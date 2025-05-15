@@ -4,6 +4,8 @@ Ideal workflow state: 90% is leveraging `builtins` / `uds-common` tasks.
 
 Without trading speed, as much behavior is validated before any code is executed to reduce side effects.
 
+Some simple examples (used in E2E tests) can be found in [testdata](../testdata)
+
 ## Simple shell scripts w/ input type validation
 
 ```yaml
