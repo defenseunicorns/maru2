@@ -6,6 +6,8 @@ Without trading speed, as much behavior is validated before any code is executed
 
 Some simple examples (used in E2E tests) can be found in [testdata](../testdata)
 
+A basic implementation of a few builtins + unit tests: [builtins/basic.go](../builtins/basic.go)
+
 ## Simple shell scripts w/ input type validation
 
 ```yaml
