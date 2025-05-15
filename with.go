@@ -217,7 +217,7 @@ func MergeWithAndParams(ctx context.Context, with With, params InputMap) (With, 
 			if param.Required && merged[name] == nil && param.Default == nil {
 				return nil, fmt.Errorf("missing required input: %q", name)
 			}
-			if merged[name] == nil {
+			if merged[name] == nil && param.Default != nil {
 				merged[name] = param.Default
 			}
 			continue

@@ -123,6 +123,14 @@ func TestMergeWithAndParams(t *testing.T) {
 			expected: With{},
 		},
 		{
+			name: "nil default input parameter",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{Default: nil},
+			},
+			expected: With{},
+		},
+		{
 			name: "with default values",
 			with: With{},
 			params: InputMap{
