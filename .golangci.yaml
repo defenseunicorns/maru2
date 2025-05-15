@@ -9,7 +9,7 @@ linters:
     goheader:
       template: |-
         SPDX-License-Identifier: Apache-2.0
-        SPDX-FileCopyrightText: 2024-Present Harry Randazzo
+        SPDX-FileCopyrightText: 2025-Present Defense Unicorns
     govet:
       disable:
         - shadow

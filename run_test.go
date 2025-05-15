@@ -479,7 +479,7 @@ func TestTraceError(t *testing.T) {
 				}
 
 				assert.Equal(t, tc.expectedMsg, traceErr.Error())
-				assert.EqualError(t, traceErr.Unwrap(), tc.expectedUnwrap.Error())
+				require.EqualError(t, traceErr.Unwrap(), tc.expectedUnwrap.Error())
 				assert.Len(t, traceErr.Trace, 2)
 				assert.Equal(t, "frame1", traceErr.Trace[0])
 				assert.Equal(t, "frame2", traceErr.Trace[1])
@@ -526,7 +526,7 @@ func TestTraceError(t *testing.T) {
 				}
 
 				var traceErr *TraceError
-				require.True(t, errors.As(resultErr, &traceErr))
+				require.ErrorAs(t, resultErr, &traceErr)
 				assert.Equal(t, tc.expectedTrace, traceErr.Trace)
 				assert.Equal(t, tc.err.Error(), traceErr.Error())
 			})
