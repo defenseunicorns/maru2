@@ -32,17 +32,17 @@ clean:
 
 ```yaml {filename="tasks.yaml"}
 default:
-    - uses: build
+  - uses: build
 
 build:
-    - run: |
-        CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
+  - run: |
+      CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
 
 test:
-    - run: go test -v -race -cover -failfast -timeout 3m ./...
+  - run: go test -v -race -cover -failfast -timeout 3m ./...
 
 clean:
-    - run: rm -rf bin/
+  - run: rm -rf bin/
 ```
 
   {{< /tab >}}
@@ -98,56 +98,21 @@ On top of the builtin behavior, Maru2 provides a few additional helpers:
   - If the task is called from another task, `with` values are passed from the calling step.
 - `os`, `arch`, `platform`: the current OS, architecture, or platform
 
-{{< tabs items="run,eval" >}}
-{{< tab >}}
-
 `with` is then mapped to the steps's environment variables, with key names being transformed to standard environment variable names (uppercase, with underscores).
 
 ```yaml {filename="tasks.yaml"}
+date:
+  description: The date
+  default: now # default to "now" if input is nil
+
 echo:
-  - run: echo "Hello, $NAME, today is $DATE"
-    with:
-      name: input
-      # default to "now" if input is nil
-      date: input || "now"
-  - run: echo "The current OS is $OS, architecture is $ARCH, platform is $PLATFORM"
-    with:
-      os: os
-      arch: arch
-      platform: platform
+  - run: echo "Hello, ${{ input "name" }}, today is ${{ input "date" }}"
+  - run: echo "The current OS is ${{ .OS }}, architecture is ${{ .ARCH }}, platform is ${{ .PLATFORM }}"
 ```
 
 ```sh
 maru2 echo --with name=$(whoami) --with date=$(date)
 ```
-
-{{< /tab >}}
-{{< tab >}}
-
-`with` values are passed to the Tengo script as global variables at compilation time.
-
-```yaml {filename="tasks.yaml"}
-echo:
-  - eval: |
-      fmt := import("fmt")
-      if date == "now" {
-        times := import("times")
-        date = times.time_format(times.now(), "2006-01-02")
-      }
-      s := fmt.sprintf("Hello, %s, today is %s", name, date)
-      fmt.println(s)
-    with:
-      name: input
-      # default to "now" if input is nil
-      date: input || "now"
-```
-
-```sh
-maru2 echo --with name=$(whoami)
-```
-
-{{< /tab >}}
-{{< /tabs >}}
 
 ## Run another task as a step
 
@@ -156,15 +121,13 @@ Calling another task within the same workflow is as simple as using the task nam
 ```yaml {filename="tasks.yaml"}
 general-kenobi:
   - run: echo "General Kenobi, you are a bold one"
-  - run: echo "$RESPONSE"
-    with:
-      response: input
+  - run: echo "${{ input "response" }}"
 
 hello:
   - run: echo "Hello There!"
   - uses: general-kenobi
     with:
-      response: '"Your move"'
+      response: Your move
 ```
 
 ```sh
@@ -183,16 +146,14 @@ If the task name is not provided, the `default` task is run.
 
 ```yaml {filename="tasks/echo.yaml"}
 simple:
-  - run: echo "$MESSAGE"
-    with:
-      message: input
+  - run: echo "${{ input "message" }}"
 ```
 
 ```yaml {filename="tasks.yaml"}
 echo:
   - uses: file:tasks/echo.yaml?task=simple
     with:
-      message: input
+      message: ${{ input "message" }}
 ```
 
 ```sh
@@ -201,9 +162,8 @@ maru2 echo --with message="Hello, World!"
 
 ## Run a task from a remote file
 
-{{< callout emoji="⚠️" >}}
-`uses` syntax leverages the [package-url spec](https://github.com/package-url/purl-spec)
-{{< /callout >}}
+> [!IMPORTANT]
+> `uses` syntax leverages the [package-url spec](https://github.com/package-url/purl-spec)
 
 {{< tabs items="GitHub,GitLab,HTTP(S)" >}}
 
@@ -211,9 +171,9 @@ maru2 echo --with message="Hello, World!"
 
 ```yaml {filename="tasks.yaml"}
 remote-echo:
-  - uses: pkg:github/noxsios/maru2@main?task=echo#testdata/simple.yaml
+  - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
     with:
-      message: '"Hello, World!"'
+      message: Hello, World!
 ```
 
 {{< /tab >}}
@@ -224,7 +184,7 @@ remote-echo:
 remote-echo:
   - uses: pkg:gitlab/noxsios/maru2@main?task=echo#testdata/simple.yaml
     with:
-      message: '"Hello, World!"'
+      message: Hello, World!
 ```
 
 {{< /tab >}}
@@ -233,9 +193,9 @@ remote-echo:
 
 ```yaml {filename="tasks.yaml"}
 remote-echo:
-  - uses: https://raw.githubusercontent.com/noxsios/maru2/main/testdata/simple.yaml?task=echo
+  - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
     with:
-      message: '"Hello, World!"'
+      message: Hello, World!
 ```
 
 {{< /tab >}}
@@ -252,37 +212,13 @@ This leverages the same mechanism as GitHub Actions.
 
 The `id` field is used to reference the output in subsequent steps.
 
-`steps` is a map of step IDs to their outputs. Values can be accessed through either bracket or dot notation.
-
-{{< tabs items="run,eval" >}}
-{{< tab >}}
-
 ```yaml {filename="tasks.yaml"}
 color:
   - run: |
-      echo "selected-color=green" >> $VAI_OUTPUT
+      echo "selected-color=green" >> $MARU2_OUTPUT
     id: color-selector
-  - run: echo "The selected color is $SELECTED"
-    with:
-      selected: steps["color-selector"]["selected-color"]
+  - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
 ```
-
-{{< /tab >}}
-{{< tab >}}
-
-```yaml {filename="tasks.yaml"}
-color:
-  - eval: |
-      color := "green"
-      maru2_output["selected-color"] = color
-    id: color-selector
-  - run: echo "The selected color is $SELECTED"
-    with:
-      selected: steps["color-selector"]["selected-color"]
-```
-
-{{< /tab >}}
-{{< /tabs >}}
 
 ```sh
 maru2 color

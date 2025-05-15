@@ -11,7 +11,7 @@ Some simple examples (used in E2E tests) can be found in [testdata](../testdata)
 ```yaml
 name:
   description: "Name to greet"
-  # <-- if no description is given, the CLI will error out if the input is accessed but not provided
+  # <-- if no default is given, the CLI will error out if the input is accessed but not provided
 
 hour:
   default: 5 # <-- note this type here, inputs will attempt to cast to this type if they mismatch
