@@ -2,8 +2,23 @@
 
 ## Usage
 
-```bash
-{{< usage >}}
+<!-- TODO: automate this once a docs site is created -->
+
+```text
+A simple task runner
+
+Usage:
+  maru2 [flags]
+
+Flags:
+      --dry-run               Don't actually run anything; just print
+  -f, --file string           Read file as workflow definition
+  -h, --help                  help for maru2
+      --list                  Print list of available tasks and exit
+  -l, --log-level string      Set log level (default "info")
+  -t, --timeout duration      Maximum time allowed for execution (default 1h0m0s)
+  -V, --version               Print version number and exit
+  -w, --with stringToString   Pass key=value pairs to the called task(s) (default [])
 ```
 
 ## Discover available tasks
@@ -61,41 +76,21 @@ $ maru2 --file path/to/other.yaml
 
 Like `make`, `maru2` only has a single command. As such, shell completions are not generated in the normal way most Cobra CLI applications are (i.e. `maru2 completion bash`). Instead, you can use the following snippet to generate completions for your shell:
 
-{{< tabs items="bash,zsh,fish,powershell" >}}
-
-{{< tab "bash" >}}
-
 ```bash
 MARU2_COMPLETION=true maru2 completion bash
 ```
-
-{{< /tab >}}
-
-{{< tab "zsh" >}}
 
 ```zsh
 MARU2_COMPLETION=true maru2 completion zsh
 ```
 
-{{< /tab >}}
-
-{{< tab "fish" >}}
-
 ```fish
 MARU2_COMPLETION=true maru2 completion fish
 ```
 
-{{< /tab >}}
-
-{{< tab "powershell" >}}
-
 ```powershell
 $env:MARU2_COMPLETION='true'; maru2 completion powershell; $env:MARU2_COMPLETION=$null
 ```
-
-{{< /tab >}}
-
-{{< /tabs >}}
 
 Completions are only generated when the `MARU2_COMPLETION` environment variable is set to `true`, and the `completion <shell>` arguments are passed to the `maru2` command.
 

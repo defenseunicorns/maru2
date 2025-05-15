@@ -10,9 +10,6 @@ Similar to `Makefile`s, a Maru2 workflow is a map of tasks, where each task is a
 
 Checkout the comparison below:
 
-{{< tabs items="Makefile,Maru2" >}}
-
-  {{< tab >}}
 
 ```makefile {filename="Makefile"}
 .DEFAULT_GOAL := build
@@ -26,9 +23,6 @@ test:
 clean:
 	rm -rf bin/
 ```
-
-  {{< /tab >}}
-  {{< tab >}}
 
 ```yaml {filename="tasks.yaml"}
 default:
@@ -45,13 +39,11 @@ clean:
   - run: rm -rf bin/
 ```
 
-  {{< /tab >}}
-
-{{< /tabs >}}
-
 ## Task names
 
-Task names must follow the following regex: `^[_a-zA-Z][a-zA-Z0-9_-]*$`. Try it out below:
+Task names must follow the following regex: `^[_a-zA-Z][a-zA-Z0-9_-]*$`.
+
+<!-- Try it out below:
 
 <input spellcheck="false" placeholder="some-task" id="task-name-regex" />
 <span id="regex-result"></span>
@@ -68,9 +60,7 @@ Task names must follow the following regex: `^[_a-zA-Z][a-zA-Z0-9_-]*$`. Try it 
     const valid = regex.test(input.value);
     result.textContent = valid ? '✅' : '❌';
   });
-</script>
-
-### Examples of valid task names
+</script> -->
 
 ```yaml
 build: ...
@@ -89,16 +79,12 @@ Both can be used interchangeably within a task, and interoperate cleanly with `w
 
 ## Passing inputs
 
-`with` is a map of [Tengo](https://github.com/d5/tengo) expressions.
-
 On top of the builtin behavior, Maru2 provides a few additional helpers:
 
-- `input`: the value passed to the task at that key
+- `${{ input <name> }}`: calling an input
   - If the task is top-level (called via CLI), `with` values are received from the `--with` flag.
   - If the task is called from another task, `with` values are passed from the calling step.
 - `os`, `arch`, `platform`: the current OS, architecture, or platform
-
-`with` is then mapped to the steps's environment variables, with key names being transformed to standard environment variable names (uppercase, with underscores).
 
 ```yaml {filename="tasks.yaml"}
 date:
@@ -165,20 +151,12 @@ maru2 echo --with message="Hello, World!"
 > [!IMPORTANT]
 > `uses` syntax leverages the [package-url spec](https://github.com/package-url/purl-spec)
 
-{{< tabs items="GitHub,GitLab,HTTP(S)" >}}
-
-{{< tab >}}
-
 ```yaml {filename="tasks.yaml"}
 remote-echo:
   - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
     with:
       message: Hello, World!
 ```
-
-{{< /tab >}}
-
-{{< tab >}}
 
 ```yaml {filename="tasks.yaml"}
 remote-echo:
@@ -187,20 +165,12 @@ remote-echo:
       message: Hello, World!
 ```
 
-{{< /tab >}}
-
-{{< tab >}}
-
 ```yaml {filename="tasks.yaml"}
 remote-echo:
   - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
     with:
       message: Hello, World!
 ```
-
-{{< /tab >}}
-
-{{< /tabs >}}
 
 ```sh
 maru2 remote-echo
