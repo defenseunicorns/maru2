@@ -1,0 +1,18 @@
+! exec maru2 parent-task
+stderr 'ERRO exit status 1'
+cmp stdout stdout.txt
+
+-- tasks.yaml --
+parent-task:
+  - run: echo "Starting parent task"
+  - uses: child-task
+  - run: echo "This should not run due to error in child"
+
+child-task:
+  - run: echo "Starting child task"
+  - run: exit 1
+  - run: echo "This should not run"
+
+-- stdout.txt --
+Starting parent task
+Starting child task

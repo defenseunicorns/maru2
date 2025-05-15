@@ -1,0 +1,8 @@
+paths-ignore:
+  - "/**/*.md"
+  - "/**/*.jpg"
+  - "/**/*.png"
+  - "/**/*.gif"
+  - "/**/*.svg"
+  - CODEOWNERS
+  - .github/**

@@ -1,0 +1,20 @@
+! exec maru2
+stderr 'ERRO open tasks.yaml: no such file or directory'
+
+exec maru2 -f maru2-other.yaml
+stdout default
+stderr '\$\ echo "default"'
+
+mv maru2-other.yaml tasks.yaml
+
+exec maru2
+stdout default
+stderr '\$\ echo "default"'
+
+exec maru2 default
+stdout default
+stderr '\$\ echo "default"'
+
+-- maru2-other.yaml --
+default:
+  - run: echo "default"

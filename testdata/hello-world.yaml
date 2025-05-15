@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../maru2.schema.json
+default:
+  - run: echo 'Hello World!'
+
+a-task:
+  - run: echo 'task a'
+
+task-b:
+  - run: echo 'task b'

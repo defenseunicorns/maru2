@@ -1,0 +1,18 @@
+exec maru2 hello
+cmp stderr stderr.txt
+cmp stdout stdout.txt
+
+-- tasks.yaml --
+general-kenobi:
+  - run: echo "General Kenobi"
+
+hello:
+  - run: echo "Hello There!"
+  - uses: general-kenobi
+
+-- stderr.txt --
+$ echo "Hello There!"
+$ echo "General Kenobi"
+-- stdout.txt --
+Hello There!
+General Kenobi

@@ -1,0 +1,201 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
+package maru2
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/url"
+	"regexp"
+	"slices"
+	"strings"
+	"sync"
+
+	"github.com/goccy/go-yaml"
+	"github.com/xeipuuv/gojsonschema"
+)
+
+// TaskNamePattern is a regular expression for valid task names, it is also used for step IDs
+var TaskNamePattern = regexp.MustCompile("^[_a-zA-Z][a-zA-Z0-9_-]*$")
+
+// InputNamePattern is a regular expression for valid input names
+var InputNamePattern = TaskNamePattern //regexp.MustCompile("^\\$[A-Z_]+[A-Z0-9_]*$")
+
+// EnvVariablePattern is a regular expression for valid environment variable names
+var EnvVariablePattern = regexp.MustCompile("^[a-zA-Z_]+[a-zA-Z0-9_]*$")
+
+// Read reads a workflow from a file
+func Read(r io.Reader) (Workflow, error) {
+	if rs, ok := r.(io.Seeker); ok {
+		_, err := rs.Seek(0, io.SeekStart)
+		if err != nil {
+			return Workflow{}, err
+		}
+	}
+
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return Workflow{}, err
+	}
+
+	var wf Workflow
+	wf.Inputs = make(InputMap)
+	wf.Tasks = make(TaskMap)
+
+	var tempMap map[string]any
+	if err := yaml.Unmarshal(data, &tempMap); err != nil {
+		return Workflow{}, err
+	}
+
+	for key, value := range tempMap {
+		// Skip x- prefixed keys (extensions)
+		if strings.HasPrefix(key, "x-") {
+			continue
+		}
+
+		// Check if the value is an array (task) or an object (input parameter)
+		switch v := value.(type) {
+		case []any:
+			taskBytes, err := yaml.Marshal(v)
+			if err != nil {
+				return Workflow{}, err
+			}
+			var task Task
+			if err := yaml.Unmarshal(taskBytes, &task); err != nil {
+				return Workflow{}, err
+			}
+			wf.Tasks[key] = task
+
+		case map[string]any:
+			inputBytes, err := yaml.Marshal(v)
+			if err != nil {
+				return Workflow{}, err
+			}
+			var input InputParameter
+			if err := yaml.Unmarshal(inputBytes, &input); err != nil {
+				return Workflow{}, err
+			}
+			wf.Inputs[key] = input
+		}
+	}
+
+	return wf, nil
+}
+
+var _schema string
+var _schemaOnce sync.Once
+
+// Validate validates a workflow
+func Validate(wf Workflow) error {
+	if len(wf.Tasks) == 0 {
+		return errors.New("no tasks available")
+	}
+
+	for name, task := range wf.Tasks {
+		if ok := TaskNamePattern.MatchString(name); !ok {
+			return fmt.Errorf("task name %q does not satisfy %q", name, TaskNamePattern.String())
+		}
+
+		ids := make(map[string]int, len(task))
+
+		for idx, step := range task {
+			// ensure that only one of run or uses fields is set
+			switch {
+			// both
+			case step.Uses != "" && step.Run != "":
+				return fmt.Errorf(".%s[%d] has both run and uses fields set", name, idx)
+			// neither
+			case step.Uses == "" && step.Run == "":
+				return fmt.Errorf(".%s[%d] must have one of [run, uses] fields set", name, idx)
+			}
+
+			if step.ID != "" {
+				if ok := TaskNamePattern.MatchString(step.ID); !ok {
+					return fmt.Errorf(".%s[%d].id %q does not satisfy %q", name, idx, step.ID, TaskNamePattern.String())
+				}
+
+				if _, ok := ids[step.ID]; ok {
+					return fmt.Errorf(".%s[%d] and .%s[%d] have the same ID %q", name, ids[step.ID], name, idx, step.ID)
+				}
+				ids[step.ID] = idx
+			}
+
+			if step.Uses != "" {
+				u, err := url.Parse(step.Uses)
+				if err != nil {
+					return fmt.Errorf(".%s[%d].uses %w", name, idx, err)
+				}
+
+				if u.Scheme == "" {
+					if step.Uses == name {
+						return fmt.Errorf(".%s[%d].uses cannot reference itself", name, idx)
+					}
+					_, ok := wf.Tasks.Find(step.Uses)
+					if !ok {
+						return fmt.Errorf(".%s[%d].uses %q not found", name, idx, step.Uses)
+					}
+				} else {
+					schemes := []string{"file", "http", "https", "pkg", "builtin"}
+
+					if !slices.Contains(schemes, u.Scheme) {
+						return fmt.Errorf(".%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))
+					}
+				}
+			}
+		}
+	}
+
+	_schemaOnce.Do(func() {
+		s := WorkFlowSchema()
+		b, err := json.Marshal(s)
+		if err != nil {
+			panic(err)
+		}
+		_schema = string(b)
+	})
+
+	schemaLoader := gojsonschema.NewStringLoader(_schema)
+
+	if len(wf.Inputs) > 0 {
+		result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(wf.Inputs))
+		if err != nil {
+			return err
+		}
+
+		if !result.Valid() {
+			var resErr error
+			for _, err := range result.Errors() {
+				resErr = errors.Join(resErr, errors.New(err.String()))
+			}
+			return resErr
+		}
+	}
+
+	result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(wf.Tasks))
+	if err != nil {
+		return err
+	}
+
+	if result.Valid() {
+		return nil
+	}
+
+	var resErr error
+	for _, err := range result.Errors() {
+		resErr = errors.Join(resErr, errors.New(err.String()))
+	}
+
+	return resErr
+}
+
+// ReadAndValidate reads and validates a workflow
+func ReadAndValidate(r io.Reader) (Workflow, error) {
+	wf, err := Read(r)
+	if err != nil {
+		return Workflow{}, err
+	}
+	return wf, Validate(wf)
+}

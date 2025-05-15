@@ -1,0 +1,14 @@
+! exec maru2 -l dne
+stderr 'ERRO invalid level: "dne"'
+
+exec maru2 --log-level warn
+cmp stderr stderr.txt
+cmp stdout stdout.txt
+
+-- stderr.txt --
+$ echo "default"
+-- stdout.txt --
+default
+-- tasks.yaml --
+default:
+  - run: echo "default"

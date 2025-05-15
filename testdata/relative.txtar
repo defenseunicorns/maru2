@@ -1,0 +1,15 @@
+exec maru2 -l debug
+stdout 'default\ndefault\ncallback\n'
+
+-- tasks.yaml --
+default:
+  - run: echo "default"
+  - uses: file:dir/maru2-other.yaml
+
+callback:
+  - run: echo "callback"
+
+-- dir/maru2-other.yaml --
+default:
+  - run: echo "default"
+  - uses: file:../?task=callback

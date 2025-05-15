@@ -1,0 +1,6 @@
+! exec maru2 nonexistent-task
+stderr 'ERRO task "nonexistent-task" not found'
+
+-- tasks.yaml --
+default:
+  - run: echo "This is the default task"

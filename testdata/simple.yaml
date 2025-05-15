@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../maru2.schema.json
+
+message:
+  required: false
+  description: message to echo
+
+echo:
+  - run: |
+      echo "$INPUT_MESSAGE"
+
+hello-world:
+  - uses: file:hello-world.yaml

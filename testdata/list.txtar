@@ -1,0 +1,23 @@
+exec maru2 --list
+cmp stderr stderr.txt
+
+exec rm tasks.yaml
+exec touch tasks.yaml
+! exec maru2 --list
+stderr 'ERRO no tasks available'
+
+-- tasks.yaml --
+default:
+  - run: echo "default"
+
+hello-world:
+  - run: echo "Hello, World!"
+
+another-task:
+  - run: echo "Another task"
+-- stderr.txt --
+Available:
+
+- default
+- another-task
+- hello-world

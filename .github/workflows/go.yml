@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
+name: Go
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: go-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.x
+          cache-dependency-path: |
+            go.sum
+            go.mod
+      - run: make
+      - run: go test -race -covermode=atomic -coverprofile=coverage.out -failfast -timeout 3m ./...
+      # - uses: codecov/codecov-action@v5.4.0
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      - run: |
+          go test -fuzz=FuzzTaskNamePattern -fuzztime=15s
+          go test -fuzz=FuzzEnvVariablePattern -fuzztime=15s
+
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.x
+          cache-dependency-path: |
+            go.sum
+            go.mod
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+
+  # fossa-scan:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: fossas/fossa-action@v1.5.0
+  #       with:
+  #         api-key: ${{ secrets.FOSSA_API_KEY }}

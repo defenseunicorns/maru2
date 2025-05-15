@@ -1,0 +1,6 @@
+! exec maru2 sleep --timeout 2s
+stderr 'ERRO task "sleep" timed out'
+
+-- tasks.yaml --
+sleep:
+  - run: sleep 10

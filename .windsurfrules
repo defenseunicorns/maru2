@@ -1,0 +1,5 @@
+1. Do not add comments to code unless strictly necessary
+2. Write clear and concise idiomatic code
+3. Do not add any new dependencies
+4. Use TDD and table tests whenever possible
+5. Run `make` to ensure the code compiles
