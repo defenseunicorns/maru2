@@ -4,11 +4,21 @@ updates:
     directory: /
     schedule:
       interval: daily
+    commit-message:
+      include: scope
+      prefix: build
+    groups:
+      go:
+        patterns:
+          - "*"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: daily
+    commit-message:
+      include: scope
+      prefix: ci
     groups:
       github-actions:
         patterns:
