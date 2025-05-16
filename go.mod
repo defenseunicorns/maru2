@@ -3,7 +3,7 @@ module github.com/defenseunicorns/maru2
 go 1.24.3
 
 require (
-	github.com/alecthomas/chroma/v2 v2.17.2
+	github.com/alecthomas/chroma/v2 v2.18.0
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/log v0.4.2
 	github.com/charmbracelet/x/ansi v0.9.2
