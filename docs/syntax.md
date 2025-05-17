@@ -210,9 +210,35 @@ maru2 echo --with message="Hello, World!"
 > [!IMPORTANT]
 > `uses` syntax leverages the [package-url spec](https://github.com/package-url/purl-spec)
 
+### Package URL Aliases
+
+Maru2 supports defining aliases for package URLs in a configuration file. By default, Maru2 looks for aliases in `~/.maru2/aliases.yaml`. The configuration file has the following structure:
+
+```yaml {filename="~/.maru2/aliases.yaml"}
+aliases:
+  gh:  # Alias name
+    type: github  # Resolved type
+    base: https://github.example.com  # Optional base URL
+    token-from-env: CUSTOM_GITHUB_TOKEN  # Optional environment variable for authentication token
+  gl:
+    type: gitlab
+    base: https://gitlab.example.com
+    token-from-env: CUSTOM_GITLAB_TOKEN
+```
+
+With this configuration, you can use the aliases in your workflow files:
+
 ```yaml {filename="tasks.yaml"}
 remote-echo:
   - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+    with:
+      message: Hello, World!
+```
+
+```yaml {filename="tasks.yaml"}
+# Using the 'gh' alias defined in ~/.maru2/aliases.yaml
+remote-echo:
+  - uses: pkg:gh/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
     with:
       message: Hello, World!
 ```
@@ -223,6 +249,48 @@ remote-echo:
     with:
       message: Hello, World!
 ```
+
+### Package URL Aliases
+
+You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in a YAML configuration file located at `~/.maru2/aliases.yaml`.
+
+Example aliases configuration:
+
+```yaml {filename="~/.maru2/aliases.yaml"}
+aliases:
+  gl:
+    type: gitlab
+    qualifiers:
+      base: https://gitlab.example.com
+  gh:
+    type: github
+  internal:
+    type: gitlab
+    qualifiers:
+      base: https://gitlab.internal.company.com
+```
+
+With this configuration, you can use the aliases in your tasks:
+
+```yaml {filename="tasks.yaml"}
+remote-echo:
+  - uses: pkg:gl/noxsios/maru2@main?task=echo#testdata/simple.yaml
+    with:
+      message: Hello, World!
+```
+
+The alias `gl` will be resolved to `gitlab` with the base URL qualifier set to `https://gitlab.example.com`.
+
+You can also override qualifiers defined in the alias by specifying them in the package URL:
+
+```yaml {filename="tasks.yaml"}
+remote-echo:
+  - uses: pkg:gl/noxsios/maru2@main?base=https://other-gitlab.com&task=echo#testdata/simple.yaml
+    with:
+      message: Hello, World!
+```
+
+This will use `https://other-gitlab.com` as the base URL instead of the one defined in the alias.
 
 ```yaml {filename="tasks.yaml"}
 remote-echo:

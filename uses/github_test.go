@@ -20,7 +20,8 @@ func TestGitHubFetcher(t *testing.T) {
 
 	ctx := context.Background()
 
-	client := NewGitHubClient()
+	client, err := NewGitHubClient("", "")
+	require.NoError(t, err)
 
 	rc, err := client.Fetch(ctx, uses)
 	require.NoError(t, err)

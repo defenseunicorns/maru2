@@ -20,7 +20,7 @@ func TestGitLabFetcher(t *testing.T) {
 
 	ctx := context.Background()
 
-	client, err := NewGitLabClient("")
+	client, err := NewGitLabClient("", "")
 	require.NoError(t, err)
 
 	rc, err := client.Fetch(ctx, uses)

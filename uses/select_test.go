@@ -39,7 +39,7 @@ func TestSelectFetcher(t *testing.T) {
 			name:        "file with pkg prev",
 			uri:         "file:tmp/test",
 			prev:        "pkg:github/noxsios/vai",
-			want:        NewGitHubClient(),
+			want:        &GitHubClient{},
 			expectedErr: "",
 		},
 		{
@@ -67,7 +67,7 @@ func TestSelectFetcher(t *testing.T) {
 			name:        "pkg-github",
 			uri:         "pkg:github/noxsios/vai",
 			prev:        defaultPrev,
-			want:        NewGitHubClient(),
+			want:        &GitHubClient{},
 			expectedErr: "",
 		},
 		{
@@ -176,7 +176,7 @@ func TestSelectFetcher(t *testing.T) {
 				previous, err := url.Parse(tc.prev)
 				require.NoError(t, err)
 
-				want, err := NewGitLabClient(tc.base)
+				want, err := NewGitLabClient(tc.base, "")
 				require.NoError(t, err)
 
 				got, err := SelectFetcher(uri, previous)

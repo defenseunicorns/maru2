@@ -11,8 +11,20 @@ import (
 	"github.com/spf13/afero"
 )
 
+// defaultResolver is the resolver used by SelectFetcher
+var defaultResolver AliasResolver
+
 // SelectFetcher returns a Fetcher based on the URI scheme and previous scheme.
 func SelectFetcher(uri, previous *url.URL) (Fetcher, error) {
+	// Initialize the resolver if needed
+	if defaultResolver == nil {
+		var err error
+		defaultResolver, err = DefaultResolver()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize alias resolver: %w", err)
+		}
+	}
+
 	switch uri.Scheme {
 	case "http", "https":
 		return NewHTTPFetcher(), nil
@@ -22,15 +34,20 @@ func SelectFetcher(uri, previous *url.URL) (Fetcher, error) {
 			return nil, err
 		}
 
+		resolvedPURL, isAlias := defaultResolver.ResolveAlias(pURL)
+		if isAlias {
+			pURL = resolvedPURL
+		}
+
+		qualifiers := pURL.Qualifiers.Map()
+		tokenEnv := qualifiers["token-from-env"]
+		base := qualifiers["base"]
+
 		switch pURL.Type {
 		case "github":
-			return NewGitHubClient(), nil
+			return NewGitHubClient(base, tokenEnv)
 		case "gitlab":
-			client, err := NewGitLabClient(pURL.Qualifiers.Map()["base"])
-			if err != nil {
-				return nil, err
-			}
-			return client, nil
+			return NewGitLabClient(base, tokenEnv)
 		default:
 			return nil, fmt.Errorf("unsupported type: %q", pURL.Type)
 		}
@@ -45,15 +62,20 @@ func SelectFetcher(uri, previous *url.URL) (Fetcher, error) {
 			if err != nil {
 				return nil, err
 			}
+			resolvedPURL, isAlias := defaultResolver.ResolveAlias(pURL)
+			if isAlias {
+				pURL = resolvedPURL
+			}
+
+			qualifiers := pURL.Qualifiers.Map()
+			tokenEnv := qualifiers["token-from-env"]
+			base := qualifiers["base"]
+
 			switch pURL.Type {
 			case "github":
-				return NewGitHubClient(), nil
+				return NewGitHubClient(base, tokenEnv)
 			case "gitlab":
-				client, err := NewGitLabClient(pURL.Qualifiers.Map()["base"])
-				if err != nil {
-					return nil, err
-				}
-				return client, nil
+				return NewGitLabClient(base, tokenEnv)
 			default:
 				return nil, fmt.Errorf("unsupported type: %q", pURL.Type)
 			}

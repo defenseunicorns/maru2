@@ -20,4 +20,8 @@ alias:
 hello-world:
 	echo "Hello, World!"
 
+ARGS ?= 
+%:
+	./bin/maru2 $* $(ARGS)
+
 .PHONY: build clean alias hello-world lint
