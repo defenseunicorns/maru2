@@ -21,6 +21,7 @@ func TestTemplateString(t *testing.T) {
 		str            string
 		expected       string
 		expectedError  string
+		dryRun         bool
 	}{
 		{
 			name:     "no template",
@@ -86,6 +87,79 @@ func TestTemplateString(t *testing.T) {
 			str:           "Hello ${{ input",
 			expectedError: "unclosed action",
 		},
+		// Dry run tests
+		{
+			name:     "dry run - no template",
+			str:      "hello world",
+			expected: "hello world",
+			dryRun:   true,
+		},
+		{
+			name:     "dry run - with input",
+			input:    With{"name": "test"},
+			str:      `hello ${{ input "name" }}`,
+			expected: "hello test",
+			dryRun:   true,
+		},
+		{
+			name:     "dry run - with missing input",
+			input:    With{},
+			str:      `hello ${{ input "name" }}`,
+			expected: "hello ❯ input name ❮",
+			dryRun:   true,
+		},
+		{
+			name: "dry run - with previous output",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"result": "success",
+				},
+			},
+			str:      `status: ${{ from "step1" "result" }}`,
+			expected: "status: success",
+			dryRun:   true,
+		},
+		{
+			name:     "dry run - with missing previous output",
+			str:      `status: ${{ from "step1" "result" }}`,
+			expected: "status: ❯ from step1 result ❮",
+			dryRun:   true,
+		},
+		{
+			name: "dry run - with missing previous output arg",
+			str:  `status: ${{ from "step1" "result" }}`,
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"foo": "bar",
+				},
+			},
+			expected: "status: ❯ from step1 result ❮",
+			dryRun:   true,
+		},
+		{
+			name:     "dry run - with OS variable",
+			str:      `OS: ${{ .OS }}`,
+			expected: "OS: " + runtime.GOOS,
+			dryRun:   true,
+		},
+		{
+			name:  "dry run - with multiple variables",
+			input: With{"name": "test"},
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"result": "success",
+				},
+			},
+			str:      `Hello ${{ input "name" }}, status: ${{ from "step1" "result" }}, OS: ${{ .OS }}`,
+			expected: "Hello test, status: success, OS: " + runtime.GOOS,
+			dryRun:   true,
+		},
+		{
+			name:          "dry run - invalid template syntax",
+			str:           "Hello ${{ input",
+			expectedError: "unclosed action",
+			dryRun:        true,
+		},
 	}
 
 	for _, tc := range tests {
@@ -95,7 +169,7 @@ func TestTemplateString(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			result, err := TemplateString(ctx, tc.input, tc.previousOutput, tc.str, false)
+			result, err := TemplateString(ctx, tc.input, tc.previousOutput, tc.str, tc.dryRun)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -109,6 +183,9 @@ func TestTemplateString(t *testing.T) {
 }
 
 func TestMergeWithAndParams(t *testing.T) {
+	requiredFalse := false
+	requiredTrue := true
+
 	tests := []struct {
 		name          string
 		with          With
@@ -126,7 +203,7 @@ func TestMergeWithAndParams(t *testing.T) {
 			name: "nil default input parameter",
 			with: With{},
 			params: InputMap{
-				"name": InputParameter{Default: nil},
+				"name": InputParameter{Default: nil, Required: &requiredFalse},
 			},
 			expected: With{},
 		},
@@ -168,11 +245,29 @@ func TestMergeWithAndParams(t *testing.T) {
 			name: "with required parameter missing",
 			with: With{},
 			params: InputMap{
+				"name": InputParameter{},
+			},
+			expectedError: "missing required input: \"name\"",
+		},
+		{
+			name: "with required parameter explicitly set to true",
+			with: With{},
+			params: InputMap{
 				"name": InputParameter{
-					Required: true,
+					Required: &requiredTrue,
 				},
 			},
 			expectedError: "missing required input: \"name\"",
+		},
+		{
+			name: "with required parameter explicitly set to false",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{
+					Required: &requiredFalse,
+				},
+			},
+			expected: With{},
 		},
 		{
 			name: "with required parameter provided",
@@ -180,9 +275,7 @@ func TestMergeWithAndParams(t *testing.T) {
 				"name": "custom-name",
 			},
 			params: InputMap{
-				"name": InputParameter{
-					Required: true,
-				},
+				"name": InputParameter{},
 			},
 			expected: With{
 				"name": "custom-name",
@@ -328,10 +421,117 @@ func TestMergeWithAndParams(t *testing.T) {
 			},
 			expectedError: "unable to cast []string{\"a\", \"b\"} of type []string to bool",
 		},
+		{
+			name: "type mismatch with default",
+			with: With{
+				"count": "not-a-number",
+			},
+			params: InputMap{
+				"count": InputParameter{
+					Default: 42,
+				},
+			},
+			expectedError: "unable to cast \"not-a-number\" of type string to int64",
+		},
+		{
+			name: "valid regex validation passes",
+			with: With{
+				"name": "Hello World",
+			},
+			params: InputMap{
+				"name": InputParameter{
+					Description: "Name with validation",
+					Validate:    "^Hello",
+				},
+			},
+			expected: With{
+				"name": "Hello World",
+			},
+		},
+		{
+			name: "invalid regex validation fails",
+			with: With{
+				"name": "Goodbye World",
+			},
+			params: InputMap{
+				"name": InputParameter{
+					Description: "Name with validation",
+					Validate:    "^Hello",
+				},
+			},
+			expectedError: "failed to validate: input=name, value=Goodbye World, regexp=^Hello",
+		},
+		{
+			name: "invalid regex pattern",
+			with: With{
+				"name": "Hello World",
+			},
+			params: InputMap{
+				"name": InputParameter{
+					Description: "Name with validation",
+					Validate:    "[", // Invalid regex
+				},
+			},
+			expectedError: "error parsing regexp: missing closing ]: `[`",
+		},
+		{
+			name: "validation with default value passes",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{
+					Description: "Name with validation and default",
+					Default:     "Hello Default",
+					Validate:    "^Hello",
+				},
+			},
+			expected: With{
+				"name": "Hello Default",
+			},
+		},
+		{
+			name: "validation with good default value bad provided value fails",
+			with: With{
+				"name": "Goodbye World", // Provide a value that fails validation
+			},
+			params: InputMap{
+				"name": InputParameter{
+					Description: "Name with validation and default",
+					Default:     "Hello Default", // Default would pass validation
+					Validate:    "^Hello",
+				},
+			},
+			expectedError: "failed to validate: input=name, value=Goodbye World, regexp=^Hello",
+		},
+		{
+			name: "validation with bad default value fails",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{
+					Description: "Name with validation and default",
+					Default:     "Goodbye World",
+					Validate:    "^Hello",
+				},
+			},
+			expectedError: "failed to validate: input=name, value=Goodbye World, regexp=^Hello",
+		},
+		{
+			name: "non-string value with validation",
+			with: With{
+				"count": 42,
+			},
+			params: InputMap{
+				"count": InputParameter{
+					Description: "Count with validation",
+					Validate:    "^4",
+				},
+			},
+			expected: With{
+				"count": 42,
+			},
+		},
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -404,13 +604,13 @@ func TestTemplateWithMap(t *testing.T) {
 				"name": "test",
 			},
 			withMap: map[string]any{
-				"greetings": []interface{}{
+				"greetings": []any{
 					"Hello ${{ input \"name\" }}",
 					"Hi ${{ input \"name\" }}",
 				},
 			},
 			expected: With{
-				"greetings": []interface{}{
+				"greetings": []any{
 					"Hello test",
 					"Hi test",
 				},
@@ -422,7 +622,7 @@ func TestTemplateWithMap(t *testing.T) {
 				"name": "test",
 			},
 			withMap: map[string]any{
-				"users": []interface{}{
+				"users": []any{
 					map[string]any{
 						"name": "${{ input \"name\" }}",
 						"role": "admin",
@@ -434,7 +634,7 @@ func TestTemplateWithMap(t *testing.T) {
 				},
 			},
 			expected: With{
-				"users": []interface{}{
+				"users": []any{
 					With{
 						"name": "test",
 						"role": "admin",
@@ -452,16 +652,16 @@ func TestTemplateWithMap(t *testing.T) {
 				"name": "test",
 			},
 			withMap: map[string]any{
-				"data": []interface{}{
-					[]interface{}{
+				"data": []any{
+					[]any{
 						"${{ input \"name\" }}",
 						"value",
 					},
 				},
 			},
 			expected: With{
-				"data": []interface{}{
-					[]interface{}{
+				"data": []any{
+					[]any{
 						"test",
 						"value",
 					},
@@ -487,7 +687,7 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 					"status": "${{ from \"step1\" \"result\" }}",
 				},
-				"data": []interface{}{
+				"data": []any{
 					map[string]any{
 						"key":   "app_name",
 						"value": "${{ input \"name\" }}",
@@ -506,7 +706,7 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 					"status": "success",
 				},
-				"data": []interface{}{
+				"data": []any{
 					With{
 						"key":   "app_name",
 						"value": "test",

@@ -148,6 +148,15 @@ func Validate(wf Workflow) error {
 		}
 	}
 
+	for _, param := range wf.Inputs {
+		if param.Validate != "" {
+			_, err := regexp.Compile(param.Validate)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	_schemaOnce.Do(func() {
 		s := WorkFlowSchema()
 		b, err := json.Marshal(s)

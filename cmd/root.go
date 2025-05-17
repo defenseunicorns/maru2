@@ -188,10 +188,15 @@ func Main() int {
 	if err := cli.ExecuteContext(ctx); err != nil {
 		logger.Print("")
 		var tErr *maru2.TraceError
-		if errors.As(err, &tErr) {
+		if errors.As(err, &tErr) && len(tErr.Trace) > 0 {
 			trace := tErr.Trace
 			slices.Reverse(trace)
-			logger.Error(tErr, "traceback (most recent call first)", strings.Join(trace, "\n"))
+			if len(trace) == 1 {
+				logger.Error(tErr)
+				logger.Error(trace[0])
+			} else {
+				logger.Error(tErr, "traceback (most recent call first)", strings.Join(trace, "\n"))
+			}
 		} else {
 			logger.Error(err)
 		}

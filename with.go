@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"regexp"
 	"runtime"
 	"slices"
 	"strings"
@@ -213,14 +214,16 @@ func MergeWithAndParams(ctx context.Context, with With, params InputMap) (With, 
 	merged := maps.Clone(with)
 
 	for name, param := range params {
+		// the default behavior is that an input is required, this is reflected in the json schema "default" value field
+		required := param.Required == nil || (param.Required != nil && *param.Required)
+
 		if _, ok := merged[name]; !ok {
-			if param.Required && merged[name] == nil && param.Default == nil {
+			if required && merged[name] == nil && param.Default == nil {
 				return nil, fmt.Errorf("missing required input: %q", name)
 			}
 			if merged[name] == nil && param.Default != nil {
 				merged[name] = param.Default
 			}
-			continue
 		}
 		// If the input is deprecated AND provided, log a warning
 		if param.DeprecatedMessage != "" && with[name] != nil {
@@ -256,6 +259,23 @@ func MergeWithAndParams(ctx context.Context, with With, params InputMap) (With, 
 				merged[name] = casted
 			default:
 				return nil, fmt.Errorf("unable to cast input %q from %T to %T", name, with[name], param.Default)
+			}
+		}
+
+		if param.Validate != "" {
+			stringified, err := cast.ToStringE(merged[name])
+			if err != nil {
+				return nil, err
+			}
+
+			expr, err := regexp.Compile(param.Validate)
+			if err != nil {
+				return nil, err
+			}
+
+			ok := expr.MatchString(stringified)
+			if !ok {
+				return nil, fmt.Errorf("failed to validate: input=%s, value=%s, regexp=%s", name, merged[name], param.Validate)
 			}
 		}
 	}

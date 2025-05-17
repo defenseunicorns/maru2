@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := build
 
 build:
-	CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
+	CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2
 	go run gen/main.go
 
 lint:

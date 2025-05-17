@@ -395,6 +395,61 @@ func TestValidate(t *testing.T) {
 			expectedError: "",
 		},
 		{
+			name: "input with valid regex validation",
+			wf: Workflow{
+				Inputs: InputMap{
+					"name": InputParameter{
+						Description: "Name with validation",
+						Validate:    "^Hello",
+					},
+				},
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo",
+					}},
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "input with invalid regex validation pattern",
+			wf: Workflow{
+				Inputs: InputMap{
+					"name": InputParameter{
+						Description: "Name with invalid validation",
+						Validate:    "[", // Invalid regex
+					},
+				},
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo",
+					}},
+				},
+			},
+			expectedError: "error parsing regexp: missing closing ]: `[`",
+		},
+		{
+			name: "multiple inputs with valid and invalid regex validation",
+			wf: Workflow{
+				Inputs: InputMap{
+					"name": InputParameter{
+						Description: "Name with validation",
+						Validate:    "^Hello",
+					},
+					"email": InputParameter{
+						Description: "Email with invalid validation",
+						Validate:    ")", // Invalid regex
+					},
+				},
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo",
+					}},
+				},
+			},
+			expectedError: "error parsing regexp: unexpected ): `)`",
+		},
+		{
 			name: "uses with valid task reference",
 			wf: Workflow{
 				Inputs: InputMap{},
@@ -471,7 +526,6 @@ func TestValidate(t *testing.T) {
 				Inputs: InputMap{
 					"input": InputParameter{
 						Description: "Invalid input",
-						Required:    true,
 						Default:     make(chan int), // Invalid type for Default field
 					},
 				},
@@ -504,7 +558,6 @@ func TestValidate(t *testing.T) {
 				Inputs: InputMap{
 					"input": InputParameter{
 						Description: "A test input",
-						Required:    true,
 						Default:     "default value",
 					},
 				},

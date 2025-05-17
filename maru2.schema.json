@@ -31,6 +31,10 @@
             }
           ],
           "description": "Default value for the parameter"
+        },
+        "validate": {
+          "type": "string",
+          "description": "Regular expression to validate the value of the parameter"
         }
       },
       "additionalProperties": false,

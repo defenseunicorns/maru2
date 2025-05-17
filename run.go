@@ -28,12 +28,12 @@ func Run(ctx context.Context, wf Workflow, taskName string, outer With, origin s
 
 	task, ok := wf.Tasks.Find(taskName)
 	if !ok {
-		return nil, fmt.Errorf("task %q not found", taskName)
+		return nil, addTrace(fmt.Errorf("task %q not found", taskName), fmt.Sprintf("at (%s)", origin))
 	}
 
 	withDefaults, err := MergeWithAndParams(ctx, outer, wf.Inputs)
 	if err != nil {
-		return nil, err
+		return nil, addTrace(err, fmt.Sprintf("at (%s)", origin))
 	}
 
 	logger := log.FromContext(ctx)
