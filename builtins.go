@@ -55,6 +55,8 @@ func ExecuteBuiltin(ctx context.Context, step Step, with With, previous CommandO
 		}
 	}
 
+	logger.Print(">", "builtin", name, "with", builtin)
+
 	result, err := builtin.Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", step.Uses, err)

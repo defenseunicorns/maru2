@@ -1,9 +1,0 @@
-# yaml-language-server: $schema=../maru2.schema.json
-
-txt:
-  description: text to print
-  validate: ^Hello
-
-do:
-  - run: |
-      echo "input txt was: ${{ input "txt" }}"

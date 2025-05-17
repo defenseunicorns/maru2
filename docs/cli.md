@@ -37,12 +37,64 @@ Available:
 - test
 ```
 
+## Passing inputs with `--with`
+
+The `--with` flag allows you to pass key-value pairs to tasks. This is particularly useful for tasks that define input parameters.
+
+```sh
+$ maru2 deploy --with environment=production --with version=1.2.3
+```
+
+These values can then be accessed within the task using the `${{ input "key" }}` syntax:
+
+```yaml
+deploy:
+  - run: echo "Deploying version ${{ input "version" }} to ${{ input "environment" }}"
+```
+
+The `--with` flag accepts values in the format `key=value`. If your value contains spaces or special characters, you should quote the value:
+
+```sh
+$ maru2 greet --with message="Hello, World!"
+```
+
+You can pass multiple `--with` flags, and they will be combined into a single set of inputs for the task.
+
 ## Dry run
 
-When the `--dry-run` flag is set, Maru2 will evaluate `uses` imports and `with` expressions but will _not_
-execute any code in `run`.
+The `--dry-run` flag allows you to preview what a workflow would do without actually executing any commands. When this flag is set, Maru2 will:
 
-This allows for debugging, as well as viewing the contents of remote workflows without executing them.
+1. Parse and validate the workflow file
+2. Resolve and evaluate all `uses` imports (including remote workflows)
+3. Process and template all `with` expressions
+4. Print the commands that would be executed
+5. Skip the actual execution of any `run` commands
+
+```sh
+$ maru2 build --dry-run
+
+$ go build -o bin/app ./cmd/app
+```
+
+### Use cases
+
+- **Workflow validation**: Verify that your workflow is correctly structured without running any commands
+- **Input validation**: Ensure that all required inputs are provided and correctly formatted
+- **Remote workflow inspection**: View the contents of remote workflows before executing them
+- **Debugging**: Understand how variables and expressions will be evaluated in your workflow
+- **Security review**: Inspect what commands would be executed before running them
+
+### Templating in dry run mode
+
+In dry run mode, template expressions that cannot be evaluated (such as outputs from previous steps that weren't actually run) will be displayed with special formatting:
+
+```sh
+$ maru2 template-example --dry-run
+
+$ echo "The value is ❯ from step-id output-key ❮"
+```
+
+This allows you to see what parts of your workflow depend on outputs from previous steps.
 
 ## "default" task
 
@@ -99,3 +151,18 @@ This is because `completion bash|fish|etc...` are valid task names in a Maru2 wo
 ## Timeout
 
 Maru2 has a default 1hr timeout. To specify a different timeout, see the `-t, --timeout` flag.
+
+## Log level
+
+Maru2 allows you to control the verbosity of its output using the `-l, --log-level` flag. The default log level is `info`.
+
+```sh
+$ maru2 build --log-level debug
+```
+
+Available log levels (from least to most verbose):
+
+- `error`: Only show errors
+- `warn`: Show errors and warnings
+- `info`: Show errors, warnings, and informational messages (default)
+- `debug`: Show all messages, including debug information

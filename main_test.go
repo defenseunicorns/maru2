@@ -24,7 +24,6 @@ func TestSimple(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Dir: "testdata",
 		Setup: func(env *testscript.Env) error {
-			// env.Setenv(maru2.CacheEnvVar, t.TempDir())
 			env.Setenv("NO_COLOR", "true")
 			return nil
 		},

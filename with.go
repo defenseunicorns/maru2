@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"os"
 	"regexp"
 	"runtime"
 	"slices"
@@ -218,11 +219,20 @@ func MergeWithAndParams(ctx context.Context, with With, params InputMap) (With, 
 		required := param.Required == nil || (param.Required != nil && *param.Required)
 
 		if _, ok := merged[name]; !ok {
-			if required && merged[name] == nil && param.Default == nil {
+			if required && merged[name] == nil && param.Default == nil && param.DefaultFromEnv == "" {
 				return nil, fmt.Errorf("missing required input: %q", name)
 			}
+			// param.Default and param.DefaultFromEnv are mutually exclusive
+			// enforced by JSON schema
 			if merged[name] == nil && param.Default != nil {
 				merged[name] = param.Default
+			}
+			if merged[name] == nil && param.DefaultFromEnv != "" {
+				val, ok := os.LookupEnv(param.DefaultFromEnv)
+				if !ok {
+					return nil, fmt.Errorf("environment variable %q not set and no input provided for %q", param.DefaultFromEnv, name)
+				}
+				merged[name] = val
 			}
 		}
 		// If the input is deprecated AND provided, log a warning

@@ -4,6 +4,44 @@
   "$defs": {
     "Input": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "not": {
+            "required": [
+              "default-from-env"
+            ]
+          },
+          "required": [
+            "default"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "default"
+            ]
+          },
+          "required": [
+            "default-from-env"
+          ]
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "default"
+                ]
+              },
+              {
+                "required": [
+                  "default-from-env"
+                ]
+              }
+            ]
+          }
+        }
+      ],
       "properties": {
         "description": {
           "type": "string",
@@ -32,6 +70,10 @@
           ],
           "description": "Default value for the parameter"
         },
+        "default-from-env": {
+          "type": "string",
+          "description": "Environment variable to use as default value for the parameter"
+        },
         "validate": {
           "type": "string",
           "description": "Regular expression to validate the value of the parameter"
@@ -42,6 +84,10 @@
       "required": [
         "description"
       ],
+      "dependentRequired": {
+        "default": [],
+        "default-from-env": []
+      },
       "description": "Input parameter for the workflow"
     },
     "Step": {

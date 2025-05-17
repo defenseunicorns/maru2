@@ -19,12 +19,13 @@ type InputParameter struct {
 	DeprecatedMessage string `json:"deprecated-message,omitempty" jsonschema:"description=Message to display when the parameter is deprecated"`
 	Required          *bool  `json:"required,omitempty" jsonschema:"description=Whether the parameter is required,default=true"`
 	Default           any    `json:"default,omitempty" jsonschema:"description=Default value for the parameter"`
+	DefaultFromEnv    string `json:"default-from-env,omitempty" jsonschema:"description=Environment variable to use as default value for the parameter"`
 	Validate          string `json:"validate,omitempty" jsonschema:"description=Regular expression to validate the value of the parameter"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a step
 func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
-	schema.Properties.Set("default", &jsonschema.Schema{
+	defaultSchema := &jsonschema.Schema{
 		Description: "Default value for the parameter",
 		OneOf: []*jsonschema.Schema{
 			{
@@ -37,7 +38,48 @@ func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
 				Type: "integer",
 			},
 		},
-	})
+	}
+
+	defaultFromEnvSchema := &jsonschema.Schema{
+		Type:        "string",
+		Description: "Environment variable to use as default value for the parameter",
+	}
+
+	schema.Properties.Set("default", defaultSchema)
+	schema.Properties.Set("default-from-env", defaultFromEnvSchema)
+
+	// Add a constraint to ensure they are mutually exclusive
+	schema.DependentRequired = map[string][]string{
+		"default":          {},
+		"default-from-env": {},
+	}
+
+	schema.OneOf = []*jsonschema.Schema{
+		{
+			Required: []string{"default"},
+			Not: &jsonschema.Schema{
+				Required: []string{"default-from-env"},
+			},
+		},
+		{
+			Required: []string{"default-from-env"},
+			Not: &jsonschema.Schema{
+				Required: []string{"default"},
+			},
+		},
+		{
+			Not: &jsonschema.Schema{
+				AnyOf: []*jsonschema.Schema{
+					{
+						Required: []string{"default"},
+					},
+					{
+						Required: []string{"default-from-env"},
+					},
+				},
+			},
+		},
+	}
 }
 
 // Step is a single step in a task

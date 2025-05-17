@@ -186,6 +186,10 @@ func TestMergeWithAndParams(t *testing.T) {
 	requiredFalse := false
 	requiredTrue := true
 
+	t.Setenv("TEST_ENV_VAR", "env-value")
+	t.Setenv("TEST_ENV_BOOL", "true")
+	t.Setenv("TEST_ENV_INT", "42")
+
 	tests := []struct {
 		name          string
 		with          With
@@ -529,12 +533,115 @@ func TestMergeWithAndParams(t *testing.T) {
 				"count": 42,
 			},
 		},
+		{
+			name: "with default-from-env value",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{
+					Description:    "Name from environment",
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expected: With{
+				"name": "env-value",
+			},
+		},
+		{
+			name: "with default-from-env for bool value",
+			with: With{},
+			params: InputMap{
+				"enabled": InputParameter{
+					Description:    "Boolean from environment",
+					DefaultFromEnv: "TEST_ENV_BOOL",
+				},
+			},
+			expected: With{
+				"enabled": "true",
+			},
+		},
+		{
+			name: "with default-from-env for int value",
+			with: With{},
+			params: InputMap{
+				"count": InputParameter{
+					Description:    "Integer from environment",
+					DefaultFromEnv: "TEST_ENV_INT",
+				},
+			},
+			expected: With{
+				"count": "42",
+			},
+		},
+		{
+			name: "with missing environment variable",
+			with: With{},
+			params: InputMap{
+				"missing": InputParameter{
+					Description:    "Missing environment variable",
+					DefaultFromEnv: "NON_EXISTENT_ENV_VAR",
+				},
+			},
+			expectedError: "environment variable \"NON_EXISTENT_ENV_VAR\" not set and no input provided for \"missing\"",
+		},
+		{
+			name: "with provided value overriding default-from-env",
+			with: With{
+				"name": "provided-value",
+			},
+			params: InputMap{
+				"name": InputParameter{
+					Description:    "Name with provided value",
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expected: With{
+				"name": "provided-value",
+			},
+		},
+		{
+			name: "with validation on default-from-env value - passing",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{
+					Description:    "Name from environment with validation",
+					DefaultFromEnv: "TEST_ENV_VAR",
+					Validate:       "^env",
+				},
+			},
+			expected: With{
+				"name": "env-value",
+			},
+		},
+		{
+			name: "with validation on default-from-env value - failing",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{
+					Description:    "Name from environment with validation",
+					DefaultFromEnv: "TEST_ENV_VAR",
+					Validate:       "^invalid",
+				},
+			},
+			expectedError: "failed to validate: input=name, value=env-value, regexp=^invalid",
+		},
+		{
+			name: "test mutual exclusivity between default and default-from-env",
+			with: With{},
+			params: InputMap{
+				"name": InputParameter{
+					Description:    "Name with both default and default-from-env",
+					Default:        "default-value",
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expected: With{
+				"name": "default-value",
+			},
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 			result, err := MergeWithAndParams(ctx, tc.with, tc.params)

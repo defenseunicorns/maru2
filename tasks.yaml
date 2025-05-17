@@ -4,6 +4,10 @@ text:
   default: "Hello, world!"
   required: true
 
+short:
+  description: Controls whether network tests are run
+  default: false
+
 default:
   - uses: echo
     with:
@@ -20,7 +24,8 @@ echo:
   - run: echo "${{ input "text" }}"
 
 test:
-  - run: go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m ./...
+  - run: |
+      go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m -short=${{ input "short" }} ./...
 
 hello-world:
   - run: echo "Hello, World!"
