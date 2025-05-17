@@ -23,12 +23,12 @@ func TestConfigBasedResolver(t *testing.T) {
 	}{
 		{
 			name:            "no alias",
-			inputType:       "github",
+			inputType:       packageurl.TypeGithub,
 			inputQualifiers: map[string]string{},
 			aliasConfig: &AliasConfig{
 				Aliases: map[string]AliasDefinition{},
 			},
-			wantType:       "github",
+			wantType:       packageurl.TypeGithub,
 			wantQualifiers: map[string]string{},
 			wantResolved:   false,
 		},
@@ -39,11 +39,11 @@ func TestConfigBasedResolver(t *testing.T) {
 			aliasConfig: &AliasConfig{
 				Aliases: map[string]AliasDefinition{
 					"custom": {
-						Type: "github",
+						Type: packageurl.TypeGithub,
 					},
 				},
 			},
-			wantType:       "github",
+			wantType:       packageurl.TypeGithub,
 			wantQualifiers: map[string]string{},
 			wantResolved:   true,
 		},
@@ -54,12 +54,12 @@ func TestConfigBasedResolver(t *testing.T) {
 			aliasConfig: &AliasConfig{
 				Aliases: map[string]AliasDefinition{
 					"gl": {
-						Type: "gitlab",
+						Type: packageurl.TypeGitlab,
 						Base: "https://gitlab.example.com",
 					},
 				},
 			},
-			wantType:       "gitlab",
+			wantType:       packageurl.TypeGitlab,
 			wantQualifiers: map[string]string{"base": "https://gitlab.example.com"},
 			wantResolved:   true,
 		},
@@ -70,12 +70,12 @@ func TestConfigBasedResolver(t *testing.T) {
 			aliasConfig: &AliasConfig{
 				Aliases: map[string]AliasDefinition{
 					"gl": {
-						Type: "gitlab",
+						Type: packageurl.TypeGitlab,
 						Base: "https://gitlab.example.com",
 					},
 				},
 			},
-			wantType:       "gitlab",
+			wantType:       packageurl.TypeGitlab,
 			wantQualifiers: map[string]string{"base": "https://my-gitlab.com"},
 			wantResolved:   true,
 		},
@@ -120,7 +120,8 @@ func TestFileSystemConfigLoader(t *testing.T) {
     type: github
 `
 	fsys := afero.NewMemMapFs()
-	afero.WriteFile(fsys, "etc/maru2/aliases.yaml", []byte(configContent), 0644)
+	err := afero.WriteFile(fsys, "etc/maru2/aliases.yaml", []byte(configContent), 0644)
+	require.NoError(t, err)
 
 	loader := NewFileSystemConfigLoader(fsys, "etc/maru2/aliases.yaml")
 	config, err := loader.LoadConfig()
@@ -130,12 +131,12 @@ func TestFileSystemConfigLoader(t *testing.T) {
 
 	glAlias, ok := config.Aliases["gl"]
 	require.True(t, ok)
-	require.Equal(t, "gitlab", glAlias.Type)
+	require.Equal(t, packageurl.TypeGitlab, glAlias.Type)
 	require.Equal(t, "https://gitlab.example.com", glAlias.Base)
 
 	ghAlias, ok := config.Aliases["gh"]
 	require.True(t, ok)
-	require.Equal(t, "github", ghAlias.Type)
+	require.Equal(t, packageurl.TypeGithub, ghAlias.Type)
 	require.Empty(t, ghAlias.Base)
 
 	loader = NewFileSystemConfigLoader(fsys, "nonexistent-file.yaml")
@@ -147,10 +148,11 @@ func TestFileSystemConfigLoader(t *testing.T) {
 
 func TestConfigLoaderWithInvalidYAML(t *testing.T) {
 	fsys := afero.NewMemMapFs()
-	afero.WriteFile(fsys, "invalid.yaml", []byte(`invalid: yaml: content`), 0644)
+	err := afero.WriteFile(fsys, "invalid.yaml", []byte(`invalid: yaml: content`), 0644)
+	require.NoError(t, err)
 
 	loader := NewFileSystemConfigLoader(fsys, "invalid.yaml")
-	_, err := loader.LoadConfig()
+	_, err = loader.LoadConfig()
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to parse alias config file")
 }

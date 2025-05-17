@@ -95,7 +95,12 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 		u = pURL.String()
 	}
 
-	fetcher, err := uses.SelectFetcher(uri, previous)
+	svc, err := uses.NewFetcherService(nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize fetcher service: %w", err)
+	}
+
+	fetcher, err := svc.GetFetcher(uri, previous)
 	if err != nil {
 		return nil, err
 	}
