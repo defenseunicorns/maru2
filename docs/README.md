@@ -30,7 +30,7 @@ default:
   - uses: greet
 
 greet:
-  - run: echo "${{ input \"message\" }}"
+  - run: echo "${{ input "message" }}"
 ```
 
 Run it with:

@@ -34,8 +34,8 @@ fetch-example:
       method: "GET"  # Optional, defaults to GET
       timeout: "30s"  # Optional, defaults to 30 seconds
       headers:  # Optional
-        Content-Type: "application/json"
-        Authorization: "Bearer ${{ input \"token\" }}"
+        Content-Type: application/json
+        Authorization: Bearer ${{ input "token" }}
 ```
 
 Outputs:
