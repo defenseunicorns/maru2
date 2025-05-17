@@ -193,3 +193,34 @@ color:
 ```sh
 maru2 color
 ```
+
+## Regex input validation
+
+```yaml
+name:
+  description: "Your name"
+  validate: ^\w+$
+
+hello:
+  - run: echo "Hello, ${{ input "name" }}"
+```
+
+```sh
+# fails due to missing input!
+maru2 hello
+
+ERRO missing required input: "name"
+ERRO at (file:tasks.yaml)
+
+# fails due to invalid input
+maru2 hello --with name="Goodbye, World!"
+
+ERRO failed to validate: input=name, value=Goodbye, World!, regexp=^\w+$
+ERRO at (file:tasks.yaml)
+
+# succeeds!
+maru2 hello --with name="Jeff"
+
+$ echo "Hello, Jeff"
+Hello, Jeff
+```
