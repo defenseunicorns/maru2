@@ -5,6 +5,7 @@ package maru2
 
 import (
 	"io"
+	"net/url"
 	"testing"
 
 	"github.com/charmbracelet/log"
@@ -20,11 +21,16 @@ func TestRun(t *testing.T) {
 	svc, err := uses.NewFetcherService(nil, nil)
 	require.NoError(t, err)
 
+	dummyOrigin := &url.URL{
+		Scheme: "file",
+		Path:   "test",
+	}
+
 	// simple happy path
-	_, err = Run(ctx, helloWorldWorkflow, "", with, "file:test", false, svc)
+	_, err = Run(ctx, helloWorldWorkflow, "", with, dummyOrigin, false, svc)
 	require.NoError(t, err)
 
 	// fast failure for 404
-	_, err = Run(ctx, helloWorldWorkflow, "does not exist", with, "file:test", false, svc)
+	_, err = Run(ctx, helloWorldWorkflow, "does not exist", with, dummyOrigin, false, svc)
 	require.EqualError(t, err, "task \"does not exist\" not found")
 }

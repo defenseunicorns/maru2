@@ -15,7 +15,7 @@ import (
 )
 
 // ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool, svc *uses.FetcherService) (map[string]any, error) {
+func ExecuteUses(ctx context.Context, u string, with With, prev *url.URL, dry bool, svc *uses.FetcherService) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("using", "task", u)
 
@@ -28,28 +28,23 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 		return nil, fmt.Errorf("must contain a scheme: %q", u)
 	}
 
-	previous, err := url.Parse(prev)
-	if err != nil {
-		return nil, err
-	}
-
-	if previous.Scheme == "" {
+	if prev.Scheme == "" {
 		return nil, fmt.Errorf("must contain a scheme: %q", prev)
 	}
 
 	var next *url.URL
 
 	if uri.Scheme == "file" {
-		switch previous.Scheme {
+		switch prev.Scheme {
 		case "http", "https":
 			// turn relative paths into absolute references
-			next = previous
-			next.Path = filepath.Join(filepath.Dir(previous.Path), uri.Opaque)
+			next = prev
+			next.Path = filepath.Join(filepath.Dir(prev.Path), uri.Opaque)
 			if next.Path == "." {
 				next.Path = DefaultFileName
 			}
 		case "pkg":
-			pURL, err := packageurl.FromString(prev)
+			pURL, err := packageurl.FromString(prev.String())
 			if err != nil {
 				return nil, err
 			}
@@ -60,7 +55,7 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 			}
 			next, _ = url.Parse(pURL.String())
 		default:
-			dir := filepath.Dir(previous.Opaque)
+			dir := filepath.Dir(prev.Opaque)
 			if dir != "." {
 				next = &url.URL{
 					Scheme:   uri.Scheme,
@@ -74,7 +69,7 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 		}
 
 		if next != nil {
-			logger.Debug("merged", "previous", previous, "uses", u, "next", next)
+			logger.Debug("merged", "previous", prev, "uses", u, "next", next)
 			u = next.String()
 		}
 	}
@@ -95,9 +90,7 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 		u = pURL.String()
 	}
 
-	// FetcherService is passed as an argument
-
-	fetcher, err := svc.GetFetcher(uri, previous)
+	fetcher, err := svc.GetFetcher(uri, prev)
 	if err != nil {
 		return nil, err
 	}
@@ -117,5 +110,5 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 
 	taskName := uri.Query().Get("task")
 
-	return Run(ctx, wf, taskName, with, next.String(), dry, svc)
+	return Run(ctx, wf, taskName, with, next, dry, svc)
 }

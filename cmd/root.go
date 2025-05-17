@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -139,7 +140,10 @@ func NewRootCmd() *cobra.Command {
 				defer cancel()
 			}
 
-			rootOrigin := "file:" + filename
+			rootOrigin := &url.URL{
+				Scheme: "file",
+				Path:   filename,
+			}
 
 			svc, err := uses.NewFetcherService(nil, nil)
 			if err != nil {

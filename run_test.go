@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"path/filepath"
 	"testing"
 
@@ -169,7 +170,10 @@ func TestRunExtended(t *testing.T) {
 			svc, err := uses.NewFetcherService(nil, nil)
 			require.NoError(t, err)
 
-			result, err := Run(ctx, tc.workflow, tc.taskName, tc.with, tc.origin, tc.dry, svc)
+			origin, err := url.Parse(tc.origin)
+			require.NoError(t, err)
+
+			result, err := Run(ctx, tc.workflow, tc.taskName, tc.with, origin, tc.dry, svc)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -442,7 +446,10 @@ func TestHandleUsesStep(t *testing.T) {
 			svc, err := uses.NewFetcherService(nil, nil)
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, tc.step, tc.workflow, tc.withDefaults, tc.outputs, tc.origin, tc.dry, svc)
+			origin, err := url.Parse(tc.origin)
+			require.NoError(t, err)
+
+			result, err := handleUsesStep(ctx, tc.step, tc.workflow, tc.withDefaults, tc.outputs, origin, tc.dry, svc)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
