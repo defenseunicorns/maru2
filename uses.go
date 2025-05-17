@@ -15,7 +15,7 @@ import (
 )
 
 // ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool) (map[string]any, error) {
+func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool, svc *uses.FetcherService) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("using", "task", u)
 
@@ -95,10 +95,7 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 		u = pURL.String()
 	}
 
-	svc, err := uses.NewFetcherService(nil, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize fetcher service: %w", err)
-	}
+	// FetcherService is passed as an argument
 
 	fetcher, err := svc.GetFetcher(uri, previous)
 	if err != nil {
@@ -120,5 +117,5 @@ func ExecuteUses(ctx context.Context, u string, with With, prev string, dry bool
 
 	taskName := uri.Query().Get("task")
 
-	return Run(ctx, wf, taskName, with, next.String(), dry)
+	return Run(ctx, wf, taskName, with, next.String(), dry, svc)
 }

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
+	"github.com/defenseunicorns/maru2/uses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -164,7 +165,11 @@ func TestRunExtended(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			result, err := Run(ctx, tc.workflow, tc.taskName, tc.with, tc.origin, tc.dry)
+			// Create test fetcher service
+			svc, err := uses.NewFetcherService(nil, nil)
+			require.NoError(t, err)
+
+			result, err := Run(ctx, tc.workflow, tc.taskName, tc.with, tc.origin, tc.dry, svc)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -433,7 +438,11 @@ func TestHandleUsesStep(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			result, err := handleUsesStep(ctx, tc.step, tc.workflow, tc.withDefaults, tc.outputs, tc.origin, tc.dry)
+			// Create test fetcher service
+			svc, err := uses.NewFetcherService(nil, nil)
+			require.NoError(t, err)
+
+			result, err := handleUsesStep(ctx, tc.step, tc.workflow, tc.withDefaults, tc.outputs, tc.origin, tc.dry, svc)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

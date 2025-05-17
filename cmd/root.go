@@ -19,6 +19,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2"
+	"github.com/defenseunicorns/maru2/uses"
 	"github.com/spf13/cobra"
 )
 
@@ -140,13 +141,18 @@ func NewRootCmd() *cobra.Command {
 
 			rootOrigin := "file:" + filename
 
+			svc, err := uses.NewFetcherService(nil, nil)
+			if err != nil {
+				return fmt.Errorf("failed to initialize fetcher service: %w", err)
+			}
+
 			for _, call := range args {
 				start := time.Now()
 				logger.Debug("run", "task", call, "from", rootOrigin, "dry-run", dry)
 				defer func() {
 					logger.Debug("ran", "task", call, "from", rootOrigin, "dry-run", dry, "duration", time.Since(start))
 				}()
-				_, err := maru2.Run(ctx, wf, call, with, rootOrigin, dry)
+				_, err := maru2.Run(ctx, wf, call, with, rootOrigin, dry, svc)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)

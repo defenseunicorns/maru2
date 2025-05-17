@@ -15,13 +15,14 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 // Run executes a task in a workflow with the given inputs.
 //
 // For all `uses` steps, this function will be called recursively.
 // Returns the outputs from the final step in the task.
-func Run(ctx context.Context, wf Workflow, taskName string, outer With, origin string, dry bool) (map[string]any, error) {
+func Run(ctx context.Context, wf Workflow, taskName string, outer With, origin string, dry bool, svc *uses.FetcherService) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
 	}
@@ -53,7 +54,7 @@ func Run(ctx context.Context, wf Workflow, taskName string, outer With, origin s
 		logger.Debug("run", "step", fmt.Sprintf("%s[%d]", taskName, i))
 
 		if step.Uses != "" {
-			stepResult, err = handleUsesStep(ctx, step, wf, withDefaults, outputs, origin, dry)
+			stepResult, err = handleUsesStep(ctx, step, wf, withDefaults, outputs, origin, dry, svc)
 		} else if step.Run != "" {
 			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
 		}
@@ -79,7 +80,7 @@ func Run(ctx context.Context, wf Workflow, taskName string, outer With, origin s
 }
 
 func handleUsesStep(ctx context.Context, step Step, wf Workflow, withDefaults With,
-	outputs CommandOutputs, origin string, dry bool) (map[string]any, error) {
+	outputs CommandOutputs, origin string, dry bool, svc *uses.FetcherService) (map[string]any, error) {
 
 	if strings.HasPrefix(step.Uses, "builtin:") {
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
@@ -91,9 +92,9 @@ func handleUsesStep(ctx context.Context, step Step, wf Workflow, withDefaults Wi
 	}
 
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, wf, step.Uses, templatedWith, origin, dry)
+		return Run(ctx, wf, step.Uses, templatedWith, origin, dry, svc)
 	}
-	return ExecuteUses(ctx, step.Uses, templatedWith, origin, dry)
+	return ExecuteUses(ctx, step.Uses, templatedWith, origin, dry, svc)
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,
