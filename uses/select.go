@@ -16,7 +16,6 @@ var defaultResolver AliasResolver
 
 // SelectFetcher returns a Fetcher based on the URI scheme and previous scheme.
 func SelectFetcher(uri, previous *url.URL) (Fetcher, error) {
-	// Initialize the resolver if needed
 	if defaultResolver == nil {
 		var err error
 		defaultResolver, err = DefaultResolver()

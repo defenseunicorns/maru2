@@ -5,6 +5,7 @@ package uses
 
 import (
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -38,9 +39,9 @@ func TestSelectFetcher(t *testing.T) {
 		{
 			name:        "file with pkg prev",
 			uri:         "file:tmp/test",
-			prev:        "pkg:github/noxsios/vai",
-			want:        &GitHubClient{},
-			expectedErr: "",
+			prev:        "pkg:other/noxsios/vai",
+			want:        nil,
+			expectedErr: "unsupported type: \"other\"",
 		},
 		{
 			name:        "abs file",
@@ -64,11 +65,11 @@ func TestSelectFetcher(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name:        "pkg-github",
-			uri:         "pkg:github/noxsios/vai",
+			name:        "pkg-unsupported",
+			uri:         "pkg:unsupported/noxsios/vai",
 			prev:        defaultPrev,
-			want:        &GitHubClient{},
-			expectedErr: "",
+			want:        nil,
+			expectedErr: "unsupported type: \"unsupported\"",
 		},
 		{
 			name:        "unsupported scheme",
@@ -187,6 +188,119 @@ func TestSelectFetcher(t *testing.T) {
 				} else {
 					require.Equal(t, "https://gitlab.com/api/v4/", got.client.BaseURL().String())
 				}
+			})
+		}
+	})
+
+	t.Run("pkg-github", func(t *testing.T) {
+		testCases := []struct {
+			name     string
+			uri      string
+			prev     string
+			base     string
+			tokenEnv string
+		}{
+			{
+				name:     "default",
+				uri:      "pkg:github/noxsios/vai",
+				prev:     defaultPrev,
+				base:     "",
+				tokenEnv: "",
+			},
+			{
+				name:     "default from previous",
+				uri:      defaultPrev,
+				prev:     "pkg:github/noxsios/vai",
+				base:     "",
+				tokenEnv: "",
+			},
+			{
+				name:     "github.com",
+				uri:      "pkg:github/noxsios/vai",
+				prev:     defaultPrev,
+				base:     "https://api.github.com/",
+				tokenEnv: "",
+			},
+			{
+				name:     "custom",
+				uri:      "pkg:github/noxsios/vai?base=https://github.example.com",
+				prev:     defaultPrev,
+				base:     "https://github.example.com",
+				tokenEnv: "",
+			},
+			{
+				name:     "with token",
+				uri:      "pkg:github/noxsios/vai?token-from-env=GITHUB_TOKEN",
+				prev:     defaultPrev,
+				base:     "",
+				tokenEnv: "GITHUB_TOKEN",
+			},
+		}
+
+		for _, tc := range testCases {
+			tc := tc
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+				uri, err := url.Parse(tc.uri)
+				require.NoError(t, err)
+
+				previous, err := url.Parse(tc.prev)
+				require.NoError(t, err)
+
+				want, err := NewGitHubClient(tc.base, tc.tokenEnv)
+				require.NoError(t, err)
+
+				got, err := SelectFetcher(uri, previous)
+				require.NoError(t, err)
+				require.IsType(t, want, got)
+
+				// For GitHub clients with custom base URLs, check the base URL
+				if tc.base != "" {
+					gotClient := got.(*GitHubClient)
+					expectedBase := tc.base
+					if !strings.HasSuffix(expectedBase, "/") {
+						expectedBase += "/"
+					}
+					require.Equal(t, expectedBase, gotClient.client.BaseURL.String())
+				}
+			})
+		}
+	})
+
+	t.Run("file with pkg prev", func(t *testing.T) {
+		testCases := []struct {
+			name         string
+			uri          string
+			prev         string
+			expectedType any
+		}{
+			{
+				name:         "github",
+				uri:          "file:tmp/test",
+				prev:         "pkg:github/noxsios/vai",
+				expectedType: &GitHubClient{},
+			},
+			{
+				name:         "gitlab",
+				uri:          "file:tmp/test",
+				prev:         "pkg:gitlab/noxsios/vai",
+				expectedType: &GitLabClient{},
+			},
+		}
+
+		for _, tc := range testCases {
+			tc := tc
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+				uri, err := url.Parse(tc.uri)
+				require.NoError(t, err)
+
+				previous, err := url.Parse(tc.prev)
+				require.NoError(t, err)
+
+				got, err := SelectFetcher(uri, previous)
+				require.NoError(t, err)
+				require.IsType(t, tc.expectedType, got)
 			})
 		}
 	})

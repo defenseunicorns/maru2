@@ -5,9 +5,9 @@ package uses
 
 import (
 	"testing"
-	"testing/fstest"
 
 	"github.com/package-url/packageurl-go"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
 
@@ -119,12 +119,8 @@ func TestFileSystemConfigLoader(t *testing.T) {
   gh:
     type: github
 `
-	fsys := fstest.MapFS{
-		"etc/maru2/aliases.yaml": &fstest.MapFile{
-			Data: []byte(configContent),
-			Mode: 0644,
-		},
-	}
+	fsys := afero.NewMemMapFs()
+	afero.WriteFile(fsys, "etc/maru2/aliases.yaml", []byte(configContent), 0644)
 
 	loader := NewFileSystemConfigLoader(fsys, "etc/maru2/aliases.yaml")
 	config, err := loader.LoadConfig()
@@ -150,12 +146,8 @@ func TestFileSystemConfigLoader(t *testing.T) {
 }
 
 func TestConfigLoaderWithInvalidYAML(t *testing.T) {
-	fsys := fstest.MapFS{
-		"invalid.yaml": &fstest.MapFile{
-			Data: []byte(`invalid: yaml: content`),
-			Mode: 0644,
-		},
-	}
+	fsys := afero.NewMemMapFs()
+	afero.WriteFile(fsys, "invalid.yaml", []byte(`invalid: yaml: content`), 0644)
 
 	loader := NewFileSystemConfigLoader(fsys, "invalid.yaml")
 	_, err := loader.LoadConfig()

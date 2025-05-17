@@ -6,12 +6,12 @@ package uses
 import (
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/goccy/go-yaml"
 	"github.com/package-url/packageurl-go"
+	"github.com/spf13/afero"
 )
 
 // AliasConfig represents the configuration for package URL aliases
@@ -38,49 +38,37 @@ type ConfigLoader interface {
 
 // FileSystemConfigLoader loads configuration from the file system
 type FileSystemConfigLoader struct {
-	FS         fs.FS
-	ConfigPath string
+	fs         afero.Fs
+	configPath string
 }
 
 // NewFileSystemConfigLoader creates a new FileSystemConfigLoader
-func NewFileSystemConfigLoader(fsys fs.FS, configPath string) *FileSystemConfigLoader {
+func NewFileSystemConfigLoader(fsys afero.Fs, configPath string) *FileSystemConfigLoader {
 	return &FileSystemConfigLoader{
-		FS:         fsys,
-		ConfigPath: configPath,
+		fs:         fsys,
+		configPath: configPath,
 	}
 }
 
 // DefaultConfigLoader returns a config loader that uses the default locations
 func DefaultConfigLoader() (*FileSystemConfigLoader, error) {
-	// Try to find config in standard locations
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
 
-	// Use ~/.maru2/aliases.yaml as the default path
 	configPath := filepath.Join(homeDir, ".maru2", "aliases.yaml")
-	return NewFileSystemConfigLoader(os.DirFS("/"), configPath), nil
+	return NewFileSystemConfigLoader(afero.NewOsFs(), configPath), nil
 }
 
 // LoadConfig loads the alias configuration from the file system
 func (l *FileSystemConfigLoader) LoadConfig() (*AliasConfig, error) {
-	// Start with empty config
 	config := &AliasConfig{
 		Aliases: map[string]AliasDefinition{},
 	}
 
-	// Make the path relative to the FS root
-	relPath := l.ConfigPath
-	if filepath.IsAbs(relPath) {
-		// For os.DirFS("/"), we need to remove the leading slash
-		relPath = relPath[1:]
-	}
-
-	// Try to open the file
-	f, err := l.FS.Open(relPath)
+	f, err := l.fs.Open(l.configPath)
 	if err != nil {
-		// If the file doesn't exist, return empty config
 		if os.IsNotExist(err) {
 			return config, nil
 		}
@@ -88,13 +76,11 @@ func (l *FileSystemConfigLoader) LoadConfig() (*AliasConfig, error) {
 	}
 	defer f.Close()
 
-	// Read the file
 	data, err := io.ReadAll(f)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read alias config file: %w", err)
 	}
 
-	// Parse the YAML
 	if err := yaml.Unmarshal(data, config); err != nil {
 		return nil, fmt.Errorf("failed to parse alias config file: %w", err)
 	}
@@ -142,18 +128,15 @@ func (r *ConfigBasedResolver) ResolveAlias(pURL packageurl.PackageURL) (packageu
 
 // DefaultResolver returns a resolver with the default configuration
 func DefaultResolver() (AliasResolver, error) {
-	// Get the default config loader
 	loader, err := DefaultConfigLoader()
 	if err != nil {
 		return nil, err
 	}
 
-	// Load the configuration
 	config, err := loader.LoadConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	// Create a resolver with the loaded config
 	return NewConfigBasedResolver(config), nil
 }
