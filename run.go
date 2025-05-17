@@ -23,7 +23,7 @@ import (
 //
 // For all `uses` steps, this function will be called recursively.
 // Returns the outputs from the final step in the task.
-func Run(ctx context.Context, wf Workflow, taskName string, outer With, origin *url.URL, dry bool, svc *uses.FetcherService) (map[string]any, error) {
+func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
 	}
@@ -93,7 +93,7 @@ func handleUsesStep(ctx context.Context, step Step, wf Workflow, withDefaults Wi
 	}
 
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, wf, step.Uses, templatedWith, origin, dry, svc)
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
 	}
 	return ExecuteUses(ctx, step.Uses, templatedWith, origin, dry, svc)
 }

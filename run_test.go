@@ -173,7 +173,7 @@ func TestRunExtended(t *testing.T) {
 			origin, err := url.Parse(tc.origin)
 			require.NoError(t, err)
 
-			result, err := Run(ctx, tc.workflow, tc.taskName, tc.with, origin, tc.dry, svc)
+			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, origin, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

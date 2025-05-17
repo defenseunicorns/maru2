@@ -110,5 +110,5 @@ func ExecuteUses(ctx context.Context, u string, with With, prev *url.URL, dry bo
 
 	taskName := uri.Query().Get("task")
 
-	return Run(ctx, wf, taskName, with, next, dry, svc)
+	return Run(ctx, svc, wf, taskName, with, next, dry)
 }

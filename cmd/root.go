@@ -156,7 +156,7 @@ func NewRootCmd() *cobra.Command {
 				defer func() {
 					logger.Debug("ran", "task", call, "from", rootOrigin, "dry-run", dry, "duration", time.Since(start))
 				}()
-				_, err := maru2.Run(ctx, wf, call, with, rootOrigin, dry, svc)
+				_, err := maru2.Run(ctx, svc, wf, call, with, rootOrigin, dry)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)
