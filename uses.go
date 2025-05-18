@@ -22,8 +22,6 @@ func ExecuteUses(ctx context.Context, svc *uses.FetcherService, u string, with W
 		return nil, err
 	}
 
-	fmt.Println("next", next)
-
 	nextURI, err := url.Parse(next)
 	if err != nil {
 		return nil, err
