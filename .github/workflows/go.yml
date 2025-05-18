@@ -33,7 +33,6 @@ jobs:
             go.mod
       - run: make
       - run: |
-          [ -n "$GITHUB_TOKEN" ] && echo "set" || echo "not set"
           go test -race -covermode=atomic -coverprofile=coverage.out -failfast -timeout 3m ./...
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,8 +40,8 @@ jobs:
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }}
       - run: |
-          go test -fuzz=FuzzTaskNamePattern -fuzztime=15s
-          go test -fuzz=FuzzEnvVariablePattern -fuzztime=15s
+          go test -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
+          go test -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
 
   golangci:
     name: lint
