@@ -211,21 +211,9 @@ maru2 echo --with message="Hello, World!"
 
 ### Package URL Aliases
 
-Maru2 supports defining aliases for package URLs in a configuration file. By default, Maru2 looks for aliases in `~/.maru2/aliases.yaml`. The configuration file has the following structure:
+Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Aliases Configuration](./aliases-config.md) document.
 
-```yaml {filename="~/.maru2/aliases.yaml"}
-aliases:
-  gh: # Alias name
-    type: github # Resolved type
-    base: https://github.example.com # Optional base URL
-    token-from-env: CUSTOM_GITHUB_TOKEN # Optional environment variable for authentication token
-  gl:
-    type: gitlab
-    base: https://gitlab.example.com
-    token-from-env: CUSTOM_GITLAB_TOKEN
-```
-
-With this configuration, you can use the aliases in your workflow files:
+Example of using an alias in a workflow file:
 
 ```yaml {filename="tasks.yaml"}
 remote-echo:

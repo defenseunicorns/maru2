@@ -1,10 +1,10 @@
 # Maru2 Aliases Configuration
 
-This document describes how to configure and use package URL aliases in Maru2.
+This document describes how to configure package URL aliases in Maru2. For usage examples in workflows, see the [Package URL Aliases section](./syntax.md#package-url-aliases) in the syntax documentation.
 
 ## Overview
 
-Maru2 supports the use of aliases to simplify package URL references. Aliases allow you to create shorthand references for commonly used package types and repositories.
+Aliases allow you to create shorthand references for commonly used package types and repositories, simplifying package URL references in your workflows.
 
 ## Configuration File Location
 
@@ -52,10 +52,10 @@ aliases:
 Once configured, you can use aliases in package URLs:
 
 ```
-pkg:gh/owner/repo@main#path/to/file.yaml
+pkg:gh/owner/repo@main#path/to/file.yaml  # Using the 'gh' alias
 ```
 
-Instead of:
+Instead of the full type name:
 
 ```
 pkg:github/owner/repo@main#path/to/file.yaml
