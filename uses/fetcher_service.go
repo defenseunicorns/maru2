@@ -46,7 +46,6 @@ func NewFetcherService(resolver AliasResolver, fs afero.Fs) (*FetcherService, er
 func (s *FetcherService) GetFetcher(uri, previous *url.URL) (Fetcher, error) {
 	cacheKey := uri.String() + "|" + previous.String()
 
-	// First check the cache with a read lock
 	s.mu.RLock()
 	if fetcher, ok := s.cache[cacheKey]; ok {
 		s.mu.RUnlock()
@@ -54,11 +53,9 @@ func (s *FetcherService) GetFetcher(uri, previous *url.URL) (Fetcher, error) {
 	}
 	s.mu.RUnlock()
 
-	// If not in cache, acquire write lock
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Double-check in case another goroutine added it while we were waiting
 	if fetcher, ok := s.cache[cacheKey]; ok {
 		return fetcher, nil
 	}

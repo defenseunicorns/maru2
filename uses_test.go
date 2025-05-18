@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/charmbracelet/log"
@@ -58,15 +57,12 @@ func TestExecuteUses(t *testing.T) {
 	helloWorld := server.URL + "/hello-world.yaml"
 	with := With{}
 
-	dummyOrigin := &url.URL{
-		Scheme: "file",
-		Path:   "test",
-	}
+	dummyOrigin := "file:test"
 
 	tests := []struct {
 		name        string
 		uses        string
-		origin      *url.URL
+		origin      string
 		skipShort   bool
 		expectedErr string
 	}{
@@ -94,7 +90,7 @@ func TestExecuteUses(t *testing.T) {
 		{
 			name:        "missing scheme in origin",
 			uses:        "file:test",
-			origin:      &url.URL{Path: "test"},
+			origin:      "file:test",
 			expectedErr: `must contain a scheme: "test"`,
 		},
 		{
@@ -106,7 +102,7 @@ func TestExecuteUses(t *testing.T) {
 		{
 			name:        "invalid control character in origin",
 			uses:        "file:test",
-			origin:      &url.URL{Scheme: "http", Host: "www.example.com/\x7f"},
+			origin:      "http://www.example.com/\x7f",
 			expectedErr: `parse "http://www.example.com%2F%7F/test": invalid URL escape "%2F"`,
 		},
 		{
@@ -124,15 +120,14 @@ func TestExecuteUses(t *testing.T) {
 		{
 			name:        "missing purl type or name",
 			uses:        "file:..?task=hello-world",
-			origin:      &url.URL{Scheme: "pkg"},
+			origin:      "pkg",
 			expectedErr: `failed to parse package URL: purl is missing type or name`,
 		},
 		{
-			name:        "pkg scheme with github",
-			uses:        "file:..?task=hello-world",
-			origin:      &url.URL{Scheme: "pkg", Host: "github/defenseunicorns/maru2#testdata/hello-world.yaml"},
-			skipShort:   true,
-			expectedErr: `failed to parse package URL: failed to parse as URL: parse "pkg://github%2Fdefenseunicorns%2Fmaru2%23testdata%2Fhello-world.yaml": invalid URL escape "%2F"`,
+			name:      "pkg scheme with github",
+			uses:      "file:..?task=hello-world",
+			origin:    "pkg:github/defenseunicorns/maru2#testdata/hello-world.yaml",
+			skipShort: true,
 		},
 		{
 			name:   "nested uses foo.yaml -> baz.yaml -> hello-world.yaml",

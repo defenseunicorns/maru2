@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -23,7 +22,7 @@ import (
 //
 // For all `uses` steps, this function will be called recursively.
 // Returns the outputs from the final step in the task.
-func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
+func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin string, dry bool) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
 	}
@@ -81,7 +80,7 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 }
 
 func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
-	outputs CommandOutputs, origin *url.URL, dry bool) (map[string]any, error) {
+	outputs CommandOutputs, origin string, dry bool) (map[string]any, error) {
 
 	if strings.HasPrefix(step.Uses, "builtin:") {
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)

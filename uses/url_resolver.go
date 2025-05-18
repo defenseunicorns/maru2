@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"github.com/package-url/packageurl-go"
 )
@@ -28,8 +30,20 @@ func ResolveURL(p, u string) (string, error) {
 		return "", fmt.Errorf("must contain a scheme: %q", uri)
 	}
 
+	if !slices.Contains([]string{"file", "http", "https", "pkg"}, uri.Scheme) {
+		return "", fmt.Errorf("unsupported scheme: %q", uri.Scheme)
+	}
+
 	if uri.Opaque == "." {
 		return "", fmt.Errorf("invalid relative path \".\"")
+	}
+
+	if uri.Scheme == "file" && (uri.Path == "" && uri.Opaque == "") {
+		return "", fmt.Errorf("invalid path %q", u)
+	}
+
+	if uri.Scheme == "file" && strings.HasPrefix(uri.Path, "/") {
+		return "", fmt.Errorf("absolute path %q", u)
 	}
 
 	if prev.Scheme == "" {
@@ -101,5 +115,10 @@ func ResolveURL(p, u string) (string, error) {
 		return pURL.String(), nil
 	}
 
-	return "", fmt.Errorf("unsupported scheme: %q", uri.Scheme)
+	// http(s) -> pkg
+	if (prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg" {
+		return u, nil
+	}
+
+	return "", fmt.Errorf("unable to resolve %q to %q", prev, uri)
 }
