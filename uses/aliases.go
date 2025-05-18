@@ -105,15 +105,14 @@ func (r *ConfigBasedResolver) ResolveAlias(pURL packageurl.PackageURL) (packageu
 		return pURL, false
 	}
 
-	qualifiers := packageurl.QualifiersFromMap(pURL.Qualifiers.Map())
-	qualifierMap := pURL.Qualifiers.Map()
+	qualifiers := pURL.Qualifiers.Map()
 
-	if aliasDef.Base != "" && qualifierMap["base"] == "" {
-		qualifiers = append(qualifiers, packageurl.Qualifier{Key: "base", Value: aliasDef.Base})
+	if aliasDef.Base != "" && qualifiers["base"] == "" {
+		qualifiers["base"] = aliasDef.Base
 	}
 
-	if aliasDef.TokenFromEnv != "" && qualifierMap["token-from-env"] == "" {
-		qualifiers = append(qualifiers, packageurl.Qualifier{Key: "token-from-env", Value: aliasDef.TokenFromEnv})
+	if aliasDef.TokenFromEnv != "" && qualifiers["token-from-env"] == "" {
+		qualifiers["token-from-env"] = aliasDef.TokenFromEnv
 	}
 
 	return packageurl.PackageURL{
@@ -121,7 +120,7 @@ func (r *ConfigBasedResolver) ResolveAlias(pURL packageurl.PackageURL) (packageu
 		Namespace:  pURL.Namespace,
 		Name:       pURL.Name,
 		Version:    pURL.Version,
-		Qualifiers: qualifiers,
+		Qualifiers: packageurl.QualifiersFromMap(qualifiers),
 		Subpath:    pURL.Subpath,
 	}, true
 }
