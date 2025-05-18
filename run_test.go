@@ -449,7 +449,7 @@ func TestHandleUsesStep(t *testing.T) {
 			origin, err := url.Parse(tc.origin)
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, tc.step, tc.workflow, tc.withDefaults, tc.outputs, origin, tc.dry, svc)
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, tc.outputs, origin, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

@@ -41,7 +41,7 @@ func NewRootCmd() *cobra.Command {
 		Short: "A simple task runner",
 		ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			if filename == "" {
-				filename = maru2.DefaultFileName
+				filename = uses.DefaultFileName
 			}
 			f, err := os.Open(filename)
 			if err != nil {
@@ -96,7 +96,7 @@ func NewRootCmd() *cobra.Command {
 			}
 
 			if filename == "" {
-				filename = maru2.DefaultFileName
+				filename = uses.DefaultFileName
 			}
 
 			f, err := os.Open(filename)

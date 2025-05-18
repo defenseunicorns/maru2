@@ -55,7 +55,7 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 		logger.Debug("run", "step", fmt.Sprintf("%s[%d]", taskName, i))
 
 		if step.Uses != "" {
-			stepResult, err = handleUsesStep(ctx, step, wf, withDefaults, outputs, origin, dry, svc)
+			stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
 		} else if step.Run != "" {
 			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
 		}
@@ -80,8 +80,8 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 	return nil, firstError
 }
 
-func handleUsesStep(ctx context.Context, step Step, wf Workflow, withDefaults With,
-	outputs CommandOutputs, origin *url.URL, dry bool, svc *uses.FetcherService) (map[string]any, error) {
+func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
+	outputs CommandOutputs, origin *url.URL, dry bool) (map[string]any, error) {
 
 	if strings.HasPrefix(step.Uses, "builtin:") {
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
@@ -95,7 +95,7 @@ func handleUsesStep(ctx context.Context, step Step, wf Workflow, withDefaults Wi
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
 		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
 	}
-	return ExecuteUses(ctx, step.Uses, templatedWith, origin, dry, svc)
+	return ExecuteUses(ctx, svc, step.Uses, templatedWith, origin, dry)
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,

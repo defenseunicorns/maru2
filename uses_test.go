@@ -125,14 +125,14 @@ func TestExecuteUses(t *testing.T) {
 			name:        "missing purl type or name",
 			uses:        "file:..?task=hello-world",
 			origin:      &url.URL{Scheme: "pkg"},
-			expectedErr: `purl is missing type or name`,
+			expectedErr: `failed to parse package URL: purl is missing type or name`,
 		},
 		{
 			name:        "pkg scheme with github",
 			uses:        "file:..?task=hello-world",
 			origin:      &url.URL{Scheme: "pkg", Host: "github/defenseunicorns/maru2#testdata/hello-world.yaml"},
 			skipShort:   true,
-			expectedErr: `failed to parse as URL: parse "pkg://github%2Fdefenseunicorns%2Fmaru2%23testdata%2Fhello-world.yaml": invalid URL escape "%2F"`,
+			expectedErr: `failed to parse package URL: failed to parse as URL: parse "pkg://github%2Fdefenseunicorns%2Fmaru2%23testdata%2Fhello-world.yaml": invalid URL escape "%2F"`,
 		},
 		{
 			name:   "nested uses foo.yaml -> baz.yaml -> hello-world.yaml",
@@ -147,7 +147,7 @@ func TestExecuteUses(t *testing.T) {
 				t.Skip("skipping test in short mode")
 			}
 
-			_, err := ExecuteUses(ctx, tt.uses, with, tt.origin, false, svc)
+			_, err := ExecuteUses(ctx, svc, tt.uses, with, tt.origin, false)
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
 			} else {
