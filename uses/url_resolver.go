@@ -104,6 +104,7 @@ func resolveHTTPToFile(prev, uri *url.URL) (string, error) {
 	if next.Path == "." || next.Path == "/" {
 		next.Path = "/" + DefaultFileName
 	}
+	next.RawQuery = uri.RawQuery
 	return next.String(), nil
 }
 

@@ -87,6 +87,12 @@ func TestResolveURL(t *testing.T) {
 			next: "pkg:github/owner/repo",
 		},
 		{
+			name: "http with task param",
+			prev: "http://127.0.0.1:43951/foo.yaml",
+			uri:  "file:bar/baz.yaml?task=baz",
+			next: "http://127.0.0.1:43951/bar/baz.yaml?task=baz",
+		},
+		{
 			name: "pkg with no subpath",
 			prev: "file:/dir/bar.yaml",
 			uri:  "pkg:github/owner/repo",

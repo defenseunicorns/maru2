@@ -17,10 +17,12 @@ func ExecuteUses(ctx context.Context, svc *uses.FetcherService, u string, with W
 	logger := log.FromContext(ctx)
 	logger.Debug("using", "task", u)
 
-	next, err := uses.ResolveURL(u, prev)
+	next, err := uses.ResolveURL(prev, u)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("next", next)
 
 	nextURI, err := url.Parse(next)
 	if err != nil {

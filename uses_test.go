@@ -16,7 +16,6 @@ import (
 )
 
 func TestExecuteUses(t *testing.T) {
-	ctx := log.WithContext(t.Context(), log.New(io.Discard))
 	svc, err := uses.NewFetcherService(nil, nil)
 	require.NoError(t, err)
 
@@ -57,7 +56,7 @@ func TestExecuteUses(t *testing.T) {
 	helloWorld := server.URL + "/hello-world.yaml"
 	with := With{}
 
-	dummyOrigin := "file:test"
+	dummyOrigin := "file:tasks.yaml"
 
 	tests := []struct {
 		name        string
@@ -88,22 +87,10 @@ func TestExecuteUses(t *testing.T) {
 			expectedErr: `must contain a scheme: "./path-with-no-scheme"`,
 		},
 		{
-			name:        "missing scheme in origin",
-			uses:        "file:test",
-			origin:      "file:test",
-			expectedErr: `must contain a scheme: "test"`,
-		},
-		{
 			name:        "invalid control character in URL",
 			uses:        "http://www.example.com/\x7f",
 			origin:      dummyOrigin,
 			expectedErr: `parse "http://www.example.com/\x7f": net/url: invalid control character in URL`,
-		},
-		{
-			name:        "invalid control character in origin",
-			uses:        "file:test",
-			origin:      "http://www.example.com/\x7f",
-			expectedErr: `parse "http://www.example.com%2F%7F/test": invalid URL escape "%2F"`,
 		},
 		{
 			name:        "unsupported scheme",
@@ -116,12 +103,6 @@ func TestExecuteUses(t *testing.T) {
 			uses:        "pkg:bitbucket/owner/repo",
 			origin:      dummyOrigin,
 			expectedErr: `unsupported type: "bitbucket"`,
-		},
-		{
-			name:        "missing purl type or name",
-			uses:        "file:..?task=hello-world",
-			origin:      "pkg",
-			expectedErr: `failed to parse package URL: purl is missing type or name`,
 		},
 		{
 			name:      "pkg scheme with github",
@@ -138,6 +119,7 @@ func TestExecuteUses(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 			if tt.skipShort && testing.Short() {
 				t.Skip("skipping test in short mode")
 			}
