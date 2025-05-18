@@ -21,151 +21,102 @@ func (m *mockResolver) ResolveAlias(pURL packageurl.PackageURL) (packageurl.Pack
 }
 
 func TestFetcherService(t *testing.T) {
-	t.Run("new service with defaults", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-		require.NotNil(t, service)
-		require.NotNil(t, service.resolver)
-		require.NotNil(t, service.fileSystem)
-	})
+	testCases := []struct {
+		name           string
+		resolver       AliasResolver
+		fs             afero.Fs
+		uri            string
+		expectedType   any
+		expectedErr    string
+		checkSameCache bool
+	}{
+		{
+			name:         "new service with defaults",
+			resolver:     nil,
+			fs:           nil,
+			expectedType: nil,
+		},
+		{
+			name:         "new service with custom config",
+			resolver:     &mockResolver{resolveFunc: func(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) { return pURL, false }},
+			fs:           afero.NewMemMapFs(),
+			expectedType: nil,
+		},
+		{
+			name:         "get http fetcher",
+			uri:          "https://example.com",
+			expectedType: &HTTPFetcher{},
+		},
+		{
+			name:         "get file fetcher",
+			uri:          "file:///tmp",
+			expectedType: &LocalFetcher{},
+		},
+		{
+			name:         "get github fetcher",
+			uri:          "pkg:github/noxsios/vai",
+			expectedType: &GitHubClient{},
+		},
+		{
+			name:         "get gitlab fetcher",
+			uri:          "pkg:gitlab/noxsios/vai",
+			expectedType: &GitLabClient{},
+		},
+		{
+			name:           "caching",
+			uri:            "https://example.com",
+			expectedType:   &HTTPFetcher{},
+			checkSameCache: true,
+		},
+		{
+			name:        "unsupported scheme",
+			uri:         "ftp://example.com",
+			expectedErr: "unsupported scheme",
+		},
+		{
+			name:        "unsupported package type",
+			uri:         "pkg:unsupported/noxsios/vai",
+			expectedErr: "unsupported package type",
+		},
+	}
 
-	t.Run("new service with custom config", func(t *testing.T) {
-		fs := afero.NewMemMapFs()
-		resolver := &mockResolver{
-			resolveFunc: func(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
-				return pURL, false
-			},
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			service, err := NewFetcherService(tc.resolver, tc.fs)
+			require.NoError(t, err)
+			require.NotNil(t, service)
 
-		service, err := NewFetcherService(resolver, fs)
+			if tc.name == "new service with defaults" {
+				require.NotNil(t, service.resolver)
+				require.NotNil(t, service.fsys)
+				return
+			}
 
-		require.NoError(t, err)
-		require.NotNil(t, service)
-		require.Equal(t, resolver, service.resolver)
-		require.Equal(t, fs, service.fileSystem)
-	})
+			if tc.name == "new service with custom config" {
+				require.Equal(t, tc.resolver, service.resolver)
+				require.Equal(t, tc.fs, service.fsys)
+				return
+			}
 
-	t.Run("get http fetcher", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
+			uri, err := url.Parse(tc.uri)
+			require.NoError(t, err)
 
-		uri, err := url.Parse("https://example.com")
-		require.NoError(t, err)
+			fetcher, err := service.GetFetcher(uri)
 
-		prev, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
+			if tc.expectedErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedErr)
+				return
+			}
 
-		fetcher, err := service.GetFetcher(uri, prev)
-		require.NoError(t, err)
-		require.IsType(t, &HTTPFetcher{}, fetcher)
-	})
+			require.NoError(t, err)
+			require.IsType(t, tc.expectedType, fetcher)
 
-	t.Run("get file fetcher", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-
-		uri, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		prev, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		fetcher, err := service.GetFetcher(uri, prev)
-		require.NoError(t, err)
-		require.IsType(t, &LocalFetcher{}, fetcher)
-	})
-
-	t.Run("get github fetcher", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-
-		uri, err := url.Parse("pkg:github/noxsios/vai")
-		require.NoError(t, err)
-
-		prev, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		fetcher, err := service.GetFetcher(uri, prev)
-		require.NoError(t, err)
-		require.IsType(t, &GitHubClient{}, fetcher)
-	})
-
-	t.Run("get gitlab fetcher", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-
-		uri, err := url.Parse("pkg:gitlab/noxsios/vai")
-		require.NoError(t, err)
-
-		prev, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		fetcher, err := service.GetFetcher(uri, prev)
-		require.NoError(t, err)
-		require.IsType(t, &GitLabClient{}, fetcher)
-	})
-
-	t.Run("get fetcher from previous URI", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-
-		uri, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		prev, err := url.Parse("pkg:github/noxsios/vai")
-		require.NoError(t, err)
-
-		fetcher, err := service.GetFetcher(uri, prev)
-		require.NoError(t, err)
-		require.IsType(t, &GitHubClient{}, fetcher)
-	})
-
-	t.Run("caching", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-
-		uri, err := url.Parse("https://example.com")
-		require.NoError(t, err)
-
-		prev, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		fetcher1, err := service.GetFetcher(uri, prev)
-		require.NoError(t, err)
-
-		fetcher2, err := service.GetFetcher(uri, prev)
-		require.NoError(t, err)
-
-		require.Same(t, fetcher1, fetcher2, "fetchers should be the same instance due to caching")
-	})
-
-	t.Run("unsupported scheme", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-
-		uri, err := url.Parse("ftp://example.com")
-		require.NoError(t, err)
-
-		prev, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		_, err = service.GetFetcher(uri, prev)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unsupported scheme")
-	})
-
-	t.Run("unsupported package type", func(t *testing.T) {
-		service, err := NewFetcherService(nil, nil)
-		require.NoError(t, err)
-
-		uri, err := url.Parse("pkg:unsupported/noxsios/vai")
-		require.NoError(t, err)
-
-		prev, err := url.Parse("file:///tmp")
-		require.NoError(t, err)
-
-		_, err = service.GetFetcher(uri, prev)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "unsupported type")
-	})
+			if tc.checkSameCache {
+				fetcher2, err := service.GetFetcher(uri)
+				require.NoError(t, err)
+				require.Same(t, fetcher, fetcher2, "fetchers should be the same instance due to caching")
+			}
+		})
+	}
 }

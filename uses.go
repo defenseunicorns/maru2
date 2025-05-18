@@ -27,14 +27,9 @@ func ExecuteUses(ctx context.Context, svc *uses.FetcherService, u string, with W
 		return nil, err
 	}
 
-	prevURI, err := url.Parse(prev)
-	if err != nil {
-		return nil, err
-	}
-
 	logger.Debug("resolved", "next", next)
 
-	fetcher, err := svc.GetFetcher(nextURI, prevURI)
+	fetcher, err := svc.GetFetcher(nextURI)
 	if err != nil {
 		return nil, err
 	}

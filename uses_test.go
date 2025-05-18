@@ -102,7 +102,7 @@ func TestExecuteUses(t *testing.T) {
 			name:        "unsupported package type",
 			uses:        "pkg:bitbucket/owner/repo",
 			origin:      dummyOrigin,
-			expectedErr: `unsupported type: "bitbucket"`,
+			expectedErr: `unsupported package type: "bitbucket"`,
 		},
 		{
 			name:      "pkg scheme with github",
