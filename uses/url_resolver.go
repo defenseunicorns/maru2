@@ -47,11 +47,11 @@ func ResolveURL(p, u string) (string, error) {
 
 	// pkg -> file
 	case prev.Scheme == "pkg" && uri.Scheme == "file":
-		return resolvePkgToFile(prev, uri, p)
+		return resolvePkgToFile(p, uri)
 	}
 
 	// This should be unreachable
-	return "", fmt.Errorf("unable to resolve %q to %q", prev, uri)
+	return "", fmt.Errorf("unable to resolve %q to %q", p, u)
 }
 
 func validateURIs(prev, uri *url.URL) error {
@@ -108,7 +108,7 @@ func resolveHTTPToFile(prev, uri *url.URL) (string, error) {
 	return next.String(), nil
 }
 
-func resolvePkgToFile(prev, uri *url.URL, p string) (string, error) {
+func resolvePkgToFile(p string, uri *url.URL) (string, error) {
 	pURL, err := packageurl.FromString(p)
 	if err != nil {
 		return "", err
