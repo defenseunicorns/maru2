@@ -26,99 +26,105 @@ func ResolveURL(p, u string) (string, error) {
 		return "", err
 	}
 
+	if err := validateURIs(prev, uri); err != nil {
+		return "", err
+	}
+
+	switch {
+	case prev.Scheme == "file" && (uri.Scheme == "https" || uri.Scheme == "http" || uri.Scheme == "pkg"),
+		(prev.Scheme == "https" || prev.Scheme == "http") && (uri.Scheme == "https" || uri.Scheme == "http"),
+		prev.Scheme == "pkg" && uri.Scheme == "pkg",
+		(prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg":
+		return u, nil
+
+	// file -> file
+	case prev.Scheme == "file" && uri.Scheme == "file":
+		return resolveFileToFile(prev, uri)
+
+	// http(s) -> file
+	case (prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "file":
+		return resolveHTTPToFile(prev, uri)
+
+	// pkg -> file
+	case prev.Scheme == "pkg" && uri.Scheme == "file":
+		return resolvePkgToFile(prev, uri, p)
+	}
+
+	// This should be unreachable
+	return "", fmt.Errorf("unable to resolve %q to %q", prev, uri)
+}
+
+func validateURIs(prev, uri *url.URL) error {
 	if uri.Scheme == "" {
-		return "", fmt.Errorf("must contain a scheme: %q", uri)
+		return fmt.Errorf("must contain a scheme: %q", uri)
 	}
 
 	if !slices.Contains([]string{"file", "http", "https", "pkg"}, uri.Scheme) {
-		return "", fmt.Errorf("unsupported scheme: %q", uri.Scheme)
+		return fmt.Errorf("unsupported scheme: %q", uri.Scheme)
 	}
 
 	if uri.Opaque == "." {
-		return "", fmt.Errorf("invalid relative path \".\"")
+		return fmt.Errorf("invalid relative path \".\"")
 	}
 
 	if uri.Scheme == "file" && (uri.Path == "" && uri.Opaque == "") {
-		return "", fmt.Errorf("invalid path %q", u)
+		return fmt.Errorf("invalid path %q", uri)
 	}
 
 	if uri.Scheme == "file" && strings.HasPrefix(uri.Path, "/") {
-		return "", fmt.Errorf("absolute path %q", u)
+		return fmt.Errorf("absolute path %q", uri)
 	}
 
 	if prev.Scheme == "" {
-		return "", fmt.Errorf("must contain a scheme: %q", prev)
+		return fmt.Errorf("must contain a scheme: %q", prev)
 	}
 
-	// file -> http(s) or pkg
-	if prev.Scheme == "file" && (uri.Scheme == "https" || uri.Scheme == "http" || uri.Scheme == "pkg") {
-		return u, nil
-	}
+	return nil
+}
 
-	// http(s) -> http(s)
-	if (prev.Scheme == "https" || prev.Scheme == "http") && (uri.Scheme == "https" || uri.Scheme == "http") {
-		return u, nil
-	}
-
-	// pkg -> pkg
-	if prev.Scheme == "pkg" && uri.Scheme == "pkg" {
-		return u, nil
-	}
-
-	// file -> file
-	if prev.Scheme == "file" && uri.Scheme == "file" {
-		dir := filepath.Dir(prev.Opaque)
-		if dir != "." {
-			next := &url.URL{
-				Scheme:   "file",
-				Opaque:   filepath.Join(dir, uri.Opaque),
-				RawQuery: uri.RawQuery,
-			}
-			if next.Opaque == "." {
-				next.Opaque = DefaultFileName
-			}
-			return next.String(), nil
+func resolveFileToFile(prev, uri *url.URL) (string, error) {
+	dir := filepath.Dir(prev.Opaque)
+	if dir != "." {
+		next := &url.URL{
+			Scheme:   "file",
+			Opaque:   filepath.Join(dir, uri.Opaque),
+			RawQuery: uri.RawQuery,
 		}
-		return u, nil
-	}
-
-	// http(s) -> file (assumes relative path) = http(s) + relative path
-	if (prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "file" {
-		next := *prev // https://github.com/golang/go/issues/38351
-		next.Path = filepath.Join(filepath.Dir(prev.Path), uri.Opaque)
-		if next.Path == "." || next.Path == "/" {
-			next.Path = "/" + DefaultFileName
+		if next.Opaque == "." {
+			next.Opaque = DefaultFileName
 		}
 		return next.String(), nil
 	}
+	return uri.String(), nil
+}
 
-	// pkg -> file (assumes relative path) = pkg + relative path
-	if prev.Scheme == "pkg" && uri.Scheme == "file" {
-		pURL, err := packageurl.FromString(p)
-		if err != nil {
-			return "", err
-		}
-		pURL.Subpath = filepath.Join(filepath.Dir(pURL.Subpath), uri.Opaque)
-		if pURL.Subpath == "." {
-			pURL.Subpath = DefaultFileName
-		}
-		if pURL.Version == "" {
-			pURL.Version = "main"
-		}
+func resolveHTTPToFile(prev, uri *url.URL) (string, error) {
+	next := *prev // https://github.com/golang/go/issues/38351
+	next.Path = filepath.Join(filepath.Dir(prev.Path), uri.Opaque)
+	if next.Path == "." || next.Path == "/" {
+		next.Path = "/" + DefaultFileName
+	}
+	return next.String(), nil
+}
 
-		if taskName := uri.Query().Get("task"); taskName != "" {
-			qm := pURL.Qualifiers.Map()
-			qm["task"] = taskName
-			pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
-		}
-
-		return pURL.String(), nil
+func resolvePkgToFile(prev, uri *url.URL, p string) (string, error) {
+	pURL, err := packageurl.FromString(p)
+	if err != nil {
+		return "", err
+	}
+	pURL.Subpath = filepath.Join(filepath.Dir(pURL.Subpath), uri.Opaque)
+	if pURL.Subpath == "." {
+		pURL.Subpath = DefaultFileName
+	}
+	if pURL.Version == "" {
+		pURL.Version = "main"
 	}
 
-	// http(s) -> pkg
-	if (prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg" {
-		return u, nil
+	if taskName := uri.Query().Get("task"); taskName != "" {
+		qm := pURL.Qualifiers.Map()
+		qm["task"] = taskName
+		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
 	}
 
-	return "", fmt.Errorf("unable to resolve %q to %q", prev, uri)
+	return pURL.String(), nil
 }

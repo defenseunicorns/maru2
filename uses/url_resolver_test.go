@@ -278,7 +278,7 @@ func TestResolveURL(t *testing.T) {
 			prev:        "file:",
 			uri:         "file://",
 			next:        "",
-			expectedErr: "invalid path \"file://\"",
+			expectedErr: "invalid path \"file:\"",
 		},
 	}
 
