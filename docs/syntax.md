@@ -10,7 +10,6 @@ Similar to `Makefile`s, a Maru2 workflow is a map of tasks, where each task is a
 
 Checkout the comparison below:
 
-
 ```makefile {filename="Makefile"}
 .DEFAULT_GOAL := build
 
@@ -45,7 +44,7 @@ Task names must follow the following regex: `^[_a-zA-Z][a-zA-Z0-9_-]*$`.
 
 This means:
 
-1. Task names must start with a letter (a-z, A-Z) or underscore (_)
+1. Task names must start with a letter (a-z, A-Z) or underscore (\_)
 2. After the first character, task names can contain letters, numbers, underscores, and hyphens
 3. Task names cannot contain spaces or other special characters
 
@@ -216,10 +215,10 @@ Maru2 supports defining aliases for package URLs in a configuration file. By def
 
 ```yaml {filename="~/.maru2/aliases.yaml"}
 aliases:
-  gh:  # Alias name
-    type: github  # Resolved type
-    base: https://github.example.com  # Optional base URL
-    token-from-env: CUSTOM_GITHUB_TOKEN  # Optional environment variable for authentication token
+  gh: # Alias name
+    type: github # Resolved type
+    base: https://github.example.com # Optional base URL
+    token-from-env: CUSTOM_GITHUB_TOKEN # Optional environment variable for authentication token
   gl:
     type: gitlab
     base: https://gitlab.example.com
@@ -412,15 +411,15 @@ To add validation to an input parameter, use the `validate` field with a regular
 ```yaml
 name:
   description: "Your name"
-  validate: ^\w+$  # Only allow alphanumeric characters and underscores
+  validate: ^\w+$ # Only allow alphanumeric characters and underscores
 
 version:
   description: "Semantic version"
-  validate: ^\d+\.\d+\.\d+$  # Enforce semantic versioning format (e.g., 1.2.3)
+  validate: ^\d+\.\d+\.\d+$ # Enforce semantic versioning format (e.g., 1.2.3)
 
 email:
   description: "Email address"
-  validate: ^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$  # Basic email validation
+  validate: ^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$ # Basic email validation
 
 hello:
   - run: echo "Hello, ${{ input "name" }}"
@@ -464,7 +463,7 @@ By default (without an `if` directive), steps will only run if all previous step
 ```yaml {filename="tasks.yaml"}
 example:
   - run: echo "This step always runs first"
-  - run: exit 1  # This step will fail
+  - run: exit 1 # This step will fail
   - run: echo "This step will be skipped because the previous step failed"
   - if: failure
     run: echo "This step runs because a previous step failed"

@@ -20,6 +20,7 @@ Hello, World!
 ```
 
 Outputs:
+
 - `stdout`: The text that was echoed
 
 ## Fetch
@@ -31,14 +32,15 @@ fetch-example:
   - uses: builtin:fetch
     with:
       url: "https://api.example.com/data"
-      method: "GET"  # Optional, defaults to GET
-      timeout: "30s"  # Optional, defaults to 30 seconds
-      headers:  # Optional
+      method: "GET" # Optional, defaults to GET
+      timeout: "30s" # Optional, defaults to 30 seconds
+      headers: # Optional
         Content-Type: application/json
         Authorization: Bearer ${{ input "token" }}
 ```
 
 Outputs:
+
 - `body`: The response body as a string
 
 The `fetch` built-in is useful for integrating with external APIs or services from your workflow.

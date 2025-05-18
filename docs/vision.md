@@ -76,7 +76,7 @@ create-pkg:
     with:
       path: ${{ inputs "path" }}
       arch: ${{ inputs "arch" }}
-      flavors:  ${{ inputs "flavors" }}
+      flavors: ${{ inputs "flavors" }}
       log-level: warning
 
   - if: failure
@@ -91,7 +91,7 @@ create-pkg:
     with:
       path: ${{ inputs "path" }}
       arch: ${{ inputs "arch" }}
-      flavors:  ${{ inputs "flavors" }}
+      flavors: ${{ inputs "flavors" }}
       to: ${{ inputs "publish-to" }}
 ```
 
