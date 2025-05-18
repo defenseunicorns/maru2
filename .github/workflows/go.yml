@@ -33,6 +33,8 @@ jobs:
             go.mod
       - run: make
       - run: go test -race -covermode=atomic -coverprofile=coverage.out -failfast -timeout 3m ./...
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # - uses: codecov/codecov-action@v5.4.0
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }}
