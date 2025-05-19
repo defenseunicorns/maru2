@@ -37,18 +37,22 @@ func Read(r io.Reader) (Workflow, error) {
 		}
 	}
 
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return Workflow{}, err
-	}
-
 	wf := Workflow{
 		Inputs:  make(InputMap),
 		Tasks:   make(TaskMap),
 		Aliases: make(map[string]config.Alias),
 	}
 
-	return wf, yaml.Unmarshal(data, &wf)
+	d := yaml.NewDecoder(r)
+
+	if err := d.Decode(&wf); err != nil {
+		if err == io.EOF {
+			return wf, nil
+		}
+		return Workflow{}, err
+	}
+
+	return wf, nil
 }
 
 var _schema string
