@@ -213,32 +213,6 @@ maru2 echo --with message="Hello, World!"
 
 Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Aliases Configuration](./aliases-config.md) document.
 
-Example of using an alias in a workflow file:
-
-```yaml {filename="tasks.yaml"}
-remote-echo:
-  - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-    with:
-      message: Hello, World!
-```
-
-```yaml {filename="tasks.yaml"}
-# Using the 'gh' alias defined in ~/.maru2/aliases.yaml
-remote-echo:
-  - uses: pkg:gh/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-    with:
-      message: Hello, World!
-```
-
-```yaml {filename="tasks.yaml"}
-remote-echo:
-  - uses: pkg:gitlab/noxsios/maru2@main?task=echo#testdata/simple.yaml
-    with:
-      message: Hello, World!
-```
-
-### Package URL Aliases
-
 You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in a YAML configuration file located at `~/.maru2/aliases.yaml`.
 
 Example aliases configuration:
@@ -257,9 +231,26 @@ aliases:
       base: https://gitlab.internal.company.com
 ```
 
-With this configuration, you can use the aliases in your tasks:
+Examples of using aliases in workflow files:
 
 ```yaml {filename="tasks.yaml"}
+# Using the full GitHub package URL
+remote-echo:
+  - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+    with:
+      message: Hello, World!
+```
+
+```yaml {filename="tasks.yaml"}
+# Using the 'gh' alias defined in ~/.maru2/aliases.yaml
+remote-echo:
+  - uses: pkg:gh/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+    with:
+      message: Hello, World!
+```
+
+```yaml {filename="tasks.yaml"}
+# Using the 'gl' alias with GitLab
 remote-echo:
   - uses: pkg:gl/noxsios/maru2@main?task=echo#testdata/simple.yaml
     with:

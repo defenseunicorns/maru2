@@ -7,6 +7,8 @@ package uses
 import (
 	"context"
 	"io"
+
+	"github.com/package-url/packageurl-go"
 )
 
 // DefaultFileName is the default file name to use when a path resolves to "."
@@ -27,4 +29,14 @@ const QualifierTask = "task"
 // Fetcher fetches a file from a remote location.
 type Fetcher interface {
 	Fetch(context.Context, string) (io.ReadCloser, error)
+}
+
+// AliasResolver handles resolving package URL aliases
+type AliasResolver interface {
+	ResolveAlias(packageurl.PackageURL) (packageurl.PackageURL, bool)
+}
+
+// ConfigLoader loads configuration from a source
+type ConfigLoader interface {
+	LoadConfig() (*AliasConfig, error)
 }

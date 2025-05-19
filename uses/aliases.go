@@ -26,16 +26,6 @@ type AliasDefinition struct {
 	TokenFromEnv string `yaml:"token-from-env,omitempty"`
 }
 
-// AliasResolver handles resolving package URL aliases
-type AliasResolver interface {
-	ResolveAlias(packageurl.PackageURL) (packageurl.PackageURL, bool)
-}
-
-// ConfigLoader loads configuration from a source
-type ConfigLoader interface {
-	LoadConfig() (*AliasConfig, error)
-}
-
 // FileSystemConfigLoader loads configuration from the file system
 type FileSystemConfigLoader struct {
 	fs         afero.Fs
