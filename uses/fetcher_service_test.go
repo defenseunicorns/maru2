@@ -72,12 +72,12 @@ func TestFetcherService(t *testing.T) {
 		{
 			name:        "unsupported scheme",
 			uri:         "ftp://example.com",
-			expectedErr: "unsupported scheme",
+			expectedErr: `unsupported scheme: "ftp"`,
 		},
 		{
 			name:        "unsupported package type",
 			uri:         "pkg:unsupported/noxsios/vai",
-			expectedErr: "unsupported package type",
+			expectedErr: `unsupported package type: "unsupported"`,
 		},
 	}
 
@@ -85,7 +85,7 @@ func TestFetcherService(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			service, err := NewFetcherService(tc.resolver, tc.fs)
 			require.NoError(t, err)
-			require.NotNil(t, service)
+			assert.NotNil(t, service)
 
 			if tc.name == "new service with defaults" {
 				require.NotNil(t, service.resolver)
@@ -105,18 +105,17 @@ func TestFetcherService(t *testing.T) {
 			fetcher, err := service.GetFetcher(uri)
 
 			if tc.expectedErr != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.expectedErr)
+				require.EqualError(t, err, tc.expectedErr)
 				return
 			}
 
 			require.NoError(t, err)
-			require.IsType(t, tc.expectedType, fetcher)
+			assert.IsType(t, tc.expectedType, fetcher)
 
 			if tc.checkSameCache {
 				fetcher2, err := service.GetFetcher(uri)
 				require.NoError(t, err)
-				require.Same(t, fetcher, fetcher2, "fetchers should be the same instance due to caching")
+				assert.Same(t, fetcher, fetcher2, "fetchers should be the same instance due to caching")
 			}
 		})
 	}

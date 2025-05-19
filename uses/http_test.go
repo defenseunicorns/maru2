@@ -41,7 +41,7 @@ func TestHTTPFetcher(t *testing.T) {
 	b, err := io.ReadAll(rc)
 	require.NoError(t, err)
 
-	require.Equal(t, string(b), hw)
+	assert.Equal(t, string(b), hw)
 
 	rc, err = fetcher.Fetch(ctx, server.URL)
 	require.EqualError(t, err, fmt.Sprintf("failed to fetch %s: 404 Not Found", server.URL))

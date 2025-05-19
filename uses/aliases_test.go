@@ -203,7 +203,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		require.NoError(t, err)
 		config, err = loader.LoadConfig()
 		require.NoError(t, err)
-		require.Equal(t, cfg.Aliases, config.Aliases)
+		assert.Equal(t, cfg.Aliases, config.Aliases)
 	}
 }
 
