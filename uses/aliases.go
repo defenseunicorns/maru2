@@ -8,26 +8,26 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
-// ConfigBasedResolver resolves aliases based on a configuration
-type ConfigBasedResolver struct {
+// ConfigBasedPackageAliasMapper maps package aliases based on a configuration
+type ConfigBasedPackageAliasMapper struct {
 	Config *config.Config
 }
 
-// NewConfigBasedResolver creates a new ConfigBasedResolver
-func NewConfigBasedResolver(config *config.Config) *ConfigBasedResolver {
-	return &ConfigBasedResolver{Config: config}
+// NewConfigBasedPackageAliasMapper creates a new ConfigBasedPackageAliasMapper
+func NewConfigBasedPackageAliasMapper(config *config.Config) *ConfigBasedPackageAliasMapper {
+	return &ConfigBasedPackageAliasMapper{Config: config}
 }
 
 // ResolveAlias resolves a package URL if its type is an alias
-func (r *ConfigBasedResolver) ResolveAlias(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
-	return MapBasedResolver(r.Config.Aliases).ResolveAlias(pURL)
+func (r *ConfigBasedPackageAliasMapper) ResolveAlias(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
+	return MapBasedPackageAliasMapper(r.Config.Aliases).ResolveAlias(pURL)
 }
 
-// MapBasedResolver resolves aliases based on a map of aliases
-type MapBasedResolver map[string]config.Alias
+// MapBasedPackageAliasMapper maps package aliases based on a map of aliases
+type MapBasedPackageAliasMapper map[string]config.Alias
 
 // ResolveAlias resolves a package URL if its type is an alias
-func (r MapBasedResolver) ResolveAlias(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
+func (r MapBasedPackageAliasMapper) ResolveAlias(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
 	aliasDef, ok := r[pURL.Type]
 	if !ok {
 		return pURL, false
@@ -51,4 +51,26 @@ func (r MapBasedResolver) ResolveAlias(pURL packageurl.PackageURL) (packageurl.P
 		Qualifiers: packageurl.QualifiersFromMap(qualifiers),
 		Subpath:    pURL.Subpath,
 	}, true
+}
+
+// FallbackPackageAliasMapper maps package aliases using a list of mappers
+type FallbackPackageAliasMapper struct {
+	mappers []PackageAliasMapper
+}
+
+// ResolveAlias resolves a package URL if its type is an alias
+func (m *FallbackPackageAliasMapper) ResolveAlias(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
+	for _, mapper := range m.mappers {
+		if mapper == nil {
+			continue
+		}
+		if resolvedPURL, isAlias := mapper.ResolveAlias(pURL); isAlias {
+			return resolvedPURL, true
+		}
+	}
+	return pURL, false
+}
+
+func NewFallbackPackageAliasMapper(mappers ...PackageAliasMapper) *FallbackPackageAliasMapper {
+	return &FallbackPackageAliasMapper{mappers: mappers}
 }

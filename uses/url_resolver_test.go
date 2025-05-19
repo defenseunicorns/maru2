@@ -291,7 +291,7 @@ func TestResolveURL(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			next, err := ResolveURL(tc.prev, tc.uri)
+			next, err := ResolveURL(tc.prev, tc.uri, nil)
 
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)

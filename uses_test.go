@@ -63,7 +63,7 @@ func TestExecuteUses(t *testing.T) {
 		name        string
 		uses        string
 		origin      string
-		resolver    uses.AliasResolver
+		mapper      uses.PackageAliasMapper
 		skipShort   bool
 		expectedErr string
 	}{
@@ -110,7 +110,7 @@ func TestExecuteUses(t *testing.T) {
 			name:   "with map based resolver",
 			uses:   "pkg:custom/noxsios/mar2-test?task=hello-world",
 			origin: dummyOrigin,
-			resolver: uses.MapBasedResolver(map[string]config.Alias{
+			mapper: uses.MapBasedPackageAliasMapper(map[string]config.Alias{
 				"custom": {
 					Type: "gitlab",
 				},
@@ -137,10 +137,10 @@ func TestExecuteUses(t *testing.T) {
 			}
 
 			if tt.expectedErr == "" {
-				_, err := ExecuteUses(ctx, svc, tt.resolver, tt.uses, with, tt.origin, false)
+				_, err := ExecuteUses(ctx, svc, tt.mapper, tt.uses, with, tt.origin, false)
 				require.NoError(t, err)
 			} else {
-				_, err := ExecuteUses(ctx, svc, tt.resolver, tt.uses, with, tt.origin, false)
+				_, err := ExecuteUses(ctx, svc, tt.mapper, tt.uses, with, tt.origin, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})

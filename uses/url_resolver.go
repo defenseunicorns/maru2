@@ -15,7 +15,7 @@ import (
 
 // ResolveURL resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveURL(p, u string, resolvers ...AliasResolver) (string, error) {
+func ResolveURL(p, u string, mapper PackageAliasMapper) (string, error) {
 	prev, err := url.Parse(p)
 	if err != nil {
 		return "", err
@@ -51,11 +51,8 @@ func ResolveURL(p, u string, resolvers ...AliasResolver) (string, error) {
 			if pURL.Version == "" {
 				pURL.Version = DefaultVersion
 			}
-			for _, resolver := range resolvers {
-				if resolver == nil {
-					continue
-				}
-				resolvedPURL, isAlias := resolver.ResolveAlias(pURL)
+			if mapper != nil {
+				resolvedPURL, isAlias := mapper.ResolveAlias(pURL)
 				if isAlias {
 					return resolvedPURL.String(), nil
 				}
@@ -74,7 +71,7 @@ func ResolveURL(p, u string, resolvers ...AliasResolver) (string, error) {
 
 	// pkg -> file
 	case prev.Scheme == "pkg" && uri.Scheme == "file":
-		return resolvePkgToFile(p, uri, resolvers...)
+		return resolvePkgToFile(p, uri, mapper)
 	}
 
 	// This should be unreachable
@@ -135,7 +132,7 @@ func resolveHTTPToFile(prev, uri *url.URL) (string, error) {
 	return next.String(), nil
 }
 
-func resolvePkgToFile(p string, uri *url.URL, resolvers ...AliasResolver) (string, error) {
+func resolvePkgToFile(p string, uri *url.URL, mapper PackageAliasMapper) (string, error) {
 	pURL, err := packageurl.FromString(p)
 	if err != nil {
 		return "", err
@@ -154,11 +151,8 @@ func resolvePkgToFile(p string, uri *url.URL, resolvers ...AliasResolver) (strin
 		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
 	}
 
-	for _, resolver := range resolvers {
-		if resolver == nil {
-			continue
-		}
-		resolvedPURL, isAlias := resolver.ResolveAlias(pURL)
+	if mapper != nil {
+		resolvedPURL, isAlias := mapper.ResolveAlias(pURL)
 		if isAlias {
 			pURL = resolvedPURL
 		}

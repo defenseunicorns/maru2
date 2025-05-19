@@ -16,20 +16,20 @@ import (
 
 // FetcherService creates and manages fetchers
 type FetcherService struct {
-	resolver AliasResolver
-	client   *http.Client
-	fsys     afero.Fs
-	cache    map[string]Fetcher
-	mu       sync.RWMutex
+	mapper PackageAliasMapper
+	client *http.Client
+	fsys   afero.Fs
+	cache  map[string]Fetcher
+	mu     sync.RWMutex
 }
 
 // FetcherServiceOption is a function that configures a FetcherService
 type FetcherServiceOption func(*FetcherService)
 
-// WithFallbackResolver sets the alias resolver to be used by the fetcher service
-func WithFallbackResolver(resolver AliasResolver) FetcherServiceOption {
+// WithPackageAliasMapper sets the package alias mapper to be used by the fetcher service
+func WithPackageAliasMapper(mapper PackageAliasMapper) FetcherServiceOption {
 	return func(s *FetcherService) {
-		s.resolver = resolver
+		s.mapper = mapper
 	}
 }
 
@@ -59,7 +59,7 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 		opt(svc)
 	}
 
-	if svc.resolver == nil {
+	if svc.mapper == nil {
 		loader, err := config.DefaultConfigLoader()
 		if err != nil {
 			return nil, err
@@ -70,7 +70,7 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 			return nil, err
 		}
 
-		svc.resolver = NewConfigBasedResolver(config)
+		svc.mapper = NewConfigBasedPackageAliasMapper(config)
 	}
 
 	if svc.fsys == nil {
@@ -80,8 +80,9 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	return svc, nil
 }
 
-func (s *FetcherService) AliasResolver() AliasResolver {
-	return s.resolver
+// FallbackAliasMapper returns the package alias mapper used by the fetcher service
+func (s *FetcherService) FallbackAliasMapper(mapper PackageAliasMapper) *FallbackPackageAliasMapper {
+	return NewFallbackPackageAliasMapper(mapper, s.mapper)
 }
 
 // GetFetcher returns a fetcher for the given URI

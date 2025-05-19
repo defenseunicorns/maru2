@@ -99,7 +99,7 @@ func TestConfigBasedResolver(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resolver := NewConfigBasedResolver(tt.aliasConfig)
+			resolver := NewConfigBasedPackageAliasMapper(tt.aliasConfig)
 
 			qualifiers := packageurl.QualifiersFromMap(tt.inputQualifiers)
 			inputPURL := packageurl.PackageURL{

@@ -16,8 +16,8 @@ import (
 func TestFetcherService(t *testing.T) {
 	testCases := []struct {
 		name           string
-		fallback       AliasResolver
-		resolver       AliasResolver
+		fallbackMapper PackageAliasMapper
+		mapper         PackageAliasMapper
 		fs             afero.Fs
 		uri            string
 		expectedType   any
@@ -26,10 +26,10 @@ func TestFetcherService(t *testing.T) {
 		verifyPURL     func(*testing.T, packageurl.PackageURL)
 	}{
 		{
-			name:         "new service with defaults",
-			fallback:     nil,
-			fs:           nil,
-			expectedType: nil,
+			name:           "new service with defaults",
+			fallbackMapper: nil,
+			fs:             nil,
+			expectedType:   nil,
 		},
 		{
 			name:         "get http fetcher",
@@ -72,20 +72,20 @@ func TestFetcherService(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			service, err := NewFetcherService(
-				WithFallbackResolver(tc.fallback),
+				WithPackageAliasMapper(tc.fallbackMapper),
 				WithFS(tc.fs),
 			)
 			require.NoError(t, err)
 			assert.NotNil(t, service)
 
 			if tc.name == "new service with defaults" {
-				require.NotNil(t, service.resolver)
+				require.NotNil(t, service.mapper)
 				require.NotNil(t, service.fsys)
 				return
 			}
 
 			if tc.name == "new service with custom config" {
-				assert.Equal(t, tc.fallback, service.resolver)
+				assert.Equal(t, tc.fallbackMapper, service.mapper)
 				assert.Equal(t, tc.fs, service.fsys)
 				return
 			}
