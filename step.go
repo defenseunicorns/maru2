@@ -101,6 +101,8 @@ type Step struct {
 	Name string `json:"name,omitempty"`
 	// If controls whether the step is executed
 	If string `json:"if,omitempty"`
+	// Dir is the directory to run the step in
+	Dir string `json:"dir,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a step

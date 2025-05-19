@@ -23,20 +23,24 @@ type FetcherService struct {
 	mu       sync.RWMutex
 }
 
+// FetcherServiceOption is a function that configures a FetcherService
 type FetcherServiceOption func(*FetcherService)
 
+// WithFallbackResolver sets the alias resolver to be used by the fetcher service
 func WithFallbackResolver(resolver AliasResolver) FetcherServiceOption {
 	return func(s *FetcherService) {
 		s.resolver = resolver
 	}
 }
 
+// WithFS sets the filesystem to be used by the fetcher service
 func WithFS(fs afero.Fs) FetcherServiceOption {
 	return func(s *FetcherService) {
 		s.fsys = fs
 	}
 }
 
+// WithClient sets the HTTP client to be used by the fetcher service
 func WithClient(client *http.Client) FetcherServiceOption {
 	return func(s *FetcherService) {
 		s.client = client
