@@ -2,8 +2,31 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json",
   "$defs": {
-    "Input": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "Alias": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "base": {
+          "type": "string"
+        },
+        "token-from-env": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type"
+      ]
+    },
+    "InputMap": {
+      "additionalProperties": {
+        "$ref": "#/$defs/InputParameter"
+      },
+      "type": "object"
+    },
+    "InputParameter": {
       "oneOf": [
         {
           "not": {
@@ -87,8 +110,7 @@
       "dependentRequired": {
         "default": [],
         "default-from-env": []
-      },
-      "description": "Input parameter for the workflow"
+      }
     },
     "Step": {
       "oneOf": [
@@ -429,28 +451,25 @@
         "$ref": "#/$defs/Step"
       },
       "type": "array"
+    },
+    "TaskMap": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Task"
+      },
+      "type": "object"
     }
   },
-  "patternProperties": {
-    "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-      "if": {
-        "type": "array"
-      },
-      "then": {
-        "$ref": "#/$defs/Task",
-        "description": "Name of the task"
-      },
-      "else": {
-        "if": {
-          "type": "object"
-        },
-        "then": {
-          "$ref": "#/$defs/Input"
-        }
-      },
-      "minItems": 1
+  "properties": {
+    "inputs": {
+      "$ref": "#/$defs/InputMap"
     },
-    "^x-": {
+    "tasks": {
+      "$ref": "#/$defs/TaskMap"
+    },
+    "aliases": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Alias"
+      },
       "type": "object"
     }
   },

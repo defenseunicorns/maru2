@@ -35,8 +35,3 @@ type Fetcher interface {
 type AliasResolver interface {
 	ResolveAlias(packageurl.PackageURL) (packageurl.PackageURL, bool)
 }
-
-// ConfigLoader loads configuration from a source
-type ConfigLoader interface {
-	LoadConfig() (*AliasConfig, error)
-}

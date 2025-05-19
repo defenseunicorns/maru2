@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 )
@@ -23,11 +24,17 @@ type FetcherService struct {
 // NewFetcherService creates a new FetcherService with custom resolver and filesystem
 func NewFetcherService(resolver AliasResolver, fs afero.Fs) (*FetcherService, error) {
 	if resolver == nil {
-		var err error
-		resolver, err = DefaultResolver()
+		loader, err := config.DefaultConfigLoader()
 		if err != nil {
-			return nil, fmt.Errorf("failed to initialize default resolver: %w", err)
+			return nil, err
 		}
+
+		config, err := loader.LoadConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		resolver = NewConfigBasedResolver(config)
 	}
 
 	if fs == nil {

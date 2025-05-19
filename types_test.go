@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,37 +24,37 @@ var helloWorldWorkflow = Workflow{
 
 func TestWorkflowFind(t *testing.T) {
 	task, ok := helloWorldWorkflow.Tasks.Find(DefaultTaskName)
-	require.True(t, ok)
+	assert.True(t, ok)
 
 	require.Len(t, task, 1)
-	require.Equal(t, "echo 'Hello World!'", task[0].Run)
+	assert.Equal(t, "echo 'Hello World!'", task[0].Run)
 
 	task, ok = helloWorldWorkflow.Tasks.Find("foo")
-	require.Nil(t, task)
-	require.False(t, ok)
+	assert.Nil(t, task)
+	assert.False(t, ok)
 }
 
 func TestOrderedTaskNames(t *testing.T) {
 	names := helloWorldWorkflow.Tasks.OrderedTaskNames()
 	expected := []string{"default", "a-task", "task-b"}
-	require.ElementsMatch(t, expected, names)
+	assert.ElementsMatch(t, expected, names)
 
 	wf := Workflow{Tasks: TaskMap{"foo": nil, "bar": nil, "baz": nil, "default": nil}}
 	names = wf.Tasks.OrderedTaskNames()
 	expected = []string{"default", "bar", "baz", "foo"}
-	require.ElementsMatch(t, expected, names)
+	assert.ElementsMatch(t, expected, names)
 
 	delete(wf.Tasks, "default")
 
 	names = wf.Tasks.OrderedTaskNames()
 	expected = []string{"bar", "baz", "foo"}
-	require.ElementsMatch(t, expected, names)
+	assert.ElementsMatch(t, expected, names)
 }
 
 func TestWorkflowSchemaGen(t *testing.T) {
 	schema := WorkFlowSchema()
 
-	require.NotNil(t, schema)
+	assert.NotNil(t, schema)
 
 	b, err := json.Marshal(schema)
 	require.NoError(t, err)
@@ -61,5 +62,5 @@ func TestWorkflowSchemaGen(t *testing.T) {
 	current, err := os.ReadFile("maru2.schema.json")
 	require.NoError(t, err)
 
-	require.JSONEq(t, string(current), string(b))
+	assert.JSONEq(t, string(current), string(b))
 }

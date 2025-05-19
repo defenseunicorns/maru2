@@ -7,6 +7,7 @@ import (
 	"cmp"
 	"slices"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/invopop/jsonschema"
 )
 
@@ -17,8 +18,9 @@ const DefaultTaskName = "default"
 //
 // It represents a "tasks.yaml" file
 type Workflow struct {
-	Inputs InputMap `json:"inputs,omitempty"`
-	Tasks  TaskMap  `json:"tasks,omitempty"`
+	Inputs  InputMap                `json:"inputs,omitempty"`
+	Tasks   TaskMap                 `json:"tasks,omitempty"`
+	Aliases map[string]config.Alias `json:"aliases,omitempty"`
 }
 
 // Task is a list of steps
@@ -55,42 +57,10 @@ func (tm TaskMap) OrderedTaskNames() []string {
 
 // WorkFlowSchema returns a JSON schema for a maru2 workflow
 func WorkFlowSchema() *jsonschema.Schema {
-	reflector := jsonschema.Reflector{}
-	reflector.ExpandedStruct = true
-	schema := reflector.Reflect(&TaskMap{})
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	schema := reflector.Reflect(&Workflow{})
 
 	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json"
-
-	inputSchema := reflector.Reflect(&InputParameter{})
-	inputSchema.ID = jsonschema.EmptyID
-	inputSchema.Description = "Input parameter for the workflow"
-	schema.Definitions["Input"] = inputSchema
-
-	schema.AdditionalProperties = jsonschema.FalseSchema
-	var single uint64 = 1
-	schema.PatternProperties = map[string]*jsonschema.Schema{
-		"^x-": &jsonschema.Schema{
-			Type: "object",
-		},
-		TaskNamePattern.String(): {
-			If: &jsonschema.Schema{
-				Type: "array",
-			},
-			Then: &jsonschema.Schema{
-				Description: "Name of the task",
-				Ref:         "#/$defs/Task",
-			},
-			Else: &jsonschema.Schema{
-				If: &jsonschema.Schema{
-					Type: "object",
-				},
-				Then: &jsonschema.Schema{
-					Ref: "#/$defs/Input",
-				},
-			},
-			MinItems: &single,
-		},
-	}
 
 	return schema
 }
