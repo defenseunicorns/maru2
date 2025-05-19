@@ -1,22 +1,38 @@
-# Maru2 Aliases Configuration
+# Maru2 Configuration
 
-This document describes how to configure package URL aliases in Maru2. For usage examples in workflows, see the [Package URL Aliases section](./syntax.md#package-url-aliases) in the syntax documentation.
-
-## Overview
-
-Aliases allow you to create shorthand references for commonly used package types and repositories, simplifying package URL references in your workflows.
+This document describes how to configure Maru2 using the global configuration file.
 
 ## Configuration File Location
 
-By default, Maru2 looks for the aliases configuration file at:
+By default, Maru2 looks for the configuration file at:
 
 ```
-~/.maru2/aliases.yaml
+~/.maru2/config.yaml
 ```
 
-## Configuration Format
+## Creating a New Configuration
 
-The aliases configuration file uses YAML format with the following structure:
+To create a new configuration:
+
+1. Create the directory if it doesn't exist:
+
+   ```sh
+   mkdir -p ~/.maru2
+   ```
+
+2. Create the config.yaml file:
+
+   ```sh
+   touch ~/.maru2/config.yaml
+   ```
+
+3. Edit the file with your preferred text editor and add your configuration following the format shown below.
+
+## Aliases Configuration
+
+Aliases allow you to create shorthand references for commonly used package types and repositories, simplifying package URL references in your workflows.
+
+### Aliases Format
 
 ```yaml
 aliases:
@@ -29,11 +45,11 @@ aliases:
 Where:
 
 - `alias_name`: A short name you want to use as an alias
-- `type`: The actual package URL type (github, gitlab, etc.)
+- `type`: The actual package URL type (github, gitlab, etc.) - this is required
 - `base`: (Optional) Base URL for the repository (useful for self-hosted instances)
 - `token-from-env`: (Optional) Environment variable name containing an access token
 
-## Example Configuration
+### Example Aliases Configuration
 
 ```yaml
 aliases:
@@ -47,21 +63,21 @@ aliases:
     token-from-env: GITHUB_TOKEN
 ```
 
-## Usage
+### Using Aliases
 
 Once configured, you can use aliases in package URLs:
 
-```
+```yaml
 pkg:gh/owner/repo@main#path/to/file.yaml  # Using the 'gh' alias
 ```
 
 Instead of the full type name:
 
-```
+```yaml
 pkg:github/owner/repo@main#path/to/file.yaml
 ```
 
-## Alias Resolution
+### Alias Resolution
 
 When Maru2 encounters an alias in a package URL:
 
@@ -70,30 +86,16 @@ When Maru2 encounters an alias in a package URL:
 3. Adds any configured base URL or token information (if not already specified)
 4. Preserves all other parts of the package URL (namespace, name, version, subpath)
 
-## Creating a New Configuration
-
-To create a new aliases configuration:
-
-1. Create the directory if it doesn't exist:
-
-   ```
-   mkdir -p ~/.maru2
-   ```
-
-2. Create the aliases.yaml file:
-
-   ```
-   touch ~/.maru2/aliases.yaml
-   ```
-
-3. Edit the file with your preferred text editor and add your aliases following the format shown above.
-
-## Overriding Base URLs
+### Overriding Base URLs
 
 You can override the base URL specified in the alias configuration by including it directly in the package URL:
 
-```
+```yaml
 pkg:gl/owner/repo@main?base=https://my-gitlab.com#path/to/file.yaml
 ```
 
 This will use `https://my-gitlab.com` instead of the base URL configured in the alias.
+
+## Future Configuration Options
+
+The global configuration file is designed to be extensible. Future versions of Maru2 may add additional configuration options beyond aliases.

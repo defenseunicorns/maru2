@@ -211,24 +211,22 @@ maru2 echo --with message="Hello, World!"
 
 ### Package URL Aliases
 
-Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Aliases Configuration](./aliases-config.md) document.
+Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Configuration](./config.md#aliases-configuration) document.
 
-You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in a YAML configuration file located at `~/.maru2/aliases.yaml`.
+You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in the global configuration file located at `~/.maru2/config.yaml`.
 
-Example aliases configuration:
+Example configuration with aliases:
 
-```yaml {filename="~/.maru2/aliases.yaml"}
+```yaml {filename="~/.maru2/config.yaml"}
 aliases:
   gl:
     type: gitlab
-    qualifiers:
-      base: https://gitlab.example.com
+    base: https://gitlab.example.com
   gh:
     type: github
   internal:
     type: gitlab
-    qualifiers:
-      base: https://gitlab.internal.company.com
+    base: https://gitlab.internal.company.com
 ```
 
 Examples of using aliases in workflow files:
