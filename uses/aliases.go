@@ -71,6 +71,7 @@ func (m *FallbackPackageAliasMapper) ResolveAlias(pURL packageurl.PackageURL) (p
 	return pURL, false
 }
 
+// NewFallbackPackageAliasMapper creates a new FallbackPackageAliasMapper
 func NewFallbackPackageAliasMapper(mappers ...PackageAliasMapper) *FallbackPackageAliasMapper {
 	return &FallbackPackageAliasMapper{mappers: mappers}
 }

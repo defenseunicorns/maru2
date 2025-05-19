@@ -66,3 +66,7 @@ tasks:
       with:
         text: ${{ input "text2" }}
     - uses: continues
+
+  pwd:
+    - run: pwd
+    - uses: file:testdata/simple.yaml?task=pwd

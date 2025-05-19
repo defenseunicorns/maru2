@@ -145,7 +145,11 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			rootOrigin := "file:" + filepath.Join(cwd, filename)
+			fullPath := filepath.Join(cwd, filename)
+
+			rootOrigin := "file:" + fullPath
+
+			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
 
 			svc, err := uses.NewFetcherService()
 			if err != nil {

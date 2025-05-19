@@ -12,3 +12,6 @@ tasks:
 
   hello-world:
     - uses: file:hello-world.yaml
+
+  pwd:
+    - run: pwd
