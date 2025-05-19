@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,7 +56,7 @@ func TestLocalFetcher(t *testing.T) {
 
 			rc, err := fetcher.Fetch(ctx, tc.uses)
 			if tc.expectedFetchErr != "" {
-				require.Nil(t, rc)
+				assert.Nil(t, rc)
 				require.EqualError(t, err, tc.expectedFetchErr)
 			} else {
 				require.NoError(t, err)
@@ -65,7 +66,7 @@ func TestLocalFetcher(t *testing.T) {
 				b2, err := io.ReadAll(rc)
 				require.NoError(t, err)
 
-				require.Equal(t, string(b1), string(b2))
+				assert.Equal(t, string(b1), string(b2))
 			}
 		})
 	}

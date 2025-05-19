@@ -11,6 +11,7 @@ import (
 
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -116,16 +117,16 @@ func TestConfigBasedResolver(t *testing.T) {
 
 			resolvedPURL, isResolved := resolver.ResolveAlias(inputPURL)
 
-			require.Equal(t, tt.wantResolved, isResolved)
-			require.Equal(t, tt.wantType, resolvedPURL.Type)
+			assert.Equal(t, tt.wantResolved, isResolved)
+			assert.Equal(t, tt.wantType, resolvedPURL.Type)
 
 			resolvedQualifiers := resolvedPURL.Qualifiers.Map()
-			require.Equal(t, tt.wantQualifiers, resolvedQualifiers)
+			assert.Equal(t, tt.wantQualifiers, resolvedQualifiers)
 
-			require.Equal(t, inputPURL.Namespace, resolvedPURL.Namespace)
-			require.Equal(t, inputPURL.Name, resolvedPURL.Name)
-			require.Equal(t, inputPURL.Version, resolvedPURL.Version)
-			require.Equal(t, inputPURL.Subpath, resolvedPURL.Subpath)
+			assert.Equal(t, inputPURL.Namespace, resolvedPURL.Namespace)
+			assert.Equal(t, inputPURL.Name, resolvedPURL.Name)
+			assert.Equal(t, inputPURL.Version, resolvedPURL.Version)
+			assert.Equal(t, inputPURL.Subpath, resolvedPURL.Subpath)
 		})
 	}
 }
@@ -166,28 +167,28 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	config, err := loader.LoadConfig()
 	require.NoError(t, err)
 
-	require.Len(t, config.Aliases, 3)
+	assert.Len(t, config.Aliases, 3)
 
 	glAlias, ok := config.Aliases["gl"]
-	require.True(t, ok)
-	require.Equal(t, packageurl.TypeGitlab, glAlias.Type)
-	require.Equal(t, "https://gitlab.example.com", glAlias.Base)
+	assert.True(t, ok)
+	assert.Equal(t, packageurl.TypeGitlab, glAlias.Type)
+	assert.Equal(t, "https://gitlab.example.com", glAlias.Base)
 
 	ghAlias, ok := config.Aliases["gh"]
-	require.True(t, ok)
-	require.Equal(t, packageurl.TypeGithub, ghAlias.Type)
-	require.Empty(t, ghAlias.Base)
+	assert.True(t, ok)
+	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
+	assert.Empty(t, ghAlias.Base)
 
 	loader = NewFileSystemConfigLoader(fsys, "nonexistent-file.yaml")
 	config, err = loader.LoadConfig()
 	require.NoError(t, err)
-	require.NotNil(t, config)
-	require.Empty(t, config.Aliases)
+	assert.NotNil(t, config)
+	assert.Empty(t, config.Aliases)
 
 	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
 		t.Setenv("HOME", "")
 		loader, err = DefaultConfigLoader()
-		require.Nil(t, loader)
+		assert.Nil(t, loader)
 		require.EqualError(t, err, "$HOME is not defined")
 
 		tmpDir := t.TempDir()
@@ -214,5 +215,5 @@ func TestConfigLoaderWithInvalidYAML(t *testing.T) {
 	loader := NewFileSystemConfigLoader(fsys, "invalid.yaml")
 	_, err = loader.LoadConfig()
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "failed to parse alias config file")
+	assert.Contains(t, err.Error(), "failed to parse alias config file")
 }

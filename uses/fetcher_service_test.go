@@ -9,6 +9,7 @@ import (
 
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -93,8 +94,8 @@ func TestFetcherService(t *testing.T) {
 			}
 
 			if tc.name == "new service with custom config" {
-				require.Equal(t, tc.resolver, service.resolver)
-				require.Equal(t, tc.fs, service.fsys)
+				assert.Equal(t, tc.resolver, service.resolver)
+				assert.Equal(t, tc.fs, service.fsys)
 				return
 			}
 

@@ -6,6 +6,7 @@ package uses
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -293,13 +294,11 @@ func TestResolveURL(t *testing.T) {
 			next, err := ResolveURL(tc.prev, tc.uri)
 
 			if tc.expectedErr != "" {
-				require.Error(t, err)
 				require.EqualError(t, err, tc.expectedErr)
-				return
+			} else {
+				require.NoError(t, err)
 			}
-
-			require.NoError(t, err)
-			require.Equal(t, tc.next, next)
+			assert.Equal(t, tc.next, next)
 		})
 	}
 }

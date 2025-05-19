@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,10 +45,10 @@ func TestHTTPFetcher(t *testing.T) {
 
 	rc, err = fetcher.Fetch(ctx, server.URL)
 	require.EqualError(t, err, fmt.Sprintf("failed to fetch %s: 404 Not Found", server.URL))
-	require.Nil(t, rc)
+	assert.Nil(t, rc)
 
 	server.Close()
 	rc, err = fetcher.Fetch(ctx, server.URL+"/hello-world.yaml")
 	require.EqualError(t, err, fmt.Sprintf("Get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
-	require.Nil(t, rc)
+	assert.Nil(t, rc)
 }

@@ -16,14 +16,14 @@ import (
 
 // AliasConfig represents the configuration for package URL aliases
 type AliasConfig struct {
-	Aliases map[string]AliasDefinition `yaml:"aliases"`
+	Aliases map[string]AliasDefinition `json:"aliases"`
 }
 
 // AliasDefinition defines how an alias should be resolved
 type AliasDefinition struct {
-	Type         string `yaml:"type"`
-	Base         string `yaml:"base,omitempty"`
-	TokenFromEnv string `yaml:"token-from-env,omitempty"`
+	Type         string `json:"type"`
+	Base         string `json:"base,omitempty"`
+	TokenFromEnv string `json:"token-from-env,omitempty"`
 }
 
 // FileSystemConfigLoader loads configuration from the file system
