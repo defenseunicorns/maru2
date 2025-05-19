@@ -441,6 +441,10 @@
         },
         "with": {
           "type": "object"
+        },
+        "dir": {
+          "type": "string",
+          "description": "Directory to run the step in"
         }
       },
       "additionalProperties": false,

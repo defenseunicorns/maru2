@@ -141,6 +141,10 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Type:        "object",
 		Description: "Additional parameters for the step/task call",
 	})
+	props.Set("dir", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Directory to run the step in",
+	})
 
 	runProps := jsonschema.NewProperties()
 	runProps.Set("run", &jsonschema.Schema{
