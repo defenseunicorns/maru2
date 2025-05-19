@@ -140,16 +140,12 @@ func NewRootCmd() *cobra.Command {
 				defer cancel()
 			}
 
-			dir := filepath.Dir(filename)
-
-			err = os.Chdir(dir)
+			cwd, err := os.Getwd()
 			if err != nil {
 				return err
 			}
 
-			name := filepath.Base(filename)
-
-			rootOrigin := "file:" + name
+			rootOrigin := "file:" + filepath.Join(cwd, filename)
 
 			svc, err := uses.NewFetcherService()
 			if err != nil {
