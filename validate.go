@@ -77,19 +77,19 @@ func Validate(wf Workflow) error {
 			switch {
 			// both
 			case step.Uses != "" && step.Run != "":
-				return fmt.Errorf(".tasks.%s[%d] has both run and uses fields set", name, idx)
+				return fmt.Errorf(".%s[%d] has both run and uses fields set", name, idx)
 			// neither
 			case step.Uses == "" && step.Run == "":
-				return fmt.Errorf(".tasks.%s[%d] must have one of [run, uses] fields set", name, idx)
+				return fmt.Errorf(".%s[%d] must have one of [run, uses] fields set", name, idx)
 			}
 
 			if step.ID != "" {
 				if ok := TaskNamePattern.MatchString(step.ID); !ok {
-					return fmt.Errorf(".tasks.%s[%d].id %q does not satisfy %q", name, idx, step.ID, TaskNamePattern.String())
+					return fmt.Errorf(".%s[%d].id %q does not satisfy %q", name, idx, step.ID, TaskNamePattern.String())
 				}
 
 				if _, ok := ids[step.ID]; ok {
-					return fmt.Errorf(".tasks.%s[%d] and .tasks.%s[%d] have the same ID %q", name, ids[step.ID], name, idx, step.ID)
+					return fmt.Errorf(".%s[%d] and .%s[%d] have the same ID %q", name, ids[step.ID], name, idx, step.ID)
 				}
 				ids[step.ID] = idx
 			}
@@ -97,29 +97,29 @@ func Validate(wf Workflow) error {
 			if step.Uses != "" {
 				u, err := url.Parse(step.Uses)
 				if err != nil {
-					return fmt.Errorf(".tasks.%s[%d].uses %w", name, idx, err)
+					return fmt.Errorf(".%s[%d].uses %w", name, idx, err)
 				}
 
 				if u.Scheme == "" {
 					if step.Uses == name {
-						return fmt.Errorf(".tasks.%s[%d].uses cannot reference itself", name, idx)
+						return fmt.Errorf(".%s[%d].uses cannot reference itself", name, idx)
 					}
 					_, ok := wf.Tasks.Find(step.Uses)
 					if !ok {
-						return fmt.Errorf(".tasks.%s[%d].uses %q not found", name, idx, step.Uses)
+						return fmt.Errorf(".%s[%d].uses %q not found", name, idx, step.Uses)
 					}
 				} else {
 					schemes := []string{"file", "http", "https", "pkg", "builtin"}
 
 					if !slices.Contains(schemes, u.Scheme) {
-						return fmt.Errorf(".tasks.%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))
+						return fmt.Errorf(".%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))
 					}
 				}
 			}
 
 			if step.Dir != "" {
 				if filepath.IsAbs(step.Dir) {
-					return fmt.Errorf(".tasks.%s[%d].dir %q must not be absolute", name, idx, step.Dir)
+					return fmt.Errorf(".%s[%d].dir %q must not be absolute", name, idx, step.Dir)
 				}
 			}
 		}
@@ -133,7 +133,7 @@ func Validate(wf Workflow) error {
 		if param.Validate != "" {
 			_, err := regexp.Compile(param.Validate)
 			if err != nil {
-				return fmt.Errorf("input %q validate %q %w", name, param.Validate, err)
+				return err
 			}
 		}
 	}

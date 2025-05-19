@@ -85,7 +85,7 @@ func TestResolveURL(t *testing.T) {
 			name: "http to pkg",
 			prev: "http://example.com/foo.yaml",
 			uri:  "pkg:github/owner/repo",
-			next: "pkg:github/owner/repo",
+			next: "pkg:github/owner/repo@main#tasks.yaml",
 		},
 		{
 			name: "http with task param",
@@ -97,13 +97,13 @@ func TestResolveURL(t *testing.T) {
 			name: "pkg with no subpath",
 			prev: "file:/dir/bar.yaml",
 			uri:  "pkg:github/owner/repo",
-			next: "pkg:github/owner/repo",
+			next: "pkg:github/owner/repo@main#tasks.yaml",
 		},
 		{
 			name: "pkg with no version",
 			prev: "file:/dir/bar.yaml",
 			uri:  "pkg:github/owner/repo#dir/foo.yaml",
-			next: "pkg:github/owner/repo#dir/foo.yaml",
+			next: "pkg:github/owner/repo@main#dir/foo.yaml",
 		},
 		{
 			name: "pkg with version and subpath",

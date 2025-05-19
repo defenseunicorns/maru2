@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -139,7 +140,16 @@ func NewRootCmd() *cobra.Command {
 				defer cancel()
 			}
 
-			rootOrigin := "file:" + filename
+			dir := filepath.Dir(filename)
+
+			err = os.Chdir(dir)
+			if err != nil {
+				return err
+			}
+
+			name := filepath.Base(filename)
+
+			rootOrigin := "file:" + name
 
 			svc, err := uses.NewFetcherService()
 			if err != nil {
