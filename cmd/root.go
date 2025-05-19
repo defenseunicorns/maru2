@@ -19,6 +19,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2"
+	"github.com/defenseunicorns/maru2/uses"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +40,7 @@ func NewRootCmd() *cobra.Command {
 		Short: "A simple task runner",
 		ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			if filename == "" {
-				filename = maru2.DefaultFileName
+				filename = uses.DefaultFileName
 			}
 			f, err := os.Open(filename)
 			if err != nil {
@@ -94,7 +95,7 @@ func NewRootCmd() *cobra.Command {
 			}
 
 			if filename == "" {
-				filename = maru2.DefaultFileName
+				filename = uses.DefaultFileName
 			}
 
 			f, err := os.Open(filename)
@@ -140,13 +141,18 @@ func NewRootCmd() *cobra.Command {
 
 			rootOrigin := "file:" + filename
 
+			svc, err := uses.NewFetcherService(nil, nil)
+			if err != nil {
+				return fmt.Errorf("failed to initialize fetcher service: %w", err)
+			}
+
 			for _, call := range args {
 				start := time.Now()
 				logger.Debug("run", "task", call, "from", rootOrigin, "dry-run", dry)
 				defer func() {
 					logger.Debug("ran", "task", call, "from", rootOrigin, "dry-run", dry, "duration", time.Since(start))
 				}()
-				_, err := maru2.Run(ctx, wf, call, with, rootOrigin, dry)
+				_, err := maru2.Run(ctx, svc, wf, call, with, rootOrigin, dry)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)

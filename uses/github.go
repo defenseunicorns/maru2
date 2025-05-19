@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/google/go-github/v62/github"
 	"github.com/package-url/packageurl-go"
@@ -20,21 +22,46 @@ type GitHubClient struct {
 }
 
 // NewGitHubClient creates a new GitHub client
-func NewGitHubClient() *GitHubClient {
+func NewGitHubClient(base string, tokenEnv string) (*GitHubClient, error) {
 	client := github.NewClient(nil)
 
-	token, ok := os.LookupEnv("GITHUB_TOKEN")
+	if tokenEnv == "" {
+		tokenEnv = "GITHUB_TOKEN"
+	}
+
+	token, ok := os.LookupEnv(tokenEnv)
+	if tokenEnv != "GITHUB_TOKEN" && !ok {
+		return nil, fmt.Errorf("token environment variable %s is not set", tokenEnv)
+	}
+
 	if ok {
 		client = client.WithAuthToken(token)
 	}
-	return &GitHubClient{client}
+
+	if base != "" {
+		baseURL, err := url.Parse(base)
+		if err != nil {
+			return nil, fmt.Errorf("invalid base URL: %w", err)
+		}
+
+		if !strings.HasSuffix(baseURL.Path, "/") {
+			baseURL.Path += "/"
+		}
+		client.BaseURL = baseURL
+	}
+
+	return &GitHubClient{client}, nil
 }
 
-// Fetch the file
+// Fetch downloads a file from GitHub
 func (g *GitHubClient) Fetch(ctx context.Context, uses string) (io.ReadCloser, error) {
 	pURL, err := packageurl.FromString(uses)
 	if err != nil {
 		return nil, err
+	}
+
+	if pURL.Type != packageurl.TypeGithub {
+		return nil, fmt.Errorf("purl type is not %q: %q", packageurl.TypeGithub, pURL.Type)
 	}
 
 	rc, resp, err := g.client.Repositories.DownloadContents(ctx, pURL.Namespace, pURL.Name, pURL.Subpath, &github.RepositoryContentGetOptions{

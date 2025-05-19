@@ -13,9 +13,6 @@ import (
 // DefaultTaskName is the default task name
 const DefaultTaskName = "default"
 
-// DefaultFileName is the default file name
-const DefaultFileName = "tasks.yaml"
-
 // Workflow is a wrapper struct around the input map and task map
 //
 // It represents a "tasks.yaml" file

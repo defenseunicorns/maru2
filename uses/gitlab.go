@@ -21,25 +21,36 @@ type GitLabClient struct {
 }
 
 // NewGitLabClient creates a new GitLab client
-func NewGitLabClient(base string) (*GitLabClient, error) {
+func NewGitLabClient(base string, tokenEnv string) (*GitLabClient, error) {
+	if tokenEnv == "" {
+		tokenEnv = "GITLAB_TOKEN"
+	}
+
+	token, ok := os.LookupEnv(tokenEnv)
+	if tokenEnv != "GITLAB_TOKEN" && !ok {
+		return nil, fmt.Errorf("token environment variable %s is not set", tokenEnv)
+	}
+
 	if base == "" {
 		base = "https://gitlab.com"
 	}
 
-	token := os.Getenv("GITLAB_TOKEN")
 	client, err := gitlab.NewClient(token, gitlab.WithBaseURL(base))
 	if err != nil {
 		return nil, err
 	}
-
 	return &GitLabClient{client}, nil
 }
 
-// Fetch the file
+// Fetch downloads a file from GitLab
 func (g *GitLabClient) Fetch(ctx context.Context, uses string) (io.ReadCloser, error) {
 	pURL, err := packageurl.FromString(uses)
 	if err != nil {
 		return nil, err
+	}
+
+	if pURL.Type != packageurl.TypeGitlab {
+		return nil, fmt.Errorf("purl type is not %q: %q", packageurl.TypeGitlab, pURL.Type)
 	}
 
 	pid := pURL.Namespace + "/" + pURL.Name
@@ -51,7 +62,7 @@ func (g *GitLabClient) Fetch(ctx context.Context, uses string) (io.ReadCloser, e
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get file %s: %s", pURL, resp.Status)
+		return nil, fmt.Errorf("failed to download %s: %s", pURL, resp.Status)
 	}
 
 	return io.NopCloser(bytes.NewReader(b)), nil

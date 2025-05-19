@@ -34,5 +34,15 @@ func (f *LocalFetcher) Fetch(_ context.Context, uses string) (io.ReadCloser, err
 	}
 
 	p := uri.Opaque
+
+	fileInfo, err := f.fs.Stat(p)
+	if err != nil {
+		return nil, err
+	}
+
+	if fileInfo.IsDir() {
+		return nil, fmt.Errorf("read %s: is a directory", p)
+	}
+
 	return f.fs.Open(p)
 }

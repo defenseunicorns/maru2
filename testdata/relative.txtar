@@ -12,4 +12,4 @@ callback:
 -- dir/maru2-other.yaml --
 default:
   - run: echo "default"
-  - uses: file:../?task=callback
+  - uses: file:../tasks.yaml?task=callback
