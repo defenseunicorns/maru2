@@ -118,12 +118,12 @@ func resolvePkgToFile(p string, uri *url.URL) (string, error) {
 		pURL.Subpath = DefaultFileName
 	}
 	if pURL.Version == "" {
-		pURL.Version = "main"
+		pURL.Version = DefaultVersion
 	}
 
-	if taskName := uri.Query().Get("task"); taskName != "" {
+	if taskName := uri.Query().Get(QualifierTask); taskName != "" {
 		qm := pURL.Qualifiers.Map()
-		qm["task"] = taskName
+		qm[QualifierTask] = taskName
 		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
 	}
 

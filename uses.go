@@ -47,7 +47,7 @@ func ExecuteUses(ctx context.Context, svc *uses.FetcherService, u string, with W
 		return nil, err
 	}
 
-	taskName := nextURI.Query().Get("task")
+	taskName := nextURI.Query().Get(uses.QualifierTask)
 
 	return Run(ctx, svc, wf, taskName, with, next, dry)
 }

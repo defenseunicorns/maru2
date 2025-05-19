@@ -90,7 +90,7 @@ func TestConfigBasedResolver(t *testing.T) {
 				Type:       tt.inputType,
 				Namespace:  "test",
 				Name:       "repo",
-				Version:    "main",
+				Version:    DefaultVersion,
 				Qualifiers: qualifiers,
 				Subpath:    "path/to/file.yaml",
 			}
