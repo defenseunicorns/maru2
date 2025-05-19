@@ -4,10 +4,10 @@
 package uses
 
 import (
-	"context"
 	"io"
 	"testing"
 
+	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +18,7 @@ func TestGitLabFetcher(t *testing.T) {
 
 	uses := "pkg:gitlab/noxsios/vai@main?task=hello-world#vai.yaml"
 
-	ctx := context.Background()
+	ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 	client, err := NewGitLabClient("", "")
 	require.NoError(t, err)

@@ -4,11 +4,11 @@
 package uses
 
 import (
-	"context"
 	"io"
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +51,7 @@ func TestLocalFetcher(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fetcher := NewLocalFetcher(fs)
-			ctx := context.Background()
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 			rc, err := fetcher.Fetch(ctx, tc.uses)
 			if tc.expectedFetchErr != "" {

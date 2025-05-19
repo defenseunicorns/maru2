@@ -5,7 +5,6 @@ package builtins
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -86,7 +85,7 @@ func TestBuiltinEcho(t *testing.T) {
 
 			var buf bytes.Buffer
 			logger := log.New(&buf)
-			ctx := log.WithContext(context.Background(), logger)
+			ctx := log.WithContext(t.Context(), logger)
 
 			echo := echo{Text: tc.text}
 			result, err := echo.Execute(ctx)
@@ -220,7 +219,7 @@ func TestBuiltinFetch(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			logger := log.New(io.Discard)
-			ctx := log.WithContext(context.Background(), logger)
+			ctx := log.WithContext(t.Context(), logger)
 
 			result, err := tc.fetch.Execute(ctx)
 

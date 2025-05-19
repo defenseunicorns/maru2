@@ -4,19 +4,19 @@
 package uses
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHTTPFetcher(t *testing.T) {
 	fetcher := NewHTTPFetcher()
-	ctx := context.Background()
+	ctx := log.WithContext(t.Context(), log.New(io.Discard))
 	hw := `echo: [run: "Hello, World!"]`
 
 	handler := func(w http.ResponseWriter, r *http.Request) {

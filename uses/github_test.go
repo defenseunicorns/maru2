@@ -4,10 +4,10 @@
 package uses
 
 import (
-	"context"
 	"io"
 	"testing"
 
+	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +18,7 @@ func TestGitHubFetcher(t *testing.T) {
 
 	uses := "pkg:github/noxsios/vai@main?task=echo#testdata/simple.yaml"
 
-	ctx := context.Background()
+	ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 	client, err := NewGitHubClient("", "")
 	require.NoError(t, err)
