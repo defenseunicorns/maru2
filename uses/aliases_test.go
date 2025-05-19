@@ -60,13 +60,13 @@ func TestConfigBasedResolver(t *testing.T) {
 				},
 			},
 			wantType:       packageurl.TypeGitlab,
-			wantQualifiers: map[string]string{"base": "https://gitlab.example.com"},
+			wantQualifiers: map[string]string{QualifierBaseURL: "https://gitlab.example.com"},
 			wantResolved:   true,
 		},
 		{
 			name:            "alias with overridden base",
 			inputType:       "gl",
-			inputQualifiers: map[string]string{"base": "https://my-gitlab.com"},
+			inputQualifiers: map[string]string{QualifierBaseURL: "https://my-gitlab.com"},
 			aliasConfig: &AliasConfig{
 				Aliases: map[string]AliasDefinition{
 					"gl": {
@@ -76,7 +76,7 @@ func TestConfigBasedResolver(t *testing.T) {
 				},
 			},
 			wantType:       packageurl.TypeGitlab,
-			wantQualifiers: map[string]string{"base": "https://my-gitlab.com"},
+			wantQualifiers: map[string]string{QualifierBaseURL: "https://my-gitlab.com"},
 			wantResolved:   true,
 		},
 	}

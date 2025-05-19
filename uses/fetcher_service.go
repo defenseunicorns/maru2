@@ -77,8 +77,8 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		}
 
 		qualifiers := pURL.Qualifiers.Map()
-		tokenEnv := qualifiers["token-from-env"]
-		base := qualifiers["base"]
+		tokenEnv := qualifiers[QualifierTokenFromEnv]
+		base := qualifiers[QualifierBaseURL]
 
 		switch pURL.Type {
 		case packageurl.TypeGithub:
