@@ -4,6 +4,9 @@
 package uses
 
 import (
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/package-url/packageurl-go"
@@ -79,6 +82,22 @@ func TestConfigBasedResolver(t *testing.T) {
 			wantQualifiers: map[string]string{QualifierBaseURL: "https://my-gitlab.com"},
 			wantResolved:   true,
 		},
+		{
+			name:            "alias with token from env",
+			inputType:       "another",
+			inputQualifiers: map[string]string{},
+			aliasConfig: &AliasConfig{
+				Aliases: map[string]AliasDefinition{
+					"another": {
+						Type:         packageurl.TypeGithub,
+						TokenFromEnv: "GITHUB2_TOKEN",
+					},
+				},
+			},
+			wantType:       packageurl.TypeGithub,
+			wantQualifiers: map[string]string{QualifierTokenFromEnv: "GITHUB2_TOKEN"},
+			wantResolved:   true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -118,7 +137,27 @@ func TestFileSystemConfigLoader(t *testing.T) {
     base: https://gitlab.example.com
   gh:
     type: github
+  another:
+    type: github
+    token-from-env: GITHUB_TOKEN
 `
+
+	cfg := &AliasConfig{
+		Aliases: map[string]AliasDefinition{
+			"gl": {
+				Type: packageurl.TypeGitlab,
+				Base: "https://gitlab.example.com",
+			},
+			"gh": {
+				Type: packageurl.TypeGithub,
+			},
+			"another": {
+				Type:         packageurl.TypeGithub,
+				TokenFromEnv: "GITHUB_TOKEN",
+			},
+		},
+	}
+
 	fsys := afero.NewMemMapFs()
 	err := afero.WriteFile(fsys, "etc/maru2/aliases.yaml", []byte(configContent), 0644)
 	require.NoError(t, err)
@@ -127,7 +166,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	config, err := loader.LoadConfig()
 	require.NoError(t, err)
 
-	require.Len(t, config.Aliases, 2)
+	require.Len(t, config.Aliases, 3)
 
 	glAlias, ok := config.Aliases["gl"]
 	require.True(t, ok)
@@ -144,6 +183,27 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 	require.Empty(t, config.Aliases)
+
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		t.Setenv("HOME", "")
+		loader, err = DefaultConfigLoader()
+		require.Nil(t, loader)
+		require.EqualError(t, err, "$HOME is not defined")
+
+		tmpDir := t.TempDir()
+		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0755)
+		require.NoError(t, err)
+
+		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", "aliases.yaml"), []byte(configContent), 0644)
+		require.NoError(t, err)
+
+		t.Setenv("HOME", tmpDir)
+		loader, err = DefaultConfigLoader()
+		require.NoError(t, err)
+		config, err = loader.LoadConfig()
+		require.NoError(t, err)
+		require.Equal(t, cfg.Aliases, config.Aliases)
+	}
 }
 
 func TestConfigLoaderWithInvalidYAML(t *testing.T) {
