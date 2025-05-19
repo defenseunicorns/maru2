@@ -101,6 +101,28 @@ Note that the same naming rules apply to step IDs. This consistency makes it eas
 
 Both can be used interchangeably within a task, and interoperate cleanly with `with`.
 
+## Working directory with `dir`
+
+You can specify a working directory for a step using the `dir` field. This applies to both `run` and `uses` steps.
+
+```yaml {filename="tasks.yaml"}
+tasks:
+  build:
+    # Run a command in a specific directory
+    - run: npm install
+      dir: frontend
+
+    # Use a task in a specific directory
+    - uses: test
+      dir: backend
+```
+
+The `dir` field must be a relative path and cannot be an absolute path. It defaults to the current working directory `maru2` is executed in.
+
+For `run` steps, the command is executed in the specified directory.
+
+For `uses` steps, the referenced task is executed with the working directory set to the specified directory.
+
 ## Defining input parameters
 
 Maru2 allows you to define input parameters for your tasks. These parameters can be required or optional, and can have default values.
