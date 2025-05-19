@@ -6,23 +6,24 @@ cmp stdout stdout.txt
 stderr 'ERRO exit status 1'
 
 -- tasks.yaml --
-fails:
-  - run: exit 1
+tasks:
+  fails:
+    - run: exit 1
 
-continues:
-  - run: echo 0
-  - if: failure
-    run: echo 1
-  - run: echo 2
-  - uses: fails
-  - run: echo 3
-  - if: always
-    run: echo 4
-  - run: echo 5
-  - if: always
-    run: echo 6
-  - if: failure
-    run: echo 7
+  continues:
+    - run: echo 0
+    - if: failure
+      run: echo 1
+    - run: echo 2
+    - uses: fails
+    - run: echo 3
+    - if: always
+      run: echo 4
+    - run: echo 5
+    - if: always
+      run: echo 6
+    - if: failure
+      run: echo 7
 
 -- stderr.txt --
 $ echo 0

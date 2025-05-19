@@ -3,12 +3,13 @@ cmp stderr stderr.txt
 cmp stdout stdout.txt
 
 -- tasks.yaml --
-general-kenobi:
-  - run: echo "General Kenobi"
+tasks:
+  general-kenobi:
+    - run: echo "General Kenobi"
 
-hello:
-  - run: echo "Hello There!"
-  - uses: general-kenobi
+  hello:
+    - run: echo "Hello There!"
+    - uses: general-kenobi
 
 -- stderr.txt --
 $ echo "Hello There!"

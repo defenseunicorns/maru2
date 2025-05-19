@@ -7,14 +7,15 @@ exec touch tasks.yaml
 stderr 'ERRO no tasks available'
 
 -- tasks.yaml --
-default:
-  - run: echo "default"
+tasks:
+  default:
+    - run: echo "default"
 
-hello-world:
-  - run: echo "Hello, World!"
+  hello-world:
+    - run: echo "Hello, World!"
 
-another-task:
-  - run: echo "Another task"
+  another-task:
+    - run: echo "Another task"
 -- stderr.txt --
 Available:
 

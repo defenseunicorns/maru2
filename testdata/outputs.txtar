@@ -3,11 +3,12 @@ cmp stderr stderr.txt
 stdout 'The selected color is green'
 
 -- tasks.yaml --
-color:
-  - run: |
-      echo "selected-color=green" >> $MARU2_OUTPUT
-    id: color-selector
-  - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
+tasks:
+  color:
+    - run: |
+        echo "selected-color=green" >> $MARU2_OUTPUT
+      id: color-selector
+    - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
 -- stderr.txt --
 $ echo "selected-color=green" >> $MARU2_OUTPUT
 $ echo "The selected color is green"

@@ -3,22 +3,21 @@ cmp stderr stderr.txt
 cmp stdout stdout.txt
 
 -- tasks.yaml --
+inputs:
+  name:
+    description: "Name to greet"
+  date:
+    description: "Date to use"
+    default: "now"
+tasks:
+  default:
+    - run: echo "default"
 
-name:
-  description: "Name to greet"
+  hello-world:
+    - run: echo "Hello, World!"
 
-date:
-  description: "Date to use"
-  default: "now"
-
-default:
-  - run: echo "default"
-
-hello-world:
-  - run: echo "Hello, World!"
-
-echo:
-  - run: echo "Hello, ${{ input "name" }}, today is $INPUT_DATE"
+  echo:
+    - run: echo "Hello, ${{ input "name" }}, today is $INPUT_DATE"
 -- stderr.txt --
 $ echo "Hello, World!"
 $ echo "default"

@@ -10,5 +10,6 @@ $ echo "default"
 -- stdout.txt --
 default
 -- tasks.yaml --
-default:
-  - run: echo "default"
+tasks:
+  default:
+    - run: echo "default"
