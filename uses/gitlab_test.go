@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,13 +25,21 @@ func TestGitLabFetcher(t *testing.T) {
 		client, err := NewGitLabClient("", "")
 		require.NoError(t, err)
 
-		rc, err := client.Fetch(ctx, uses)
+		rc, err := client.Fetch(ctx, "file:foo.yaml")
+		require.EqualError(t, err, `purl scheme is not "pkg": file`)
+		assert.Nil(t, rc)
+
+		rc, err = client.Fetch(ctx, "pkg:github/foo.yaml")
+		require.EqualError(t, err, `purl type is not "gitlab": "github"`)
+		assert.Nil(t, rc)
+
+		rc, err = client.Fetch(ctx, uses)
 		require.NoError(t, err)
 
 		b, err := io.ReadAll(rc)
 		require.NoError(t, err)
 
-		require.Equal(t, `# yaml-language-server: $schema=vai.schema.json
+		assert.Equal(t, `# yaml-language-server: $schema=vai.schema.json
 
 hello-world:
   - run: echo "Hello, World!"
@@ -46,25 +55,25 @@ hello-world:
 		customEnv := "CUSTOM_GITLAB_TOKEN"
 		_, err = NewGitLabClient("", customEnv)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), customEnv)
+		assert.Contains(t, err.Error(), customEnv)
 
 		// Test with custom token env that exists
 		t.Setenv(customEnv, "dummy-token")
 		client, err := NewGitLabClient("", customEnv)
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		assert.NotNil(t, client)
 	})
 
 	t.Run("base url", func(t *testing.T) {
 		// Test with default base URL
 		client, err := NewGitLabClient("", "")
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		assert.NotNil(t, client)
 
 		// Test with custom base URL
 		baseURL := "https://gitlab.example.com"
 		client, err = NewGitLabClient(baseURL, "")
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		assert.NotNil(t, client)
 	})
 }

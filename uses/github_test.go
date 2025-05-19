@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,13 +26,21 @@ func TestGitHubFetcher(t *testing.T) {
 		client, err := NewGitHubClient("", "")
 		require.NoError(t, err)
 
-		rc, err := client.Fetch(ctx, uses)
+		rc, err := client.Fetch(ctx, "file:foo.yaml")
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
+
+		rc, err = client.Fetch(ctx, "pkg:github/foo.yaml")
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `purl type is not "github": "github"`)
+
+		rc, err = client.Fetch(ctx, uses)
 		require.NoError(t, err)
 
 		b, err := io.ReadAll(rc)
 		require.NoError(t, err)
 
-		require.Equal(t, `# yaml-language-server: $schema=../vai.schema.json
+		assert.Equal(t, `# yaml-language-server: $schema=../vai.schema.json
 
 echo:
   - run: |
@@ -50,26 +59,26 @@ echo:
 		customEnv := "CUSTOM_GITHUB_TOKEN"
 		_, err = NewGitHubClient("", customEnv)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), customEnv)
+		assert.Contains(t, err.Error(), customEnv)
 
 		// Test with custom token env that exists
 		t.Setenv(customEnv, "dummy-token")
 		client, err := NewGitHubClient("", customEnv)
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		assert.NotNil(t, client)
 	})
 
 	t.Run("base url", func(t *testing.T) {
 		// Test with invalid base URL
 		_, err := NewGitHubClient(":%invalid", "")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid base URL")
+		assert.Contains(t, err.Error(), "invalid base URL")
 
 		// Test with valid base URL
 		baseURL := "https://github.example.com"
 		client, err := NewGitHubClient(baseURL, "")
 		require.NoError(t, err)
-		require.NotNil(t, client)
+		assert.NotNil(t, client)
 
 		// Verify the base URL was set correctly
 		actualBaseURL := client.client.BaseURL.String()
@@ -77,6 +86,6 @@ echo:
 		if !strings.HasSuffix(expectedBaseURL, "/") {
 			expectedBaseURL += "/"
 		}
-		require.Equal(t, expectedBaseURL, actualBaseURL)
+		assert.Equal(t, expectedBaseURL, actualBaseURL)
 	})
 }

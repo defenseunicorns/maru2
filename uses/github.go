@@ -60,6 +60,10 @@ func (g *GitHubClient) Fetch(ctx context.Context, uses string) (io.ReadCloser, e
 		return nil, err
 	}
 
+	if pURL.Type != packageurl.TypeGithub {
+		return nil, fmt.Errorf("purl type is not %q: %q", packageurl.TypeGithub, pURL.Type)
+	}
+
 	rc, resp, err := g.client.Repositories.DownloadContents(ctx, pURL.Namespace, pURL.Name, pURL.Subpath, &github.RepositoryContentGetOptions{
 		Ref: pURL.Version,
 	})
