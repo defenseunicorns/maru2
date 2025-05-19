@@ -22,8 +22,8 @@ type GitHubClient struct {
 }
 
 // NewGitHubClient creates a new GitHub client
-func NewGitHubClient(base string, tokenEnv string) (*GitHubClient, error) {
-	client := github.NewClient(nil)
+func NewGitHubClient(client *http.Client, base string, tokenEnv string) (*GitHubClient, error) {
+	c := github.NewClient(client)
 
 	if tokenEnv == "" {
 		tokenEnv = "GITHUB_TOKEN"
@@ -35,7 +35,7 @@ func NewGitHubClient(base string, tokenEnv string) (*GitHubClient, error) {
 	}
 
 	if ok {
-		client = client.WithAuthToken(token)
+		c = c.WithAuthToken(token)
 	}
 
 	if base != "" {
@@ -47,10 +47,10 @@ func NewGitHubClient(base string, tokenEnv string) (*GitHubClient, error) {
 		if !strings.HasSuffix(baseURL.Path, "/") {
 			baseURL.Path += "/"
 		}
-		client.BaseURL = baseURL
+		c.BaseURL = baseURL
 	}
 
-	return &GitHubClient{client}, nil
+	return &GitHubClient{client: c}, nil
 }
 
 // Fetch downloads a file from GitHub

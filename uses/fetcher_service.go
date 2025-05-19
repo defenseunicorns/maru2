@@ -5,6 +5,7 @@ package uses
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"sync"
 
@@ -16,14 +17,45 @@ import (
 // FetcherService creates and manages fetchers
 type FetcherService struct {
 	resolver AliasResolver
+	client   *http.Client
 	fsys     afero.Fs
 	cache    map[string]Fetcher
 	mu       sync.RWMutex
 }
 
+type FetcherServiceOption func(*FetcherService)
+
+func WithFallbackResolver(resolver AliasResolver) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.resolver = resolver
+	}
+}
+
+func WithFS(fs afero.Fs) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.fsys = fs
+	}
+}
+
+func WithClient(client *http.Client) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.client = client
+	}
+}
+
 // NewFetcherService creates a new FetcherService with custom resolver and filesystem
-func NewFetcherService(resolver AliasResolver, fs afero.Fs) (*FetcherService, error) {
-	if resolver == nil {
+func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
+	svc := &FetcherService{
+		cache:  make(map[string]Fetcher),
+		mu:     sync.RWMutex{},
+		client: &http.Client{},
+	}
+
+	for _, opt := range opts {
+		opt(svc)
+	}
+
+	if svc.resolver == nil {
 		loader, err := config.DefaultConfigLoader()
 		if err != nil {
 			return nil, err
@@ -34,19 +66,14 @@ func NewFetcherService(resolver AliasResolver, fs afero.Fs) (*FetcherService, er
 			return nil, err
 		}
 
-		resolver = NewConfigBasedResolver(config)
+		svc.resolver = NewConfigBasedResolver(config)
 	}
 
-	if fs == nil {
-		fs = afero.NewOsFs()
+	if svc.fsys == nil {
+		svc.fsys = afero.NewOsFs()
 	}
 
-	return &FetcherService{
-		resolver: resolver,
-		fsys:     fs,
-		cache:    make(map[string]Fetcher),
-		mu:       sync.RWMutex{},
-	}, nil
+	return svc, nil
 }
 
 // GetFetcher returns a fetcher for the given URI
@@ -71,7 +98,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 
 	switch uri.Scheme {
 	case "http", "https":
-		fetcher = NewHTTPFetcher()
+		fetcher = NewHTTPFetcher(s.client)
 	case "pkg":
 		pURL, err := packageurl.FromString(uri.String())
 		if err != nil {
@@ -89,9 +116,9 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 
 		switch pURL.Type {
 		case packageurl.TypeGithub:
-			fetcher, err = NewGitHubClient(base, tokenEnv)
+			fetcher, err = NewGitHubClient(s.client, base, tokenEnv)
 		case packageurl.TypeGitlab:
-			fetcher, err = NewGitLabClient(base, tokenEnv)
+			fetcher, err = NewGitLabClient(s.client, base, tokenEnv)
 		default:
 			return nil, fmt.Errorf("unsupported package type: %q", pURL.Type)
 		}

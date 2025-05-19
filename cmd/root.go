@@ -141,7 +141,7 @@ func NewRootCmd() *cobra.Command {
 
 			rootOrigin := "file:" + filename
 
-			svc, err := uses.NewFetcherService(nil, nil)
+			svc, err := uses.NewFetcherService()
 			if err != nil {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
 			}

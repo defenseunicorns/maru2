@@ -165,7 +165,7 @@ func TestRunExtended(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			svc, err := uses.NewFetcherService(nil, nil)
+			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
 			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, tc.origin, tc.dry)
@@ -437,7 +437,7 @@ func TestHandleUsesStep(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			svc, err := uses.NewFetcherService(nil, nil)
+			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
 			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, tc.outputs, tc.origin, tc.dry)

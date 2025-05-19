@@ -83,7 +83,10 @@ func TestFetcherService(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			service, err := NewFetcherService(tc.resolver, tc.fs)
+			service, err := NewFetcherService(
+				WithFallbackResolver(tc.resolver),
+				WithFS(tc.fs),
+			)
 			require.NoError(t, err)
 			assert.NotNil(t, service)
 

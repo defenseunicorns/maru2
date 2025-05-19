@@ -16,7 +16,7 @@ import (
 )
 
 func TestExecuteUses(t *testing.T) {
-	svc, err := uses.NewFetcherService(nil, nil)
+	svc, err := uses.NewFetcherService()
 	require.NoError(t, err)
 
 	workflowFoo := Workflow{Tasks: TaskMap{"default": {Step{Run: "echo 'foo'"}, Step{Uses: "file:bar/baz.yaml?task=baz"}}}}
