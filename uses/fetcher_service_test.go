@@ -13,34 +13,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type mockResolver struct {
-	resolveFunc func(packageurl.PackageURL) (packageurl.PackageURL, bool)
-}
-
-func (m *mockResolver) ResolveAlias(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
-	return m.resolveFunc(pURL)
-}
-
 func TestFetcherService(t *testing.T) {
 	testCases := []struct {
 		name           string
+		fallback       AliasResolver
 		resolver       AliasResolver
 		fs             afero.Fs
 		uri            string
 		expectedType   any
 		expectedErr    string
 		checkSameCache bool
+		verifyPURL     func(*testing.T, packageurl.PackageURL)
 	}{
 		{
 			name:         "new service with defaults",
-			resolver:     nil,
+			fallback:     nil,
 			fs:           nil,
-			expectedType: nil,
-		},
-		{
-			name:         "new service with custom config",
-			resolver:     &mockResolver{resolveFunc: func(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) { return pURL, false }},
-			fs:           afero.NewMemMapFs(),
 			expectedType: nil,
 		},
 		{
@@ -84,7 +72,7 @@ func TestFetcherService(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			service, err := NewFetcherService(
-				WithFallbackResolver(tc.resolver),
+				WithFallbackResolver(tc.fallback),
 				WithFS(tc.fs),
 			)
 			require.NoError(t, err)
@@ -97,7 +85,7 @@ func TestFetcherService(t *testing.T) {
 			}
 
 			if tc.name == "new service with custom config" {
-				assert.Equal(t, tc.resolver, service.resolver)
+				assert.Equal(t, tc.fallback, service.resolver)
 				assert.Equal(t, tc.fs, service.fsys)
 				return
 			}

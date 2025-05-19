@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func TestExecuteUses(t *testing.T) {
 	workflowBaz := Workflow{Tasks: TaskMap{"baz": {Step{Run: "echo 'baz'"}, Step{Uses: "file:../hello-world.yaml"}}}}
 
 	handleWF := func(w http.ResponseWriter, wf Workflow) {
-		b, err := yaml.Marshal(wf.Tasks)
+		b, err := yaml.Marshal(wf)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte(err.Error()))
@@ -53,15 +54,16 @@ func TestExecuteUses(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(handler))
 	t.Cleanup(server.Close)
 
-	helloWorld := server.URL + "/hello-world.yaml"
-	with := With{}
+	helloWorldURL := server.URL + "/hello-world.yaml"
 
+	with := With{}
 	dummyOrigin := "file:tasks.yaml"
 
 	tests := []struct {
 		name        string
 		uses        string
 		origin      string
+		resolver    uses.AliasResolver
 		skipShort   bool
 		expectedErr string
 	}{
@@ -77,7 +79,7 @@ func TestExecuteUses(t *testing.T) {
 		},
 		{
 			name:   "http url",
-			uses:   helloWorld,
+			uses:   helloWorldURL,
 			origin: dummyOrigin,
 		},
 		{
@@ -105,6 +107,16 @@ func TestExecuteUses(t *testing.T) {
 			expectedErr: `unsupported package type: "bitbucket"`,
 		},
 		{
+			name:   "with map based resolver",
+			uses:   "pkg:custom/noxsios/mar2-test?task=hello-world",
+			origin: dummyOrigin,
+			resolver: uses.MapBasedResolver(map[string]config.Alias{
+				"custom": {
+					Type: "gitlab",
+				},
+			}),
+		},
+		{
 			name:      "pkg scheme with github",
 			uses:      "file:..?task=hello-world",
 			origin:    "pkg:github/defenseunicorns/maru2#testdata/hello-world.yaml",
@@ -120,14 +132,15 @@ func TestExecuteUses(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			if tt.skipShort && testing.Short() {
+			if tt.skipShort { // && testing.Short() {
 				t.Skip("skipping test in short mode")
 			}
 
-			_, err := ExecuteUses(ctx, svc, tt.uses, with, tt.origin, false)
 			if tt.expectedErr == "" {
+				_, err := ExecuteUses(ctx, svc, tt.resolver, tt.uses, with, tt.origin, false)
 				require.NoError(t, err)
 			} else {
+				_, err := ExecuteUses(ctx, svc, tt.resolver, tt.uses, with, tt.origin, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})

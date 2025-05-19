@@ -13,11 +13,11 @@ import (
 )
 
 // ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, svc *uses.FetcherService, u string, with With, prev string, dry bool) (map[string]any, error) {
+func ExecuteUses(ctx context.Context, svc *uses.FetcherService, resolver uses.AliasResolver, u string, with With, prev string, dry bool) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("using", "task", u)
 
-	next, err := uses.ResolveURL(prev, u)
+	next, err := uses.ResolveURL(prev, u, svc.AliasResolver(), resolver)
 	if err != nil {
 		return nil, err
 	}

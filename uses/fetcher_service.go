@@ -80,6 +80,10 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	return svc, nil
 }
 
+func (s *FetcherService) AliasResolver() AliasResolver {
+	return s.resolver
+}
+
 // GetFetcher returns a fetcher for the given URI
 func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 	cacheKey := uri.String()
@@ -107,11 +111,6 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		pURL, err := packageurl.FromString(uri.String())
 		if err != nil {
 			return nil, err
-		}
-
-		resolvedPURL, isAlias := s.resolver.ResolveAlias(pURL)
-		if isAlias {
-			pURL = resolvedPURL
 		}
 
 		qualifiers := pURL.Qualifiers.Map()

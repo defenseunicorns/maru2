@@ -97,7 +97,7 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
 		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
 	}
-	return ExecuteUses(ctx, svc, step.Uses, templatedWith, origin, dry)
+	return ExecuteUses(ctx, svc, uses.MapBasedResolver(wf.Aliases), step.Uses, templatedWith, origin, dry)
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,

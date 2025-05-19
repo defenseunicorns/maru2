@@ -542,33 +542,3 @@ ERRO exit status 1
 The traceback shows that the error occurred in the first step (`[0]`) of the `fail` task, which was called from the second step (`[1]`) of the `caller` task.
 
 This traceback information is particularly valuable when debugging complex workflows with multiple levels of task nesting or when using remote tasks.
-
-## Workflow extensions
-
-Maru2 supports extensions in workflow files using keys prefixed with `x-`. These keys are ignored during workflow validation and execution, allowing you to add custom metadata or documentation to your workflow files.
-
-```yaml {filename="tasks.yaml"}
-# Extension fields are prefixed with x-
-x-version: 1.0.0
-x-maintainer: "Jane Doe <jane@example.com>"
-x-description: |
-  This workflow handles the build, test, and deployment processes
-  for our application. It's designed to be used in CI/CD pipelines.
-
-# Regular workflow content
-tasks:
-  default:
-    - uses: build
-
-  build:
-    - run: go build -o bin/app ./cmd/app
-```
-
-Extension fields can be used for various purposes:
-
-- Adding version information to track workflow changes
-- Including maintainer contact information
-- Providing detailed documentation about the workflow
-- Adding custom metadata for external tools or integrations
-
-While these fields don't affect the execution of the workflow, they can be valuable for documentation and maintenance purposes.

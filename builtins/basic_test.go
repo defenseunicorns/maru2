@@ -120,7 +120,7 @@ func TestBuiltinFetch(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
-	defer server.Close()
+	t.Cleanup(server.Close)
 
 	testCases := []struct {
 		name          string

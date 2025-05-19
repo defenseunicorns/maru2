@@ -61,6 +61,8 @@ func (g *GitLabClient) Fetch(ctx context.Context, uses string) (io.ReadCloser, e
 		return nil, fmt.Errorf("purl type is not %q: %q", packageurl.TypeGitlab, pURL.Type)
 	}
 
+	fmt.Println("Fetching", pURL)
+
 	pid := pURL.Namespace + "/" + pURL.Name
 	b, resp, err := g.client.RepositoryFiles.GetRawFile(pid, pURL.Subpath, &gitlab.GetRawFileOptions{
 		Ref: &pURL.Version,
