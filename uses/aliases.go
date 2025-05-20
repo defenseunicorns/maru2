@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
 package uses
 
 import (
@@ -5,6 +8,7 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
+// ResolveAlias resolves a package URL using the given aliases map
 func ResolveAlias(pURL packageurl.PackageURL, aliases map[string]config.Alias) (packageurl.PackageURL, bool) {
 	aliasDef, ok := aliases[pURL.Type]
 	if !ok {
