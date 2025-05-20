@@ -34,7 +34,7 @@ func ExecuteBuiltin(ctx context.Context, step Step, with With, previous CommandO
 
 	if dry {
 		logger.Info("dry run", "builtin", name)
-		err := printBuiltin(ctx, rendered)
+		err := printBuiltin(logger, rendered)
 		if err != nil {
 			return nil, err
 		}
