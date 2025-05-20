@@ -7,40 +7,28 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type mockResolver struct {
-	resolveFunc func(packageurl.PackageURL) (packageurl.PackageURL, bool)
-}
-
-func (m *mockResolver) ResolveAlias(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) {
-	return m.resolveFunc(pURL)
-}
-
 func TestFetcherService(t *testing.T) {
 	testCases := []struct {
 		name           string
-		resolver       AliasResolver
+		aliases        map[string]config.Alias
 		fs             afero.Fs
 		uri            string
 		expectedType   any
 		expectedErr    string
 		checkSameCache bool
+		verifyPURL     func(*testing.T, packageurl.PackageURL)
 	}{
 		{
 			name:         "new service with defaults",
-			resolver:     nil,
+			aliases:      nil,
 			fs:           nil,
-			expectedType: nil,
-		},
-		{
-			name:         "new service with custom config",
-			resolver:     &mockResolver{resolveFunc: func(pURL packageurl.PackageURL) (packageurl.PackageURL, bool) { return pURL, false }},
-			fs:           afero.NewMemMapFs(),
 			expectedType: nil,
 		},
 		{
@@ -55,7 +43,7 @@ func TestFetcherService(t *testing.T) {
 		},
 		{
 			name:         "get github fetcher",
-			uri:          "pkg:github/noxsios/vai",
+			uri:          "pkg:github/defenseunicorns/maru2",
 			expectedType: &GitHubClient{},
 		},
 		{
@@ -83,18 +71,21 @@ func TestFetcherService(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			service, err := NewFetcherService(tc.resolver, tc.fs)
+			service, err := NewFetcherService(
+				WithAliases(tc.aliases),
+				WithFS(tc.fs),
+			)
 			require.NoError(t, err)
 			assert.NotNil(t, service)
 
 			if tc.name == "new service with defaults" {
-				require.NotNil(t, service.resolver)
+				require.NotNil(t, service.PkgAliases())
 				require.NotNil(t, service.fsys)
 				return
 			}
 
 			if tc.name == "new service with custom config" {
-				assert.Equal(t, tc.resolver, service.resolver)
+				assert.Equal(t, tc.aliases, service.PkgAliases())
 				assert.Equal(t, tc.fs, service.fsys)
 				return
 			}

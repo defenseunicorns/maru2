@@ -5,41 +5,88 @@ package uses
 
 import (
 	"fmt"
+	"maps"
+	"net/http"
 	"net/url"
 	"sync"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 )
 
 // FetcherService creates and manages fetchers
 type FetcherService struct {
-	resolver AliasResolver
-	fsys     afero.Fs
-	cache    map[string]Fetcher
-	mu       sync.RWMutex
+	aliases map[string]config.Alias
+	client  *http.Client
+	fsys    afero.Fs
+	cache   map[string]Fetcher
+	mu      sync.RWMutex
+}
+
+// FetcherServiceOption is a function that configures a FetcherService
+type FetcherServiceOption func(*FetcherService)
+
+// WithAliases sets the aliases to be used by the fetcher service
+func WithAliases(aliases map[string]config.Alias) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.aliases = aliases
+	}
+}
+
+// WithFS sets the filesystem to be used by the fetcher service
+func WithFS(fs afero.Fs) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.fsys = fs
+	}
+}
+
+// WithClient sets the HTTP client to be used by the fetcher service
+func WithClient(client *http.Client) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.client = client
+	}
 }
 
 // NewFetcherService creates a new FetcherService with custom resolver and filesystem
-func NewFetcherService(resolver AliasResolver, fs afero.Fs) (*FetcherService, error) {
-	if resolver == nil {
-		var err error
-		resolver, err = DefaultResolver()
+func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
+	svc := &FetcherService{
+		mu:    sync.RWMutex{},
+		cache: make(map[string]Fetcher),
+	}
+
+	for _, opt := range opts {
+		opt(svc)
+	}
+
+	if svc.aliases == nil {
+		loader, err := config.DefaultConfigLoader()
 		if err != nil {
-			return nil, fmt.Errorf("failed to initialize default resolver: %w", err)
+			return nil, err
 		}
+
+		config, err := loader.LoadConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		svc.aliases = config.Aliases
 	}
 
-	if fs == nil {
-		fs = afero.NewOsFs()
+	if svc.fsys == nil {
+		svc.fsys = afero.NewOsFs()
 	}
 
-	return &FetcherService{
-		resolver: resolver,
-		fsys:     fs,
-		cache:    make(map[string]Fetcher),
-		mu:       sync.RWMutex{},
-	}, nil
+	if svc.client == nil {
+		svc.client = &http.Client{}
+	}
+
+	return svc, nil
+}
+
+// PkgAliases returns the aliases used by the fetcher service
+func (s *FetcherService) PkgAliases() map[string]config.Alias {
+	return maps.Clone(s.aliases)
 }
 
 // GetFetcher returns a fetcher for the given URI
@@ -64,16 +111,11 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 
 	switch uri.Scheme {
 	case "http", "https":
-		fetcher = NewHTTPFetcher()
+		fetcher = NewHTTPFetcher(s.client)
 	case "pkg":
 		pURL, err := packageurl.FromString(uri.String())
 		if err != nil {
 			return nil, err
-		}
-
-		resolvedPURL, isAlias := s.resolver.ResolveAlias(pURL)
-		if isAlias {
-			pURL = resolvedPURL
 		}
 
 		qualifiers := pURL.Qualifiers.Map()
@@ -82,9 +124,9 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 
 		switch pURL.Type {
 		case packageurl.TypeGithub:
-			fetcher, err = NewGitHubClient(base, tokenEnv)
+			fetcher, err = NewGitHubClient(s.client, base, tokenEnv)
 		case packageurl.TypeGitlab:
-			fetcher, err = NewGitLabClient(base, tokenEnv)
+			fetcher, err = NewGitLabClient(s.client, base, tokenEnv)
 		default:
 			return nil, fmt.Errorf("unsupported package type: %q", pURL.Type)
 		}

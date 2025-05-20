@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -139,9 +140,18 @@ func NewRootCmd() *cobra.Command {
 				defer cancel()
 			}
 
-			rootOrigin := "file:" + filename
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
 
-			svc, err := uses.NewFetcherService(nil, nil)
+			fullPath := filepath.Join(cwd, filename)
+
+			rootOrigin := "file:" + fullPath
+
+			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
+
+			svc, err := uses.NewFetcherService()
 			if err != nil {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
 			}

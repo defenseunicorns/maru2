@@ -6,18 +6,23 @@ package maru2
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/url"
 
 	"github.com/charmbracelet/log"
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
 // ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, svc *uses.FetcherService, u string, with With, prev string, dry bool) (map[string]any, error) {
+func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[string]config.Alias, u string, with With, prev string, dry bool) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("using", "task", u)
 
-	next, err := uses.ResolveURL(prev, u)
+	aliases := svc.PkgAliases()
+	maps.Copy(aliases, pkgAliases)
+
+	next, err := uses.ResolveURL(prev, u, aliases)
 	if err != nil {
 		return nil, err
 	}

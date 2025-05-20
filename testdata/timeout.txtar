@@ -2,5 +2,6 @@
 stderr 'ERRO task "sleep" timed out'
 
 -- tasks.yaml --
-sleep:
-  - run: sleep 10
+tasks:
+  sleep:
+    - run: sleep 10

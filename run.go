@@ -11,6 +11,7 @@ import (
 	"maps"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -82,6 +83,8 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
 	outputs CommandOutputs, origin string, dry bool) (map[string]any, error) {
 
+	ctx = WithCWDContext(ctx, filepath.Join(CWDFromContext(ctx), step.Dir))
+
 	if strings.HasPrefix(step.Uses, "builtin:") {
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
 	}
@@ -94,7 +97,7 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
 		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
 	}
-	return ExecuteUses(ctx, svc, step.Uses, templatedWith, origin, dry)
+	return ExecuteUses(ctx, svc, wf.Aliases, step.Uses, templatedWith, origin, dry)
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,
@@ -126,6 +129,7 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 
 	cmd := exec.CommandContext(ctx, "sh", "-e", "-c", templatedRun)
 	cmd.Env = env
+	cmd.Dir = filepath.Join(CWDFromContext(ctx), step.Dir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -148,6 +152,25 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 		return result, nil
 	}
 	return nil, nil
+}
+
+type contextKey struct{ string }
+
+// ContextKeyDir is the key used to store the current working directory in context.
+var ContextKeyDir = contextKey{"dir"}
+
+// WithCWDContext returns a new context with the given current working directory.
+func WithCWDContext(ctx context.Context, dir string) context.Context {
+	return context.WithValue(ctx, ContextKeyDir, dir)
+}
+
+// CWDFromContext returns the current working directory from the context.
+// If no current working directory is set, it returns an empty string.
+func CWDFromContext(ctx context.Context) string {
+	if dir, ok := ctx.Value(ContextKeyDir).(string); ok {
+		return dir
+	}
+	return "" // empty string is a valid dir for exec.Command, defaults to calling process's current directory
 }
 
 func prepareEnvironment(withDefaults With, outFileName string) []string {

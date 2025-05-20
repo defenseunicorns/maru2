@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -518,7 +519,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "task: Must validate \"then\" as \"if\" was valid\ntask.0.if: task.0.if must be one of the following: \"failure\", \"always\"",
+			expectedError: "tasks.task.0.if: tasks.task.0.if must be one of the following: \"failure\", \"always\"",
 		},
 		{
 			name: "invalid input schema validation",
@@ -596,8 +597,9 @@ func TestRead(t *testing.T) {
 		{
 			name: "simple workflow",
 			r: strings.NewReader(`
-echo:
-  - run: echo
+tasks:
+  echo:
+    - run: echo
 `),
 			expected: Workflow{
 				Inputs: InputMap{},
@@ -606,18 +608,21 @@ echo:
 						Run: "echo",
 					}},
 				},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedError: "",
 		},
 		{
 			name: "workflow with inputs",
 			r: strings.NewReader(`
-name:
-  description: "string"
-  default: "default name"
+tasks:
+  echo:
+    - run: echo
 
-echo:
-  - run: echo
+inputs:
+  name:
+    description: "string"
+    default: "default name"
 `),
 			expected: Workflow{
 				Inputs: InputMap{
@@ -631,17 +636,55 @@ echo:
 						Run: "echo",
 					}},
 				},
+				Aliases: map[string]config.Alias{},
+			},
+			expectedError: "",
+		},
+		{
+			name: "workflow with inputs and aliases",
+			r: strings.NewReader(`
+tasks:
+  echo:
+    - run: echo
+
+inputs:
+  name:
+    description: "string"
+    default: "default name"
+
+aliases:
+  gh:
+    type: github
+`),
+			expected: Workflow{
+				Inputs: InputMap{
+					"name": InputParameter{
+						Description: "string",
+						Default:     "default name",
+					},
+				},
+				Tasks: TaskMap{
+					"echo": Task{Step{
+						Run: "echo",
+					}},
+				},
+				Aliases: map[string]config.Alias{
+					"gh": {
+						Type: "github",
+					},
+				},
 			},
 			expectedError: "",
 		},
 		{
 			name: "workflow with extension keys",
 			r: strings.NewReader(`
+tasks:
+  echo:
+    - run: echo
+
 x-metadata:
   description: "This is a test workflow"
-
-echo:
-  - run: echo
 `),
 			expected: Workflow{
 				Inputs: InputMap{},
@@ -650,6 +693,7 @@ echo:
 						Run: "echo",
 					}},
 				},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedError: "",
 		},
@@ -657,8 +701,9 @@ echo:
 			name: "invalid yaml",
 			r:    strings.NewReader(`invalid: yaml::`),
 			expected: Workflow{
-				Inputs: InputMap{},
-				Tasks:  TaskMap{},
+				Inputs:  InputMap{},
+				Tasks:   TaskMap{},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedError: `[1:10] mapping value is not allowed in this context
 >  1 | invalid: yaml::
@@ -669,8 +714,9 @@ echo:
 			name: "read error from reader",
 			r:    badReadSeeker{failOnRead: true},
 			expected: Workflow{
-				Inputs: InputMap{},
-				Tasks:  TaskMap{},
+				Inputs:  InputMap{},
+				Tasks:   TaskMap{},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedError: "read failed",
 		},
@@ -678,43 +724,55 @@ echo:
 			name: "seek error from reader",
 			r:    badReadSeeker{failOnSeek: true},
 			expected: Workflow{
-				Inputs: InputMap{},
-				Tasks:  TaskMap{},
+				Inputs:  InputMap{},
+				Tasks:   TaskMap{},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedError: "seek failed",
 		},
 		{
 			name: "error marshaling task",
 			r: strings.NewReader(`
-echo:
-  - run: echo
-    with:
-    - invalid
+tasks:
+  echo:
+    - run: echo
+      with:
+      - invalid
 `),
 			expected: Workflow{
-				Inputs: InputMap{},
-				Tasks:  TaskMap{},
+				Inputs:  InputMap{},
+				Tasks:   TaskMap{},
+				Aliases: map[string]config.Alias{},
 			},
-			expectedError: `[3:3] sequence was used where mapping is expected
-   1 | - run: echo
-   2 |   with:
->  3 |   - invalid
-         ^
+			expectedError: `[6:7] sequence was used where mapping is expected
+   3 |   echo:
+   4 |     - run: echo
+   5 |       with:
+>  6 |       - invalid
+             ^
 `,
 		},
 		{
 			name: "error marshaling input",
 			r: strings.NewReader(`
-name:
-  description: []
+tasks:
+  echo:
+    - run: echo
+
+inputs:
+  name:
+    description: []
 `),
 			expected: Workflow{
-				Inputs: InputMap{},
-				Tasks:  TaskMap{},
+				Inputs:  InputMap{},
+				Tasks:   TaskMap{},
+				Aliases: map[string]config.Alias{},
 			},
-			expectedError: `[1:14] cannot unmarshal []interface {} into Go struct field InputParameter.Description of type string
->  1 | description: []
-                    ^
+			expectedError: `[8:18] cannot unmarshal []interface {} into Go struct field Workflow.Inputs of type string
+   6 | inputs:
+   7 |   name:
+>  8 |     description: []
+                        ^
 `,
 		},
 	}
@@ -746,8 +804,9 @@ func TestReadAndValidate(t *testing.T) {
 		{
 			name: "simple good read",
 			r: strings.NewReader(`
-echo:
-  - run: echo
+tasks:
+  echo:
+    - run: echo
 `),
 			expected: Workflow{
 				Inputs: InputMap{},
@@ -756,6 +815,7 @@ echo:
 						Run: "echo",
 					}},
 				},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedReadErr:     "",
 			expectedValidateErr: "",
@@ -764,8 +824,9 @@ echo:
 			name: "read error",
 			r:    strings.NewReader(`invalid: yaml::`),
 			expected: Workflow{
-				Inputs: InputMap{},
-				Tasks:  TaskMap{},
+				Inputs:  InputMap{},
+				Tasks:   TaskMap{},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedReadErr:     "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml::\n                ^\n",
 			expectedValidateErr: "",
@@ -773,8 +834,9 @@ echo:
 		{
 			name: "validation error",
 			r: strings.NewReader(`
-2-echo:
-  - run: echo
+tasks:
+  2-echo:
+    - run: echo
 `),
 			expected: Workflow{
 				Inputs: InputMap{},
@@ -783,6 +845,7 @@ echo:
 						Run: "echo",
 					}},
 				},
+				Aliases: map[string]config.Alias{},
 			},
 			expectedReadErr:     "",
 			expectedValidateErr: fmt.Sprintf("task name \"2-echo\" does not satisfy %q", TaskNamePattern.String()),

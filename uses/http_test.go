@@ -16,7 +16,6 @@ import (
 )
 
 func TestHTTPFetcher(t *testing.T) {
-	fetcher := NewHTTPFetcher()
 	ctx := log.WithContext(t.Context(), log.New(io.Discard))
 	hw := `echo: [run: "Hello, World!"]`
 
@@ -30,25 +29,37 @@ func TestHTTPFetcher(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("not found"))
 	}
-	server := httptest.NewServer(http.HandlerFunc(handler))
+	s1 := httptest.NewTLSServer(http.HandlerFunc(handler))
 	t.Cleanup(func() {
-		server.Close()
+		s1.Close()
 	})
 
-	rc, err := fetcher.Fetch(ctx, server.URL+"/hello-world.yaml")
-	require.NoError(t, err)
+	s2 := httptest.NewServer(http.HandlerFunc(handler))
+	t.Cleanup(func() {
+		s2.Close()
+	})
 
-	b, err := io.ReadAll(rc)
-	require.NoError(t, err)
+	f := func(server *httptest.Server) {
+		fetcher := NewHTTPFetcher(server.Client())
 
-	assert.Equal(t, string(b), hw)
+		rc, err := fetcher.Fetch(ctx, server.URL+"/hello-world.yaml")
+		require.NoError(t, err)
 
-	rc, err = fetcher.Fetch(ctx, server.URL)
-	require.EqualError(t, err, fmt.Sprintf("failed to fetch %s: 404 Not Found", server.URL))
-	assert.Nil(t, rc)
+		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
 
-	server.Close()
-	rc, err = fetcher.Fetch(ctx, server.URL+"/hello-world.yaml")
-	require.EqualError(t, err, fmt.Sprintf("Get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
-	assert.Nil(t, rc)
+		assert.Equal(t, string(b), hw)
+
+		rc, err = fetcher.Fetch(ctx, server.URL)
+		require.EqualError(t, err, fmt.Sprintf("failed to fetch %s: 404 Not Found", server.URL))
+		assert.Nil(t, rc)
+
+		server.Close()
+		rc, err = fetcher.Fetch(ctx, server.URL+"/hello-world.yaml")
+		require.EqualError(t, err, fmt.Sprintf("Get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
+		assert.Nil(t, rc)
+	}
+
+	f(s1)
+	f(s2)
 }

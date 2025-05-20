@@ -24,18 +24,19 @@ clean:
 ```
 
 ```yaml {filename="tasks.yaml"}
-default:
-  - uses: build
+tasks:
+  default:
+    - uses: build
 
-build:
-  - run: |
-      CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
+  build:
+    - run: |
+        CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
 
-test:
-  - run: go test -v -race -cover -failfast -timeout 3m ./...
+  test:
+    - run: go test -v -race -cover -failfast -timeout 3m ./...
 
-clean:
-  - run: rm -rf bin/
+  clean:
+    - run: rm -rf bin/
 ```
 
 ## Task names and descriptions
@@ -100,28 +101,52 @@ Note that the same naming rules apply to step IDs. This consistency makes it eas
 
 Both can be used interchangeably within a task, and interoperate cleanly with `with`.
 
+## Working directory with `dir`
+
+You can specify a working directory for a step using the `dir` field. This applies to both `run` and `uses` steps.
+
+```yaml {filename="tasks.yaml"}
+tasks:
+  build:
+    # Run a command in a specific directory
+    - run: npm install
+      dir: frontend
+
+    # Use a task in a specific directory
+    - uses: test
+      dir: backend
+```
+
+The `dir` field must be a relative path and cannot be an absolute path. It defaults to the current working directory `maru2` is executed in.
+
+For `run` steps, the command is executed in the specified directory.
+
+For `uses` steps, the referenced task is executed with the working directory set to the specified directory.
+
 ## Defining input parameters
 
 Maru2 allows you to define input parameters for your tasks. These parameters can be required or optional, and can have default values.
 
 ```yaml {filename="tasks.yaml"}
-# Required input (default behavior)
-name:
-  description: "Your name"
+inputs:
+  # Required input (default behavior)
+  name:
+    description: "Your name"
 
-# Optional input with default value
-greeting:
-  description: "Greeting to use"
-  default: "Hello"
-  required: false
+  # Optional input with default value
+  greeting:
+    description: "Greeting to use"
+    default: "Hello"
+    required: false
 
-# Required input with default from environment variable
-username:
-  description: "Username"
-  default-from-env: USER
+  # Required input with default from environment variable
+  username:
+    description: "Username"
+    default-from-env: USER
 
-greet:
-  - run: echo "${{ input "greeting" }}, ${{ input "name" }}! Your username is ${{ input "username" }}."
+tasks:
+  greet:
+    - run: echo "${{ input "greeting" }}, ${{ input "name" }}! Your username is ${{ input "username" }}."
 ```
 
 Input parameters have the following properties:
@@ -145,13 +170,15 @@ On top of the builtin behavior, Maru2 provides a few additional helpers:
 - `os`, `arch`, `platform`: the current OS, architecture, or platform
 
 ```yaml {filename="tasks.yaml"}
-date:
-  description: The date
-  default: now # default to "now" if input is nil
+inputs:
+  date:
+    description: The date
+    default: now # default to "now" if input is nil
 
-echo:
-  - run: echo "Hello, ${{ input "name" }}, today is ${{ input "date" }}"
-  - run: echo "The current OS is ${{ .OS }}, architecture is ${{ .ARCH }}, platform is ${{ .PLATFORM }}"
+tasks:
+  echo:
+    - run: echo "Hello, ${{ input "name" }}, today is ${{ input "date" }}"
+    - run: echo "The current OS is ${{ .OS }}, architecture is ${{ .ARCH }}, platform is ${{ .PLATFORM }}"
 ```
 
 ```sh
@@ -163,15 +190,16 @@ maru2 echo --with name=$(whoami) --with date=$(date)
 Calling another task within the same workflow is as simple as using the task name, similar to Makefile targets.
 
 ```yaml {filename="tasks.yaml"}
-general-kenobi:
-  - run: echo "General Kenobi, you are a bold one"
-  - run: echo "${{ input "response" }}"
+tasks:
+  general-kenobi:
+    - run: echo "General Kenobi, you are a bold one"
+    - run: echo "${{ input "response" }}"
 
-hello:
-  - run: echo "Hello There!"
-  - uses: general-kenobi
-    with:
-      response: Your move
+  hello:
+    - run: echo "Hello There!"
+    - uses: general-kenobi
+      with:
+        response: Your move
 ```
 
 ```sh
@@ -189,15 +217,17 @@ If the filepath is a directory, `tasks.yaml` is appended to the path.
 If the task name is not provided, the `default` task is run.
 
 ```yaml {filename="tasks/echo.yaml"}
-simple:
-  - run: echo "${{ input "message" }}"
+tasks:
+  simple:
+    - run: echo "${{ input "message" }}"
 ```
 
 ```yaml {filename="tasks.yaml"}
-echo:
-  - uses: file:tasks/echo.yaml?task=simple
-    with:
-      message: ${{ input "message" }}
+tasks:
+  echo:
+    - uses: file:tasks/echo.yaml?task=simple
+      with:
+        message: ${{ input "message" }}
 ```
 
 ```sh
@@ -211,50 +241,51 @@ maru2 echo --with message="Hello, World!"
 
 ### Package URL Aliases
 
-Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Aliases Configuration](./aliases-config.md) document.
+Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Configuration](./config.md#aliases-configuration) document.
 
-You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in a YAML configuration file located at `~/.maru2/aliases.yaml`.
+You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in the global configuration file located at `~/.maru2/config.yaml`.
 
-Example aliases configuration:
+Example configuration with aliases:
 
-```yaml {filename="~/.maru2/aliases.yaml"}
+```yaml {filename="~/.maru2/config.yaml"}
 aliases:
   gl:
     type: gitlab
-    qualifiers:
-      base: https://gitlab.example.com
+    base: https://gitlab.example.com
   gh:
     type: github
   internal:
     type: gitlab
-    qualifiers:
-      base: https://gitlab.internal.company.com
+    base: https://gitlab.internal.company.com
 ```
 
 Examples of using aliases in workflow files:
 
 ```yaml {filename="tasks.yaml"}
-# Using the full GitHub package URL
-remote-echo:
-  - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-    with:
-      message: Hello, World!
+tasks:
+  # Using the full GitHub package URL
+  remote-echo:
+    - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+      with:
+        message: Hello, World!
 ```
 
 ```yaml {filename="tasks.yaml"}
-# Using the 'gh' alias defined in ~/.maru2/aliases.yaml
-remote-echo:
-  - uses: pkg:gh/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-    with:
-      message: Hello, World!
+tasks:
+  # Using the 'gh' alias defined in ~/.maru2/config.yaml
+  remote-echo:
+    - uses: pkg:gh/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+      with:
+        message: Hello, World!
 ```
 
 ```yaml {filename="tasks.yaml"}
-# Using the 'gl' alias with GitLab
-remote-echo:
-  - uses: pkg:gl/noxsios/maru2@main?task=echo#testdata/simple.yaml
-    with:
-      message: Hello, World!
+tasks:
+  # Using the 'gl' alias with GitLab
+  remote-echo:
+    - uses: pkg:gl/noxsios/maru2@main?task=echo#testdata/simple.yaml
+      with:
+        message: Hello, World!
 ```
 
 The alias `gl` will be resolved to `gitlab` with the base URL qualifier set to `https://gitlab.example.com`.
@@ -262,19 +293,21 @@ The alias `gl` will be resolved to `gitlab` with the base URL qualifier set to `
 You can also override qualifiers defined in the alias by specifying them in the package URL:
 
 ```yaml {filename="tasks.yaml"}
-remote-echo:
-  - uses: pkg:gl/noxsios/maru2@main?base=https://other-gitlab.com&task=echo#testdata/simple.yaml
-    with:
-      message: Hello, World!
+tasks:
+  remote-echo:
+    - uses: pkg:gl/noxsios/maru2@main?base=https://other-gitlab.com&task=echo#testdata/simple.yaml
+      with:
+        message: Hello, World!
 ```
 
 This will use `https://other-gitlab.com` as the base URL instead of the one defined in the alias.
 
 ```yaml {filename="tasks.yaml"}
-remote-echo:
-  - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
-    with:
-      message: Hello, World!
+tasks:
+  remote-echo:
+    - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
+      with:
+        message: Hello, World!
 ```
 
 ```sh
@@ -291,13 +324,14 @@ Each step in a Maru2 workflow can have an optional `id` and `name` field:
 The `id` field must follow the same naming rules as task names: `^[_a-zA-Z][a-zA-Z0-9_-]*$`
 
 ```yaml {filename="tasks.yaml"}
-build:
-  - name: "Install dependencies"
-    run: npm install
-    id: install
-  - name: "Build application"
-    run: npm run build
-    id: build
+tasks:
+  build:
+    - name: "Install dependencies"
+      run: npm install
+      id: install
+    - name: "Build application"
+      run: npm run build
+      id: build
 ```
 
 The `name` field is primarily for documentation purposes and to improve readability of the workflow, while the `id` field is used for referencing outputs.
@@ -313,11 +347,12 @@ To set outputs from a step:
 3. Reference the output in subsequent steps using `${{ from "step-id" "output-key" }}`
 
 ```yaml {filename="tasks.yaml"}
-color:
-  - run: |
-      echo "selected-color=green" >> $MARU2_OUTPUT
-    id: color-selector
-  - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
+tasks:
+  color:
+    - run: |
+        echo "selected-color=green" >> $MARU2_OUTPUT
+      id: color-selector
+    - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
 ```
 
 ```sh
@@ -331,13 +366,14 @@ The selected color is green
 You can set multiple outputs from a single step by writing multiple lines to the `$MARU2_OUTPUT` file:
 
 ```yaml {filename="tasks.yaml"}
-multi-output:
-  - run: |
-      echo "name=John" >> $MARU2_OUTPUT
-      echo "age=30" >> $MARU2_OUTPUT
-      echo "city=New York" >> $MARU2_OUTPUT
-    id: user-info
-  - run: echo "User ${{ from "user-info" "name" }} is ${{ from "user-info" "age" }} years old and lives in ${{ from "user-info" "city" }}"
+tasks:
+  multi-output:
+    - run: |
+        echo "name=John" >> $MARU2_OUTPUT
+        echo "age=30" >> $MARU2_OUTPUT
+        echo "city=New York" >> $MARU2_OUTPUT
+      id: user-info
+    - run: echo "User ${{ from "user-info" "name" }} is ${{ from "user-info" "age" }} years old and lives in ${{ from "user-info" "city" }}"
 ```
 
 Outputs are only available to steps that come after the step that sets them. If a step with an ID doesn't write anything to `$MARU2_OUTPUT`, no outputs will be available from that step.
@@ -347,12 +383,14 @@ Outputs are only available to steps that come after the step that sets them. If 
 In addition to static default values, you can specify environment variables as default values for input parameters using the `default-from-env` field.
 
 ```yaml
-name:
-  description: "Your name"
-  default-from-env: USER
+inputs:
+  name:
+    description: "Your name"
+    default-from-env: USER
 
-hello:
-  - run: echo "Hello, ${{ input "name" }}"
+tasks:
+  hello:
+    - run: echo "Hello, ${{ input "name" }}"
 ```
 
 ```sh
@@ -388,20 +426,22 @@ Maru2 allows you to validate input parameters using regular expressions. This en
 To add validation to an input parameter, use the `validate` field with a regular expression pattern:
 
 ```yaml
-name:
-  description: "Your name"
-  validate: ^\w+$ # Only allow alphanumeric characters and underscores
+inputs:
+  name:
+    description: "Your name"
+    validate: ^\w+$ # Only allow alphanumeric characters and underscores
 
-version:
-  description: "Semantic version"
-  validate: ^\d+\.\d+\.\d+$ # Enforce semantic versioning format (e.g., 1.2.3)
+  version:
+    description: "Semantic version"
+    validate: ^\d+\.\d+\.\d+$ # Enforce semantic versioning format (e.g., 1.2.3)
 
-email:
-  description: "Email address"
-  validate: ^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$ # Basic email validation
+  email:
+    description: "Email address"
+    validate: ^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$ # Basic email validation
 
-hello:
-  - run: echo "Hello, ${{ input "name" }}"
+tasks:
+  hello:
+    - run: echo "Hello, ${{ input "name" }}"
 ```
 
 When a task is run, Maru2 will validate all inputs against their respective patterns. If validation fails, an error is returned and the task is not executed:
@@ -440,14 +480,15 @@ There are two conditional values supported:
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 
 ```yaml {filename="tasks.yaml"}
-example:
-  - run: echo "This step always runs first"
-  - run: exit 1 # This step will fail
-  - run: echo "This step will be skipped because the previous step failed"
-  - if: failure
-    run: echo "This step runs because a previous step failed"
-  - if: always
-    run: echo "This step always runs, regardless of previous failures"
+tasks:
+  example:
+    - run: echo "This step always runs first"
+    - run: exit 1 # This step will fail
+    - run: echo "This step will be skipped because the previous step failed"
+    - if: failure
+      run: echo "This step runs because a previous step failed"
+    - if: always
+      run: echo "This step always runs, regardless of previous failures"
 ```
 
 ```sh
@@ -475,13 +516,14 @@ For information about built-in tasks provided by Maru2, see the [Built-in Tasks]
 When a step in a Maru2 workflow fails, the error is propagated up the call stack with a traceback that shows the path of execution. This helps you identify where in your workflow the error occurred, especially for complex workflows with nested task calls.
 
 ```yaml {filename="tasks.yaml"}
-fail:
-  - run: exit 1
+tasks:
+  fail:
+    - run: exit 1
 
-caller:
-  - run: echo "Starting workflow"
-  - uses: fail
-  - run: echo "This step will be skipped"
+  caller:
+    - run: echo "Starting workflow"
+    - uses: fail
+    - run: echo "This step will be skipped"
 ```
 
 ```sh
@@ -500,32 +542,3 @@ ERRO exit status 1
 The traceback shows that the error occurred in the first step (`[0]`) of the `fail` task, which was called from the second step (`[1]`) of the `caller` task.
 
 This traceback information is particularly valuable when debugging complex workflows with multiple levels of task nesting or when using remote tasks.
-
-## Workflow extensions
-
-Maru2 supports extensions in workflow files using keys prefixed with `x-`. These keys are ignored during workflow validation and execution, allowing you to add custom metadata or documentation to your workflow files.
-
-```yaml {filename="tasks.yaml"}
-# Extension fields are prefixed with x-
-x-version: 1.0.0
-x-maintainer: "Jane Doe <jane@example.com>"
-x-description: |
-  This workflow handles the build, test, and deployment processes
-  for our application. It's designed to be used in CI/CD pipelines.
-
-# Regular workflow content
-default:
-  - uses: build
-
-build:
-  - run: go build -o bin/app ./cmd/app
-```
-
-Extension fields can be used for various purposes:
-
-- Adding version information to track workflow changes
-- Including maintainer contact information
-- Providing detailed documentation about the workflow
-- Adding custom metadata for external tools or integrations
-
-While these fields don't affect the execution of the workflow, they can be valuable for documentation and maintenance purposes.

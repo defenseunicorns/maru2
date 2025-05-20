@@ -23,7 +23,7 @@ func TestGitHubFetcher(t *testing.T) {
 
 		ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-		client, err := NewGitHubClient("", "")
+		client, err := NewGitHubClient(nil, "", "")
 		require.NoError(t, err)
 
 		rc, err := client.Fetch(ctx, "file:foo.yaml")
@@ -52,31 +52,31 @@ echo:
 
 	t.Run("environment variables", func(t *testing.T) {
 		// Test with default token env
-		_, err := NewGitHubClient("", "")
+		_, err := NewGitHubClient(nil, "", "")
 		require.NoError(t, err)
 
 		// Test with custom token env that doesn't exist
 		customEnv := "CUSTOM_GITHUB_TOKEN"
-		_, err = NewGitHubClient("", customEnv)
+		_, err = NewGitHubClient(nil, "", customEnv)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), customEnv)
 
 		// Test with custom token env that exists
 		t.Setenv(customEnv, "dummy-token")
-		client, err := NewGitHubClient("", customEnv)
+		client, err := NewGitHubClient(nil, "", customEnv)
 		require.NoError(t, err)
 		assert.NotNil(t, client)
 	})
 
 	t.Run("base url", func(t *testing.T) {
 		// Test with invalid base URL
-		_, err := NewGitHubClient(":%invalid", "")
+		_, err := NewGitHubClient(nil, ":%invalid", "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid base URL")
 
 		// Test with valid base URL
 		baseURL := "https://github.example.com"
-		client, err := NewGitHubClient(baseURL, "")
+		client, err := NewGitHubClient(nil, baseURL, "")
 		require.NoError(t, err)
 		assert.NotNil(t, client)
 

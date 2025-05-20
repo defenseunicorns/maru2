@@ -2,10 +2,11 @@ exec maru2 echo-test
 cmp stderr stderr.txt
 
 -- tasks.yaml --
-echo-test:
-  - uses: builtin:echo
-    with:
-      text: "Hello, World!"
+tasks:
+  echo-test:
+    - uses: builtin:echo
+      with:
+        text: "Hello, World!"
 
 -- stderr.txt --
 > builtin=echo with="{Text:Hello, World!}"

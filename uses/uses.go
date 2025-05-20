@@ -31,12 +31,7 @@ type Fetcher interface {
 	Fetch(context.Context, string) (io.ReadCloser, error)
 }
 
-// AliasResolver handles resolving package URL aliases
-type AliasResolver interface {
+// PackageAliasMapper handles mapping package URL aliases to their resolved forms
+type PackageAliasMapper interface {
 	ResolveAlias(packageurl.PackageURL) (packageurl.PackageURL, bool)
-}
-
-// ConfigLoader loads configuration from a source
-type ConfigLoader interface {
-	LoadConfig() (*AliasConfig, error)
 }

@@ -21,7 +21,7 @@ type GitLabClient struct {
 }
 
 // NewGitLabClient creates a new GitLab client
-func NewGitLabClient(base string, tokenEnv string) (*GitLabClient, error) {
+func NewGitLabClient(client *http.Client, base string, tokenEnv string) (*GitLabClient, error) {
 	if tokenEnv == "" {
 		tokenEnv = "GITLAB_TOKEN"
 	}
@@ -35,11 +35,19 @@ func NewGitLabClient(base string, tokenEnv string) (*GitLabClient, error) {
 		base = "https://gitlab.com"
 	}
 
-	client, err := gitlab.NewClient(token, gitlab.WithBaseURL(base))
+	opts := []gitlab.ClientOptionFunc{
+		gitlab.WithBaseURL(base),
+	}
+
+	if client != nil {
+		opts = append(opts, gitlab.WithHTTPClient(client))
+	}
+
+	c, err := gitlab.NewClient(token, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return &GitLabClient{client}, nil
+	return &GitLabClient{c}, nil
 }
 
 // Fetch downloads a file from GitLab

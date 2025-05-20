@@ -1,67 +1,72 @@
 # yaml-language-server: $schema=maru2.schema.json
-text:
-  description: Text to echo
-  default: "Hello, world!"
-  required: true
+inputs:
+  text:
+    description: Text to echo
+    default: "Hello, world!"
+    required: true
+  short:
+    description: Controls whether network tests are run
+    default: false
 
-short:
-  description: Controls whether network tests are run
-  default: false
+tasks:
+  default:
+    - uses: echo
+      with:
+        text: input was '${{ input "text" }}'
+    - run: |
+        echo "$INPUT_TEXT"
+        echo "${{ input "text" }}"
+    - run: echo "bar=baz" >> $MARU2_OUTPUT
+      id: foo
+    - run: |
+        echo "got: ${{ from "foo" "bar" }}"
 
-default:
-  - uses: echo
-    with:
-      text: input was '${{ input "text" }}'
-  - run: |
-      echo "$INPUT_TEXT"
-      echo "${{ input "text" }}"
-  - run: echo "bar=baz" >> $MARU2_OUTPUT
-    id: foo
-  - run: |
-      echo "got: ${{ from "foo" "bar" }}"
+  echo:
+    - run: echo "${{ input "text" }}"
 
-echo:
-  - run: echo "${{ input "text" }}"
+  test:
+    - run: |
+        go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m -short=${{ input "short" }} ./...
 
-test:
-  - run: |
-      go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m -short=${{ input "short" }} ./...
+  hello-world:
+    - run: echo "Hello, World!"
 
-hello-world:
-  - run: echo "Hello, World!"
+  benchmark:
+    - run: hyperfine './bin/maru2 hello-world' 'make hello-world' -N --warmup 10
 
-benchmark:
-  - run: hyperfine './bin/maru2 hello-world' 'make hello-world' -N --warmup 10
+  chuck:
+    - uses: builtin:fetch
+      with:
+        url: https://api.chucknorris.io/jokes/random
+        timeout: 10s
+        headers:
+          Accept: application/json
 
-chuck:
-  - uses: builtin:fetch
-    with:
-      url: https://api.chucknorris.io/jokes/random
-      timeout: 10s
-      headers:
-        Accept: application/json
+  complex-imports:
+    - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+    - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
+    - uses: pkg:gitlab/defenseunicorns/maru2?base=https://gitlab.example.com
 
-complex-imports:
-  - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-  - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
-  - uses: pkg:gitlab/defenseunicorns/maru2?base=https://gitlab.example.com
+  fails:
+    - run: exit 2
 
-fails:
-  - run: exit 2
+  continues:
+    - run: echo 1
+    - uses: fails
+    - run: echo 3
+    - if: always
+      run: echo 3
 
-continues:
-  - run: echo 1
-  - uses: fails
-  - run: echo 3
-  - if: always
-    run: echo 3
+  bad-echo:
+    - run: echo "${{ input "text2" }}"
 
-bad-echo:
-  - run: echo "${{ input "text2" }}"
+  show-stack-trace:
+    - uses: bad-echo
+    - uses: builtin:echo
+      with:
+        text: ${{ input "text2" }}
+    - uses: continues
 
-show-stack-trace:
-  - uses: bad-echo
-  - uses: builtin:echo
-    with:
-      text: ${{ input "text2" }}
-  - uses: continues
+  pwd:
+    - run: pwd
+    - uses: file:testdata/simple.yaml?task=pwd

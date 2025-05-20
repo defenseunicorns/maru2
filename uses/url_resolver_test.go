@@ -6,6 +6,7 @@ package uses
 import (
 	"testing"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,6 +16,7 @@ func TestResolveURL(t *testing.T) {
 		name        string
 		prev        string
 		uri         string
+		aliases     map[string]config.Alias
 		next        string
 		expectedErr string
 	}{
@@ -85,7 +87,7 @@ func TestResolveURL(t *testing.T) {
 			name: "http to pkg",
 			prev: "http://example.com/foo.yaml",
 			uri:  "pkg:github/owner/repo",
-			next: "pkg:github/owner/repo",
+			next: "pkg:github/owner/repo@main#tasks.yaml",
 		},
 		{
 			name: "http with task param",
@@ -97,13 +99,13 @@ func TestResolveURL(t *testing.T) {
 			name: "pkg with no subpath",
 			prev: "file:/dir/bar.yaml",
 			uri:  "pkg:github/owner/repo",
-			next: "pkg:github/owner/repo",
+			next: "pkg:github/owner/repo@main#tasks.yaml",
 		},
 		{
 			name: "pkg with no version",
 			prev: "file:/dir/bar.yaml",
 			uri:  "pkg:github/owner/repo#dir/foo.yaml",
-			next: "pkg:github/owner/repo#dir/foo.yaml",
+			next: "pkg:github/owner/repo@main#dir/foo.yaml",
 		},
 		{
 			name: "pkg with version and subpath",
@@ -249,6 +251,42 @@ func TestResolveURL(t *testing.T) {
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
+			name: "pkg with alias resolution",
+			prev: "file:dir/foo.yaml",
+			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
+			aliases: map[string]config.Alias{
+				"github": {
+					Type: "github",
+					Base: "github/aliased/repo@v2.0.0",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=github%2Faliased%2Frepo%40v2.0.0#dir/bar.yaml",
+		},
+		{
+			name: "pkg to file with alias resolution",
+			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
+			uri:  "file:bar.yaml",
+			aliases: map[string]config.Alias{
+				"github": {
+					Type: "github",
+					Base: "github/aliased/repo@v2.0.0",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=github%2Faliased%2Frepo%40v2.0.0#dir/bar.yaml",
+		},
+		{
+			name: "pkg to file with task param and alias resolution",
+			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
+			uri:  "file:bar.yaml?task=baz",
+			aliases: map[string]config.Alias{
+				"github": {
+					Type: "github",
+					Base: "github/aliased/repo@v2.0.0",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=github%2Faliased%2Frepo%40v2.0.0&task=baz#dir/bar.yaml",
+		},
+		{
 			name:        "pkg to file with invalid package URL",
 			prev:        "pkg:invalid",
 			uri:         "file:foo.yaml",
@@ -291,7 +329,7 @@ func TestResolveURL(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			next, err := ResolveURL(tc.prev, tc.uri)
+			next, err := ResolveURL(tc.prev, tc.uri, tc.aliases)
 
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)

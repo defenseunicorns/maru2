@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
 	"sync"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/goccy/go-yaml"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -36,50 +38,19 @@ func Read(r io.Reader) (Workflow, error) {
 		}
 	}
 
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return Workflow{}, err
+	wf := Workflow{
+		Inputs:  make(InputMap),
+		Tasks:   make(TaskMap),
+		Aliases: make(map[string]config.Alias),
 	}
 
-	var wf Workflow
-	wf.Inputs = make(InputMap)
-	wf.Tasks = make(TaskMap)
+	d := yaml.NewDecoder(r)
 
-	var tempMap map[string]any
-	if err := yaml.Unmarshal(data, &tempMap); err != nil {
+	if err := d.Decode(&wf); err != nil {
+		if err == io.EOF {
+			return wf, nil
+		}
 		return Workflow{}, err
-	}
-
-	for key, value := range tempMap {
-		// Skip x- prefixed keys (extensions)
-		if strings.HasPrefix(key, "x-") {
-			continue
-		}
-
-		// Check if the value is an array (task) or an object (input parameter)
-		switch v := value.(type) {
-		case []any:
-			taskBytes, err := yaml.Marshal(v)
-			if err != nil {
-				return Workflow{}, err
-			}
-			var task Task
-			if err := yaml.Unmarshal(taskBytes, &task); err != nil {
-				return Workflow{}, err
-			}
-			wf.Tasks[key] = task
-
-		case map[string]any:
-			inputBytes, err := yaml.Marshal(v)
-			if err != nil {
-				return Workflow{}, err
-			}
-			var input InputParameter
-			if err := yaml.Unmarshal(inputBytes, &input); err != nil {
-				return Workflow{}, err
-			}
-			wf.Inputs[key] = input
-		}
 	}
 
 	return wf, nil
@@ -145,10 +116,20 @@ func Validate(wf Workflow) error {
 					}
 				}
 			}
+
+			if step.Dir != "" {
+				if filepath.IsAbs(step.Dir) {
+					return fmt.Errorf(".%s[%d].dir %q must not be absolute", name, idx, step.Dir)
+				}
+			}
 		}
 	}
 
-	for _, param := range wf.Inputs {
+	for name, param := range wf.Inputs {
+		if ok := InputNamePattern.MatchString(name); !ok {
+			return fmt.Errorf("input name %q does not satisfy %q", name, InputNamePattern.String())
+		}
+
 		if param.Validate != "" {
 			_, err := regexp.Compile(param.Validate)
 			if err != nil {
@@ -168,22 +149,7 @@ func Validate(wf Workflow) error {
 
 	schemaLoader := gojsonschema.NewStringLoader(_schema)
 
-	if len(wf.Inputs) > 0 {
-		result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(wf.Inputs))
-		if err != nil {
-			return err
-		}
-
-		if !result.Valid() {
-			var resErr error
-			for _, err := range result.Errors() {
-				resErr = errors.Join(resErr, errors.New(err.String()))
-			}
-			return resErr
-		}
-	}
-
-	result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(wf.Tasks))
+	result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(wf))
 	if err != nil {
 		return err
 	}

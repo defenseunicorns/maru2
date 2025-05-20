@@ -1,0 +1,33 @@
+exec maru2
+cmp stdout stdout.txt
+
+-- tasks.yaml --
+tasks:
+  default:
+    - run: echo "default"
+    - uses: other
+      dir: dir
+
+  other:
+    - run: cat content/hello.txt
+    - run: cat tasks.yaml
+      dir: ..
+
+-- dir/content/hello.txt --
+Hello World!
+
+-- stdout.txt --
+default
+Hello World!
+
+tasks:
+  default:
+    - run: echo "default"
+    - uses: other
+      dir: dir
+
+  other:
+    - run: cat content/hello.txt
+    - run: cat tasks.yaml
+      dir: ..
+

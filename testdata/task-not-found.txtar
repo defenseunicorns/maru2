@@ -2,5 +2,6 @@
 stderr 'ERRO task "nonexistent-task" not found'
 
 -- tasks.yaml --
-default:
-  - run: echo "This is the default task"
+tasks:
+  default:
+    - run: echo "This is the default task"

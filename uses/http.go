@@ -11,11 +11,13 @@ import (
 )
 
 // HTTPFetcher fetches a file from a remote HTTP server
-type HTTPFetcher struct{}
+type HTTPFetcher struct {
+	client *http.Client
+}
 
 // NewHTTPFetcher returns a new HTTPFetcher
-func NewHTTPFetcher() *HTTPFetcher {
-	return &HTTPFetcher{}
+func NewHTTPFetcher(client *http.Client) *HTTPFetcher {
+	return &HTTPFetcher{client: client}
 }
 
 // Fetch performs a GET request using the default HTTP client
@@ -27,7 +29,7 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, raw string) (io.ReadCloser, err
 	}
 	req.Header.Set("User-Agent", "maru2")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := f.client.Do(req)
 	if err != nil {
 		return nil, err
 	}

@@ -1,28 +1,29 @@
 ! exec maru2 continues
-cmp stderr stderr.txt
+cmpenv stderr stderr.txt
 cmp stdout stdout.txt
 
 ! exec maru2 fails
 stderr 'ERRO exit status 1'
 
 -- tasks.yaml --
-fails:
-  - run: exit 1
+tasks:
+  fails:
+    - run: exit 1
 
-continues:
-  - run: echo 0
-  - if: failure
-    run: echo 1
-  - run: echo 2
-  - uses: fails
-  - run: echo 3
-  - if: always
-    run: echo 4
-  - run: echo 5
-  - if: always
-    run: echo 6
-  - if: failure
-    run: echo 7
+  continues:
+    - run: echo 0
+    - if: failure
+      run: echo 1
+    - run: echo 2
+    - uses: fails
+    - run: echo 3
+    - if: always
+      run: echo 4
+    - run: echo 5
+    - if: always
+      run: echo 6
+    - if: failure
+      run: echo 7
 
 -- stderr.txt --
 $ echo 0
@@ -34,8 +35,8 @@ $ echo 7
 
 ERRO exit status 1
   traceback (most recent call first)=
-  │ at fails[0] (file:tasks.yaml)
-  │ at continues[3] (file:tasks.yaml)
+  │ at fails[0] (file:$WORK/tasks.yaml)
+  │ at continues[3] (file:$WORK/tasks.yaml)
 -- stdout.txt --
 0
 2
