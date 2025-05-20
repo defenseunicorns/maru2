@@ -48,16 +48,14 @@ $ echo !
 		},
 	}
 
-	var buf strings.Builder
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.color {
 				t.Setenv("NO_COLOR", "true")
 			}
+			var buf strings.Builder
 			printScript(log.New(&buf), tc.script)
 			assert.Equal(t, tc.expected, buf.String())
-			buf.Reset()
 		})
 	}
 }
@@ -102,16 +100,14 @@ func TestPrintBuiltin(t *testing.T) {
 		},
 	}
 
-	var buf strings.Builder
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if !tc.color {
 				t.Setenv("NO_COLOR", "true")
 			}
+			var buf strings.Builder
 			printBuiltin(log.New(&buf), tc.builtin)
 			assert.Equal(t, tc.expected, buf.String())
-			buf.Reset()
 		})
 	}
 }
