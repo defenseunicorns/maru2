@@ -106,12 +106,12 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 	templatedRun, err := TemplateString(ctx, withDefaults, outputs, step.Run, dry)
 	if err != nil {
 		if dry {
-			printScript(ctx, "$", templatedRun)
+			printScript(log.FromContext(ctx), templatedRun)
 		}
 		return nil, err
 	}
 
-	printScript(ctx, "$", templatedRun)
+	printScript(log.FromContext(ctx), templatedRun)
 	if dry {
 		return nil, nil
 	}
