@@ -10,12 +10,13 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 )
 
 // ResolveURL resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveURL(p, u string, mapper PackageAliasMapper) (string, error) {
+func ResolveURL(p, u string, pkgAliases map[string]config.Alias) (string, error) {
 	prev, err := url.Parse(p)
 	if err != nil {
 		return "", err
@@ -51,11 +52,9 @@ func ResolveURL(p, u string, mapper PackageAliasMapper) (string, error) {
 			if pURL.Version == "" {
 				pURL.Version = DefaultVersion
 			}
-			if mapper != nil {
-				resolvedPURL, isAlias := mapper.ResolveAlias(pURL)
-				if isAlias {
-					return resolvedPURL.String(), nil
-				}
+			resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
+			if isAlias {
+				return resolvedPURL.String(), nil
 			}
 			return pURL.String(), nil
 		}
@@ -71,7 +70,7 @@ func ResolveURL(p, u string, mapper PackageAliasMapper) (string, error) {
 
 	// pkg -> file
 	case prev.Scheme == "pkg" && uri.Scheme == "file":
-		return resolvePkgToFile(p, uri, mapper)
+		return resolvePkgToFile(p, uri, pkgAliases)
 	}
 
 	// This should be unreachable
@@ -132,7 +131,7 @@ func resolveHTTPToFile(prev, uri *url.URL) (string, error) {
 	return next.String(), nil
 }
 
-func resolvePkgToFile(p string, uri *url.URL, mapper PackageAliasMapper) (string, error) {
+func resolvePkgToFile(p string, uri *url.URL, aliases map[string]config.Alias) (string, error) {
 	pURL, err := packageurl.FromString(p)
 	if err != nil {
 		return "", err
@@ -151,11 +150,9 @@ func resolvePkgToFile(p string, uri *url.URL, mapper PackageAliasMapper) (string
 		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
 	}
 
-	if mapper != nil {
-		resolvedPURL, isAlias := mapper.ResolveAlias(pURL)
-		if isAlias {
-			pURL = resolvedPURL
-		}
+	resolvedPURL, isAlias := ResolveAlias(pURL, aliases)
+	if isAlias {
+		pURL = resolvedPURL
 	}
 
 	return pURL.String(), nil

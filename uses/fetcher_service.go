@@ -16,20 +16,20 @@ import (
 
 // FetcherService creates and manages fetchers
 type FetcherService struct {
-	mapper PackageAliasMapper
-	client *http.Client
-	fsys   afero.Fs
-	cache  map[string]Fetcher
-	mu     sync.RWMutex
+	aliases map[string]config.Alias
+	client  *http.Client
+	fsys    afero.Fs
+	cache   map[string]Fetcher
+	mu      sync.RWMutex
 }
 
 // FetcherServiceOption is a function that configures a FetcherService
 type FetcherServiceOption func(*FetcherService)
 
-// WithPackageAliasMapper sets the package alias mapper to be used by the fetcher service
-func WithPackageAliasMapper(mapper PackageAliasMapper) FetcherServiceOption {
+// WithAliases sets the aliases to be used by the fetcher service
+func WithAliases(aliases map[string]config.Alias) FetcherServiceOption {
 	return func(s *FetcherService) {
-		s.mapper = mapper
+		s.aliases = aliases
 	}
 }
 
@@ -50,16 +50,15 @@ func WithClient(client *http.Client) FetcherServiceOption {
 // NewFetcherService creates a new FetcherService with custom resolver and filesystem
 func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	svc := &FetcherService{
-		cache:  make(map[string]Fetcher),
-		mu:     sync.RWMutex{},
-		client: &http.Client{},
+		mu:    sync.RWMutex{},
+		cache: make(map[string]Fetcher),
 	}
 
 	for _, opt := range opts {
 		opt(svc)
 	}
 
-	if svc.mapper == nil {
+	if svc.aliases == nil {
 		loader, err := config.DefaultConfigLoader()
 		if err != nil {
 			return nil, err
@@ -70,19 +69,23 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 			return nil, err
 		}
 
-		svc.mapper = NewConfigBasedPackageAliasMapper(config)
+		svc.aliases = config.Aliases
 	}
 
 	if svc.fsys == nil {
 		svc.fsys = afero.NewOsFs()
 	}
 
+	if svc.client == nil {
+		svc.client = &http.Client{}
+	}
+
 	return svc, nil
 }
 
-// FallbackAliasMapper returns the package alias mapper used by the fetcher service
-func (s *FetcherService) FallbackAliasMapper(mapper PackageAliasMapper) *FallbackPackageAliasMapper {
-	return NewFallbackPackageAliasMapper(mapper, s.mapper)
+// PkgAliases returns the aliases used by the fetcher service
+func (s *FetcherService) PkgAliases() map[string]config.Alias {
+	return s.aliases
 }
 
 // GetFetcher returns a fetcher for the given URI

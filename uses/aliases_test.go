@@ -99,8 +99,6 @@ func TestConfigBasedResolver(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resolver := NewConfigBasedPackageAliasMapper(tt.aliasConfig)
-
 			qualifiers := packageurl.QualifiersFromMap(tt.inputQualifiers)
 			inputPURL := packageurl.PackageURL{
 				Type:       tt.inputType,
@@ -111,7 +109,7 @@ func TestConfigBasedResolver(t *testing.T) {
 				Subpath:    "path/to/file.yaml",
 			}
 
-			resolvedPURL, isResolved := resolver.ResolveAlias(inputPURL)
+			resolvedPURL, isResolved := ResolveAlias(inputPURL, tt.aliasConfig.Aliases)
 
 			assert.Equal(t, tt.wantResolved, isResolved)
 			assert.Equal(t, tt.wantType, resolvedPURL.Type)

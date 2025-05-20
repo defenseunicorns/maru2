@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -16,8 +17,7 @@ import (
 func TestFetcherService(t *testing.T) {
 	testCases := []struct {
 		name           string
-		fallbackMapper PackageAliasMapper
-		mapper         PackageAliasMapper
+		aliases        map[string]config.Alias
 		fs             afero.Fs
 		uri            string
 		expectedType   any
@@ -26,10 +26,10 @@ func TestFetcherService(t *testing.T) {
 		verifyPURL     func(*testing.T, packageurl.PackageURL)
 	}{
 		{
-			name:           "new service with defaults",
-			fallbackMapper: nil,
-			fs:             nil,
-			expectedType:   nil,
+			name:         "new service with defaults",
+			aliases:      nil,
+			fs:           nil,
+			expectedType: nil,
 		},
 		{
 			name:         "get http fetcher",
@@ -72,20 +72,20 @@ func TestFetcherService(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			service, err := NewFetcherService(
-				WithPackageAliasMapper(tc.fallbackMapper),
+				WithAliases(tc.aliases),
 				WithFS(tc.fs),
 			)
 			require.NoError(t, err)
 			assert.NotNil(t, service)
 
 			if tc.name == "new service with defaults" {
-				require.NotNil(t, service.mapper)
+				require.NotNil(t, service.aliases)
 				require.NotNil(t, service.fsys)
 				return
 			}
 
 			if tc.name == "new service with custom config" {
-				assert.Equal(t, tc.fallbackMapper, service.mapper)
+				assert.Equal(t, tc.aliases, service.aliases)
 				assert.Equal(t, tc.fs, service.fsys)
 				return
 			}
