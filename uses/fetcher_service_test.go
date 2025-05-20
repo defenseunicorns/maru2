@@ -79,13 +79,13 @@ func TestFetcherService(t *testing.T) {
 			assert.NotNil(t, service)
 
 			if tc.name == "new service with defaults" {
-				require.NotNil(t, service.aliases)
+				require.NotNil(t, service.PkgAliases())
 				require.NotNil(t, service.fsys)
 				return
 			}
 
 			if tc.name == "new service with custom config" {
-				assert.Equal(t, tc.aliases, service.aliases)
+				assert.Equal(t, tc.aliases, service.PkgAliases())
 				assert.Equal(t, tc.fs, service.fsys)
 				return
 			}

@@ -46,6 +46,8 @@ func TestExecuteUses(t *testing.T) {
 			handleWF(w, workflowFoo)
 		case "/bar/baz.yaml":
 			handleWF(w, workflowBaz)
+		case "/bad.yaml":
+			_, _ = w.Write([]byte("not a workflow"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = w.Write([]byte("not found"))
@@ -127,6 +129,18 @@ func TestExecuteUses(t *testing.T) {
 			name:   "nested uses foo.yaml -> baz.yaml -> hello-world.yaml",
 			uses:   server.URL + "/foo.yaml",
 			origin: dummyOrigin,
+		},
+		{
+			name:        "bad workflow",
+			uses:        server.URL + "/bad.yaml",
+			origin:      dummyOrigin,
+			expectedErr: "[1:1] string was used where mapping is expected\n>  1 | not a workflow\n       ^\n",
+		},
+		{
+			name:        "failed to fetch",
+			uses:        server.URL + "/non-existent.yaml",
+			origin:      dummyOrigin,
+			expectedErr: "failed to fetch " + server.URL + "/non-existent.yaml: 404 Not Found",
 		},
 	}
 
