@@ -4,7 +4,6 @@
 package maru2
 
 import (
-	"context"
 	"strings"
 
 	"github.com/alecthomas/chroma/v2/quick"
@@ -16,9 +15,10 @@ import (
 
 // very side effect heavy
 // should rethink this
-func printScript(ctx context.Context, prefix, script string) {
-	logger := log.FromContext(ctx)
+func printScript(logger *log.Logger, script string) {
 	script = strings.TrimSpace(script)
+	prefix := "$"
+	lang := "shell"
 
 	if termenv.EnvNoColor() {
 		for line := range strings.SplitSeq(script, "\n") {
@@ -31,10 +31,6 @@ func printScript(ctx context.Context, prefix, script string) {
 	style := "tokyonight-day"
 	if lipgloss.HasDarkBackground() {
 		style = "tokyonight-moon"
-	}
-	lang := "shell"
-	if prefix == ">" {
-		lang = "go"
 	}
 	if err := quick.Highlight(&buf, script, lang, "terminal256", style); err != nil {
 		logger.Debugf("failed to highlight: %v", err)
@@ -49,9 +45,7 @@ func printScript(ctx context.Context, prefix, script string) {
 	}
 }
 
-func printBuiltin(ctx context.Context, builtin With) error {
-	logger := log.FromContext(ctx)
-
+func printBuiltin(logger *log.Logger, builtin With) error {
 	b, err := yaml.MarshalWithOptions(Step{
 		With: builtin,
 	}, yaml.Indent(2), yaml.IndentSequence(true))

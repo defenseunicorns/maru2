@@ -16,25 +16,16 @@ func TestPrintScript(t *testing.T) {
 	testCases := []struct {
 		name     string
 		script   string
-		prefix   string
 		expected string
 	}{
 		{
-			name:     "simple eval",
-			script:   `h := "hello"`,
-			prefix:   ">",
-			expected: "> h := \"hello\"\n",
-		},
-		{
 			name:     "simple shell",
 			script:   "echo hello",
-			prefix:   "$",
 			expected: "$ echo hello\n",
 		},
 		{
 			name:     "multiline",
 			script:   "echo hello\necho world\n\necho !",
-			prefix:   "$",
 			expected: "$ echo hello\n$ echo world\n$ \n$ echo !\n",
 		},
 	}
@@ -43,8 +34,7 @@ func TestPrintScript(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := log.WithContext(t.Context(), log.New(&buf))
-			printScript(ctx, tc.prefix, tc.script)
+			printScript(log.New(&buf), tc.script)
 			require.Equal(t, tc.expected, ansi.Strip(buf.String()))
 			buf.Reset()
 		})
