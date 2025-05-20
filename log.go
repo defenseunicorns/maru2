@@ -45,17 +45,18 @@ func printScript(logger *log.Logger, script string) {
 	}
 }
 
-func printBuiltin(logger *log.Logger, builtin With) error {
+func printBuiltin(logger *log.Logger, builtin With) {
 	b, err := yaml.MarshalWithOptions(Step{
 		With: builtin,
 	}, yaml.Indent(2), yaml.IndentSequence(true))
 	if err != nil {
-		return err
+		logger.Debugf("failed to marshal builtin: %v", err)
+		return
 	}
 
 	if termenv.EnvNoColor() {
 		logger.Printf("%s", strings.TrimSpace(string(b)))
-		return nil
+		return
 	}
 
 	style := "tokyonight-day"
@@ -70,10 +71,8 @@ func printBuiltin(logger *log.Logger, builtin With) error {
 	if err := quick.Highlight(&buf, string(b), lang, "terminal256", style); err != nil {
 		logger.Debugf("failed to highlight: %v", err)
 		logger.Printf("%s", string(b))
-		return err
+		return
 	}
 
 	logger.Printf("%s", strings.TrimSpace(buf.String()))
-
-	return nil
 }
