@@ -5,6 +5,7 @@ package uses
 
 import (
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"sync"
@@ -85,7 +86,7 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 
 // PkgAliases returns the aliases used by the fetcher service
 func (s *FetcherService) PkgAliases() map[string]config.Alias {
-	return s.aliases
+	return maps.Clone(s.aliases)
 }
 
 // GetFetcher returns a fetcher for the given URI
