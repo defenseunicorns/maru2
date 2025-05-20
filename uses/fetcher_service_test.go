@@ -43,7 +43,7 @@ func TestFetcherService(t *testing.T) {
 		},
 		{
 			name:         "get github fetcher",
-			uri:          "pkg:github/noxsios/vai",
+			uri:          "pkg:github/defenseunicorns/maru2",
 			expectedType: &GitHubClient{},
 		},
 		{
