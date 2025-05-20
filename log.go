@@ -28,9 +28,9 @@ func printScript(ctx context.Context, prefix, script string) {
 	}
 
 	var buf strings.Builder
-	style := "catppuccin-latte"
+	style := "tokyonight-day"
 	if lipgloss.HasDarkBackground() {
-		style = "catppuccin-frappe"
+		style = "tokyonight-moon"
 	}
 	lang := "shell"
 	if prefix == ">" {
@@ -64,9 +64,9 @@ func printBuiltin(ctx context.Context, builtin With) error {
 		return nil
 	}
 
-	style := "catppuccin-latte"
+	style := "tokyonight-day"
 	if lipgloss.HasDarkBackground() {
-		style = "catppuccin-frappe"
+		style = "tokyonight-moon"
 	}
 
 	lang := "yaml"
