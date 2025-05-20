@@ -1,5 +1,5 @@
 ! exec maru2 continues
-cmp stderr stderr.txt
+cmpenv stderr stderr.txt
 cmp stdout stdout.txt
 
 ! exec maru2 fails
