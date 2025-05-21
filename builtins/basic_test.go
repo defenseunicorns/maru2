@@ -16,8 +16,6 @@ import (
 )
 
 func TestBuiltinsMap(t *testing.T) {
-	t.Parallel()
-
 	names := Names()
 
 	assert.Len(t, names, len(_registrations))
@@ -35,8 +33,6 @@ func TestBuiltinsMap(t *testing.T) {
 }
 
 func TestBuiltinEcho(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		name     string
 		text     string
@@ -195,7 +191,6 @@ func TestBuiltinFetch(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 

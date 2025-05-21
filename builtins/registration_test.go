@@ -24,7 +24,7 @@ func (m mockBuiltin) Execute(ctx context.Context) (map[string]any, error) {
 }
 
 func TestRegister(t *testing.T) {
-	t.Parallel()
+	// Don't run this test in parallel to avoid race conditions with other tests
 
 	tests := []struct {
 		name             string
@@ -118,7 +118,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestConcurrentOperations(t *testing.T) {
-	t.Parallel()
+	// Don't run this test in parallel to avoid race conditions with other tests
 
 	done := make(chan bool)
 
