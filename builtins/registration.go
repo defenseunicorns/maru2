@@ -3,7 +3,10 @@
 
 package builtins
 
-import "context"
+import (
+	"context"
+	"slices"
+)
 
 // Builtin is a simple interface, only implementable on structs due to how the with re-parsing logic works
 type Builtin interface {
@@ -32,5 +35,6 @@ func Names() []string {
 	for name := range builtinFactories {
 		result = append(result, name)
 	}
+	slices.Sort(result)
 	return result
 }
