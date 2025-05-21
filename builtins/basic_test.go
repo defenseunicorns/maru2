@@ -20,7 +20,7 @@ func TestBuiltinsMap(t *testing.T) {
 
 	names := Names()
 
-	assert.Len(t, names, len(builtinFactories))
+	assert.Len(t, names, len(_registrations))
 
 	for _, name := range names {
 		builtin := Get(name)
@@ -28,6 +28,7 @@ func TestBuiltinsMap(t *testing.T) {
 		assert.Implements(t, (*Builtin)(nil), builtin)
 	}
 
+	//nolint:testifylint
 	assert.NotSame(t, Get("echo"), Get("echo"))
 
 	assert.Nil(t, Get(""))
@@ -215,7 +216,7 @@ func TestBuiltinWackyStructs(t *testing.T) {
 	wacky := Get("wacky-structs")
 	assert.Implements(t, (*Builtin)(nil), wacky)
 
-	out, err := wacky.Execute(nil)
+	out, err := wacky.Execute(t.Context())
 	assert.Nil(t, out)
 	require.Error(t, err)
 }
