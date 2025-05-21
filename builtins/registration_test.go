@@ -1,0 +1,121 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
+package builtins
+
+import (
+	"context"
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+type mockBuiltin struct {
+	ExecuteFunc func(ctx context.Context) (map[string]any, error)
+}
+
+func (m mockBuiltin) Execute(ctx context.Context) (map[string]any, error) {
+	return m.ExecuteFunc(ctx)
+}
+
+func TestRegister(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		builtinName   string
+		existingName  bool
+		expectedError string
+	}{
+		{
+			name:          "register new builtin",
+			builtinName:   "test-builtin",
+			existingName:  false,
+			expectedError: "",
+		},
+		{
+			name:          "register duplicate builtin",
+			builtinName:   "duplicate-builtin",
+			existingName:  true,
+			expectedError: "\"duplicate-builtin\" is already registered",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+
+			if tc.existingName {
+				err := Register(tc.builtinName, func() Builtin {
+					return mockBuiltin{
+						ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+							return map[string]any{"result": "first"}, nil
+						},
+					}
+				})
+				require.NoError(t, err)
+			}
+
+			err := Register(tc.builtinName, func() Builtin {
+				return mockBuiltin{
+					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+						return map[string]any{"result": "test"}, nil
+					},
+				}
+			})
+
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+
+				builtin := Get(tc.builtinName)
+				require.NotNil(t, builtin)
+
+				result, execErr := builtin.Execute(context.Background())
+				require.NoError(t, execErr)
+				assert.Equal(t, "test", result["result"])
+			} else {
+				require.EqualError(t, err, tc.expectedError)
+			}
+
+			_register.Lock()
+			delete(_registrations, tc.builtinName)
+			_register.Unlock()
+		})
+	}
+}
+
+func TestConcurrentOperations(t *testing.T) {
+	t.Parallel()
+
+	done := make(chan bool)
+
+	for i := range 5 {
+		go func(id int) {
+			name := fmt.Sprintf("concurrent-test-%d", id)
+			_ = Register(name, func() Builtin {
+				return &mockBuiltin{
+					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+						return nil, nil
+					},
+				}
+			})
+
+			_ = Get(name)
+
+			_ = Names()
+
+			done <- true
+		}(i)
+	}
+
+	for range 5 {
+		<-done
+	}
+
+	_register.Lock()
+	for i := range 5 {
+		delete(_registrations, fmt.Sprintf("concurrent-test-%d", i))
+	}
+	_register.Unlock()
+}
