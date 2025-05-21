@@ -28,6 +28,8 @@ func TestBuiltinsMap(t *testing.T) {
 		assert.Implements(t, (*Builtin)(nil), builtin)
 	}
 
+	assert.NotSame(t, Get("echo"), Get("echo"))
+
 	assert.Nil(t, Get(""))
 }
 
@@ -194,8 +196,7 @@ func TestBuiltinFetch(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.New(io.Discard)
-			ctx := log.WithContext(t.Context(), logger)
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 			result, err := tc.fetch.Execute(ctx)
 
