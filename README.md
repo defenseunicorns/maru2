@@ -31,6 +31,12 @@ GOPRIVATE=github.com/defenseunicorns/maru2 \
 go install github.com/defenseunicorns/maru2/cmd/maru2@main
 ```
 
+## Documentation
+
+- [CLI](docs/cli.md)
+- [Workflow Syntax](docs/syntax.md)
+- [Built-in Tasks](docs/builtins.md)
+
 ## Schema Validation
 
 Enabling schema validation in VSCode:

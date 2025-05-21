@@ -20,17 +20,21 @@ Maru2 is built around a few simple concepts:
 ## Example Workflow
 
 ```yaml
-# Define inputs
-message:
-  description: "Message to display"
-  default: "Hello, World!"
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json
+inputs:
+  message:
+    description: "Message to display"
+    default: "Hello, World!"
+    required: true
 
-# Define tasks
-default:
-  - uses: greet
+tasks:
+  default:
+    - uses: greet
+      with:
+        message: "${{ input "message" }}"
 
-greet:
-  - run: echo "${{ input "message" }}"
+  greet:
+    - run: echo "${{ input "message" }}"
 ```
 
 Run it with:
