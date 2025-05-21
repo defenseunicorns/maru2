@@ -39,7 +39,7 @@ func TestRegister(t *testing.T) {
 			existingName: false,
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
 						return map[string]any{"result": "test"}, nil
 					},
 				}
@@ -52,7 +52,7 @@ func TestRegister(t *testing.T) {
 			existingName: true,
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
 						return map[string]any{"result": "test"}, nil
 					},
 				}
@@ -65,7 +65,7 @@ func TestRegister(t *testing.T) {
 			existingName: false,
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
 						return map[string]any{"result": "test"}, nil
 					},
 				}
@@ -87,7 +87,7 @@ func TestRegister(t *testing.T) {
 			if tc.existingName {
 				err := Register(tc.builtinName, func() Builtin {
 					return mockBuiltin{
-						ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+						ExecuteFunc: func(_ context.Context) (map[string]any, error) {
 							return map[string]any{"result": "first"}, nil
 						},
 					}
@@ -127,7 +127,7 @@ func TestConcurrentOperations(t *testing.T) {
 			name := fmt.Sprintf("concurrent-test-%d", id)
 			_ = Register(name, func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
 						return nil, nil
 					},
 				}
