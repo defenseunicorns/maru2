@@ -18,36 +18,17 @@ import (
 func TestBuiltinsMap(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		name        string
-		builtinName string
-		expectType  any
-	}{
-		{
-			name:        "echo builtin exists",
-			builtinName: "echo",
-			expectType:  &echo{},
-		},
-		{
-			name:        "fetch builtin exists",
-			builtinName: "fetch",
-			expectType:  &fetch{},
-		},
-		{
-			name:        "non-existent builtin",
-			builtinName: "nonexistent",
-			expectType:  nil,
-		},
+	names := Names()
+
+	assert.Len(t, names, len(builtinFactories))
+
+	for _, name := range names {
+		builtin := Get(name)
+		assert.NotNil(t, builtin)
+		assert.Implements(t, (*Builtin)(nil), builtin)
 	}
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-
-			builtin := Get(tc.builtinName)
-			assert.IsType(t, tc.expectType, builtin)
-		})
-	}
+	assert.Nil(t, Get(""))
 }
 
 func TestBuiltinEcho(t *testing.T) {
@@ -76,7 +57,6 @@ func TestBuiltinEcho(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
 			var buf bytes.Buffer
@@ -228,4 +208,13 @@ func TestBuiltinFetch(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuiltinWackyStructs(t *testing.T) {
+	wacky := Get("wacky-structs")
+	assert.Implements(t, (*Builtin)(nil), wacky)
+
+	out, err := wacky.Execute(nil)
+	assert.Nil(t, out)
+	require.Error(t, err)
 }
