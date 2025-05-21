@@ -10,9 +10,27 @@ type Builtin interface {
 	Execute(ctx context.Context) (map[string]any, error)
 }
 
-// Builtins maps builtin names to their implementations
-var Builtins = map[string]Builtin{
-	"echo":          echo{},
-	"fetch":         fetch{},
-	"wacky-structs": wackyStructs{},
+var builtinFactories = map[string]func() Builtin{
+	"echo":          func() Builtin { return &echo{} },
+	"fetch":         func() Builtin { return &fetch{} },
+	"wacky-structs": func() Builtin { return &wackyStructs{} },
+}
+
+// Get returns a new instance of the requested builtin
+// Returns nil if the builtin doesn't exist
+func Get(name string) Builtin {
+	factory, exists := builtinFactories[name]
+	if !exists {
+		return nil
+	}
+	return factory()
+}
+
+// Names returns a list of all builtin names
+func Names() []string {
+	result := make([]string, 0, len(builtinFactories))
+	for name := range builtinFactories {
+		result = append(result, name)
+	}
+	return result
 }

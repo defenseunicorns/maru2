@@ -21,22 +21,22 @@ func TestBuiltinsMap(t *testing.T) {
 	testCases := []struct {
 		name        string
 		builtinName string
-		expectFound bool
+		expectType  any
 	}{
 		{
 			name:        "echo builtin exists",
 			builtinName: "echo",
-			expectFound: true,
+			expectType:  &echo{},
 		},
 		{
 			name:        "fetch builtin exists",
 			builtinName: "fetch",
-			expectFound: true,
+			expectType:  &fetch{},
 		},
 		{
 			name:        "non-existent builtin",
 			builtinName: "nonexistent",
-			expectFound: false,
+			expectType:  nil,
 		},
 	}
 
@@ -44,12 +44,8 @@ func TestBuiltinsMap(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
-			builtin, found := Builtins[tc.builtinName]
-			assert.Equal(t, tc.expectFound, found)
-
-			if tc.expectFound {
-				assert.NotNil(t, builtin)
-			}
+			builtin := Get(tc.builtinName)
+			assert.IsType(t, tc.expectType, builtin)
 		})
 	}
 }

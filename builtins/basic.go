@@ -22,7 +22,7 @@ type echo struct {
 }
 
 // Execute the builtin
-func (b echo) Execute(ctx context.Context) (map[string]any, error) {
+func (b *echo) Execute(ctx context.Context) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 
 	logger.Print(b.Text)
@@ -38,7 +38,7 @@ type fetch struct {
 }
 
 // Execute the builtin
-func (b fetch) Execute(ctx context.Context) (map[string]any, error) {
+func (b *fetch) Execute(ctx context.Context) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 
 	method := b.Method

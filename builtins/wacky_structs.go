@@ -25,6 +25,6 @@ type wackyStructs struct {
 }
 
 // Execute the builtin
-func (b wackyStructs) Execute(_ context.Context) (map[string]any, error) {
+func (b *wackyStructs) Execute(_ context.Context) (map[string]any, error) {
 	return nil, fmt.Errorf("not implemented")
 }

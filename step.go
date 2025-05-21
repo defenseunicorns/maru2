@@ -169,14 +169,11 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 	var allBuiltinSchemas []*jsonschema.Schema
 	reflector := jsonschema.Reflector{ExpandedStruct: true}
 
-	var builtinNames []string
-	for name := range builtins.Builtins {
-		builtinNames = append(builtinNames, name)
-	}
+	builtinNames := builtins.Names()
 	slices.Sort(builtinNames)
 
 	for _, name := range builtinNames {
-		builtinEmpty := builtins.Builtins[name]
+		builtinEmpty := builtins.Get(name)
 
 		builtinSchema := &jsonschema.Schema{
 			If: &jsonschema.Schema{

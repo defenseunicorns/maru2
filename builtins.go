@@ -18,8 +18,8 @@ func ExecuteBuiltin(ctx context.Context, step Step, with With, previous CommandO
 	name := strings.TrimPrefix(step.Uses, "builtin:")
 	logger := log.FromContext(ctx)
 
-	builtin, ok := builtins.Builtins[name]
-	if !ok || builtin == nil {
+	builtin := builtins.Get(name)
+	if builtin == nil {
 		return nil, fmt.Errorf("%s not found", step.Uses)
 	}
 
