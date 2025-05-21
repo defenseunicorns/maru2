@@ -17,6 +17,9 @@ type mockBuiltin struct {
 }
 
 func (m mockBuiltin) Execute(ctx context.Context) (map[string]any, error) {
+	if m.ExecuteFunc == nil {
+		return map[string]any{"result": "default"}, nil
+	}
 	return m.ExecuteFunc(ctx)
 }
 
@@ -24,22 +27,57 @@ func TestRegister(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name          string
-		builtinName   string
-		existingName  bool
-		expectedError string
+		name             string
+		builtinName      string
+		existingName     bool
+		registrationFunc func() Builtin
+		expectedError    string
 	}{
 		{
-			name:          "register new builtin",
-			builtinName:   "test-builtin",
-			existingName:  false,
+			name:         "register new builtin",
+			builtinName:  "test-builtin",
+			existingName: false,
+			registrationFunc: func() Builtin {
+				return &mockBuiltin{
+					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+						return map[string]any{"result": "test"}, nil
+					},
+				}
+			},
 			expectedError: "",
 		},
 		{
-			name:          "register duplicate builtin",
-			builtinName:   "duplicate-builtin",
-			existingName:  true,
+			name:         "register duplicate builtin",
+			builtinName:  "duplicate-builtin",
+			existingName: true,
+			registrationFunc: func() Builtin {
+				return &mockBuiltin{
+					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+						return map[string]any{"result": "test"}, nil
+					},
+				}
+			},
 			expectedError: "\"duplicate-builtin\" is already registered",
+		},
+		{
+			name:         "register with empty name",
+			builtinName:  "",
+			existingName: false,
+			registrationFunc: func() Builtin {
+				return &mockBuiltin{
+					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
+						return map[string]any{"result": "test"}, nil
+					},
+				}
+			},
+			expectedError: "builtin name cannot be empty",
+		},
+		{
+			name:             "register with nil function",
+			builtinName:      "nil-func",
+			existingName:     false,
+			registrationFunc: nil,
+			expectedError:    "registration function cannot be nil",
 		},
 	}
 
@@ -57,13 +95,7 @@ func TestRegister(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			err := Register(tc.builtinName, func() Builtin {
-				return mockBuiltin{
-					ExecuteFunc: func(ctx context.Context) (map[string]any, error) {
-						return map[string]any{"result": "test"}, nil
-					},
-				}
-			})
+			err := Register(tc.builtinName, tc.registrationFunc)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

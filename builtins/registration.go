@@ -45,6 +45,15 @@ func Register(name string, registrationFunc func() Builtin) error {
 	if exists {
 		return fmt.Errorf("%q is already registered", name)
 	}
+
+	if name == "" {
+		return fmt.Errorf("builtin name cannot be empty")
+	}
+
+	if registrationFunc == nil {
+		return fmt.Errorf("registration function cannot be nil")
+	}
+
 	_registrations[name] = registrationFunc
 	return nil
 }
