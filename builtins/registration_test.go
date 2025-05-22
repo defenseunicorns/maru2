@@ -130,13 +130,13 @@ func TestConcurrentOperations(t *testing.T) {
 					},
 				}
 			})
-			require.NoError(t, err)
+			assert.NoError(t, err)
 
 			builtin := Get(name)
-			require.NotNil(t, builtin)
+			assert.NotNil(t, builtin)
 
 			builtinNames := Names()
-			require.Contains(t, builtinNames, name)
+			assert.Contains(t, builtinNames, name)
 
 			done <- true
 		}(i)
