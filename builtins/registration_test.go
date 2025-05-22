@@ -118,24 +118,25 @@ func TestRegister(t *testing.T) {
 }
 
 func TestConcurrentOperations(t *testing.T) {
-	// Don't run this test in parallel to avoid race conditions with other tests
-
 	done := make(chan bool)
 
 	for i := range 5 {
 		go func(id int) {
 			name := fmt.Sprintf("concurrent-test-%d", id)
-			_ = Register(name, func() Builtin {
+			err := Register(name, func() Builtin {
 				return &mockBuiltin{
 					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
 						return nil, nil
 					},
 				}
 			})
+			require.NoError(t, err)
 
-			_ = Get(name)
+			builtin := Get(name)
+			require.NotNil(t, builtin)
 
-			_ = Names()
+			builtinNames := Names()
+			require.Contains(t, builtinNames, name)
 
 			done <- true
 		}(i)
