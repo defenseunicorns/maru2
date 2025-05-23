@@ -16,47 +16,23 @@ import (
 )
 
 func TestBuiltinsMap(t *testing.T) {
-	t.Parallel()
+	names := Names()
 
-	testCases := []struct {
-		name        string
-		builtinName string
-		expectFound bool
-	}{
-		{
-			name:        "echo builtin exists",
-			builtinName: "echo",
-			expectFound: true,
-		},
-		{
-			name:        "fetch builtin exists",
-			builtinName: "fetch",
-			expectFound: true,
-		},
-		{
-			name:        "non-existent builtin",
-			builtinName: "nonexistent",
-			expectFound: false,
-		},
+	assert.Len(t, names, len(_registrations))
+
+	for _, name := range names {
+		builtin := Get(name)
+		assert.NotNil(t, builtin)
+		assert.Implements(t, (*Builtin)(nil), builtin)
 	}
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
+	//nolint:testifylint
+	assert.NotSame(t, Get("echo"), Get("echo"))
 
-			builtin, found := Builtins[tc.builtinName]
-			assert.Equal(t, tc.expectFound, found)
-
-			if tc.expectFound {
-				assert.NotNil(t, builtin)
-			}
-		})
-	}
+	assert.Nil(t, Get(""))
 }
 
 func TestBuiltinEcho(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		name     string
 		text     string
@@ -80,7 +56,6 @@ func TestBuiltinEcho(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
 			var buf bytes.Buffer
@@ -216,10 +191,8 @@ func TestBuiltinFetch(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			logger := log.New(io.Discard)
-			ctx := log.WithContext(t.Context(), logger)
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 			result, err := tc.fetch.Execute(ctx)
 
@@ -232,4 +205,13 @@ func TestBuiltinFetch(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuiltinWackyStructs(t *testing.T) {
+	wacky := Get("wacky-structs")
+	assert.Implements(t, (*Builtin)(nil), wacky)
+
+	out, err := wacky.Execute(t.Context())
+	assert.Nil(t, out)
+	require.Error(t, err)
 }
