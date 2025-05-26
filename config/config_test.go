@@ -4,6 +4,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -96,17 +97,54 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, cfg.Aliases, config.Aliases)
 	}
-}
 
-func TestConfigLoaderWithInvalidYAML(t *testing.T) {
-	fsys := afero.NewMemMapFs()
-	err := afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
-	require.NoError(t, err)
+	t.Run("invalid config", func(t *testing.T) {
+		fsys = afero.NewMemMapFs()
+		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
+		require.NoError(t, err)
+		loader := &FileSystemConfigLoader{
+			Fs: afero.NewBasePathFs(fsys, "invalid"),
+		}
+		_, err = loader.LoadConfig()
+		require.EqualError(t, err, "failed to parse config file: [1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
+	})
 
-	loader := &FileSystemConfigLoader{
-		Fs: afero.NewBasePathFs(fsys, "invalid"),
-	}
-	_, err = loader.LoadConfig()
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to parse config file")
+	t.Run("nonexistent config", func(t *testing.T) {
+		loader := &FileSystemConfigLoader{
+			Fs: afero.NewBasePathFs(fsys, "nonexistent"),
+		}
+		config, err := loader.LoadConfig()
+		require.NoError(t, err)
+		assert.NotNil(t, config)
+		assert.Empty(t, config.Aliases)
+	})
+
+	t.Run("read error", func(t *testing.T) {
+		tmpDir := t.TempDir()
+
+		configDir := filepath.Join(tmpDir, DefaultFileName)
+		err = os.Mkdir(configDir, 0755)
+		require.NoError(t, err)
+
+		loader := &FileSystemConfigLoader{
+			Fs: afero.NewBasePathFs(afero.NewOsFs(), tmpDir),
+		}
+
+		_, err := loader.LoadConfig()
+		require.EqualError(t, err, fmt.Sprintf("failed to read config file: read %s: is a directory", configDir))
+	})
+
+	t.Run("open error", func(t *testing.T) {
+		tmpDir := t.TempDir()
+
+		configPath := filepath.Join(tmpDir, DefaultFileName)
+		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0000)
+		require.NoError(t, err)
+
+		loader := &FileSystemConfigLoader{
+			Fs: afero.NewBasePathFs(afero.NewOsFs(), tmpDir),
+		}
+		_, err = loader.LoadConfig()
+		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, DefaultFileName)))
+	})
 }
