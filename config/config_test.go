@@ -44,10 +44,12 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	}
 
 	fsys := afero.NewMemMapFs()
-	err := afero.WriteFile(fsys, "etc/maru2/aliases.yaml", []byte(configContent), 0644)
+	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0644)
 	require.NoError(t, err)
 
-	loader := NewFileSystemConfigLoader(fsys, "etc/maru2/aliases.yaml")
+	loader := &FileSystemConfigLoader{
+		Fs: afero.NewBasePathFs(fsys, "etc/maru2"),
+	}
 	config, err := loader.LoadConfig()
 	require.NoError(t, err)
 
@@ -63,7 +65,9 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
 	assert.Empty(t, ghAlias.Base)
 
-	loader = NewFileSystemConfigLoader(fsys, "nonexistent-file.yaml")
+	loader = &FileSystemConfigLoader{
+		Fs: afero.NewBasePathFs(fsys, "nonexistent-dir"),
+	}
 	config, err = loader.LoadConfig()
 	require.NoError(t, err)
 	assert.NotNil(t, config)
@@ -71,8 +75,8 @@ func TestFileSystemConfigLoader(t *testing.T) {
 
 	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
 		t.Setenv("HOME", "")
-		loader, err = DefaultConfigLoader()
-		assert.Nil(t, loader)
+		configDir, err := DefaultConfigDirectory()
+		assert.Empty(t, configDir)
 		require.EqualError(t, err, "$HOME is not defined")
 
 		tmpDir := t.TempDir()
@@ -83,8 +87,11 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Setenv("HOME", tmpDir)
-		loader, err = DefaultConfigLoader()
+		configDir, err = DefaultConfigDirectory()
 		require.NoError(t, err)
+		loader = &FileSystemConfigLoader{
+			Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+		}
 		config, err = loader.LoadConfig()
 		require.NoError(t, err)
 		assert.Equal(t, cfg.Aliases, config.Aliases)
@@ -93,10 +100,12 @@ func TestFileSystemConfigLoader(t *testing.T) {
 
 func TestConfigLoaderWithInvalidYAML(t *testing.T) {
 	fsys := afero.NewMemMapFs()
-	err := afero.WriteFile(fsys, "invalid.yaml", []byte(`invalid: yaml: content`), 0644)
+	err := afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
 	require.NoError(t, err)
 
-	loader := NewFileSystemConfigLoader(fsys, "invalid.yaml")
+	loader := &FileSystemConfigLoader{
+		Fs: afero.NewBasePathFs(fsys, "invalid"),
+	}
 	_, err = loader.LoadConfig()
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse config file")

@@ -27,7 +27,7 @@ func TestFetcherService(t *testing.T) {
 	}{
 		{
 			name:         "new service with defaults",
-			aliases:      nil,
+			aliases:      make(map[string]config.Alias),
 			fs:           nil,
 			expectedType: nil,
 		},
@@ -79,8 +79,9 @@ func TestFetcherService(t *testing.T) {
 			assert.NotNil(t, service)
 
 			if tc.name == "new service with defaults" {
-				require.NotNil(t, service.PkgAliases())
-				require.NotNil(t, service.fsys)
+				assert.NotNil(t, service.PkgAliases())
+				assert.Empty(t, service.PkgAliases())
+				assert.NotNil(t, service.fsys)
 				return
 			}
 

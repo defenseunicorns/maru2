@@ -154,12 +154,14 @@ func NewRootCmd() *cobra.Command {
 
 			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
 
-			configPath, err := config.DefaultConfigLocation()
+			configDir, err := config.DefaultConfigDirectory()
 			if err != nil {
 				return err
 			}
 
-			loader := config.NewFileSystemConfigLoader(afero.NewOsFs(), configPath)
+			loader := &config.FileSystemConfigLoader{
+				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+			}
 
 			cfg, err := loader.LoadConfig()
 			if err != nil {
