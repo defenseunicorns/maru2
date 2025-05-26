@@ -155,7 +155,7 @@ func NewRootCmd() *cobra.Command {
 
 			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
 
-			configDir, err := config.DefaultConfigDirectory()
+			configDir, err := config.DefaultDirectory()
 			if err != nil {
 				return err
 			}

@@ -76,7 +76,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 
 	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
 		t.Setenv("HOME", "")
-		configDir, err := DefaultConfigDirectory()
+		configDir, err := DefaultDirectory()
 		assert.Empty(t, configDir)
 		require.EqualError(t, err, "$HOME is not defined")
 
@@ -88,7 +88,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Setenv("HOME", tmpDir)
-		configDir, err = DefaultConfigDirectory()
+		configDir, err = DefaultDirectory()
 		require.NoError(t, err)
 		loader = &FileSystemConfigLoader{
 			Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),

@@ -34,8 +34,8 @@ type FileSystemConfigLoader struct {
 	Fs afero.Fs
 }
 
-// DefaultConfigDirectory returns the default directory for maru2 configuration
-func DefaultConfigDirectory() (string, error) {
+// DefaultDirectory returns the default directory for maru2 configuration
+func DefaultDirectory() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
