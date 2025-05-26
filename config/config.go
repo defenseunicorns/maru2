@@ -43,15 +43,14 @@ func NewFileSystemConfigLoader(fsys afero.Fs, configPath string) *FileSystemConf
 	}
 }
 
-// DefaultConfigLoader returns a config loader that uses the default locations
-func DefaultConfigLoader() (*FileSystemConfigLoader, error) {
+// DefaultConfigLocation returns the default location for the maru2 configuration file
+func DefaultConfigLocation() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	configPath := filepath.Join(homeDir, ".maru2", DefaultFileName)
-	return NewFileSystemConfigLoader(afero.NewOsFs(), configPath), nil
+	return filepath.Join(homeDir, ".maru2", DefaultFileName), nil
 }
 
 // LoadConfig loads the configuration from the file system

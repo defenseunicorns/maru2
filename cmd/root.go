@@ -21,7 +21,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2"
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
@@ -152,7 +154,21 @@ func NewRootCmd() *cobra.Command {
 
 			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
 
-			svc, err := uses.NewFetcherService()
+			configPath, err := config.DefaultConfigLocation()
+			if err != nil {
+				return err
+			}
+
+			loader := config.NewFileSystemConfigLoader(afero.NewOsFs(), configPath)
+
+			cfg, err := loader.LoadConfig()
+			if err != nil {
+				return err
+			}
+
+			svc, err := uses.NewFetcherService(
+				uses.WithAliases(cfg.Aliases),
+			)
 			if err != nil {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
 			}
