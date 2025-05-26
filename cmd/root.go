@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -170,6 +171,9 @@ func NewRootCmd() *cobra.Command {
 
 			svc, err := uses.NewFetcherService(
 				uses.WithAliases(cfg.Aliases),
+				uses.WithClient(&http.Client{
+					Timeout: timeout,
+				}),
 			)
 			if err != nil {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
