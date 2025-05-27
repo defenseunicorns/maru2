@@ -104,11 +104,11 @@
         "default-from-env": {
           "type": "string",
           "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
-          "description": "Environment variable to use as default value for the parameter"
+          "description": "Environment variable to use as default value for the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-values-from-environment-variables"
         },
         "validate": {
           "type": "string",
-          "description": "Regular expression to validate the value of the parameter"
+          "description": "Regular expression to validate the value of the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#input-validation"
         }
       },
       "additionalProperties": false,
@@ -436,10 +436,9 @@
           "type": "string",
           "enum": [
             "always",
-            "success",
             "failure"
           ],
-          "description": "Expression that controls whether the step is executed"
+          "description": "Expression that controls whether the step is executed\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if"
         },
         "dir": {
           "type": "string",
@@ -497,7 +496,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "description": "Aliases for package URLs to create shorthand references"
+      "description": "Aliases for package URLs to create shorthand references\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases"
     }
   },
   "additionalProperties": false,

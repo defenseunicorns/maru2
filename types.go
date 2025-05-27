@@ -49,7 +49,9 @@ func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	}
 
 	if aliases, ok := schema.Properties.Get("aliases"); ok && aliases != nil {
-		aliases.Description = "Aliases for package URLs to create shorthand references"
+		aliases.Description = `Aliases for package URLs to create shorthand references
+
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases`
 		aliases.PatternProperties = map[string]*jsonschema.Schema{
 			// TODO: figure out if there is a better pattern to use here
 			InputNamePattern.String(): {

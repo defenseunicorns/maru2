@@ -174,11 +174,12 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-ou
 		Description: "Human-readable name for the step, pure sugar",
 	})
 	props.Set("if", &jsonschema.Schema{
-		Type:        "string",
-		Description: "Expression that controls whether the step is executed",
+		Type: "string",
+		Description: `Expression that controls whether the step is executed
+
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if`,
 		Enum: []any{
 			"always",
-			"success",
 			"failure",
 		},
 	})
