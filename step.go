@@ -179,8 +179,8 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-ou
 
 See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if`,
 		Enum: []any{
-			"always",
 			"failure",
+			"always",
 		},
 	})
 	props.Set("dir", &jsonschema.Schema{
