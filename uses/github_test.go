@@ -51,17 +51,14 @@ echo:
 	})
 
 	t.Run("environment variables", func(t *testing.T) {
-		// Test with default token env
 		_, err := NewGitHubClient(nil, "", "")
 		require.NoError(t, err)
 
-		// Test with custom token env that doesn't exist
 		customEnv := "CUSTOM_GITHUB_TOKEN"
 		_, err = NewGitHubClient(nil, "", customEnv)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), customEnv)
 
-		// Test with custom token env that exists
 		t.Setenv(customEnv, "dummy-token")
 		client, err := NewGitHubClient(nil, "", customEnv)
 		require.NoError(t, err)
@@ -69,18 +66,14 @@ echo:
 	})
 
 	t.Run("base url", func(t *testing.T) {
-		// Test with invalid base URL
 		_, err := NewGitHubClient(nil, ":%invalid", "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid base URL")
-
-		// Test with valid base URL
 		baseURL := "https://github.example.com"
 		client, err := NewGitHubClient(nil, baseURL, "")
 		require.NoError(t, err)
 		assert.NotNil(t, client)
 
-		// Verify the base URL was set correctly
 		actualBaseURL := client.client.BaseURL.String()
 		expectedBaseURL := baseURL
 		if !strings.HasSuffix(expectedBaseURL, "/") {
