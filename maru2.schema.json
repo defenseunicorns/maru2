@@ -6,14 +6,19 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "Type of the alias (e.g. github)"
+          "enum": [
+            "github",
+            "gitlab"
+          ],
+          "description": "Type of the alias, maps to a package URL type"
         },
         "base": {
           "type": "string",
-          "description": "Base URL for the alias"
+          "description": "Base URL for the underlying client (e.g. https://mygitlab.com )"
         },
         "token-from-env": {
           "type": "string",
+          "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
           "description": "Environment variable containing the token for authentication"
         }
       },
