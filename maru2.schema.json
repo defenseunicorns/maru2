@@ -5,13 +5,21 @@
     "Alias": {
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "github",
+            "gitlab"
+          ],
+          "description": "Type of the alias, maps to a package URL type"
         },
         "base": {
-          "type": "string"
+          "type": "string",
+          "description": "Base URL for the underlying client (e.g. https://mygitlab.com )"
         },
         "token-from-env": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
+          "description": "Environment variable containing the token for authentication"
         }
       },
       "additionalProperties": false,
@@ -91,15 +99,16 @@
               "type": "integer"
             }
           ],
-          "description": "Default value for the parameter"
+          "description": "Default value for the parameter, can be a string or a primitive type"
         },
         "default-from-env": {
           "type": "string",
-          "description": "Environment variable to use as default value for the parameter"
+          "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
+          "description": "Environment variable to use as default value for the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-values-from-environment-variables"
         },
         "validate": {
           "type": "string",
-          "description": "Regular expression to validate the value of the parameter"
+          "description": "Regular expression to validate the value of the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#input-validation"
         }
       },
       "additionalProperties": false,
@@ -152,7 +161,8 @@
                     "type": "object",
                     "required": [
                       "text"
-                    ]
+                    ],
+                    "description": "Configuration for builtin:echo"
                   }
                 },
                 "required": [
@@ -198,7 +208,8 @@
                     "type": "object",
                     "required": [
                       "url"
-                    ]
+                    ],
+                    "description": "Configuration for builtin:fetch"
                   }
                 },
                 "required": [
@@ -337,7 +348,8 @@
                       "Map",
                       "Slice",
                       "Nested"
-                    ]
+                    ],
+                    "description": "Configuration for builtin:wacky-structs"
                   }
                 },
                 "required": [
@@ -377,7 +389,7 @@
                     "additionalProperties": false,
                     "type": "object",
                     "minItems": 1,
-                    "description": "Additional parameters for the step/task call"
+                    "description": "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-inputs"
                   }
                 }
               }
@@ -399,37 +411,26 @@
       "properties": {
         "run": {
           "type": "string",
-          "description": "Command/script to run",
-          "examples": [
-            "echo 'Hello World'",
-            "cat file.txt | grep pattern"
-          ]
+          "description": "Command/script to run"
         },
         "uses": {
           "type": "string",
-          "description": "Location of a remote task to call conforming to the purl spec",
+          "description": "Location of a task to call\n\nCalling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-another-task-as-a-step\nCalling tasks from local files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-local-file\nCalling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-file",
           "examples": [
+            "local-task",
+            "file:testdata/simple.yaml?task=echo",
             "builtin:echo",
-            "pkg:github/defenseunicorns/maru2@main?task=echo"
+            "pkg:github/defenseunicorns/maru2@main?task=echo",
+            "https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo"
           ]
         },
         "id": {
           "type": "string",
-          "description": "Unique identifier for the step",
-          "examples": [
-            "setup",
-            "build",
-            "test"
-          ]
+          "description": "Unique identifier for the step, required to access step outputs\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-outputs"
         },
         "name": {
           "type": "string",
-          "description": "Human-readable name for the step",
-          "examples": [
-            "Setup environment",
-            "Build application",
-            "Run tests"
-          ]
+          "description": "Human-readable name for the step, pure sugar"
         },
         "if": {
           "type": "string",
@@ -437,14 +438,14 @@
             "failure",
             "always"
           ],
-          "description": "Condition to determine if the step should be executed"
-        },
-        "with": {
-          "type": "object"
+          "description": "Expression that controls whether the step is executed\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if"
         },
         "dir": {
           "type": "string",
-          "description": "Directory to run the step in"
+          "description": "Relative directory to run the step in"
+        },
+        "with": {
+          "type": "object"
         }
       },
       "additionalProperties": false,
@@ -465,16 +466,37 @@
   },
   "properties": {
     "inputs": {
-      "$ref": "#/$defs/InputMap"
+      "$ref": "#/$defs/InputMap",
+      "patternProperties": {
+        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+          "$ref": "#/$defs/InputParameter",
+          "description": "Input parameter for the workflow"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Input parameters for the workflow"
     },
     "tasks": {
-      "$ref": "#/$defs/TaskMap"
+      "$ref": "#/$defs/TaskMap",
+      "patternProperties": {
+        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+          "$ref": "#/$defs/Task",
+          "description": "A task definition, aka a collection of steps"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
     },
     "aliases": {
-      "additionalProperties": {
-        "$ref": "#/$defs/Alias"
+      "patternProperties": {
+        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+          "$ref": "#/$defs/Alias",
+          "description": "An alias to a package URL"
+        }
       },
-      "type": "object"
+      "additionalProperties": false,
+      "type": "object",
+      "description": "Aliases for package URLs to create shorthand references\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases"
     }
   },
   "additionalProperties": false,

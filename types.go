@@ -23,6 +23,46 @@ type Workflow struct {
 	Aliases map[string]config.Alias `json:"aliases,omitempty"`
 }
 
+// JSONSchemaExtend extends the JSON schema for a workflow
+func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
+	if inputs, ok := schema.Properties.Get("inputs"); ok && inputs != nil {
+		inputs.Description = "Input parameters for the workflow"
+		inputs.PatternProperties = map[string]*jsonschema.Schema{
+			InputNamePattern.String(): {
+				Ref:         "#/$defs/InputParameter",
+				Description: "Input parameter for the workflow",
+			},
+		}
+		inputs.AdditionalProperties = jsonschema.FalseSchema
+	}
+
+	if tasks, ok := schema.Properties.Get("tasks"); ok && tasks != nil {
+		tasks.Description = "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
+		tasks.PatternProperties = map[string]*jsonschema.Schema{
+			TaskNamePattern.String(): {
+				Ref:         "#/$defs/Task",
+				Description: "A task definition, aka a collection of steps",
+			},
+		}
+
+		tasks.AdditionalProperties = jsonschema.FalseSchema
+	}
+
+	if aliases, ok := schema.Properties.Get("aliases"); ok && aliases != nil {
+		aliases.Description = `Aliases for package URLs to create shorthand references
+
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases`
+		aliases.PatternProperties = map[string]*jsonschema.Schema{
+			// TODO: figure out if there is a better pattern to use here
+			InputNamePattern.String(): {
+				Ref:         "#/$defs/Alias",
+				Description: "An alias to a package URL",
+			},
+		}
+		aliases.AdditionalProperties = jsonschema.FalseSchema
+	}
+}
+
 // Task is a list of steps
 type Task []Step
 
