@@ -4,10 +4,12 @@
 package maru2
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2/config"
@@ -17,7 +19,7 @@ import (
 )
 
 func TestExecuteUses(t *testing.T) {
-	svc, err := uses.NewFetcherService()
+	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: 5 * time.Second}))
 	require.NoError(t, err)
 
 	workflowFoo := Workflow{Tasks: TaskMap{"default": {Step{Run: "echo 'foo'"}, Step{Uses: "file:bar/baz.yaml?task=baz"}}}}
@@ -48,6 +50,10 @@ func TestExecuteUses(t *testing.T) {
 			handleWF(w, workflowBaz)
 		case "/bad.yaml":
 			_, _ = w.Write([]byte("not a workflow"))
+		case "/timeout.yaml":
+			time.Sleep(10 * time.Second)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = w.Write([]byte("not found"))
@@ -142,12 +148,18 @@ func TestExecuteUses(t *testing.T) {
 			origin:      dummyOrigin,
 			expectedErr: "failed to fetch " + server.URL + "/non-existent.yaml: 404 Not Found",
 		},
+		{
+			name:        "timeout",
+			uses:        server.URL + "/timeout.yaml",
+			origin:      dummyOrigin,
+			expectedErr: fmt.Sprintf("Get \"%s/timeout.yaml\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", server.URL),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			if tt.skipShort { // && testing.Short() {
+			if tt.skipShort && testing.Short() {
 				t.Skip("skipping test in short mode")
 			}
 
