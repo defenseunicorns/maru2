@@ -5,3 +5,5 @@ exec maru2 completion bash
 exec maru2 completion zsh
 exec maru2 completion fish
 exec maru2 completion powershell
+! exec maru2 completion tcsh
+stderr '\nERRO unsupported shell: tcsh\n'

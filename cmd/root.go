@@ -95,7 +95,7 @@ func NewRootCmd() *cobra.Command {
 				case "powershell":
 					return cmd.GenPowerShellCompletionWithDesc(os.Stdout)
 				default:
-					return fmt.Errorf("unsupported shell: %s", cmpl)
+					return fmt.Errorf("unsupported shell: %s", args[1])
 				}
 			}
 
