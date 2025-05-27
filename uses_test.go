@@ -19,7 +19,7 @@ import (
 )
 
 func TestExecuteUses(t *testing.T) {
-	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: 5 * time.Second}))
+	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
 	require.NoError(t, err)
 
 	workflowFoo := Workflow{Tasks: TaskMap{"default": {Step{Run: "echo 'foo'"}, Step{Uses: "file:bar/baz.yaml?task=baz"}}}}
@@ -51,7 +51,7 @@ func TestExecuteUses(t *testing.T) {
 		case "/bad.yaml":
 			_, _ = w.Write([]byte("not a workflow"))
 		case "/timeout.yaml":
-			time.Sleep(10 * time.Second)
+			time.Sleep(2 * time.Second)
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 		default:
