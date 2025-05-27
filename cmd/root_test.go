@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package maru2_test
+package cmd_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/defenseunicorns/maru2/cmd"
@@ -20,9 +21,9 @@ func TestMain(m *testing.M) {
 	})
 }
 
-func TestSimple(t *testing.T) {
+func TestE2E(t *testing.T) {
 	testscript.Run(t, testscript.Params{
-		Dir: "testdata",
+		Dir: filepath.Join("..", "testdata"),
 		Setup: func(env *testscript.Env) error {
 			env.Setenv("NO_COLOR", "true")
 			return nil

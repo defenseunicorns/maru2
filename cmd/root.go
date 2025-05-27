@@ -205,6 +205,8 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 
+	root.CompletionOptions.DisableDefaultCmd = true
+
 	return root
 }
 
