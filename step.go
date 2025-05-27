@@ -4,6 +4,8 @@
 package maru2
 
 import (
+	"fmt"
+
 	"github.com/defenseunicorns/maru2/builtins"
 	"github.com/invopop/jsonschema"
 )
@@ -13,18 +15,24 @@ type InputMap map[string]InputParameter
 
 // InputParameter represents a single input parameter for a workflow, to be used w/ `with`
 type InputParameter struct {
-	Description       string `json:"description" jsonschema:"description=Description of the parameter,required"`
-	DeprecatedMessage string `json:"deprecated-message,omitempty" jsonschema:"description=Message to display when the parameter is deprecated"`
-	Required          *bool  `json:"required,omitempty" jsonschema:"description=Whether the parameter is required,default=true"`
-	Default           any    `json:"default,omitempty" jsonschema:"description=Default value for the parameter"`
-	DefaultFromEnv    string `json:"default-from-env,omitempty" jsonschema:"description=Environment variable to use as default value for the parameter"`
-	Validate          string `json:"validate,omitempty" jsonschema:"description=Regular expression to validate the value of the parameter"`
+	// Description of the input parameter
+	Description string `json:"description"`
+	// Message to display when the parameter is deprecated
+	DeprecatedMessage string `json:"deprecated-message,omitempty"`
+	// Whether the parameter is required, defaults to true
+	Required *bool `json:"required,omitempty"`
+	// Default value for the parameter, can be a string or a primitive type
+	Default any `json:"default,omitempty"`
+	// Environment variable to use as default value for the parameter
+	DefaultFromEnv string `json:"default-from-env,omitempty"`
+	// Regular expression to validate the value of the parameter
+	Validate string `json:"validate,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a step
 func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
 	defaultSchema := &jsonschema.Schema{
-		Description: "Default value for the parameter",
+		Description: "Default value for the parameter, can be a string or a primitive type",
 		OneOf: []*jsonschema.Schema{
 			{
 				Type: "string",
@@ -41,7 +49,29 @@ func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
 	defaultFromEnvSchema := &jsonschema.Schema{
 		Type:        "string",
 		Description: "Environment variable to use as default value for the parameter",
+		Pattern:     EnvVariablePattern.String(),
 	}
+
+	schema.Properties.Set("description", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Description of the parameter",
+	})
+
+	schema.Properties.Set("deprecated-message", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Message to display when the parameter is deprecated",
+	})
+
+	schema.Properties.Set("required", &jsonschema.Schema{
+		Type:        "boolean",
+		Description: "Whether the parameter is required",
+		Default:     true,
+	})
+
+	schema.Properties.Set("validate", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Regular expression to validate the value of the parameter",
+	})
 
 	schema.Properties.Set("default", defaultSchema)
 	schema.Properties.Set("default-from-env", defaultFromEnvSchema)
@@ -95,7 +125,7 @@ type Step struct {
 	With `json:"with,omitempty"`
 	// ID is a unique identifier for the step
 	ID string `json:"id,omitempty"`
-	// Name is a human-readable name for the step
+	// Name is a human-readable name for the step, pure sugar
 	Name string `json:"name,omitempty"`
 	// If controls whether the step is executed
 	If string `json:"if,omitempty"`
@@ -113,35 +143,31 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 	props.Set("run", &jsonschema.Schema{
 		Type:        "string",
 		Description: "Command/script to run",
-		Examples:    []any{"echo 'Hello World'", "cat file.txt | grep pattern"},
 	})
 	props.Set("uses", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Location of a remote task to call conforming to the purl spec",
-		Examples:    []any{"builtin:echo", "pkg:github/defenseunicorns/maru2@main?task=echo"},
+		Description: "Location of a remote task to call conforming to the package URL spec",
 	})
 	props.Set("id", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Unique identifier for the step",
-		Examples:    []any{"setup", "build", "test"},
+		Description: "Unique identifier for the step, required to access step outputs",
 	})
 	props.Set("name", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Human-readable name for the step",
-		Examples:    []any{"Setup environment", "Build application", "Run tests"},
+		Description: "Human-readable name for the step, pure sugar",
 	})
 	props.Set("if", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Condition to determine if the step should be executed",
-		Enum:        []any{"failure", "always"}, // todo: tie this to an enum
-	})
-	props.Set("with", &jsonschema.Schema{
-		Type:        "object",
-		Description: "Additional parameters for the step/task call",
+		Description: "Expression that controls whether the step is executed",
+		Enum: []any{
+			"always",
+			"success",
+			"failure",
+		},
 	})
 	props.Set("dir", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Directory to run the step in",
+		Description: "Relative directory to run the step in",
 	})
 
 	runProps := jsonschema.NewProperties()
@@ -189,15 +215,15 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 		withSchema := reflector.Reflect(builtinEmpty)
 
 		if withSchema != nil {
+			withSchema.Description = fmt.Sprintf("Configuration for builtin:%s", name)
+
 			// processSchema allows schema types to be either string or their original type for templating
 			var processSchema func(schema *jsonschema.Schema)
 			processSchema = func(schema *jsonschema.Schema) {
-				// Skip if already a string type
 				if schema.Type == "string" {
 					return
 				}
 
-				// Process primitive types (not array or object)
 				if schema.Type != "array" && schema.Type != "object" {
 					schema.OneOf = []*jsonschema.Schema{
 						{Type: "string"},
@@ -207,13 +233,10 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 					return
 				}
 
-				// Process array items
 				if schema.Type == "array" && schema.Items != nil {
 					processSchema(schema.Items)
 					return
 				}
-
-				// Process object properties
 				if schema.Type == "object" && schema.Properties != nil {
 					for nestedPair := schema.Properties.Oldest(); nestedPair != nil; nestedPair = nestedPair.Next() {
 						processSchema(nestedPair.Value)
@@ -221,32 +244,25 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 				}
 			}
 
-			// Process all properties in the schema
 			for pair := withSchema.Properties.Oldest(); pair != nil; pair = pair.Next() {
-				// Skip string types
 				if pair.Value.Type == "string" {
 					continue
 				}
 
 				switch pair.Value.Type {
 				case "array":
-					// For arrays, keep structure but process items
 					if pair.Value.Items != nil {
 						processSchema(pair.Value.Items)
 					}
 
 				case "object":
-					// Special handling for maps
 					if pair.Value.AdditionalProperties != nil && pair.Value.AdditionalProperties != jsonschema.FalseSchema {
-						// Process map values if they're not strings
 						if pair.Value.AdditionalProperties.Type != "string" {
 							processSchema(pair.Value.AdditionalProperties)
 						}
 					} else {
-						// For regular objects, allow string or original type
 						objectSchema := *pair.Value
 
-						// Process nested properties
 						if objectSchema.Properties != nil {
 							for nestedPair := objectSchema.Properties.Oldest(); nestedPair != nil; nestedPair = nestedPair.Next() {
 								processSchema(nestedPair.Value)
@@ -264,7 +280,6 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 					}
 
 				default:
-					// Handle primitive types
 					pair.Value.OneOf = []*jsonschema.Schema{
 						{Type: "string"},
 						{Type: pair.Value.Type},
@@ -307,7 +322,7 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 
 	withSchema := &jsonschema.Schema{
 		Type:        "object",
-		Description: "Additional parameters for the step/task call",
+		Description: "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-inputs",
 		MinItems:    &single,
 		PatternProperties: map[string]*jsonschema.Schema{
 			EnvVariablePattern.String(): {
@@ -325,14 +340,6 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 			},
 		},
 		AdditionalProperties: jsonschema.FalseSchema,
-	}
-
-	withSchema.PatternProperties[EnvVariablePattern.String()] = &jsonschema.Schema{
-		OneOf: []*jsonschema.Schema{
-			{Type: "string"},
-			{Type: "boolean"},
-			{Type: "integer"},
-		},
 	}
 
 	oneOfGenericWith.Then.Properties.Set("with", withSchema)

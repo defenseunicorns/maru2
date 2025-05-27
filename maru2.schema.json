@@ -5,13 +5,16 @@
     "Alias": {
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "Type of the alias (e.g. github)"
         },
         "base": {
-          "type": "string"
+          "type": "string",
+          "description": "Base URL for the alias"
         },
         "token-from-env": {
-          "type": "string"
+          "type": "string",
+          "description": "Environment variable containing the token for authentication"
         }
       },
       "additionalProperties": false,
@@ -91,10 +94,11 @@
               "type": "integer"
             }
           ],
-          "description": "Default value for the parameter"
+          "description": "Default value for the parameter, can be a string or a primitive type"
         },
         "default-from-env": {
           "type": "string",
+          "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
           "description": "Environment variable to use as default value for the parameter"
         },
         "validate": {
@@ -152,7 +156,8 @@
                     "type": "object",
                     "required": [
                       "text"
-                    ]
+                    ],
+                    "description": "Configuration for builtin:echo"
                   }
                 },
                 "required": [
@@ -198,7 +203,8 @@
                     "type": "object",
                     "required": [
                       "url"
-                    ]
+                    ],
+                    "description": "Configuration for builtin:fetch"
                   }
                 },
                 "required": [
@@ -337,7 +343,8 @@
                       "Map",
                       "Slice",
                       "Nested"
-                    ]
+                    ],
+                    "description": "Configuration for builtin:wacky-structs"
                   }
                 },
                 "required": [
@@ -377,7 +384,7 @@
                     "additionalProperties": false,
                     "type": "object",
                     "minItems": 1,
-                    "description": "Additional parameters for the step/task call"
+                    "description": "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-inputs"
                   }
                 }
               }
@@ -399,52 +406,35 @@
       "properties": {
         "run": {
           "type": "string",
-          "description": "Command/script to run",
-          "examples": [
-            "echo 'Hello World'",
-            "cat file.txt | grep pattern"
-          ]
+          "description": "Command/script to run"
         },
         "uses": {
           "type": "string",
-          "description": "Location of a remote task to call conforming to the purl spec",
-          "examples": [
-            "builtin:echo",
-            "pkg:github/defenseunicorns/maru2@main?task=echo"
-          ]
+          "description": "Location of a remote task to call conforming to the package URL spec"
         },
         "id": {
           "type": "string",
-          "description": "Unique identifier for the step",
-          "examples": [
-            "setup",
-            "build",
-            "test"
-          ]
+          "description": "Unique identifier for the step, required to access step outputs"
         },
         "name": {
           "type": "string",
-          "description": "Human-readable name for the step",
-          "examples": [
-            "Setup environment",
-            "Build application",
-            "Run tests"
-          ]
+          "description": "Human-readable name for the step, pure sugar"
         },
         "if": {
           "type": "string",
           "enum": [
-            "failure",
-            "always"
+            "always",
+            "success",
+            "failure"
           ],
-          "description": "Condition to determine if the step should be executed"
-        },
-        "with": {
-          "type": "object"
+          "description": "Expression that controls whether the step is executed"
         },
         "dir": {
           "type": "string",
-          "description": "Directory to run the step in"
+          "description": "Relative directory to run the step in"
+        },
+        "with": {
+          "type": "object"
         }
       },
       "additionalProperties": false,
@@ -465,16 +455,37 @@
   },
   "properties": {
     "inputs": {
-      "$ref": "#/$defs/InputMap"
+      "$ref": "#/$defs/InputMap",
+      "patternProperties": {
+        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+          "$ref": "#/$defs/InputParameter",
+          "description": "Input parameter for the workflow"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Input parameters for the workflow"
     },
     "tasks": {
-      "$ref": "#/$defs/TaskMap"
+      "$ref": "#/$defs/TaskMap",
+      "patternProperties": {
+        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+          "$ref": "#/$defs/Task",
+          "description": "A task definition, aka a collection of steps"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
     },
     "aliases": {
-      "additionalProperties": {
-        "$ref": "#/$defs/Alias"
+      "patternProperties": {
+        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+          "$ref": "#/$defs/Alias",
+          "description": "An alias to a package URL"
+        }
       },
-      "type": "object"
+      "additionalProperties": false,
+      "type": "object",
+      "description": "Aliases for package URLs to create shorthand references"
     }
   },
   "additionalProperties": false,

@@ -24,9 +24,9 @@ type Config struct {
 
 // Alias defines how an alias should be resolved
 type Alias struct {
-	Type         string `json:"type"`
-	Base         string `json:"base,omitempty"`
-	TokenFromEnv string `json:"token-from-env,omitempty"`
+	Type         string `json:"type" jsonschema:"description=Type of the alias (e.g. github),required,comments=https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-url"`
+	Base         string `json:"base,omitempty" jsonschema:"description=Base URL for the alias,comments=https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-url"`
+	TokenFromEnv string `json:"token-from-env,omitempty" jsonschema:"description=Environment variable containing the token for authentication,comments=https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-url"`
 }
 
 // FileSystemConfigLoader loads configuration from the file system
