@@ -31,27 +31,17 @@ type Alias struct {
 
 // FileSystemConfigLoader loads configuration from the file system
 type FileSystemConfigLoader struct {
-	fs         afero.Fs
-	configPath string
+	Fs afero.Fs
 }
 
-// NewFileSystemConfigLoader creates a new FileSystemConfigLoader
-func NewFileSystemConfigLoader(fsys afero.Fs, configPath string) *FileSystemConfigLoader {
-	return &FileSystemConfigLoader{
-		fs:         fsys,
-		configPath: configPath,
-	}
-}
-
-// DefaultConfigLoader returns a config loader that uses the default locations
-func DefaultConfigLoader() (*FileSystemConfigLoader, error) {
+// DefaultDirectory returns the default directory for maru2 configuration
+func DefaultDirectory() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	configPath := filepath.Join(homeDir, ".maru2", DefaultFileName)
-	return NewFileSystemConfigLoader(afero.NewOsFs(), configPath), nil
+	return filepath.Join(homeDir, ".maru2"), nil
 }
 
 // LoadConfig loads the configuration from the file system
@@ -60,7 +50,7 @@ func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 		Aliases: map[string]Alias{},
 	}
 
-	f, err := l.fs.Open(l.configPath)
+	f, err := l.Fs.Open(DefaultFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return config, nil

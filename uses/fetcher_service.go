@@ -51,26 +51,13 @@ func WithClient(client *http.Client) FetcherServiceOption {
 // NewFetcherService creates a new FetcherService with custom resolver and filesystem
 func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	svc := &FetcherService{
-		mu:    sync.RWMutex{},
-		cache: make(map[string]Fetcher),
+		aliases: make(map[string]config.Alias),
+		mu:      sync.RWMutex{},
+		cache:   make(map[string]Fetcher),
 	}
 
 	for _, opt := range opts {
 		opt(svc)
-	}
-
-	if svc.aliases == nil {
-		loader, err := config.DefaultConfigLoader()
-		if err != nil {
-			return nil, err
-		}
-
-		config, err := loader.LoadConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		svc.aliases = config.Aliases
 	}
 
 	if svc.fsys == nil {

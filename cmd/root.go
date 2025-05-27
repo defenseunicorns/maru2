@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -21,7 +22,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2"
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
@@ -152,7 +155,26 @@ func NewRootCmd() *cobra.Command {
 
 			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
 
-			svc, err := uses.NewFetcherService()
+			configDir, err := config.DefaultDirectory()
+			if err != nil {
+				return err
+			}
+
+			loader := &config.FileSystemConfigLoader{
+				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+			}
+
+			cfg, err := loader.LoadConfig()
+			if err != nil {
+				return err
+			}
+
+			svc, err := uses.NewFetcherService(
+				uses.WithAliases(cfg.Aliases),
+				uses.WithClient(&http.Client{
+					Timeout: timeout,
+				}),
+			)
 			if err != nil {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
 			}
