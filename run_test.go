@@ -4,6 +4,7 @@
 package maru2
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -38,12 +39,9 @@ func TestRunExtended(t *testing.T) {
 					},
 				},
 			},
-			taskName:      "test",
-			with:          With{},
-			origin:        "",
-			dry:           false,
-			expectedError: "",
-			expectedOut:   nil,
+			taskName:    "test",
+			with:        With{},
+			expectedOut: nil,
 		},
 		{
 			name: "task with output",
@@ -57,12 +55,9 @@ func TestRunExtended(t *testing.T) {
 					},
 				},
 			},
-			taskName:      "test",
-			with:          With{},
-			origin:        "",
-			dry:           false,
-			expectedError: "",
-			expectedOut:   map[string]any{"result": "success"},
+			taskName:    "test",
+			with:        With{},
+			expectedOut: map[string]any{"result": "success"},
 		},
 		{
 			name: "task not found",
@@ -71,8 +66,6 @@ func TestRunExtended(t *testing.T) {
 			},
 			taskName:      "nonexistent",
 			with:          With{},
-			origin:        "",
-			dry:           false,
 			expectedError: "task \"nonexistent\" not found",
 			expectedOut:   nil,
 		},
@@ -91,12 +84,9 @@ func TestRunExtended(t *testing.T) {
 					},
 				},
 			},
-			taskName:      "test",
-			with:          With{},
-			origin:        "",
-			dry:           false,
-			expectedError: "",
-			expectedOut:   map[string]any{"stdout": "Hello, World!"},
+			taskName:    "test",
+			with:        With{},
+			expectedOut: map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "conditional step execution - success path",
@@ -120,12 +110,9 @@ func TestRunExtended(t *testing.T) {
 					},
 				},
 			},
-			taskName:      "test",
-			with:          With{},
-			origin:        "",
-			dry:           false,
-			expectedError: "",
-			expectedOut:   nil,
+			taskName:    "test",
+			with:        With{},
+			expectedOut: nil,
 		},
 		{
 			name: "conditional step execution - failure path",
@@ -151,15 +138,12 @@ func TestRunExtended(t *testing.T) {
 			},
 			taskName:      "test",
 			with:          With{},
-			origin:        "",
-			dry:           false,
 			expectedError: "exit status 1",
 			expectedOut:   map[string]any{"result": "handled"},
 		},
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -203,18 +187,15 @@ func TestToEnvVar(t *testing.T) {
 }
 
 func TestPrepareEnvironment(t *testing.T) {
-	// Test that MARU2_OUTPUT is set correctly
 	tempDir := t.TempDir()
 	outFilePath := filepath.Join(tempDir, "output.txt")
 
 	with := With{}
 	env := prepareEnvironment(with, outFilePath)
 
-	// Check that MARU2_OUTPUT is set
 	outputEnv := "MARU2_OUTPUT=" + outFilePath
 	assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
 
-	// Table tests for input environment variables
 	tests := []struct {
 		name           string
 		with           With
@@ -248,7 +229,6 @@ func TestPrepareEnvironment(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -257,7 +237,6 @@ func TestPrepareEnvironment(t *testing.T) {
 
 			env := prepareEnvironment(tc.with, outFilePath)
 
-			// Check that our expected env var is set
 			expectedEnv := tc.expectedEnvVar + "=" + tc.expectedValue
 			assert.Contains(t, env, expectedEnv, "Expected environment variable not found")
 		})
@@ -269,21 +248,18 @@ func TestHandleRunStep(t *testing.T) {
 		name          string
 		step          Step
 		withDefaults  With
-		outputs       CommandOutputs
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
+		expectedLog   string
 	}{
 		{
 			name: "simple command",
 			step: Step{
 				Run: "echo hello",
 			},
-			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			dry:           false,
-			expectedError: "",
-			expectedOut:   nil,
+			withDefaults: With{},
+			expectedLog:  "$ echo hello\n",
 		},
 		{
 			name: "command with output",
@@ -291,22 +267,17 @@ func TestHandleRunStep(t *testing.T) {
 				Run: "echo \"result=success\" >> $MARU2_OUTPUT",
 				ID:  "step1",
 			},
-			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			dry:           false,
-			expectedError: "",
-			expectedOut:   map[string]any{"result": "success"},
+			withDefaults: With{},
+			expectedOut:  map[string]any{"result": "success"},
+			expectedLog:  "$ echo \"result=success\" >> $MARU2_OUTPUT\n",
 		},
 		{
 			name: "command with template",
 			step: Step{
 				Run: "echo ${{ input \"text\" }}",
 			},
-			withDefaults:  With{"text": "hello world"},
-			outputs:       CommandOutputs{},
-			dry:           false,
-			expectedError: "",
-			expectedOut:   nil,
+			withDefaults: With{"text": "hello world"},
+			expectedLog:  "$ echo hello world\n",
 		},
 		{
 			name: "dry run",
@@ -314,11 +285,9 @@ func TestHandleRunStep(t *testing.T) {
 				Run: "echo hello",
 				ID:  "step1",
 			},
-			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			dry:           true,
-			expectedError: "",
-			expectedOut:   nil,
+			withDefaults: With{},
+			dry:          true,
+			expectedLog:  "$ echo hello\n",
 		},
 		{
 			name: "command error",
@@ -326,21 +295,22 @@ func TestHandleRunStep(t *testing.T) {
 				Run: "exit 1",
 			},
 			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			dry:           false,
 			expectedError: "exit status 1",
-			expectedOut:   nil,
+			expectedLog:   "$ exit 1\n",
 		},
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			t.Setenv("NO_COLOR", "true")
 
-			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			var buf bytes.Buffer
 
-			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, tc.outputs, tc.dry)
+			ctx := log.WithContext(t.Context(), log.NewWithOptions(&buf, log.Options{
+				Level: log.InfoLevel,
+			}))
+
+			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -351,6 +321,8 @@ func TestHandleRunStep(t *testing.T) {
 			if tc.expectedOut != nil {
 				assert.Equal(t, tc.expectedOut, result)
 			}
+
+			assert.Equal(t, tc.expectedLog, buf.String())
 		})
 	}
 }
@@ -361,7 +333,6 @@ func TestHandleUsesStep(t *testing.T) {
 		step          Step
 		workflow      Workflow
 		withDefaults  With
-		outputs       CommandOutputs
 		origin        string
 		dry           bool
 		expectedError string
@@ -375,13 +346,9 @@ func TestHandleUsesStep(t *testing.T) {
 					"text": "Hello, World!",
 				},
 			},
-			workflow:      Workflow{},
-			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			origin:        "",
-			dry:           false,
-			expectedError: "",
-			expectedOut:   map[string]any{"stdout": "Hello, World!"},
+			workflow:     Workflow{},
+			withDefaults: With{},
+			expectedOut:  map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "dry run builtin",
@@ -391,13 +358,10 @@ func TestHandleUsesStep(t *testing.T) {
 					"text": "Hello, World!",
 				},
 			},
-			workflow:      Workflow{},
-			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			origin:        "",
-			dry:           true,
-			expectedError: "",
-			expectedOut:   nil,
+			workflow:     Workflow{},
+			withDefaults: With{},
+			dry:          true,
+			expectedOut:  nil,
 		},
 		{
 			name: "uses with template",
@@ -407,13 +371,9 @@ func TestHandleUsesStep(t *testing.T) {
 					"text": "Hello from template",
 				},
 			},
-			workflow:      Workflow{},
-			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			origin:        "",
-			dry:           false,
-			expectedError: "",
-			expectedOut:   map[string]any{"stdout": "Hello from template"},
+			workflow:     Workflow{},
+			withDefaults: With{},
+			expectedOut:  map[string]any{"stdout": "Hello from template"},
 		},
 		{
 			name: "nonexistent builtin",
@@ -422,16 +382,12 @@ func TestHandleUsesStep(t *testing.T) {
 			},
 			workflow:      Workflow{},
 			withDefaults:  With{},
-			outputs:       CommandOutputs{},
-			origin:        "",
-			dry:           false,
 			expectedError: "builtin:nonexistent not found",
 			expectedOut:   nil,
 		},
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -440,7 +396,7 @@ func TestHandleUsesStep(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, tc.outputs, tc.origin, tc.dry)
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, tc.origin, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -476,7 +432,6 @@ func TestTraceError(t *testing.T) {
 		}
 
 		for _, tc := range tests {
-			tc := tc
 			t.Run(tc.name, func(t *testing.T) {
 				t.Parallel()
 
@@ -522,7 +477,6 @@ func TestTraceError(t *testing.T) {
 		}
 
 		for _, tc := range tests {
-			tc := tc
 			t.Run(tc.name, func(t *testing.T) {
 				t.Parallel()
 

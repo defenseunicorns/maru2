@@ -95,7 +95,7 @@ func NewRootCmd() *cobra.Command {
 				case "powershell":
 					return cmd.GenPowerShellCompletionWithDesc(os.Stdout)
 				default:
-					return fmt.Errorf("unsupported shell: %s", cmpl)
+					return fmt.Errorf("unsupported shell: %s", args[1])
 				}
 			}
 
@@ -204,6 +204,8 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&filename, "file", "f", "", "Read file as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
+
+	root.CompletionOptions.DisableDefaultCmd = true
 
 	return root
 }

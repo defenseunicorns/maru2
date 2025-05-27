@@ -47,17 +47,14 @@ hello-world:
 	})
 
 	t.Run("environment variables", func(t *testing.T) {
-		// Test with default token env
 		_, err := NewGitLabClient(nil, "", "")
 		require.NoError(t, err)
 
-		// Test with custom token env that doesn't exist
 		customEnv := "CUSTOM_GITLAB_TOKEN"
 		_, err = NewGitLabClient(nil, "", customEnv)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), customEnv)
 
-		// Test with custom token env that exists
 		t.Setenv(customEnv, "dummy-token")
 		client, err := NewGitLabClient(nil, "", customEnv)
 		require.NoError(t, err)
@@ -65,12 +62,9 @@ hello-world:
 	})
 
 	t.Run("base url", func(t *testing.T) {
-		// Test with default base URL
 		client, err := NewGitLabClient(nil, "", "")
 		require.NoError(t, err)
 		assert.NotNil(t, client)
-
-		// Test with custom base URL
 		baseURL := "https://gitlab.example.com"
 		client, err = NewGitLabClient(nil, baseURL, "")
 		require.NoError(t, err)
