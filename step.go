@@ -47,9 +47,11 @@ func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
 	}
 
 	defaultFromEnvSchema := &jsonschema.Schema{
-		Type:        "string",
-		Description: "Environment variable to use as default value for the parameter",
-		Pattern:     EnvVariablePattern.String(),
+		Type: "string",
+		Description: `Environment variable to use as default value for the parameter
+
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-values-from-environment-variables`,
+		Pattern: EnvVariablePattern.String(),
 	}
 
 	schema.Properties.Set("description", &jsonschema.Schema{
@@ -69,8 +71,10 @@ func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
 	})
 
 	schema.Properties.Set("validate", &jsonschema.Schema{
-		Type:        "string",
-		Description: "Regular expression to validate the value of the parameter",
+		Type: "string",
+		Description: `Regular expression to validate the value of the parameter
+
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#input-validation`,
 	})
 
 	schema.Properties.Set("default", defaultSchema)
@@ -145,12 +149,25 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Description: "Command/script to run",
 	})
 	props.Set("uses", &jsonschema.Schema{
-		Type:        "string",
-		Description: "Location of a remote task to call conforming to the package URL spec",
+		Type: "string",
+		Description: `Location of a task to call
+
+Calling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-another-task-as-a-step
+Calling tasks from local files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-local-file
+Calling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-file`,
+		Examples: []any{
+			"local-task",
+			"file:testdata/simple.yaml?task=echo",
+			"builtin:echo",
+			"pkg:github/defenseunicorns/maru2@main?task=echo",
+			"https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo",
+		},
 	})
 	props.Set("id", &jsonschema.Schema{
-		Type:        "string",
-		Description: "Unique identifier for the step, required to access step outputs",
+		Type: "string",
+		Description: `Unique identifier for the step, required to access step outputs
+
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-outputs`,
 	})
 	props.Set("name", &jsonschema.Schema{
 		Type:        "string",

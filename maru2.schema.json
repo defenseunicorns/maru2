@@ -415,11 +415,18 @@
         },
         "uses": {
           "type": "string",
-          "description": "Location of a remote task to call conforming to the package URL spec"
+          "description": "Location of a task to call\n\nCalling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-another-task-as-a-step\nCalling tasks from local files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-local-file\nCalling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-file",
+          "examples": [
+            "local-task",
+            "file:testdata/simple.yaml?task=echo",
+            "builtin:echo",
+            "pkg:github/defenseunicorns/maru2@main?task=echo",
+            "https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo"
+          ]
         },
         "id": {
           "type": "string",
-          "description": "Unique identifier for the step, required to access step outputs"
+          "description": "Unique identifier for the step, required to access step outputs\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-outputs"
         },
         "name": {
           "type": "string",
