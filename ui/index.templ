@@ -1,0 +1,30 @@
+package ui
+
+templ Hello(data chan []byte) {
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<title>Console</title>
+			<style>
+				pre {
+					background-color: #f5f5f5;
+					border: 1px solid #ddd;
+					border-radius: 4px;
+					padding: 15px;
+					margin: 10px;
+					font-family: monospace;
+				}
+			</style>
+		</head>
+		<body>
+			<h1>Console</h1>
+			<pre>
+				for d := range data {
+					@templ.Flush() {
+						<div>{ string(d) }</div>
+					}
+				}
+			</pre>
+		</body>
+	</html>
+}

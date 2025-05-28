@@ -134,6 +134,16 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
+	stdErr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	stdOut, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}

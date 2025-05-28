@@ -5,9 +5,11 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -19,10 +21,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/config"
+	"github.com/defenseunicorns/maru2/ui"
 	"github.com/defenseunicorns/maru2/uses"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -38,7 +42,10 @@ func NewRootCmd() *cobra.Command {
 		filename string
 		timeout  time.Duration
 		dry      bool
+		web      bool
 	)
+
+	os.Setenv("NO_COLOR", "true")
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -179,6 +186,60 @@ func NewRootCmd() *cobra.Command {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
 			}
 
+			if web {
+				port := 8080
+
+				pr, pw := io.Pipe()
+
+				logger.SetOutput(pw)
+
+				stdErrPr, stdErrPw := io.Pipe()
+				stdOut, stdOutPw := io.Pipe()
+
+				http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+					reader := bufio.NewReader(pr)
+					ch := make(chan []byte)
+					go func() {
+						// Always remember to close the channel.
+						defer close(ch)
+						for {
+							select {
+							case <-r.Context().Done():
+								// Quit early if the client is no longer connected.
+								return
+							default:
+								buf := make([]byte, 1024) // chunk size
+								n, err := reader.Read(buf)
+								if n > 0 {
+									chunk := make([]byte, n)
+									copy(chunk, buf[:n])
+									ch <- chunk
+								}
+								if err != nil {
+									if err == io.EOF {
+										close(ch)
+										return
+									}
+									log.Printf("read error: %v", err)
+									close(ch)
+									return
+								}
+							}
+						}
+					}()
+
+					// Pass the channel to the template.
+					component := ui.Hello(ch)
+
+					// Serve using the streaming mode of the handler.
+					templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)
+				})
+				go http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+				logger.Info("Started web server", "port", port)
+				// <-ctx.Done()
+				time.Sleep(3 * time.Second)
+			}
+
 			for _, call := range args {
 				start := time.Now()
 				logger.Debug("run", "task", call, "from", rootOrigin, "dry-run", dry)
@@ -204,6 +265,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&filename, "file", "f", "", "Read file as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
+	root.Flags().BoolVar(&web, "web", false, "Run maru2 in web mode")
 
 	root.CompletionOptions.DisableDefaultCmd = true
 
