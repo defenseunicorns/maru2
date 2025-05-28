@@ -6,6 +6,7 @@ package maru2
 import (
 	"context"
 	"fmt"
+	"io"
 	"maps"
 	"net/url"
 
@@ -15,7 +16,7 @@ import (
 )
 
 // ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[string]config.Alias, u string, with With, prev string, dry bool) (map[string]any, error) {
+func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[string]config.Alias, u string, with With, prev string, dry bool, stdout, stderr io.Writer) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("using", "task", u)
 
@@ -54,5 +55,5 @@ func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[s
 
 	taskName := nextURI.Query().Get(uses.QualifierTask)
 
-	return Run(ctx, svc, wf, taskName, with, next, dry)
+	return Run(ctx, svc, wf, taskName, with, next, dry, stdout, stderr)
 }

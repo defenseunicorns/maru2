@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"os"
 	"os/exec"
@@ -23,7 +24,7 @@ import (
 //
 // For all `uses` steps, this function will be called recursively.
 // Returns the outputs from the final step in the task.
-func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin string, dry bool) (map[string]any, error) {
+func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin string, dry bool, stdout, stderr io.Writer) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
 	}
@@ -55,9 +56,9 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 		logger.Debug("run", "step", fmt.Sprintf("%s[%d]", taskName, i))
 
 		if step.Uses != "" {
-			stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
+			stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry, stdout, stderr)
 		} else if step.Run != "" {
-			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
+			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry, stdout, stderr)
 		}
 
 		logger.Debug("ran", "step", fmt.Sprintf("%s[%d]", taskName, i), "outputs", len(stepResult), "duration", time.Since(start))
@@ -81,7 +82,7 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 }
 
 func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
-	outputs CommandOutputs, origin string, dry bool) (map[string]any, error) {
+	outputs CommandOutputs, origin string, dry bool, stdout, stderr io.Writer) (map[string]any, error) {
 
 	ctx = WithCWDContext(ctx, filepath.Join(CWDFromContext(ctx), step.Dir))
 
@@ -95,13 +96,13 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf
 	}
 
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry, stdout, stderr)
 	}
-	return ExecuteUses(ctx, svc, wf.Aliases, step.Uses, templatedWith, origin, dry)
+	return ExecuteUses(ctx, svc, wf.Aliases, step.Uses, templatedWith, origin, dry, stdout, stderr)
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,
-	outputs CommandOutputs, dry bool) (map[string]any, error) {
+	outputs CommandOutputs, dry bool, stdout, stderr io.Writer) (map[string]any, error) {
 
 	templatedRun, err := TemplateString(ctx, withDefaults, outputs, step.Run, dry)
 	if err != nil {
@@ -130,19 +131,21 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 	cmd := exec.CommandContext(ctx, "sh", "-e", "-c", templatedRun)
 	cmd.Env = env
 	cmd.Dir = filepath.Join(CWDFromContext(ctx), step.Dir)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	
+	// Use provided writers if available, otherwise default to os.Stdout/os.Stderr
+	if stdout != nil {
+		cmd.Stdout = stdout
+	} else {
+		cmd.Stdout = os.Stdout
+	}
+	
+	if stderr != nil {
+		cmd.Stderr = stderr
+	} else {
+		cmd.Stderr = os.Stderr
+	}
+	
 	cmd.Stdin = os.Stdin
-
-	stdErr, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	stdOut, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
 
 	if err := cmd.Run(); err != nil {
 		return nil, err

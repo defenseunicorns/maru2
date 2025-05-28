@@ -164,10 +164,10 @@ func TestExecuteUses(t *testing.T) {
 			}
 
 			if tt.expectedErr == "" {
-				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, tt.origin, false)
+				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, tt.origin, false, nil, nil)
 				require.NoError(t, err)
 			} else {
-				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, tt.origin, false)
+				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, tt.origin, false, nil, nil)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})

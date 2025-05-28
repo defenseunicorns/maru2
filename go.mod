@@ -5,7 +5,9 @@ go 1.24.3
 tool github.com/a-h/templ/cmd/templ
 
 require (
+	github.com/a-h/templ v0.3.865
 	github.com/alecthomas/chroma/v2 v2.18.0
+	github.com/buildkite/terminal-to-html v3.2.0+incompatible
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/log v0.4.2
 	github.com/go-viper/mapstructure/v2 v2.2.1
@@ -25,7 +27,6 @@ require (
 
 require (
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
-	github.com/a-h/templ v0.3.865 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect

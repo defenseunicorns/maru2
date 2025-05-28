@@ -43,9 +43,9 @@ func NewRootCmd() *cobra.Command {
 		timeout  time.Duration
 		dry      bool
 		web      bool
+		stdout   io.Writer
+		stderr   io.Writer
 	)
-
-	os.Setenv("NO_COLOR", "true")
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -189,15 +189,22 @@ func NewRootCmd() *cobra.Command {
 			if web {
 				port := 8080
 
-				pr, pw := io.Pipe()
+				// Setup pipes for logger output
+				logPr, logPw := io.Pipe()
+				logger.SetOutput(logPw)
 
-				logger.SetOutput(pw)
+				// Setup pipes for stdout and stderr
+				stdoutPr, stdoutPw := io.Pipe()
+				stderrPr, stderrPw := io.Pipe()
 
-				stdErrPr, stdErrPw := io.Pipe()
-				stdOut, stdOutPw := io.Pipe()
+				// Assign the writers for Run function
+				stdout = stdoutPw
+				stderr = stderrPw
 
 				http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-					reader := bufio.NewReader(pr)
+					// Create a multi-reader that combines all three streams
+					multiReader := io.MultiReader(logPr, stdoutPr, stderrPr)
+					reader := bufio.NewReader(multiReader)
 					ch := make(chan []byte)
 					go func() {
 						// Always remember to close the channel.
@@ -205,7 +212,6 @@ func NewRootCmd() *cobra.Command {
 						for {
 							select {
 							case <-r.Context().Done():
-								// Quit early if the client is no longer connected.
 								return
 							default:
 								buf := make([]byte, 1024) // chunk size
@@ -217,27 +223,22 @@ func NewRootCmd() *cobra.Command {
 								}
 								if err != nil {
 									if err == io.EOF {
-										close(ch)
 										return
 									}
-									log.Printf("read error: %v", err)
-									close(ch)
+									logger.Errorf("read error: %v", err)
 									return
 								}
 							}
 						}
 					}()
 
-					// Pass the channel to the template.
 					component := ui.Hello(ch)
 
-					// Serve using the streaming mode of the handler.
 					templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)
 				})
 				go http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 				logger.Info("Started web server", "port", port)
 				// <-ctx.Done()
-				time.Sleep(3 * time.Second)
 			}
 
 			for _, call := range args {
@@ -246,7 +247,7 @@ func NewRootCmd() *cobra.Command {
 				defer func() {
 					logger.Debug("ran", "task", call, "from", rootOrigin, "dry-run", dry, "duration", time.Since(start))
 				}()
-				_, err := maru2.Run(ctx, svc, wf, call, with, rootOrigin, dry)
+				_, err := maru2.Run(ctx, svc, wf, call, with, rootOrigin, dry, stdout, stderr)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)
