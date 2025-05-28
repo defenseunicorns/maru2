@@ -47,6 +47,8 @@ func NewRootCmd() *cobra.Command {
 		stderr   io.Writer
 	)
 
+	os.Setenv("CLICOLOR_FORCE", "1")
+
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
@@ -224,9 +226,7 @@ func NewRootCmd() *cobra.Command {
 						}
 					}()
 
-					component := ui.Hello(ch)
-
-					templ.Handler(component, templ.WithStreaming()).ServeHTTP(w, r)
+					templ.Handler(ui.Console(ch), templ.WithStreaming()).ServeHTTP(w, r)
 				})
 				go http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 				logger.Info("Started web server", "port", port)

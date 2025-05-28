@@ -2,20 +2,25 @@ package ui
 
 import "github.com/buildkite/terminal-to-html"
 
-templ Hello(data chan []byte) {
+templ Console(data chan []byte) {
 <!DOCTYPE html>
 <html>
 
 <head>
-	<title>Console</title>
+	<title>maru2 Web Console</title>
 	<style>
+		body {
+			background-color: #121212;
+			color: #e0e0e0;
+		}
 		#console {
-			background-color: #f5f5f5;
-			border: 1px solid #ddd;
+			background-color: #1e1e1e;
+			border: 1px solid #333;
 			border-radius: 4px;
 			padding: 15px;
 			margin: 10px;
 			font-family: monospace;
+			color: #e0e0e0;
 		}
 
 		// https://github.com/buildkite/terminal-to-html/blob/main/internal/assets/terminal.css
@@ -1149,7 +1154,6 @@ templ Hello(data chan []byte) {
 </head>
 
 <body>
-	<h1>Console</h1>
 	<pre id="console">
 				for d := range data {
 					@templ.Flush() {
