@@ -189,25 +189,17 @@ func NewRootCmd() *cobra.Command {
 			if web {
 				port := 8080
 
-				// Setup pipes for logger output
-				logPr, logPw := io.Pipe()
-				logger.SetOutput(logPw)
+				uiPr, uiPw := io.Pipe()
 
-				// Setup pipes for stdout and stderr
-				stdoutPr, stdoutPw := io.Pipe()
-				stderrPr, stderrPw := io.Pipe()
+				stdout = io.MultiWriter(os.Stdout, uiPw)
+				stderr = io.MultiWriter(os.Stderr, uiPw)
 
-				// Assign the writers for Run function
-				stdout = stdoutPw
-				stderr = stderrPw
+				logger.SetOutput(io.MultiWriter(os.Stderr, uiPw))
 
 				http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-					// Create a multi-reader that combines all three streams
-					multiReader := io.MultiReader(logPr, stdoutPr, stderrPr)
-					reader := bufio.NewReader(multiReader)
+					reader := bufio.NewReader(uiPr)
 					ch := make(chan []byte)
 					go func() {
-						// Always remember to close the channel.
 						defer close(ch)
 						for {
 							select {
@@ -238,7 +230,6 @@ func NewRootCmd() *cobra.Command {
 				})
 				go http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 				logger.Info("Started web server", "port", port)
-				// <-ctx.Done()
 			}
 
 			for _, call := range args {
