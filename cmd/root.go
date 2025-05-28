@@ -8,7 +8,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -31,33 +33,80 @@ import (
 // NewRootCmd creates the root command for the maru2 CLI.
 func NewRootCmd() *cobra.Command {
 	var (
-		w        map[string]string
-		level    string
-		ver      bool
-		list     bool
-		filename string
-		timeout  time.Duration
-		dry      bool
+		w       map[string]string
+		level   string
+		ver     bool
+		list    bool
+		from    string
+		timeout time.Duration
+		dry     bool
 	)
 
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
-		ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-			if filename == "" {
-				filename = uses.DefaultFileName
-			}
-			f, err := os.Open(filename)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveNoFileComp
-			}
-			defer f.Close()
+		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+			var rc io.ReadCloser
 
-			wf, err := maru2.ReadAndValidate(f)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveNoFileComp
+			var err error
+			if from == "" {
+				from = uses.DefaultFileName
+				rc, err = os.Open(from)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+				defer rc.Close()
+			} else {
+				configDir, err := config.DefaultDirectory()
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				loader := &config.FileSystemConfigLoader{
+					Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+				}
+
+				cfg, err := loader.LoadConfig()
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				svc, err := uses.NewFetcherService(
+					uses.WithAliases(cfg.Aliases),
+					uses.WithClient(&http.Client{
+						Timeout: 500 * time.Millisecond,
+					}),
+				)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				resolved, err := uses.ResolveURL("file:dne.yaml", from, nil)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				uri, err := url.Parse(resolved)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				fetcher, err := svc.GetFetcher(uri)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				rc, err = fetcher.Fetch(cmd.Context(), resolved)
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+				defer rc.Close()
 			}
 
+			wf, err := maru2.ReadAndValidate(rc)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
 			return wf.Tasks.OrderedTaskNames(), cobra.ShellCompDirectiveNoFileComp
 		},
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -91,7 +140,7 @@ func NewRootCmd() *cobra.Command {
 				case "zsh":
 					return cmd.GenZshCompletion(os.Stdout)
 				case "fish":
-					return cmd.GenFishCompletion(os.Stdout, false)
+					return cmd.GenFishCompletion(os.Stdout, true)
 				case "powershell":
 					return cmd.GenPowerShellCompletionWithDesc(os.Stdout)
 				default:
@@ -99,17 +148,73 @@ func NewRootCmd() *cobra.Command {
 				}
 			}
 
-			if filename == "" {
-				filename = uses.DefaultFileName
-			}
-
-			f, err := os.Open(filename)
+			configDir, err := config.DefaultDirectory()
 			if err != nil {
 				return err
 			}
-			defer f.Close()
 
-			wf, err := maru2.ReadAndValidate(f)
+			loader := &config.FileSystemConfigLoader{
+				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+			}
+
+			cfg, err := loader.LoadConfig()
+			if err != nil {
+				return err
+			}
+
+			svc, err := uses.NewFetcherService(
+				uses.WithAliases(cfg.Aliases),
+				uses.WithClient(&http.Client{
+					Timeout: timeout,
+				}),
+			)
+			if err != nil {
+				return fmt.Errorf("failed to initialize fetcher service: %w", err)
+			}
+
+			if timeout > 0 {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, timeout)
+				defer cancel()
+			}
+
+			var rc io.ReadCloser
+
+			// fix fish needing "'pkg:...'" for tab completion
+			from = strings.ReplaceAll(from, `'`, "")
+			from = strings.ReplaceAll(from, `"`, "")
+
+			if from == "" {
+				from = uses.DefaultFileName
+				rc, err = os.Open(from)
+				if err != nil {
+					return err
+				}
+				defer rc.Close()
+			} else {
+				resolved, err := uses.ResolveURL("file:dne.yaml", from, nil)
+				if err != nil {
+					return err
+				}
+
+				uri, err := url.Parse(resolved)
+				if err != nil {
+					return err
+				}
+
+				fetcher, err := svc.GetFetcher(uri)
+				if err != nil {
+					return err
+				}
+
+				rc, err = fetcher.Fetch(cmd.Context(), resolved)
+				if err != nil {
+					return err
+				}
+				defer rc.Close()
+			}
+
+			wf, err := maru2.ReadAndValidate(rc)
 			if err != nil {
 				return err
 			}
@@ -138,54 +243,25 @@ func NewRootCmd() *cobra.Command {
 				args = append(args, maru2.DefaultTaskName)
 			}
 
-			if timeout > 0 {
-				var cancel context.CancelFunc
-				ctx, cancel = context.WithTimeout(ctx, timeout)
-				defer cancel()
-			}
-
 			cwd, err := os.Getwd()
 			if err != nil {
 				return err
 			}
 
-			fullPath := filepath.Join(cwd, filename)
+			fullPath := cwd
 
-			rootOrigin := "file:" + fullPath
-
+			if from == uses.DefaultFileName {
+				from = "file:" + uses.DefaultFileName
+			}
 			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
-
-			configDir, err := config.DefaultDirectory()
-			if err != nil {
-				return err
-			}
-
-			loader := &config.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-			}
-
-			cfg, err := loader.LoadConfig()
-			if err != nil {
-				return err
-			}
-
-			svc, err := uses.NewFetcherService(
-				uses.WithAliases(cfg.Aliases),
-				uses.WithClient(&http.Client{
-					Timeout: timeout,
-				}),
-			)
-			if err != nil {
-				return fmt.Errorf("failed to initialize fetcher service: %w", err)
-			}
 
 			for _, call := range args {
 				start := time.Now()
-				logger.Debug("run", "task", call, "from", rootOrigin, "dry-run", dry)
+				logger.Debug("run", "task", call, "from", from, "dry-run", dry)
 				defer func() {
-					logger.Debug("ran", "task", call, "from", rootOrigin, "dry-run", dry, "duration", time.Since(start))
+					logger.Debug("ran", "task", call, "from", from, "dry-run", dry, "duration", time.Since(start))
 				}()
-				_, err := maru2.Run(ctx, svc, wf, call, with, rootOrigin, dry)
+				_, err := maru2.Run(ctx, svc, wf, call, with, from, dry)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)
@@ -201,7 +277,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().StringVarP(&filename, "file", "f", "", "Read file as workflow definition")
+	root.Flags().StringVarP(&from, "file", "f", "", "Read file as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 

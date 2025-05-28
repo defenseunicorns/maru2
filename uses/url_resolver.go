@@ -144,11 +144,9 @@ func resolvePkgToFile(p string, uri *url.URL, aliases map[string]config.Alias) (
 		pURL.Version = DefaultVersion
 	}
 
-	if taskName := uri.Query().Get(QualifierTask); taskName != "" {
-		qm := pURL.Qualifiers.Map()
-		qm[QualifierTask] = taskName
-		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
-	}
+	qm := pURL.Qualifiers.Map()
+	qm[QualifierTask] = uri.Query().Get(QualifierTask)
+	pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
 
 	resolvedPURL, isAlias := ResolveAlias(pURL, aliases)
 	if isAlias {
