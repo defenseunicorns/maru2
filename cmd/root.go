@@ -36,19 +36,12 @@ func NewRootCmd() *cobra.Command {
 		level   string
 		ver     bool
 		list    bool
+		from    string
 		timeout time.Duration
 		dry     bool
 	)
 
 	var cfg *config.Config
-
-	// default location
-	from := &uses.URI{
-		URL: &url.URL{
-			Scheme: "",
-			Opaque: uses.DefaultFileName,
-		},
-	}
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -68,8 +61,9 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			if from.Scheme == "file" {
-				return fmt.Errorf("provide a standard filepath: %q", from.URL.String())
+			u, _ := url.Parse(from)
+			if u.Scheme == "file" {
+				return fmt.Errorf("provide a standard filepath: %q", from)
 			}
 
 			return nil
@@ -84,18 +78,17 @@ func NewRootCmd() *cobra.Command {
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			// resolved, err := uses.ResolveURL("file:dne.yaml", from, cfg.Aliases)
-			// if err != nil {
-			// 	fmt.Println(err)
-			// 	return nil, cobra.ShellCompDirectiveError
-			// }
-
-			fetcher, err := svc.GetFetcher(from)
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			rc, err := fetcher.Fetch(cmd.Context(), from)
+			fetcher, err := svc.GetFetcher(resolved)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+
+			rc, err := fetcher.Fetch(cmd.Context(), resolved)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
@@ -121,6 +114,10 @@ func NewRootCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
+
+			// fix fish needing "'pkg:...'" for tab completion
+			from := strings.Trim(from, `"`)
+			from = strings.Trim(from, `'`)
 
 			if ver && len(args) == 0 {
 				bi, ok := debug.ReadBuildInfo()
@@ -162,9 +159,25 @@ func NewRootCmd() *cobra.Command {
 				defer cancel()
 			}
 
-			wf, err := maru2.Fetch(cmd.Context(), svc, from)
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
-				return fmt.Errorf("failed to fetch workflow: %w", err)
+				return err
+			}
+
+			fetcher, err := svc.GetFetcher(resolved)
+			if err != nil {
+				return err
+			}
+
+			rc, err := fetcher.Fetch(cmd.Context(), resolved)
+			if err != nil {
+				return err
+			}
+			defer rc.Close()
+
+			wf, err := maru2.ReadAndValidate(rc)
+			if err != nil {
+				return err
 			}
 
 			if list {
@@ -198,8 +211,8 @@ func NewRootCmd() *cobra.Command {
 
 			fullPath := cwd
 			// needs unit test validation
-			if from.Scheme == "" || from.Scheme == "file" {
-				stripped := strings.TrimPrefix(from.String(), "file:")
+			if resolved.Scheme == "" || resolved.Scheme == "file" {
+				stripped := strings.TrimPrefix(resolved.String(), "file:")
 				stripped = strings.TrimPrefix(stripped, "//")
 				fullPath = filepath.Join(cwd, stripped)
 			}
@@ -208,11 +221,11 @@ func NewRootCmd() *cobra.Command {
 
 			for _, call := range args {
 				start := time.Now()
-				logger.Debug("run", "task", call, "from", from, "dry-run", dry)
+				logger.Debug("run", "task", call, "from", resolved, "dry-run", dry)
 				defer func() {
-					logger.Debug("ran", "task", call, "from", from, "dry-run", dry, "duration", time.Since(start))
+					logger.Debug("ran", "task", call, "from", resolved, "dry-run", dry, "duration", time.Since(start))
 				}()
-				_, err := maru2.Run(ctx, svc, wf, call, with, from, dry)
+				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, dry)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)
@@ -228,7 +241,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().VarP(from, "from", "f", "Fetch workflow definition from location specified")
+	root.Flags().StringVarP(&from, "from", "f", uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 

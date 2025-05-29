@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"net/url"
 	"sync"
 
 	"github.com/defenseunicorns/maru2/config"
@@ -75,8 +76,8 @@ func (s *FetcherService) PkgAliases() map[string]config.Alias {
 	return maps.Clone(s.aliases)
 }
 
-// GetFetcher returns a fetcher for the given URI
-func (s *FetcherService) GetFetcher(uri *URI) (Fetcher, error) {
+// GetFetcher returns a fetcher for the given URL
+func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 	cacheKey := uri.String()
 
 	s.mu.RLock()

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/package-url/packageurl-go"
@@ -51,9 +52,9 @@ func NewGitLabClient(client *http.Client, base string, tokenEnv string) (*GitLab
 }
 
 // Fetch downloads a file from GitLab
-func (g *GitLabClient) Fetch(ctx context.Context, uri *URI) (io.ReadCloser, error) {
+func (g *GitLabClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	if uri == nil {
-		return nil, fmt.Errorf("uri is nil")
+		return nil, fmt.Errorf("url is nil")
 	}
 
 	pURL, err := packageurl.FromString(uri.String())

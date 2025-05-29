@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // HTTPFetcher fetches a file from a remote HTTP server
@@ -22,9 +23,9 @@ func NewHTTPFetcher(client *http.Client) *HTTPFetcher {
 
 // Fetch performs a GET request using the default HTTP client
 // against the provided raw URL string and returns the request body
-func (f *HTTPFetcher) Fetch(ctx context.Context, uri *URI) (io.ReadCloser, error) {
+func (f *HTTPFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	if uri == nil {
-		return nil, fmt.Errorf("uri is nil")
+		return nil, fmt.Errorf("url is nil")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri.String(), nil)

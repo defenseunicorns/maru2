@@ -15,13 +15,15 @@ import (
 
 // ResolveRelative resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveRelative(prev *URI, u string, pkgAliases map[string]config.Alias) (*URI, error) {
-	uri, err := Parse(u)
+func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias) (*url.URL, error) {
+	uri, err := url.Parse(u)
 	if err != nil {
 		return nil, err
 	}
 
-	if uri.Scheme == "" {
+	fmt.Println(prev)
+
+	if prev != nil && uri.Scheme == "" {
 		return nil, fmt.Errorf("must contain a scheme: %q", uri)
 	}
 
@@ -64,22 +66,20 @@ func ResolveRelative(prev *URI, u string, pkgAliases map[string]config.Alias) (*
 			}
 			resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
 			if isAlias {
-				return Parse(resolvedPURL.String())
+				return url.Parse(resolvedPURL.String())
 			}
-			return Parse(pURL.String())
+			return url.Parse(pURL.String())
 		}
 		return uri, nil
 
 	// file -> file
 	case prev.Scheme == "file" && uri.Scheme == "file":
-		dir := filepath.Dir(prev.URL.Opaque)
+		dir := filepath.Dir(prev.Opaque)
 		if dir != "." {
-			next := &URI{
-				URL: &url.URL{
-					Scheme:   "file",
-					Opaque:   filepath.Join(dir, uri.Opaque),
-					RawQuery: uri.RawQuery,
-				},
+			next := &url.URL{
+				Scheme:   "file",
+				Opaque:   filepath.Join(dir, uri.Opaque),
+				RawQuery: uri.RawQuery,
 			}
 			if next.Opaque == "." {
 				next.Opaque = DefaultFileName
@@ -122,7 +122,7 @@ func ResolveRelative(prev *URI, u string, pkgAliases map[string]config.Alias) (*
 			pURL = resolvedPURL
 		}
 
-		return Parse(pURL.String())
+		return url.Parse(pURL.String())
 	}
 
 	// This should be unreachable

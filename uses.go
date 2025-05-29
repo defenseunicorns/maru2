@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"net/url"
 
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2/config"
@@ -14,7 +15,7 @@ import (
 )
 
 // ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[string]config.Alias, u string, with With, prev *uses.URI, dry bool) (map[string]any, error) {
+func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[string]config.Alias, u string, with With, prev *url.URL, dry bool) (map[string]any, error) {
 	aliases := svc.PkgAliases()
 	maps.Copy(aliases, pkgAliases)
 
@@ -33,7 +34,7 @@ func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[s
 	return Run(ctx, svc, wf, taskName, with, next, dry)
 }
 
-func Fetch(ctx context.Context, svc *uses.FetcherService, uri *uses.URI) (Workflow, error) {
+func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflow, error) {
 	logger := log.FromContext(ctx)
 
 	fetcher, err := svc.GetFetcher(uri)
@@ -41,7 +42,7 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *uses.URI) (Workfl
 		return Workflow{}, err
 	}
 
-	logger.Debug("fetching", "uri", uri, "fetcher", fmt.Sprintf("%T", fetcher))
+	logger.Debug("fetching", "url", uri, "fetcher", fmt.Sprintf("%T", fetcher))
 
 	rc, err := fetcher.Fetch(ctx, uri)
 	if err != nil {
