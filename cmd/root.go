@@ -184,8 +184,9 @@ func NewRootCmd() *cobra.Command {
 			from = strings.ReplaceAll(from, `'`, "")
 			from = strings.ReplaceAll(from, `"`, "")
 
-			if from == "" {
-				from = uses.DefaultFileName
+			// TODO: local files are currently borked, fix it
+
+			if from == uses.DefaultFileName {
 				rc, err = os.Open(from)
 				if err != nil {
 					return err
@@ -277,7 +278,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().StringVarP(&from, "file", "f", "", "Read file as workflow definition")
+	root.Flags().StringVarP(&from, "from", "f", uses.DefaultFileName, "Read file as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 
