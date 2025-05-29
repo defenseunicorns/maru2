@@ -31,4 +31,34 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
+	// u, err := url.Parse("tasks.yaml")
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "error: %v\n", err)
+	// 	os.Exit(1)
+	// }
+	// fmt.Printf("%#v\n\n", u)
+	// fmt.Println(u.String())
+
+	// u, err = url.Parse("pkg:/gh/defenseunicorns/maru2@main?task=hello-world#testdata/simple.yaml")
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "error: %v\n", err)
+	// 	os.Exit(1)
+	// }
+	// fmt.Printf("\n\n%#v\n\n", u)
+	// fmt.Println(u.String())
+
+	// u, err = url.Parse("pkg://gh/defenseunicorns/maru2@main?task=hello-world#testdata/simple.yaml")
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "error: %v\n", err)
+	// 	os.Exit(1)
+	// }
+	// fmt.Printf("\n\n%#v\n\n", u)
+	// fmt.Println(u.String())
+
+	// source := &url.URL{
+	// 	Scheme: "",
+	// 	Opaque: "tasks.yaml",
+	// }
+
+	// fmt.Println(source)
 }

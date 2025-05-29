@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"net/url"
 	"sync"
 
 	"github.com/defenseunicorns/maru2/config"
@@ -77,7 +76,7 @@ func (s *FetcherService) PkgAliases() map[string]config.Alias {
 }
 
 // GetFetcher returns a fetcher for the given URI
-func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
+func (s *FetcherService) GetFetcher(uri *URI) (Fetcher, error) {
 	cacheKey := uri.String()
 
 	s.mu.RLock()
@@ -122,7 +121,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 			return nil, err
 		}
 
-	case "file":
+	case "file", "":
 		fetcher = NewLocalFetcher(s.fsys)
 	default:
 		return nil, fmt.Errorf("unsupported scheme: %q", uri.Scheme)
