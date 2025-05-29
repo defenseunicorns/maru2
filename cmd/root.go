@@ -42,9 +42,27 @@ func NewRootCmd() *cobra.Command {
 		dry     bool
 	)
 
+	var cfg *config.Config
+
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			configDir, err := config.DefaultDirectory()
+			if err != nil {
+				return err
+			}
+
+			loader := &config.FileSystemConfigLoader{
+				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+			}
+
+			cfg, err = loader.LoadConfig()
+			if err != nil {
+				return err
+			}
+			return nil
+		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			var rc io.ReadCloser
 
@@ -57,20 +75,6 @@ func NewRootCmd() *cobra.Command {
 				}
 				defer rc.Close()
 			} else {
-				configDir, err := config.DefaultDirectory()
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
-				loader := &config.FileSystemConfigLoader{
-					Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-				}
-
-				cfg, err := loader.LoadConfig()
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
 				svc, err := uses.NewFetcherService(
 					uses.WithAliases(cfg.Aliases),
 					uses.WithClient(&http.Client{
@@ -146,20 +150,6 @@ func NewRootCmd() *cobra.Command {
 				default:
 					return fmt.Errorf("unsupported shell: %s", args[1])
 				}
-			}
-
-			configDir, err := config.DefaultDirectory()
-			if err != nil {
-				return err
-			}
-
-			loader := &config.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-			}
-
-			cfg, err := loader.LoadConfig()
-			if err != nil {
-				return err
 			}
 
 			svc, err := uses.NewFetcherService(
