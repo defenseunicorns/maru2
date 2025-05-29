@@ -64,47 +64,36 @@ func NewRootCmd() *cobra.Command {
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-			var rc io.ReadCloser
-
-			var err error
-			if from == "" {
-				from = uses.DefaultFileName
-				rc, err = os.Open(from)
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-				defer rc.Close()
-			} else {
-				svc, err := uses.NewFetcherService(
-					uses.WithClient(&http.Client{
-						Timeout: 500 * time.Millisecond,
-					}),
-				)
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
-				resolved, err := uses.ResolveURL("file:dne.yaml", from, cfg.Aliases)
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
-				uri, err := url.Parse(resolved)
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
-				fetcher, err := svc.GetFetcher(uri)
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
-				rc, err = fetcher.Fetch(cmd.Context(), resolved)
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-				defer rc.Close()
+			svc, err := uses.NewFetcherService(
+				uses.WithClient(&http.Client{
+					Timeout: 500 * time.Millisecond,
+				}),
+			)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
 			}
+
+			resolved, err := uses.ResolveURL("file:dne.yaml", from, cfg.Aliases)
+			if err != nil {
+				fmt.Println(err)
+				return nil, cobra.ShellCompDirectiveError
+			}
+
+			uri, err := url.Parse(resolved)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+
+			fetcher, err := svc.GetFetcher(uri)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+
+			rc, err := fetcher.Fetch(cmd.Context(), resolved)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+			defer rc.Close()
 
 			wf, err := maru2.ReadAndValidate(rc)
 			if err != nil {
@@ -173,36 +162,26 @@ func NewRootCmd() *cobra.Command {
 			from = strings.ReplaceAll(from, `'`, "")
 			from = strings.ReplaceAll(from, `"`, "")
 
-			// TODO: local files are currently borked, fix it
-
-			if from == uses.DefaultFileName {
-				rc, err = os.Open(from)
-				if err != nil {
-					return err
-				}
-				defer rc.Close()
-			} else {
-				resolved, err := uses.ResolveURL("file:dne.yaml", from, cfg.Aliases)
-				if err != nil {
-					return err
-				}
-
-				uri, err := url.Parse(resolved)
-				if err != nil {
-					return err
-				}
-
-				fetcher, err := svc.GetFetcher(uri)
-				if err != nil {
-					return err
-				}
-
-				rc, err = fetcher.Fetch(cmd.Context(), resolved)
-				if err != nil {
-					return err
-				}
-				defer rc.Close()
+			resolved, err := uses.ResolveURL("file:dne.yaml", from, cfg.Aliases)
+			if err != nil {
+				return err
 			}
+
+			uri, err := url.Parse(resolved)
+			if err != nil {
+				return err
+			}
+
+			fetcher, err := svc.GetFetcher(uri)
+			if err != nil {
+				return err
+			}
+
+			rc, err = fetcher.Fetch(cmd.Context(), resolved)
+			if err != nil {
+				return err
+			}
+			defer rc.Close()
 
 			wf, err := maru2.ReadAndValidate(rc)
 			if err != nil {
@@ -267,7 +246,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().StringVarP(&from, "from", "f", uses.DefaultFileName, "Read file as workflow definition")
+	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read file as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 
