@@ -76,7 +76,6 @@ func NewRootCmd() *cobra.Command {
 				defer rc.Close()
 			} else {
 				svc, err := uses.NewFetcherService(
-					uses.WithAliases(cfg.Aliases),
 					uses.WithClient(&http.Client{
 						Timeout: 500 * time.Millisecond,
 					}),
@@ -85,7 +84,7 @@ func NewRootCmd() *cobra.Command {
 					return nil, cobra.ShellCompDirectiveError
 				}
 
-				resolved, err := uses.ResolveURL("file:dne.yaml", from, nil)
+				resolved, err := uses.ResolveURL("file:dne.yaml", from, cfg.Aliases)
 				if err != nil {
 					return nil, cobra.ShellCompDirectiveError
 				}
@@ -183,7 +182,7 @@ func NewRootCmd() *cobra.Command {
 				}
 				defer rc.Close()
 			} else {
-				resolved, err := uses.ResolveURL("file:dne.yaml", from, nil)
+				resolved, err := uses.ResolveURL("file:dne.yaml", from, cfg.Aliases)
 				if err != nil {
 					return err
 				}
