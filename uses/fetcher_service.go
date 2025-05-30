@@ -122,7 +122,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 			return nil, err
 		}
 
-	case "file", "":
+	case "file":
 		fetcher = NewLocalFetcher(s.fsys)
 	default:
 		return nil, fmt.Errorf("unsupported scheme: %q", uri.Scheme)
