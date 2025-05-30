@@ -9,11 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -59,11 +57,6 @@ func NewRootCmd() *cobra.Command {
 			cfg, err = loader.LoadConfig()
 			if err != nil {
 				return err
-			}
-
-			u, _ := url.Parse(from)
-			if u.Scheme == "file" {
-				return fmt.Errorf("provide a standard filepath: %q", from)
 			}
 
 			return nil
@@ -115,10 +108,6 @@ func NewRootCmd() *cobra.Command {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
-			// fix fish needing "'pkg:...'" for tab completion
-			from := strings.Trim(from, `"`)
-			from = strings.Trim(from, `'`)
-
 			if ver && len(args) == 0 {
 				bi, ok := debug.ReadBuildInfo()
 				if !ok {
@@ -159,19 +148,28 @@ func NewRootCmd() *cobra.Command {
 				defer cancel()
 			}
 
-			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
+			cwd, err := os.Getwd()
 			if err != nil {
 				return err
+			}
+
+			// fix fish needing "'pkg:...'" for tab completion
+			from := strings.Trim(from, `"`)
+			from = strings.Trim(from, `'`)
+
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
+			if err != nil {
+				return fmt.Errorf("failed to resolve %q: %w", from, err)
 			}
 
 			fetcher, err := svc.GetFetcher(resolved)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get fetcher for %q: %w", resolved, err)
 			}
 
 			rc, err := fetcher.Fetch(cmd.Context(), resolved)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
 			}
 			defer rc.Close()
 
@@ -204,20 +202,7 @@ func NewRootCmd() *cobra.Command {
 				args = append(args, maru2.DefaultTaskName)
 			}
 
-			cwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			fullPath := cwd
-			// needs unit test validation
-			if resolved.Scheme == "" || resolved.Scheme == "file" {
-				stripped := strings.TrimPrefix(resolved.String(), "file:")
-				stripped = strings.TrimPrefix(stripped, "//")
-				fullPath = filepath.Join(cwd, stripped)
-			}
-
-			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
+			ctx = maru2.WithCWDContext(ctx, root)
 
 			for _, call := range args {
 				start := time.Now()

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 )
@@ -28,12 +29,16 @@ func (f *LocalFetcher) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, er
 		return nil, fmt.Errorf("url is nil")
 	}
 
-	if uri.Scheme != "" && uri.Scheme != "file" {
+	clone := *uri
+
+	if clone.Scheme != "" && clone.Scheme != "file" {
 		return nil, fmt.Errorf("scheme is not \"file\" or empty")
 	}
 
-	uri.Scheme = ""
-	p := uri.String()
+	clone.Scheme = ""
+	clone.RawQuery = ""
+	p := clone.String()
+	p = filepath.Clean(p)
 
 	fileInfo, err := f.fs.Stat(p)
 	if err != nil {

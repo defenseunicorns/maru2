@@ -39,7 +39,7 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, e
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s: %s", uri.String(), resp.Status)
+		return nil, fmt.Errorf("Get %q: %s", uri.String(), resp.Status)
 	}
 	return resp.Body, nil
 }

@@ -139,7 +139,7 @@ func TestResolveURL(t *testing.T) {
 			name:        "uri without scheme",
 			prev:        "file:foo.yaml",
 			uri:         "no-scheme",
-			expectedErr: "must contain a scheme: \"no-scheme\"",
+			expectedErr: `unsupported scheme: "" in "no-scheme"`,
 		},
 		{
 			name: "prev without scheme",
@@ -150,6 +150,12 @@ func TestResolveURL(t *testing.T) {
 		{
 			name: "file to file with directory path",
 			prev: "file:dir/foo.yaml",
+			uri:  "file:bar.yaml",
+			next: "file:dir/bar.yaml",
+		},
+		{
+			name: "file to file",
+			prev: "file://dir/foo.yaml",
 			uri:  "file:bar.yaml",
 			next: "file:dir/bar.yaml",
 		},
@@ -193,7 +199,7 @@ func TestResolveURL(t *testing.T) {
 			name:        "unsupported scheme",
 			prev:        "file:dir/foo.yaml",
 			uri:         "ftp://example.com/bar.yaml",
-			expectedErr: "unsupported scheme: \"ftp\"",
+			expectedErr: `unsupported scheme: "ftp" in "ftp://example.com/bar.yaml"`,
 		},
 		{
 			name:        "file to file with dot replacement in next.Opaque",
@@ -303,16 +309,26 @@ func TestResolveURL(t *testing.T) {
 			next: "file:tasks.yaml",
 		},
 		{
-			name:        "file to file with next.Opaque equals dot",
-			prev:        "file:foo/bar.yaml",
-			uri:         "file:.",
-			expectedErr: "invalid relative path \".\"",
+			name: "nil prev with file",
+			uri:  "file:foo/bar.yaml",
+			next: "file:foo/bar.yaml",
 		},
 		{
-			name:        "relative file to abs file",
-			prev:        "file:foo/bar.yaml",
-			uri:         "file:/",
-			expectedErr: "absolute path \"file:/\"",
+			name: "nil prev with file without scheme",
+			uri:  "foo/bar.yaml",
+			next: "file://foo/bar.yaml",
+		},
+		{
+			name: "file to file with next.Opaque equals dot",
+			prev: "file:foo/bar.yaml",
+			uri:  "file:.",
+			next: "file:foo/tasks.yaml",
+		},
+		{
+			name: "relative file to abs file",
+			prev: "file:foo/bar.yaml",
+			uri:  "file:/",
+			next: "file:/",
 		},
 		{
 			name:        "invalid path",
@@ -338,6 +354,7 @@ func TestResolveURL(t *testing.T) {
 				assert.Nil(t, next)
 			} else {
 				require.NoError(t, err)
+				assert.NotEmpty(t, next.Scheme)
 				assert.Equal(t, tc.next, next.String())
 			}
 		})

@@ -8,11 +8,14 @@ import (
 	"net/url"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 )
+
+func SupportedSchemes() []string {
+	return []string{"file", "http", "https", "pkg"}
+}
 
 // ResolveRelative resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
@@ -22,25 +25,16 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		return nil, err
 	}
 
-	// dst schemeless is only acceptable if the previous URI is nil
-	if prev != nil && uri.Scheme == "" {
-		return nil, fmt.Errorf("must contain a scheme: %q", uri)
+	if uri.Scheme == "" {
+		uri.Scheme = "file"
 	}
 
-	if !slices.Contains([]string{"file", "http", "https", "pkg"}, uri.Scheme) {
-		return nil, fmt.Errorf("unsupported scheme: %q", uri.Scheme)
+	if uri.Scheme == "file" && uri.Opaque == "" { // absolute path
+		return uri, nil
 	}
 
-	if uri.Opaque == "." {
-		return nil, fmt.Errorf("invalid relative path \".\"")
-	}
-
-	if uri.Scheme == "file" && (uri.Path == "" && uri.Opaque == "") {
-		return nil, fmt.Errorf("invalid path %q", uri)
-	}
-
-	if uri.Scheme == "file" && strings.HasPrefix(uri.Path, "/") {
-		return nil, fmt.Errorf("absolute path %q", uri)
+	if !slices.Contains(SupportedSchemes(), uri.Scheme) {
+		return nil, fmt.Errorf("unsupported scheme: %q in %q", uri.Scheme, uri)
 	}
 
 	switch {
@@ -79,7 +73,7 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		return uri, nil
 
 	// file -> file
-	case (prev.Scheme == "file" || prev.Scheme == "") && uri.Scheme == "file":
+	case prev.Scheme == "file" && uri.Scheme == "file":
 		dir := filepath.Dir(prev.Opaque)
 		if dir != "." {
 			next := &url.URL{
