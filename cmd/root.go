@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -44,6 +45,13 @@ func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
+		Example: `
+maru2 build
+
+maru2 -f ../foo.yaml bar baz -w zab="zaz"
+
+maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
+`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			configDir, err := config.DefaultDirectory()
 			if err != nil {
@@ -148,11 +156,6 @@ func NewRootCmd() *cobra.Command {
 				defer cancel()
 			}
 
-			cwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
 			// fix fish needing "'pkg:...'" for tab completion
 			from := strings.Trim(from, `"`)
 			from = strings.Trim(from, `'`)
@@ -162,20 +165,26 @@ func NewRootCmd() *cobra.Command {
 				return fmt.Errorf("failed to resolve %q: %w", from, err)
 			}
 
-			fetcher, err := svc.GetFetcher(resolved)
-			if err != nil {
-				return fmt.Errorf("failed to get fetcher for %q: %w", resolved, err)
-			}
-
-			rc, err := fetcher.Fetch(cmd.Context(), resolved)
-			if err != nil {
-				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
-			}
-			defer rc.Close()
-
-			wf, err := maru2.ReadAndValidate(rc)
+			cwd, err := os.Getwd()
 			if err != nil {
 				return err
+			}
+			root := cwd
+			if resolved.Scheme == "file" {
+				copy := *resolved
+				copy.RawQuery = ""
+				fileRef := filepath.Clean(strings.TrimPrefix(copy.String(), "file:"))
+				if filepath.IsAbs(fileRef) {
+					root = filepath.Dir(fileRef)
+				} else {
+					root = filepath.Join(cwd, filepath.Dir(fileRef))
+				}
+			}
+			ctx = maru2.WithCWDContext(ctx, root)
+
+			wf, err := maru2.Fetch(ctx, svc, resolved)
+			if err != nil {
+				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
 			}
 
 			if list {
@@ -202,8 +211,6 @@ func NewRootCmd() *cobra.Command {
 				args = append(args, maru2.DefaultTaskName)
 			}
 
-			ctx = maru2.WithCWDContext(ctx, root)
-
 			for _, call := range args {
 				start := time.Now()
 				logger.Debug("run", "task", call, "from", resolved, "dry-run", dry)
@@ -226,7 +233,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().StringVarP(&from, "from", "f", uses.DefaultFileName, "Read location as workflow definition")
+	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 

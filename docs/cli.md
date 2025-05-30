@@ -12,7 +12,7 @@ Usage:
 
 Flags:
       --dry-run               Don't actually run anything; just print
-  -f, --from string           Read file as workflow definition (default "tasks.yaml")
+  -f, --from string           Read location as workflow definition (default "file:tasks.yaml")
   -h, --help                  help for maru2
       --list                  Print list of available tasks and exit
   -l, --log-level string      Set log level (default "info")

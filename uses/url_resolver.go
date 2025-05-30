@@ -25,10 +25,6 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		return nil, err
 	}
 
-	if uri.Scheme == "" {
-		uri.Scheme = "file"
-	}
-
 	if uri.Scheme == "file" && uri.Opaque == "" { // absolute path
 		return uri, nil
 	}
