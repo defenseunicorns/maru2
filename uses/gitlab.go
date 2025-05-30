@@ -54,7 +54,7 @@ func NewGitLabClient(client *http.Client, base string, tokenEnv string) (*GitLab
 // Fetch downloads a file from GitLab
 func (g *GitLabClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	if uri == nil {
-		return nil, fmt.Errorf("url is nil")
+		return nil, fmt.Errorf("uri is nil")
 	}
 
 	pURL, err := packageurl.FromString(uri.String())

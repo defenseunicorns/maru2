@@ -98,7 +98,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 
 	switch uri.Scheme {
 	case "http", "https":
-		fetcher = NewHTTPFetcher(s.client)
+		fetcher = NewHTTPClient(s.client)
 	case "pkg":
 		pURL, err := packageurl.FromString(uri.String())
 		if err != nil {

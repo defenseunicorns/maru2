@@ -41,12 +41,16 @@ func TestHTTPFetcher(t *testing.T) {
 	})
 
 	f := func(server *httptest.Server) {
-		fetcher := NewHTTPFetcher(server.Client())
+		client := NewHTTPClient(server.Client())
+
+		rc, err := client.Fetch(ctx, nil)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `uri is nil`)
 
 		u, err := url.Parse(server.URL + "/hello-world.yaml")
 		require.NoError(t, err)
 
-		rc, err := fetcher.Fetch(ctx, u)
+		rc, err = client.Fetch(ctx, u)
 		require.NoError(t, err)
 
 		b, err := io.ReadAll(rc)
@@ -57,7 +61,7 @@ func TestHTTPFetcher(t *testing.T) {
 		u, err = url.Parse(server.URL)
 		require.NoError(t, err)
 
-		rc, err = fetcher.Fetch(ctx, u)
+		rc, err = client.Fetch(ctx, u)
 		require.EqualError(t, err, fmt.Sprintf("get %q: 404 Not Found", server.URL))
 		assert.Nil(t, rc)
 
@@ -66,7 +70,7 @@ func TestHTTPFetcher(t *testing.T) {
 		u, err = url.Parse(server.URL + "/hello-world.yaml")
 		require.NoError(t, err)
 
-		rc, err = fetcher.Fetch(ctx, u)
+		rc, err = client.Fetch(ctx, u)
 		require.EqualError(t, err, fmt.Sprintf("Get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
 		assert.Nil(t, rc)
 	}

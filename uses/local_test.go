@@ -48,6 +48,10 @@ func TestLocalFetcher(t *testing.T) {
 			uses: "file:zab.yaml",
 			rc:   io.NopCloser(strings.NewReader("")),
 		},
+		{
+			name:        "nil uri",
+			expectedErr: "uri is nil",
+		},
 	}
 
 	fs := afero.NewMemMapFs()
@@ -69,6 +73,10 @@ func TestLocalFetcher(t *testing.T) {
 
 			u, err := url.Parse(tc.uses)
 			require.NoError(t, err)
+
+			if tc.name == "nil uri" {
+				u = nil
+			}
 
 			rc, err := fetcher.Fetch(ctx, u)
 			if tc.expectedErr != "" {

@@ -25,10 +25,14 @@ func TestGitHubFetcher(t *testing.T) {
 		client, err := NewGitHubClient(nil, "", "")
 		require.NoError(t, err)
 
+		rc, err := client.Fetch(ctx, nil)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `uri is nil`)
+
 		u, err := url.Parse("file:foo.yaml")
 		require.NoError(t, err)
 
-		rc, err := client.Fetch(ctx, u)
+		rc, err = client.Fetch(ctx, u)
 		assert.Nil(t, rc)
 		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
 

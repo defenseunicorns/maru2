@@ -56,7 +56,7 @@ func NewGitHubClient(client *http.Client, base string, tokenEnv string) (*GitHub
 // Fetch downloads a file from GitHub
 func (g *GitHubClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	if uri == nil {
-		return nil, fmt.Errorf("url is nil")
+		return nil, fmt.Errorf("uri is nil")
 	}
 
 	pURL, err := packageurl.FromString(uri.String())

@@ -130,11 +130,10 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			cwd, err := os.Getwd()
+			root, err := os.Getwd()
 			if err != nil {
 				return err
 			}
-			root := cwd
 
 			fURI, err := url.Parse(from)
 			if err != nil {
@@ -146,8 +145,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					root = filepath.Dir(fileRef)
 					from = "file:" + fileRef
 				} else {
-					root = filepath.Join(cwd, filepath.Dir(fileRef))
-					from = "file:" + filepath.Join(cwd, fileRef)
+					root = filepath.Join(root, filepath.Dir(fileRef))
+					from = "file:" + filepath.Join(root, fileRef)
 				}
 			}
 			ctx = maru2.WithCWDContext(ctx, root)
