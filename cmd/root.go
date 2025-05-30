@@ -42,6 +42,25 @@ func NewRootCmd() *cobra.Command {
 	)
 
 	var cfg *config.Config
+	var cwd string
+
+	makeAbs := func(f string) string {
+		fURI, err := url.Parse(f)
+		if err != nil {
+			return f
+		}
+		if fURI.Scheme == "file" || fURI.Scheme == "" {
+			fileRef := filepath.Clean(strings.TrimPrefix(f, "file:"))
+			if filepath.IsAbs(fileRef) {
+				cwd = filepath.Dir(fileRef)
+				f = "file:" + fileRef
+			} else {
+				cwd = filepath.Join(cwd, filepath.Dir(fileRef))
+				f = "file:" + filepath.Join(cwd, fileRef)
+			}
+		}
+		return f
+	}
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -53,7 +72,7 @@ maru2 -f ../foo.yaml bar baz -w zab="zaz"
 
 maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
 `,
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			configDir, err := config.DefaultDirectory()
 			if err != nil {
 				return err
@@ -68,6 +87,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return err
 			}
 
+			cwd, err = os.Getwd()
+			if err != nil {
+				return fmt.Errorf("failed to get current working directory: %w", err)
+			}
+
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
@@ -80,7 +104,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
+			resolved, err := uses.ResolveRelative(nil, makeAbs(from), cfg.Aliases)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
@@ -130,26 +154,13 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			root, err := os.Getwd()
-			if err != nil {
-				return err
-			}
+			// fix fish needing "'pkg:...'" for tab completion
+			from = strings.Trim(from, `"`)
+			from = strings.Trim(from, `'`)
 
-			fURI, err := url.Parse(from)
-			if err != nil {
-				return err
-			}
-			if fURI.Scheme == "file" || fURI.Scheme == "" {
-				fileRef := filepath.Clean(strings.TrimPrefix(from, "file:"))
-				if filepath.IsAbs(fileRef) {
-					root = filepath.Dir(fileRef)
-					from = "file:" + fileRef
-				} else {
-					root = filepath.Join(root, filepath.Dir(fileRef))
-					from = "file:" + filepath.Join(root, fileRef)
-				}
-			}
-			ctx = maru2.WithCWDContext(ctx, root)
+			from = makeAbs(from)
+
+			ctx = maru2.WithCWDContext(ctx, cwd)
 
 			svc, err := uses.NewFetcherService(
 				uses.WithAliases(cfg.Aliases),
@@ -163,10 +174,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				ctx, cancel = context.WithTimeout(ctx, timeout)
 				defer cancel()
 			}
-
-			// fix fish needing "'pkg:...'" for tab completion
-			from := strings.Trim(from, `"`)
-			from = strings.Trim(from, `'`)
 
 			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
