@@ -85,18 +85,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			fetcher, err := svc.GetFetcher(resolved)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveError
-			}
-
-			rc, err := fetcher.Fetch(cmd.Context(), resolved)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveError
-			}
-			defer rc.Close()
-
-			wf, err := maru2.ReadAndValidate(rc)
+			wf, err := maru2.Fetch(cmd.Context(), svc, resolved)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
@@ -207,8 +196,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 				return nil
 			}
-
-			// if explain {}
 
 			with := make(maru2.With, len(w))
 			for k, v := range w {
