@@ -1,0 +1,19 @@
+exec maru2 __complete status
+cmp stdout stdout.txt
+cmp stderr stderr.txt
+
+-- stdout.txt --
+default
+bar
+foo
+:4
+-- stderr.txt --
+Completion ended with directive: ShellCompDirectiveNoFileComp
+-- tasks.yaml --
+tasks:
+  default:
+    - run: echo "default"
+  foo:
+    - run: echo "foo"
+  bar:
+    - run: echo "bar"
