@@ -8,44 +8,57 @@ import (
 	"net/url"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 )
 
-// ResolveURL resolves a URI relative to a previous URI.
-// It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveURL(p, u string, pkgAliases map[string]config.Alias) (string, error) {
-	prev, err := url.Parse(p)
-	if err != nil {
-		return "", err
-	}
+// SupportedSchemes returns a list of supported schemes
+func SupportedSchemes() []string {
+	return []string{"file", "http", "https", "pkg"}
+}
 
+// ResolveRelative resolves a URI relative to a previous URI.
+// It handles different schemes (file, http, https, pkg) and resolves relative paths.
+func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias) (*url.URL, error) {
 	uri, err := url.Parse(u)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if err := validateURIs(prev, uri); err != nil {
-		return "", err
+	if uri.Scheme == "file" && uri.Opaque == "" { // absolute path
+		return uri, nil
+	}
+
+	if !slices.Contains(SupportedSchemes(), uri.Scheme) {
+		return nil, fmt.Errorf("unsupported scheme: %q in %q", uri.Scheme, uri)
+	}
+
+	if prev != nil && !slices.Contains(SupportedSchemes(), prev.Scheme) {
+		return nil, fmt.Errorf("unsupported scheme: %q in %q", prev.Scheme, prev)
 	}
 
 	switch {
-	// file -> https, http, pkg
-	case prev.Scheme == "file" && (uri.Scheme == "https" || uri.Scheme == "http" || uri.Scheme == "pkg"),
+	case
+		// nil -> anything
+		prev == nil,
+		// file -> https, http, pkg
+		prev.Scheme == "file" && (uri.Scheme == "https" || uri.Scheme == "http" || uri.Scheme == "pkg"),
 		// https, http -> https, http
 		(prev.Scheme == "https" || prev.Scheme == "http") && (uri.Scheme == "https" || uri.Scheme == "http"),
 		// pkg -> pkg
 		prev.Scheme == "pkg" && uri.Scheme == "pkg",
 		// https, http -> pkg
-		(prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg":
+		(prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg",
+		// pkg -> http, https
+		prev.Scheme == "pkg" && (uri.Scheme == "https" || uri.Scheme == "http"):
 
 		if uri.Scheme == "pkg" {
 			pURL, err := packageurl.FromString(u)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
+
 			if pURL.Subpath == "" {
 				pURL.Subpath = DefaultFileName
 			}
@@ -54,106 +67,67 @@ func ResolveURL(p, u string, pkgAliases map[string]config.Alias) (string, error)
 			}
 			resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
 			if isAlias {
-				return resolvedPURL.String(), nil
+				return url.Parse(resolvedPURL.String())
 			}
-			return pURL.String(), nil
+			return url.Parse(pURL.String())
 		}
-		return u, nil
+		return uri, nil
 
 	// file -> file
 	case prev.Scheme == "file" && uri.Scheme == "file":
-		return resolveFileToFile(prev, uri)
+		dir := filepath.Dir(prev.Opaque)
+		if dir != "." {
+			next := &url.URL{
+				Scheme:   "file",
+				Opaque:   filepath.Join(dir, uri.Opaque),
+				RawQuery: uri.RawQuery,
+			}
+			if next.Opaque == "." {
+				next.Opaque = DefaultFileName
+			}
+			return next, nil
+		}
+		return uri, nil
 
 	// http(s) -> file
 	case (prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "file":
-		return resolveHTTPToFile(prev, uri)
+		next := *prev // https://github.com/golang/go/issues/38351
+		next.Path = filepath.Join(filepath.Dir(prev.Path), uri.Opaque)
+		if next.Path == "." || next.Path == "/" {
+			next.Path = "/" + DefaultFileName
+		}
+		next.RawQuery = uri.RawQuery
+		return &next, nil
 
 	// pkg -> file
 	case prev.Scheme == "pkg" && uri.Scheme == "file":
-		return resolvePkgToFile(p, uri, pkgAliases)
-	}
-
-	// This should be unreachable
-	return "", fmt.Errorf("unable to resolve %q to %q", p, u)
-}
-
-func validateURIs(prev, uri *url.URL) error {
-	if uri.Scheme == "" {
-		return fmt.Errorf("must contain a scheme: %q", uri)
-	}
-
-	if !slices.Contains([]string{"file", "http", "https", "pkg"}, uri.Scheme) {
-		return fmt.Errorf("unsupported scheme: %q", uri.Scheme)
-	}
-
-	if uri.Opaque == "." {
-		return fmt.Errorf("invalid relative path \".\"")
-	}
-
-	if uri.Scheme == "file" && (uri.Path == "" && uri.Opaque == "") {
-		return fmt.Errorf("invalid path %q", uri)
-	}
-
-	if uri.Scheme == "file" && strings.HasPrefix(uri.Path, "/") {
-		return fmt.Errorf("absolute path %q", uri)
-	}
-
-	if prev.Scheme == "" {
-		return fmt.Errorf("must contain a scheme: %q", prev)
-	}
-
-	return nil
-}
-
-func resolveFileToFile(prev, uri *url.URL) (string, error) {
-	dir := filepath.Dir(prev.Opaque)
-	if dir != "." {
-		next := &url.URL{
-			Scheme:   "file",
-			Opaque:   filepath.Join(dir, uri.Opaque),
-			RawQuery: uri.RawQuery,
+		pURL, err := packageurl.FromString(prev.String())
+		if err != nil {
+			return nil, err
 		}
-		if next.Opaque == "." {
-			next.Opaque = DefaultFileName
+
+		pURL.Subpath = filepath.Join(filepath.Dir(pURL.Subpath), uri.Opaque)
+		if pURL.Subpath == "." {
+			pURL.Subpath = DefaultFileName
 		}
-		return next.String(), nil
-	}
-	return uri.String(), nil
-}
+		if pURL.Version == "" {
+			pURL.Version = DefaultVersion
+		}
 
-func resolveHTTPToFile(prev, uri *url.URL) (string, error) {
-	next := *prev // https://github.com/golang/go/issues/38351
-	next.Path = filepath.Join(filepath.Dir(prev.Path), uri.Opaque)
-	if next.Path == "." || next.Path == "/" {
-		next.Path = "/" + DefaultFileName
-	}
-	next.RawQuery = uri.RawQuery
-	return next.String(), nil
-}
-
-func resolvePkgToFile(p string, uri *url.URL, aliases map[string]config.Alias) (string, error) {
-	pURL, err := packageurl.FromString(p)
-	if err != nil {
-		return "", err
-	}
-	pURL.Subpath = filepath.Join(filepath.Dir(pURL.Subpath), uri.Opaque)
-	if pURL.Subpath == "." {
-		pURL.Subpath = DefaultFileName
-	}
-	if pURL.Version == "" {
-		pURL.Version = DefaultVersion
-	}
-
-	if taskName := uri.Query().Get(QualifierTask); taskName != "" {
 		qm := pURL.Qualifiers.Map()
-		qm[QualifierTask] = taskName
+		delete(qm, QualifierTask)
+		if taskName := uri.Query().Get(QualifierTask); taskName != "" {
+			qm[QualifierTask] = taskName
+		}
 		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
+
+		resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
+		if isAlias {
+			pURL = resolvedPURL
+		}
+
+		return url.Parse(pURL.String())
 	}
 
-	resolvedPURL, isAlias := ResolveAlias(pURL, aliases)
-	if isAlias {
-		pURL = resolvedPURL
-	}
-
-	return pURL.String(), nil
+	return nil, fmt.Errorf("unable to resolve %q to %q", prev, uri)
 }

@@ -76,7 +76,7 @@ func (s *FetcherService) PkgAliases() map[string]config.Alias {
 	return maps.Clone(s.aliases)
 }
 
-// GetFetcher returns a fetcher for the given URI
+// GetFetcher returns a fetcher for the given URL
 func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 	cacheKey := uri.String()
 
@@ -98,7 +98,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 
 	switch uri.Scheme {
 	case "http", "https":
-		fetcher = NewHTTPFetcher(s.client)
+		fetcher = NewHTTPClient(s.client)
 	case "pkg":
 		pURL, err := packageurl.FromString(uri.String())
 		if err != nil {

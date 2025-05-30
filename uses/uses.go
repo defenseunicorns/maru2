@@ -7,6 +7,7 @@ package uses
 import (
 	"context"
 	"io"
+	"net/url"
 
 	"github.com/package-url/packageurl-go"
 )
@@ -28,7 +29,7 @@ const QualifierTask = "task"
 
 // Fetcher fetches a file from a remote location.
 type Fetcher interface {
-	Fetch(context.Context, string) (io.ReadCloser, error)
+	Fetch(context.Context, *url.URL) (io.ReadCloser, error)
 }
 
 // PackageAliasMapper handles mapping package URL aliases to their resolved forms

@@ -5,6 +5,7 @@ package uses
 
 import (
 	"io"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -19,22 +20,33 @@ func TestGitHubFetcher(t *testing.T) {
 			t.Skip("skipping tests that require network access")
 		}
 
-		uses := "pkg:github/noxsios/vai@main?task=echo#testdata/simple.yaml"
-
 		ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 		client, err := NewGitHubClient(nil, "", "")
 		require.NoError(t, err)
 
-		rc, err := client.Fetch(ctx, "file:foo.yaml")
+		rc, err := client.Fetch(ctx, nil)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `uri is nil`)
+
+		u, err := url.Parse("file:foo.yaml")
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
 		assert.Nil(t, rc)
 		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
 
-		rc, err = client.Fetch(ctx, "pkg:gitlab/foo.yaml")
+		u, err = url.Parse("pkg:gitlab/foo.yaml")
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
 		assert.Nil(t, rc)
 		require.EqualError(t, err, `purl type is not "github": "gitlab"`)
 
-		rc, err = client.Fetch(ctx, uses)
+		u, err = url.Parse("pkg:github/noxsios/vai@main?task=echo#testdata/simple.yaml")
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
 		require.NoError(t, err)
 
 		b, err := io.ReadAll(rc)

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -31,33 +32,63 @@ import (
 // NewRootCmd creates the root command for the maru2 CLI.
 func NewRootCmd() *cobra.Command {
 	var (
-		w        map[string]string
-		level    string
-		ver      bool
-		list     bool
-		filename string
-		timeout  time.Duration
-		dry      bool
+		w       map[string]string
+		level   string
+		ver     bool
+		list    bool
+		from    string
+		timeout time.Duration
+		dry     bool
 	)
+
+	var cfg *config.Config
 
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
-		ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-			if filename == "" {
-				filename = uses.DefaultFileName
-			}
-			f, err := os.Open(filename)
-			if err != nil {
-				return nil, cobra.ShellCompDirectiveNoFileComp
-			}
-			defer f.Close()
+		Example: `
+maru2 build
 
-			wf, err := maru2.ReadAndValidate(f)
+maru2 -f ../foo.yaml bar baz -w zab="zaz"
+
+maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
+`,
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			configDir, err := config.DefaultDirectory()
 			if err != nil {
-				return nil, cobra.ShellCompDirectiveNoFileComp
+				return err
 			}
 
+			loader := &config.FileSystemConfigLoader{
+				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+			}
+
+			cfg, err = loader.LoadConfig()
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+			svc, err := uses.NewFetcherService(
+				uses.WithClient(&http.Client{
+					Timeout: 500 * time.Millisecond,
+				}),
+			)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
+
+			wf, err := maru2.Fetch(cmd.Context(), svc, resolved)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError
+			}
 			return wf.Tasks.OrderedTaskNames(), cobra.ShellCompDirectiveNoFileComp
 		},
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -91,7 +122,7 @@ func NewRootCmd() *cobra.Command {
 				case "zsh":
 					return cmd.GenZshCompletion(os.Stdout)
 				case "fish":
-					return cmd.GenFishCompletion(os.Stdout, false)
+					return cmd.GenFishCompletion(os.Stdout, true)
 				case "powershell":
 					return cmd.GenPowerShellCompletionWithDesc(os.Stdout)
 				default:
@@ -99,19 +130,52 @@ func NewRootCmd() *cobra.Command {
 				}
 			}
 
-			if filename == "" {
-				filename = uses.DefaultFileName
-			}
-
-			f, err := os.Open(filename)
+			root, err := os.Getwd()
 			if err != nil {
 				return err
 			}
-			defer f.Close()
 
-			wf, err := maru2.ReadAndValidate(f)
+			fURI, err := url.Parse(from)
 			if err != nil {
 				return err
+			}
+			if fURI.Scheme == "file" || fURI.Scheme == "" {
+				fileRef := filepath.Clean(strings.TrimPrefix(from, "file:"))
+				if filepath.IsAbs(fileRef) {
+					root = filepath.Dir(fileRef)
+					from = "file:" + fileRef
+				} else {
+					root = filepath.Join(root, filepath.Dir(fileRef))
+					from = "file:" + filepath.Join(root, fileRef)
+				}
+			}
+			ctx = maru2.WithCWDContext(ctx, root)
+
+			svc, err := uses.NewFetcherService(
+				uses.WithAliases(cfg.Aliases),
+			)
+			if err != nil {
+				return fmt.Errorf("failed to initialize fetcher service: %w", err)
+			}
+
+			if timeout > 0 {
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, timeout)
+				defer cancel()
+			}
+
+			// fix fish needing "'pkg:...'" for tab completion
+			from := strings.Trim(from, `"`)
+			from = strings.Trim(from, `'`)
+
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
+			if err != nil {
+				return fmt.Errorf("failed to resolve %q: %w", from, err)
+			}
+
+			wf, err := maru2.Fetch(ctx, svc, resolved)
+			if err != nil {
+				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
 			}
 
 			if list {
@@ -138,54 +202,13 @@ func NewRootCmd() *cobra.Command {
 				args = append(args, maru2.DefaultTaskName)
 			}
 
-			if timeout > 0 {
-				var cancel context.CancelFunc
-				ctx, cancel = context.WithTimeout(ctx, timeout)
-				defer cancel()
-			}
-
-			cwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			fullPath := filepath.Join(cwd, filename)
-
-			rootOrigin := "file:" + fullPath
-
-			ctx = maru2.WithCWDContext(ctx, filepath.Dir(fullPath))
-
-			configDir, err := config.DefaultDirectory()
-			if err != nil {
-				return err
-			}
-
-			loader := &config.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-			}
-
-			cfg, err := loader.LoadConfig()
-			if err != nil {
-				return err
-			}
-
-			svc, err := uses.NewFetcherService(
-				uses.WithAliases(cfg.Aliases),
-				uses.WithClient(&http.Client{
-					Timeout: timeout,
-				}),
-			)
-			if err != nil {
-				return fmt.Errorf("failed to initialize fetcher service: %w", err)
-			}
-
 			for _, call := range args {
 				start := time.Now()
-				logger.Debug("run", "task", call, "from", rootOrigin, "dry-run", dry)
+				logger.Debug("run", "task", call, "from", resolved, "dry-run", dry)
 				defer func() {
-					logger.Debug("ran", "task", call, "from", rootOrigin, "dry-run", dry, "duration", time.Since(start))
+					logger.Debug("ran", "task", call, "from", resolved, "dry-run", dry, "duration", time.Since(start))
 				}()
-				_, err := maru2.Run(ctx, svc, wf, call, with, rootOrigin, dry)
+				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, dry)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)
@@ -201,7 +224,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().StringVarP(&filename, "file", "f", "", "Read file as workflow definition")
+	root.Flags().StringVarP(&from, "from", "f", uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 )
@@ -23,17 +24,21 @@ func NewLocalFetcher(fs afero.Fs) *LocalFetcher {
 }
 
 // Fetch opens a file handle at the given location
-func (f *LocalFetcher) Fetch(_ context.Context, uses string) (io.ReadCloser, error) {
-	uri, err := url.Parse(uses)
-	if err != nil {
-		return nil, err
+func (f *LocalFetcher) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
+	if uri == nil {
+		return nil, fmt.Errorf("uri is nil")
 	}
 
-	if uri.Scheme != "file" {
-		return nil, fmt.Errorf("scheme is not \"file\"")
+	clone := *uri
+
+	if clone.Scheme != "" && clone.Scheme != "file" {
+		return nil, fmt.Errorf("scheme is not \"file\" or empty")
 	}
 
-	p := uri.Opaque
+	clone.Scheme = ""
+	clone.RawQuery = ""
+	p := clone.String()
+	p = filepath.Clean(p)
 
 	fileInfo, err := f.fs.Stat(p)
 	if err != nil {

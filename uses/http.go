@@ -8,22 +8,27 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
-// HTTPFetcher fetches a file from a remote HTTP server
-type HTTPFetcher struct {
+// HTTPClient fetches a file from a remote HTTP server
+type HTTPClient struct {
 	client *http.Client
 }
 
-// NewHTTPFetcher returns a new HTTPFetcher
-func NewHTTPFetcher(client *http.Client) *HTTPFetcher {
-	return &HTTPFetcher{client: client}
+// NewHTTPClient returns a new HTTPClient
+func NewHTTPClient(client *http.Client) *HTTPClient {
+	return &HTTPClient{client: client}
 }
 
 // Fetch performs a GET request using the default HTTP client
 // against the provided raw URL string and returns the request body
-func (f *HTTPFetcher) Fetch(ctx context.Context, raw string) (io.ReadCloser, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, raw, nil)
+func (f *HTTPClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+	if uri == nil {
+		return nil, fmt.Errorf("uri is nil")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +39,7 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, raw string) (io.ReadCloser, err
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch %s: %s", raw, resp.Status)
+		return nil, fmt.Errorf("get %q: %s", uri.String(), resp.Status)
 	}
 	return resp.Body, nil
 }

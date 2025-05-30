@@ -12,7 +12,7 @@ Usage:
 
 Flags:
       --dry-run               Don't actually run anything; just print
-  -f, --file string           Read file as workflow definition
+  -f, --from string           Read location as workflow definition (default "tasks.yaml")
   -h, --help                  help for maru2
       --list                  Print list of available tasks and exit
   -l, --log-level string      Set log level (default "info")
@@ -116,12 +116,21 @@ Like `make`, you can run multiple tasks in a single command.
 $ maru2 task1 task2
 ```
 
-## Specify a workflow file
+## Specify a local workflow file
 
-By default, Maru2 will look for a file named `tasks.yaml` in the current directory. You can specify a different file to use with the `--file` or `-f` flag.
+By default, Maru2 will look for a file named `tasks.yaml` in the current directory. You can specify a different location to use with the `--from` or `-f` flag.
 
 ```sh
-$ maru2 --file path/to/other.yaml
+$ maru2 --from path/to/other.yaml
+```
+
+## Specify a remote workflow file
+
+Any [`uses` syntax](./syntax.md#run-a-task-from-a-remote-file) is also acceptable as a workflow location.
+
+```sh
+# NOTE: referencing remote workflows requires quoting, since the package-url spec leverages reserved shell characters (like # and @)!!!
+$ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
 ```
 
 ## Shell completions
@@ -147,6 +156,14 @@ $env:MARU2_COMPLETION='true'; maru2 completion powershell; $env:MARU2_COMPLETION
 Completions are only generated when the `MARU2_COMPLETION` environment variable is set to `true`, and the `completion <shell>` arguments are passed to the `maru2` command.
 
 This is because `completion bash|fish|etc...` are valid task names in a Maru2 workflow, so the CLI would attempt to run these tasks. By setting the environment variable, the CLI knows to generate completions instead of running tasks.
+
+> If using `fish` and attempting to perform tab completions w/ a remote workflow, surround your query in both sets of quotes. This is due to the way that Cobra's completion script is generated, the first set of quotes is stripped, and the underlying string will cause a completion error.
+>
+> ```sh
+> $ maru2 --from "'pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml'" [tab][tab]
+> # or just use --list to discover tasks
+> $ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
+> ```
 
 ## Timeout
 

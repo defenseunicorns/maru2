@@ -8,51 +8,65 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[string]config.Alias, u string, with With, prev string, dry bool) (map[string]any, error) {
-	logger := log.FromContext(ctx)
-	logger.Debug("using", "task", u)
+func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
+	outputs CommandOutputs, origin *url.URL, dry bool) (map[string]any, error) {
+
+	ctx = WithCWDContext(ctx, filepath.Join(CWDFromContext(ctx), step.Dir))
+
+	if strings.HasPrefix(step.Uses, "builtin:") {
+		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
+	}
+
+	templatedWith, err := TemplateWith(ctx, withDefaults, step.With, outputs, dry)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := wf.Tasks.Find(step.Uses); ok {
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
+	}
 
 	aliases := svc.PkgAliases()
-	maps.Copy(aliases, pkgAliases)
+	maps.Copy(aliases, wf.Aliases)
 
-	next, err := uses.ResolveURL(prev, u, aliases)
+	next, err := uses.ResolveRelative(origin, step.Uses, aliases)
 	if err != nil {
 		return nil, err
 	}
 
-	nextURI, err := url.Parse(next)
+	nextWf, err := Fetch(ctx, svc, next)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Debug("resolved", "next", next)
+	taskName := next.Query().Get(uses.QualifierTask)
 
-	fetcher, err := svc.GetFetcher(nextURI)
+	return Run(ctx, svc, nextWf, taskName, templatedWith, next, dry)
+}
+
+// Fetch fetches a workflow from a given URL.
+func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflow, error) {
+	logger := log.FromContext(ctx)
+
+	fetcher, err := svc.GetFetcher(uri)
 	if err != nil {
-		return nil, err
+		return Workflow{}, err
 	}
 
-	logger.Debug("chosen", "fetcher", fmt.Sprintf("%T", fetcher))
+	logger.Debug("fetching", "url", uri, "fetcher", fmt.Sprintf("%T", fetcher))
 
-	rc, err := fetcher.Fetch(ctx, next)
+	rc, err := fetcher.Fetch(ctx, uri)
 	if err != nil {
-		return nil, err
+		return Workflow{}, err
 	}
 	defer rc.Close()
 
-	wf, err := ReadAndValidate(rc)
-	if err != nil {
-		return nil, err
-	}
-
-	taskName := nextURI.Query().Get(uses.QualifierTask)
-
-	return Run(ctx, svc, wf, taskName, with, next, dry)
+	return ReadAndValidate(rc)
 }

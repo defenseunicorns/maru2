@@ -34,7 +34,7 @@ func TestFetcherService(t *testing.T) {
 		{
 			name:         "get http fetcher",
 			uri:          "https://example.com",
-			expectedType: &HTTPFetcher{},
+			expectedType: &HTTPClient{},
 		},
 		{
 			name:         "get file fetcher",
@@ -54,7 +54,7 @@ func TestFetcherService(t *testing.T) {
 		{
 			name:           "caching",
 			uri:            "https://example.com",
-			expectedType:   &HTTPFetcher{},
+			expectedType:   &HTTPClient{},
 			checkSameCache: true,
 		},
 		{

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,7 +24,7 @@ import (
 //
 // For all `uses` steps, this function will be called recursively.
 // Returns the outputs from the final step in the task.
-func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin string, dry bool) (map[string]any, error) {
+func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
 	}
@@ -78,26 +79,6 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 	}
 
 	return nil, firstError
-}
-
-func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
-	outputs CommandOutputs, origin string, dry bool) (map[string]any, error) {
-
-	ctx = WithCWDContext(ctx, filepath.Join(CWDFromContext(ctx), step.Dir))
-
-	if strings.HasPrefix(step.Uses, "builtin:") {
-		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
-	}
-
-	templatedWith, err := TemplateWith(ctx, withDefaults, step.With, outputs, dry)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
-	}
-	return ExecuteUses(ctx, svc, wf.Aliases, step.Uses, templatedWith, origin, dry)
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,

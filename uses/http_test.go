@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/charmbracelet/log"
@@ -40,9 +41,16 @@ func TestHTTPFetcher(t *testing.T) {
 	})
 
 	f := func(server *httptest.Server) {
-		fetcher := NewHTTPFetcher(server.Client())
+		client := NewHTTPClient(server.Client())
 
-		rc, err := fetcher.Fetch(ctx, server.URL+"/hello-world.yaml")
+		rc, err := client.Fetch(ctx, nil)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `uri is nil`)
+
+		u, err := url.Parse(server.URL + "/hello-world.yaml")
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
 		require.NoError(t, err)
 
 		b, err := io.ReadAll(rc)
@@ -50,12 +58,19 @@ func TestHTTPFetcher(t *testing.T) {
 
 		assert.Equal(t, string(b), hw)
 
-		rc, err = fetcher.Fetch(ctx, server.URL)
-		require.EqualError(t, err, fmt.Sprintf("failed to fetch %s: 404 Not Found", server.URL))
+		u, err = url.Parse(server.URL)
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
+		require.EqualError(t, err, fmt.Sprintf("get %q: 404 Not Found", server.URL))
 		assert.Nil(t, rc)
 
 		server.Close()
-		rc, err = fetcher.Fetch(ctx, server.URL+"/hello-world.yaml")
+
+		u, err = url.Parse(server.URL + "/hello-world.yaml")
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
 		require.EqualError(t, err, fmt.Sprintf("Get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
 		assert.Nil(t, rc)
 	}

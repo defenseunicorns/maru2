@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/defenseunicorns/maru2/config"
+	"github.com/defenseunicorns/maru2/uses"
 	"github.com/goccy/go-yaml"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -109,7 +110,7 @@ func Validate(wf Workflow) error {
 						return fmt.Errorf(".%s[%d].uses %q not found", name, idx, step.Uses)
 					}
 				} else {
-					schemes := []string{"file", "http", "https", "pkg", "builtin"}
+					schemes := append(uses.SupportedSchemes(), "builtin")
 
 					if !slices.Contains(schemes, u.Scheme) {
 						return fmt.Errorf(".%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))
