@@ -48,6 +48,20 @@ func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 	}
 }
 
+// FetchPolicy defines the fetching behavior for the fetcher service
+type FetchPolicy string
+
+const (
+	// FetchPolicyAlways will always use the cache if available, never fetching from source
+	FetchPolicyAlways FetchPolicy = "always"
+	// FetchPolicyIfMissing will use the cache if available, otherwise fetch from source
+	FetchPolicyIfMissing FetchPolicy = "if-missing"
+	// FetchPolicyNever will never use the cache, always fetching from source
+	FetchPolicyNever FetchPolicy = "never"
+	// DefaultFetchPolicy is the default fetch policy used when none is specified
+	DefaultFetchPolicy FetchPolicy = FetchPolicyIfMissing
+)
+
 // FileSystemConfigLoader loads configuration from the file system
 type FileSystemConfigLoader struct {
 	Fs afero.Fs

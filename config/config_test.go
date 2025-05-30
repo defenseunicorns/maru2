@@ -31,21 +31,21 @@ func TestFileSystemConfigLoader(t *testing.T) {
     token-from-env: GITHUB_TOKEN
 `
 
-	// cfg := &Config{
-	// 	Aliases: map[string]Alias{
-	// 		"gl": {
-	// 			Type: packageurl.TypeGitlab,
-	// 			Base: "https://gitlab.example.com",
-	// 		},
-	// 		"gh": {
-	// 			Type: packageurl.TypeGithub,
-	// 		},
-	// 		"another": {
-	// 			Type:         packageurl.TypeGithub,
-	// 			TokenFromEnv: "GITHUB_TOKEN",
-	// 		},
-	// 	},
-	// }
+	cfg := &Config{
+		Aliases: map[string]Alias{
+			"gl": {
+				Type: packageurl.TypeGitlab,
+				Base: "https://gitlab.example.com",
+			},
+			"gh": {
+				Type: packageurl.TypeGithub,
+			},
+			"another": {
+				Type:         packageurl.TypeGithub,
+				TokenFromEnv: "GITHUB_TOKEN",
+			},
+		},
+	}
 
 	fsys := afero.NewMemMapFs()
 	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0644)
@@ -83,12 +83,12 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		assert.Empty(t, configDir)
 		require.EqualError(t, err, "$HOME is not defined")
 
-		// 	tmpDir := t.TempDir()
-		// 	err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0755)
-		// 	require.NoError(t, err)
+		tmpDir := t.TempDir()
+		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0755)
+		require.NoError(t, err)
 
-		// 	err = os.WriteFile(filepath.Join(tmpDir, ".maru2", DefaultFileName), []byte(configContent), 0644)
-		// 	require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", DefaultFileName), []byte(configContent), 0644)
+		require.NoError(t, err)
 
 		t.Setenv("HOME", tmpDir)
 		configDir, err = DefaultDirectory()
