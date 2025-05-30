@@ -5,6 +5,7 @@ package uses
 
 import (
 	"io"
+	"net/url"
 	"testing"
 
 	"github.com/charmbracelet/log"
@@ -18,22 +19,29 @@ func TestGitLabFetcher(t *testing.T) {
 			t.Skip("skipping tests that require network access")
 		}
 
-		uses := "pkg:gitlab/noxsios/vai@main?task=hello-world#vai.yaml"
-
 		ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 		client, err := NewGitLabClient(nil, "", "")
 		require.NoError(t, err)
 
-		rc, err := client.Fetch(ctx, "file:foo.yaml")
+		u, err := url.Parse("file:foo.yaml")
+		require.NoError(t, err)
+
+		rc, err := client.Fetch(ctx, u)
 		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
 		assert.Nil(t, rc)
 
-		rc, err = client.Fetch(ctx, "pkg:github/foo.yaml")
+		u, err = url.Parse("pkg:github/foo.yaml")
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
 		require.EqualError(t, err, `purl type is not "gitlab": "github"`)
 		assert.Nil(t, rc)
 
-		rc, err = client.Fetch(ctx, uses)
+		u, err = url.Parse("pkg:gitlab/noxsios/vai@main?task=hello-world#vai.yaml")
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
 		require.NoError(t, err)
 
 		b, err := io.ReadAll(rc)

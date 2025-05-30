@@ -5,6 +5,7 @@ package uses
 
 import (
 	"io"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -54,7 +55,10 @@ func TestLocalFetcher(t *testing.T) {
 			fetcher := NewLocalFetcher(fs)
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			rc, err := fetcher.Fetch(ctx, tc.uses)
+			u, err := url.Parse(tc.uses)
+			require.NoError(t, err)
+
+			rc, err := fetcher.Fetch(ctx, u)
 			if tc.expectedFetchErr != "" {
 				assert.Nil(t, rc)
 				require.EqualError(t, err, tc.expectedFetchErr)

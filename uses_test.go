@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -163,11 +164,14 @@ func TestExecuteUses(t *testing.T) {
 				t.Skip("skipping test in short mode")
 			}
 
+			origin, err := url.Parse(tt.origin)
+			require.NoError(t, err)
+
 			if tt.expectedErr == "" {
-				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, tt.origin, false)
+				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, origin, false)
 				require.NoError(t, err)
 			} else {
-				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, tt.origin, false)
+				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, origin, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})

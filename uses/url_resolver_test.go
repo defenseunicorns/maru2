@@ -4,6 +4,8 @@
 package uses
 
 import (
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/defenseunicorns/maru2/config"
@@ -42,7 +44,6 @@ func TestResolveURL(t *testing.T) {
 			name:        "file with dot path and http previous",
 			prev:        "http://example.com/dir/bar.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
@@ -52,16 +53,14 @@ func TestResolveURL(t *testing.T) {
 			next: "pkg:github/owner/repo@main#dir/foo.yaml",
 		},
 		{
-			name:        "invalid pkg url",
-			uri:         "file:foo.yaml",
-			prev:        "pkg://invalid%url",
-			expectedErr: "parse \"pkg://invalid%url\": invalid URL escape \"%ur\"",
+			name:        "nil prev with invalid pkg url", // https://raw.githubusercontent.com/package-url/purl-spec/master/test-suite-data.json
+			uri:         "pkg:EnterpriseLibrary.Common@6.0.1304",
+			expectedErr: "purl is missing type or name",
 		},
 		{
 			name:        "file with dot path and pkg previous",
 			prev:        "pkg:github/owner/repo@main#dir/bar.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
@@ -74,7 +73,6 @@ func TestResolveURL(t *testing.T) {
 			name:        "file with dot path and file previous",
 			prev:        "file:foo.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
@@ -144,10 +142,10 @@ func TestResolveURL(t *testing.T) {
 			expectedErr: "must contain a scheme: \"no-scheme\"",
 		},
 		{
-			name:        "prev without scheme",
-			prev:        "no-scheme",
-			uri:         "file:foo.yaml",
-			expectedErr: "must contain a scheme: \"no-scheme\"",
+			name: "prev without scheme",
+			prev: "no-scheme",
+			uri:  "file:foo.yaml",
+			next: "file:foo.yaml",
 		},
 		{
 			name: "file to file with directory path",
@@ -159,7 +157,6 @@ func TestResolveURL(t *testing.T) {
 			name:        "file to file with directory path and dot replacement",
 			prev:        "file:dir/foo.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
@@ -167,6 +164,12 @@ func TestResolveURL(t *testing.T) {
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "pkg:github/owner/repo2@v2.0.0#dir/bar.yaml",
 			next: "pkg:github/owner/repo2@v2.0.0#dir/bar.yaml",
+		},
+		{
+			name: "pkg to http",
+			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
+			uri:  "http://example.com/bar.yaml",
+			next: "http://example.com/bar.yaml",
 		},
 		{
 			name: "file to http",
@@ -196,13 +199,11 @@ func TestResolveURL(t *testing.T) {
 			name:        "file to file with dot replacement in next.Opaque",
 			prev:        "file:dir/foo.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
-			name:        "pkg to file with error in packageurl.FromString",
-			prev:        "pkg://invalid%url",
-			uri:         "file:foo.yaml",
+			name:        "nil prev with error in packageurl.FromString",
+			uri:         "pkg://invalid%url",
 			expectedErr: "parse \"pkg://invalid%url\": invalid URL escape \"%ur\"",
 		},
 		{
@@ -221,7 +222,6 @@ func TestResolveURL(t *testing.T) {
 			name:        "file to file with directory path and dot opaque",
 			prev:        "file:dir/foo.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
@@ -240,14 +240,12 @@ func TestResolveURL(t *testing.T) {
 			name:        "file to file with next.Opaque equals dot",
 			prev:        "file:dir/foo.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
 			name:        "file to file with dir path and dot replacement",
 			prev:        "file:dir/foo.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
@@ -308,35 +306,40 @@ func TestResolveURL(t *testing.T) {
 			name:        "file to file with next.Opaque equals dot",
 			prev:        "file:foo/bar.yaml",
 			uri:         "file:.",
-			next:        "",
 			expectedErr: "invalid relative path \".\"",
 		},
 		{
 			name:        "relative file to abs file",
 			prev:        "file:foo/bar.yaml",
 			uri:         "file:/",
-			next:        "",
 			expectedErr: "absolute path \"file:/\"",
 		},
 		{
 			name:        "invalid path",
 			prev:        "file:",
 			uri:         "file://",
-			next:        "",
 			expectedErr: "invalid path \"file:\"",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			next, err := ResolveRelative(tc.prev, tc.uri, tc.aliases)
+			u, err := url.Parse(tc.prev)
+			require.NoError(t, err)
+
+			if strings.HasPrefix(tc.name, "nil prev") {
+				u = nil
+			}
+
+			next, err := ResolveRelative(u, tc.uri, tc.aliases)
 
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)
+				assert.Nil(t, next)
 			} else {
 				require.NoError(t, err)
+				assert.Equal(t, tc.next, next.String())
 			}
-			assert.Equal(t, tc.next, next)
 		})
 	}
 }

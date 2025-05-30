@@ -4,6 +4,7 @@
 package uses
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/defenseunicorns/maru2/config"
@@ -90,7 +91,7 @@ func TestFetcherService(t *testing.T) {
 				return
 			}
 
-			uri, err := Parse(tc.uri)
+			uri, err := url.Parse(tc.uri)
 			require.NoError(t, err)
 
 			fetcher, err := service.GetFetcher(uri)

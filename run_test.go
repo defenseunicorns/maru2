@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"path/filepath"
 	"testing"
 
@@ -23,7 +24,6 @@ func TestRunExtended(t *testing.T) {
 		workflow      Workflow
 		taskName      string
 		with          With
-		origin        string
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
@@ -152,7 +152,7 @@ func TestRunExtended(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, tc.origin, tc.dry)
+			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -396,7 +396,10 @@ func TestHandleUsesStep(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, tc.origin, tc.dry)
+			origin, err := url.Parse(tc.origin)
+			require.NoError(t, err)
+
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/defenseunicorns/maru2/config"
@@ -21,10 +22,13 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		return nil, err
 	}
 
-	fmt.Println(prev)
-
+	// dst schemeless is only acceptable if the previous URI is nil
 	if prev != nil && uri.Scheme == "" {
 		return nil, fmt.Errorf("must contain a scheme: %q", uri)
+	}
+
+	if !slices.Contains([]string{"file", "http", "https", "pkg"}, uri.Scheme) {
+		return nil, fmt.Errorf("unsupported scheme: %q", uri.Scheme)
 	}
 
 	if uri.Opaque == "." {
@@ -50,7 +54,9 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		// pkg -> pkg
 		prev.Scheme == "pkg" && uri.Scheme == "pkg",
 		// https, http -> pkg
-		(prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg":
+		(prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg",
+		// pkg -> http, https
+		prev.Scheme == "pkg" && (uri.Scheme == "https" || uri.Scheme == "http"):
 
 		if uri.Scheme == "pkg" {
 			pURL, err := packageurl.FromString(u)
@@ -73,7 +79,7 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		return uri, nil
 
 	// file -> file
-	case prev.Scheme == "file" && uri.Scheme == "file":
+	case (prev.Scheme == "file" || prev.Scheme == "") && uri.Scheme == "file":
 		dir := filepath.Dir(prev.Opaque)
 		if dir != "." {
 			next := &url.URL{
@@ -114,7 +120,10 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		}
 
 		qm := pURL.Qualifiers.Map()
-		qm[QualifierTask] = uri.Query().Get(QualifierTask)
+		delete(qm, QualifierTask)
+		if taskName := uri.Query().Get(QualifierTask); taskName != "" {
+			qm[QualifierTask] = taskName
+		}
 		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
 
 		resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
