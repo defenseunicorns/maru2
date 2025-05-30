@@ -67,7 +67,7 @@ func TestHTTPFetcher(t *testing.T) {
 		require.NoError(t, err)
 
 		rc, err = fetcher.Fetch(ctx, u)
-		require.EqualError(t, err, fmt.Sprintf("Get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
+		require.EqualError(t, err, fmt.Sprintf("get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
 		assert.Nil(t, rc)
 	}
 

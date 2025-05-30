@@ -8,32 +8,50 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// ExecuteUses executes a task from a given URI.
-func ExecuteUses(ctx context.Context, svc *uses.FetcherService, pkgAliases map[string]config.Alias, u string, with With, prev *url.URL, dry bool) (map[string]any, error) {
-	aliases := svc.PkgAliases()
-	maps.Copy(aliases, pkgAliases)
+func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
+	outputs CommandOutputs, origin *url.URL, dry bool) (map[string]any, error) {
 
-	next, err := uses.ResolveRelative(prev, u, aliases)
+	ctx = WithCWDContext(ctx, filepath.Join(CWDFromContext(ctx), step.Dir))
+
+	if strings.HasPrefix(step.Uses, "builtin:") {
+		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
+	}
+
+	templatedWith, err := TemplateWith(ctx, withDefaults, step.With, outputs, dry)
 	if err != nil {
 		return nil, err
 	}
 
-	wf, err := Fetch(ctx, svc, next)
+	if _, ok := wf.Tasks.Find(step.Uses); ok {
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
+	}
+
+	aliases := svc.PkgAliases()
+	maps.Copy(aliases, wf.Aliases)
+
+	next, err := uses.ResolveRelative(origin, step.Uses, aliases)
+	if err != nil {
+		return nil, err
+	}
+
+	nextWf, err := Fetch(ctx, svc, next)
 	if err != nil {
 		return nil, err
 	}
 
 	taskName := next.Query().Get(uses.QualifierTask)
 
-	return Run(ctx, svc, wf, taskName, with, next, dry)
+	return Run(ctx, svc, nextWf, taskName, templatedWith, next, dry)
 }
 
+// Fetch fetches a workflow from a given URL.
 func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflow, error) {
 	logger := log.FromContext(ctx)
 

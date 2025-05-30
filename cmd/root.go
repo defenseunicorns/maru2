@@ -52,7 +52,7 @@ maru2 -f ../foo.yaml bar baz -w zab="zaz"
 
 maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
 `,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			configDir, err := config.DefaultDirectory()
 			if err != nil {
 				return err
@@ -171,9 +171,9 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 			root := cwd
 			if resolved.Scheme == "file" {
-				copy := *resolved
-				copy.RawQuery = ""
-				fileRef := filepath.Clean(strings.TrimPrefix(copy.String(), "file:"))
+				resolvedCopy := *resolved
+				resolvedCopy.RawQuery = ""
+				fileRef := filepath.Clean(strings.TrimPrefix(resolvedCopy.String(), "file:"))
 				if filepath.IsAbs(fileRef) {
 					root = filepath.Dir(fileRef)
 				} else {

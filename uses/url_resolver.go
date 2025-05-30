@@ -13,6 +13,7 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
+// SupportedSchemes returns a list of supported schemes
 func SupportedSchemes() []string {
 	return []string{"file", "http", "https", "pkg"}
 }

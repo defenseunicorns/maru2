@@ -65,7 +65,6 @@ func TestExecuteUses(t *testing.T) {
 
 	helloWorldURL := server.URL + "/hello-world.yaml"
 
-	with := With{}
 	dummyOrigin := "file:tasks.yaml"
 
 	tests := []struct {
@@ -95,7 +94,7 @@ func TestExecuteUses(t *testing.T) {
 			name:        "missing scheme",
 			uses:        "./path-with-no-scheme",
 			origin:      dummyOrigin,
-			expectedErr: `must contain a scheme: "./path-with-no-scheme"`,
+			expectedErr: `unsupported scheme: "" in "./path-with-no-scheme"`,
 		},
 		{
 			name:        "invalid control character in URL",
@@ -107,7 +106,7 @@ func TestExecuteUses(t *testing.T) {
 			name:        "unsupported scheme",
 			uses:        "ssh:not-supported",
 			origin:      dummyOrigin,
-			expectedErr: `unsupported scheme: "ssh"`,
+			expectedErr: `unsupported scheme: "ssh" in "ssh:not-supported"`,
 		},
 		{
 			name:        "unsupported package type",
@@ -147,13 +146,13 @@ func TestExecuteUses(t *testing.T) {
 			name:        "failed to fetch",
 			uses:        server.URL + "/non-existent.yaml",
 			origin:      dummyOrigin,
-			expectedErr: "failed to fetch " + server.URL + "/non-existent.yaml: 404 Not Found",
+			expectedErr: fmt.Sprintf("get %q: 404 Not Found", server.URL+"/non-existent.yaml"),
 		},
 		{
 			name:        "timeout",
 			uses:        server.URL + "/timeout.yaml",
 			origin:      dummyOrigin,
-			expectedErr: fmt.Sprintf("Get \"%s/timeout.yaml\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", server.URL),
+			expectedErr: fmt.Sprintf("Get %q: context deadline exceeded (Client.Timeout exceeded while awaiting headers)", server.URL+"/timeout.yaml"),
 		},
 	}
 
@@ -168,10 +167,10 @@ func TestExecuteUses(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.expectedErr == "" {
-				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, origin, false)
+				_, err := handleUsesStep(ctx, svc, Step{Uses: tt.uses}, Workflow{Aliases: tt.aliases}, With{}, nil, origin, false)
 				require.NoError(t, err)
 			} else {
-				_, err := ExecuteUses(ctx, svc, tt.aliases, tt.uses, with, origin, false)
+				_, err := handleUsesStep(ctx, svc, Step{Uses: tt.uses}, Workflow{Aliases: tt.aliases}, With{}, nil, origin, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})
