@@ -249,7 +249,8 @@ func TestResolveURL(t *testing.T) {
 			next: "file:dir",
 		},
 		{
-			name: "pkg with alias resolution",
+			name: "file -> pkg with alias resolution",
+			prev: "file:dir/foo.yaml",
 			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
 			aliases: map[string]config.Alias{
 				"github": {
