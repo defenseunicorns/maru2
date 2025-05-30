@@ -37,6 +37,7 @@ func NewRootCmd() *cobra.Command {
 		from    string
 		timeout time.Duration
 		dry     bool
+		dir     string
 	)
 
 	var cfg *config.Config
@@ -52,6 +53,12 @@ maru2 -f ../foo.yaml bar baz -w zab="zaz"
 maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
 `,
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			if dir != "" {
+				if err := os.Chdir(dir); err != nil {
+					return err
+				}
+			}
+
 			configDir, err := config.DefaultDirectory()
 			if err != nil {
 				return err
@@ -204,6 +211,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
+	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
 
 	root.CompletionOptions.DisableDefaultCmd = true
 

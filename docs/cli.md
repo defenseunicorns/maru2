@@ -10,9 +10,19 @@ A simple task runner
 Usage:
   maru2 [flags]
 
+Examples:
+
+maru2 build
+
+maru2 -f ../foo.yaml bar baz -w zab="zaz"
+
+maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
+
+
 Flags:
+  -C, --directory string      Change to directory before doing anything
       --dry-run               Don't actually run anything; just print
-  -f, --from string           Read location as workflow definition (default "tasks.yaml")
+  -f, --from string           Read location as workflow definition (default "file:tasks.yaml")
   -h, --help                  help for maru2
       --list                  Print list of available tasks and exit
   -l, --log-level string      Set log level (default "info")
