@@ -3,8 +3,14 @@ exec maru2 pwd
 cmp stderr stderr.txt
 cmpenv stdout stdout.txt
 
+exec maru2 pwd -f testdata/pwd.txtar
+cmpenv stdout stdout2.txt
+
 -- stdout.txt --
 $WORK
+$WORK
+$WORK/foo
+-- stdout2.txt --
 $WORK
 $WORK/foo
 -- stderr.txt --

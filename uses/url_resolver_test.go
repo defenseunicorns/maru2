@@ -309,7 +309,17 @@ func TestResolveURL(t *testing.T) {
 			next: "file:foo/bar.yaml",
 		},
 		{
-			name:        "nil prev: file without scheme",
+			name: "nil prev: file without scheme",
+			uri:  "foo/bar.yaml",
+			next: "file:foo/bar.yaml",
+		},
+		{
+			name: "nil prev: abs file without scheme",
+			uri:  "/foo/bar.yaml",
+			next: "file:/foo/bar.yaml",
+		},
+		{
+			name:        "file without scheme",
 			uri:         "foo/bar.yaml",
 			expectedErr: "unsupported scheme: \"\" in \"foo/bar.yaml\"",
 		},

@@ -4,7 +4,7 @@ cmp stderr stderr1.txt
 exec rm tasks.yaml
 exec touch tasks.yaml
 ! exec maru2 --list
-cmpenv stderr stderr2.txt
+cmp stderr stderr2.txt
 
 -- tasks.yaml --
 tasks:
@@ -24,4 +24,4 @@ Available:
 - hello-world
 -- stderr2.txt --
 
-ERRO failed to fetch "file:$WORK/tasks.yaml": no tasks available
+ERRO failed to fetch "file:tasks.yaml": no tasks available

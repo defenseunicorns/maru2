@@ -1,5 +1,5 @@
 ! exec maru2
-cmpenv stderr stderr.txt
+cmp stderr stderr.txt
 
 exec maru2 -f maru2-other.yaml
 stdout default
@@ -21,4 +21,4 @@ tasks:
     - run: echo "default"
 -- stderr.txt --
 
-ERRO failed to fetch "file:$WORK/tasks.yaml": stat $WORK/tasks.yaml: no such file or directory
+ERRO failed to fetch "file:tasks.yaml": stat tasks.yaml: no such file or directory

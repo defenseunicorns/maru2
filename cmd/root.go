@@ -51,7 +51,7 @@ maru2 -f ../foo.yaml bar baz -w zab="zaz"
 
 maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
 `,
-		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			configDir, err := config.DefaultDirectory()
 			if err != nil {
 				return err
