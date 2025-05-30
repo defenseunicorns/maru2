@@ -154,9 +154,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			svc, err := uses.NewFetcherService(
 				uses.WithAliases(cfg.Aliases),
-				uses.WithClient(&http.Client{
-					Timeout: timeout,
-				}),
 			)
 			if err != nil {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
