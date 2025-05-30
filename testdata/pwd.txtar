@@ -1,0 +1,24 @@
+mkdir foo
+exec maru2 pwd
+cmp stderr stderr.txt
+cmpenv stdout stdout.txt
+
+-- stdout.txt --
+$WORK
+$WORK
+$WORK/foo
+-- stderr.txt --
+$ pwd
+$ pwd
+$ pwd
+-- tasks.yaml --
+tasks:
+  pwd:
+    - run: pwd
+    - uses: file:testdata/pwd.txtar?task=pwd
+-- testdata/pwd.txtar --
+tasks:
+  pwd:
+    - run: pwd
+    - run: pwd
+      dir: foo

@@ -9,11 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -42,25 +40,6 @@ func NewRootCmd() *cobra.Command {
 	)
 
 	var cfg *config.Config
-	var cwd string
-
-	makeAbs := func(f string) string {
-		fURI, err := url.Parse(f)
-		if err != nil {
-			return f
-		}
-		if fURI.Scheme == "file" || fURI.Scheme == "" {
-			fileRef := filepath.Clean(strings.TrimPrefix(f, "file:"))
-			if filepath.IsAbs(fileRef) {
-				cwd = filepath.Dir(fileRef)
-				f = "file:" + fileRef
-			} else {
-				cwd = filepath.Join(cwd, filepath.Dir(fileRef))
-				f = "file:" + filepath.Join(cwd, fileRef)
-			}
-		}
-		return f
-	}
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -87,11 +66,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return err
 			}
 
-			cwd, err = os.Getwd()
-			if err != nil {
-				return fmt.Errorf("failed to get current working directory: %w", err)
-			}
-
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
@@ -104,7 +78,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			resolved, err := uses.ResolveRelative(nil, makeAbs(from), cfg.Aliases)
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
@@ -157,10 +131,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			// fix fish needing "'pkg:...'" for tab completion
 			from = strings.Trim(from, `"`)
 			from = strings.Trim(from, `'`)
-
-			from = makeAbs(from)
-
-			ctx = maru2.WithCWDContext(ctx, cwd)
 
 			svc, err := uses.NewFetcherService(
 				uses.WithAliases(cfg.Aliases),
@@ -231,7 +201,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().StringVarP(&from, "from", "f", uses.DefaultFileName, "Read location as workflow definition")
+	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 
