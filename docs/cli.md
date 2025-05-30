@@ -126,7 +126,7 @@ $ maru2 --from path/to/other.yaml
 
 ## Specify a remote workflow file
 
-Any [`uses` syntax](./syntax.md#run-a-task-from-a-remote-file) is also acceptible as a workflow location.
+Any [`uses` syntax](./syntax.md#run-a-task-from-a-remote-file) is also acceptable as a workflow location.
 
 ```sh
 # NOTE: referencing remote workflows requires quoting, since the package-url spec leverages reserved shell characters (like # and @)!!!

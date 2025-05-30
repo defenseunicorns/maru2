@@ -166,31 +166,31 @@ func TestResolveURL(t *testing.T) {
 			next: "file:dir",
 		},
 		{
-			name: "pkg to pkg",
+			name: "pkg -> pkg",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "pkg:github/owner/repo2@v2.0.0#dir/bar.yaml",
 			next: "pkg:github/owner/repo2@v2.0.0#dir/bar.yaml",
 		},
 		{
-			name: "pkg to http",
+			name: "pkg -> http",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "http://example.com/bar.yaml",
 			next: "http://example.com/bar.yaml",
 		},
 		{
-			name: "file to http",
+			name: "file -> http",
 			prev: "file:dir/foo.yaml",
 			uri:  "http://example.com/bar.yaml",
 			next: "http://example.com/bar.yaml",
 		},
 		{
-			name: "file to https",
+			name: "file -> https",
 			prev: "file:dir/foo.yaml",
 			uri:  "https://example.com/bar.yaml",
 			next: "https://example.com/bar.yaml",
 		},
 		{
-			name: "file to pkg",
+			name: "file -> pkg",
 			prev: "file:dir/foo.yaml",
 			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
 			next: "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
@@ -213,13 +213,13 @@ func TestResolveURL(t *testing.T) {
 			next: "pkg:github/owner/repo@main#tasks.yaml",
 		},
 		{
-			name: "pkg to file with subpath",
+			name: "pkg -> file with subpath",
 			prev: "pkg:github/owner/repo@v1.0.0#.",
 			uri:  "file:foo.yaml",
 			next: "pkg:github/owner/repo@v1.0.0#foo.yaml",
 		},
 		{
-			name: "pkg to file with empty version",
+			name: "pkg -> file with empty version",
 			prev: "pkg:github/owner/repo#dir/foo.yaml",
 			uri:  "file:bar.yaml",
 			next: "pkg:github/owner/repo@main#dir/bar.yaml",
@@ -231,13 +231,13 @@ func TestResolveURL(t *testing.T) {
 			next: "file:dir",
 		},
 		{
-			name: "pkg to file with dot subpath replacement",
+			name: "pkg -> file with dot subpath replacement",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:../.",
 			next: "pkg:github/owner/repo@v1.0.0#tasks.yaml",
 		},
 		{
-			name: "pkg to file up one dir",
+			name: "pkg -> file up one dir",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:..",
 			next: "pkg:github/owner/repo@v1.0.0#tasks.yaml",
@@ -250,7 +250,6 @@ func TestResolveURL(t *testing.T) {
 		},
 		{
 			name: "pkg with alias resolution",
-			prev: "file:dir/foo.yaml",
 			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
 			aliases: map[string]config.Alias{
 				"github": {
@@ -261,7 +260,7 @@ func TestResolveURL(t *testing.T) {
 			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com%2F#dir/bar.yaml",
 		},
 		{
-			name: "pkg to file with alias resolution",
+			name: "pkg -> file with alias resolution",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:bar.yaml",
 			aliases: map[string]config.Alias{
@@ -273,7 +272,7 @@ func TestResolveURL(t *testing.T) {
 			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com#dir/bar.yaml",
 		},
 		{
-			name: "pkg to file with task param and alias resolution",
+			name: "pkg -> file with task param and alias resolution",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:bar.yaml?task=baz",
 			aliases: map[string]config.Alias{
@@ -286,19 +285,19 @@ func TestResolveURL(t *testing.T) {
 			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com&task=baz&token-from-env=GITHUB_TOKEN#dir/bar.yaml",
 		},
 		{
-			name:        "pkg to file with invalid package URL",
+			name:        "pkg -> file with invalid package URL",
 			prev:        "pkg:invalid",
 			uri:         "file:foo.yaml",
 			expectedErr: "purl is missing type or name",
 		},
 		{
-			name: "file to file with next.Opaque as dot nested",
+			name: "file -> file with next.Opaque as dot nested",
 			prev: "file:dir/sub/subdir/foo.yaml",
 			uri:  "file:..",
 			next: "file:dir/sub", // only time a join doesn't result in a .yaml
 		},
 		{
-			name: "file to file with next.Opaque as dot",
+			name: "file -> file with next.Opaque as dot",
 			prev: "file:dir/foo.yaml",
 			uri:  "file:..",
 			next: "file:tasks.yaml",
@@ -314,7 +313,7 @@ func TestResolveURL(t *testing.T) {
 			expectedErr: "unsupported scheme: \"\" in \"foo/bar.yaml\"",
 		},
 		{
-			name: "relative file to abs file",
+			name: "relative file -> abs file",
 			prev: "file:foo/bar.yaml",
 			uri:  "file:/",
 			next: "file:/",
