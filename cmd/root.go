@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -140,6 +141,28 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			root := cwd
+
+			fURI, err := url.Parse(from)
+			if err != nil {
+				return err
+			}
+			if fURI.Scheme == "file" || fURI.Scheme == "" {
+				fileRef := filepath.Clean(strings.TrimPrefix(from, "file:"))
+				if filepath.IsAbs(fileRef) {
+					root = filepath.Dir(fileRef)
+					from = "file:" + fileRef
+				} else {
+					root = filepath.Join(cwd, filepath.Dir(fileRef))
+					from = "file:" + filepath.Join(cwd, fileRef)
+				}
+			}
+			ctx = maru2.WithCWDContext(ctx, root)
+
 			svc, err := uses.NewFetcherService(
 				uses.WithAliases(cfg.Aliases),
 				uses.WithClient(&http.Client{
@@ -165,23 +188,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return fmt.Errorf("failed to resolve %q: %w", from, err)
 			}
 
-			cwd, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-			root := cwd
-			if resolved.Scheme == "file" {
-				resolvedCopy := *resolved
-				resolvedCopy.RawQuery = ""
-				fileRef := filepath.Clean(strings.TrimPrefix(resolvedCopy.String(), "file:"))
-				if filepath.IsAbs(fileRef) {
-					root = filepath.Dir(fileRef)
-				} else {
-					root = filepath.Join(cwd, filepath.Dir(fileRef))
-				}
-			}
-			ctx = maru2.WithCWDContext(ctx, root)
-
 			wf, err := maru2.Fetch(ctx, svc, resolved)
 			if err != nil {
 				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
@@ -201,6 +207,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 				return nil
 			}
+
+			// if explain {}
 
 			with := make(maru2.With, len(w))
 			for k, v := range w {
@@ -233,7 +241,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
-	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read location as workflow definition")
+	root.Flags().StringVarP(&from, "from", "f", uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 

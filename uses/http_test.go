@@ -58,7 +58,7 @@ func TestHTTPFetcher(t *testing.T) {
 		require.NoError(t, err)
 
 		rc, err = fetcher.Fetch(ctx, u)
-		require.EqualError(t, err, fmt.Sprintf("Get %q: 404 Not Found", server.URL))
+		require.EqualError(t, err, fmt.Sprintf("get %q: 404 Not Found", server.URL))
 		assert.Nil(t, rc)
 
 		server.Close()
@@ -67,7 +67,7 @@ func TestHTTPFetcher(t *testing.T) {
 		require.NoError(t, err)
 
 		rc, err = fetcher.Fetch(ctx, u)
-		require.EqualError(t, err, fmt.Sprintf("get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
+		require.EqualError(t, err, fmt.Sprintf("Get \"%s/hello-world.yaml\": dial tcp %s: connect: connection refused", server.URL, server.Listener.Addr()))
 		assert.Nil(t, rc)
 	}
 

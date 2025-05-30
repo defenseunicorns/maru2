@@ -1,10 +1,10 @@
 exec maru2 --list
-cmp stderr stderr.txt
+cmp stderr stderr1.txt
 
 exec rm tasks.yaml
 exec touch tasks.yaml
 ! exec maru2 --list
-stderr 'ERRO no tasks available'
+cmpenv stderr stderr2.txt
 
 -- tasks.yaml --
 tasks:
@@ -16,9 +16,12 @@ tasks:
 
   another-task:
     - run: echo "Another task"
--- stderr.txt --
+-- stderr1.txt --
 Available:
 
 - default
 - another-task
 - hello-world
+-- stderr2.txt --
+
+ERRO failed to fetch "file:$WORK/tasks.yaml": no tasks available

@@ -34,6 +34,10 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		return nil, fmt.Errorf("unsupported scheme: %q in %q", uri.Scheme, uri)
 	}
 
+	if prev != nil && !slices.Contains(SupportedSchemes(), prev.Scheme) {
+		return nil, fmt.Errorf("unsupported scheme: %q in %q", prev.Scheme, prev)
+	}
+
 	switch {
 	case
 		// nil -> anything
@@ -125,6 +129,5 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		return url.Parse(pURL.String())
 	}
 
-	// This should be unreachable
 	return nil, fmt.Errorf("unable to resolve %q to %q", prev, uri)
 }
