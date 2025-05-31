@@ -216,8 +216,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
-	root.Flags().StringVarP(&fetchPolicy, "fetch-policy", "p", string(config.DefaultFetchPolicy), "Set fetch policy")
-	root.Flags().StringVarP(&policy, "fetch-policy", "p", string(config.DefaultFetchPolicy), "Set fetch policy")
 	root.Flags().VarP(&policy, "fetch-policy", "p", fmt.Sprintf(`Set fetch policy ("%s")`, strings.Join(config.AvailablePolicies(), `", "`)))
 	root.RegisterFlagCompletionFunc("fetch-policy", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return config.AvailablePolicies(), cobra.ShellCompDirectiveNoFileComp
