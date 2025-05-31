@@ -82,7 +82,7 @@ func (s *Store) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	desc, ok := s.index[uri.String()]
+	desc, ok := s.index[s.id(uri)]
 	if !ok {
 		return nil, fmt.Errorf("descriptor not found")
 	}
@@ -116,7 +116,7 @@ func (s *Store) Store(rc io.ReadCloser, uri *url.URL) error {
 		return err
 	}
 
-	s.index[uri.String()] = Descriptor{
+	s.index[s.id(uri)] = Descriptor{
 		Size: int64(buf.Len()),
 		Hex:  hex,
 	}
@@ -134,7 +134,7 @@ func (s *Store) Exists(uri *url.URL) (bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	desc, ok := s.index[uri.String()]
+	desc, ok := s.index[s.id(uri)]
 	if !ok {
 		return false, nil
 	}
@@ -168,4 +168,10 @@ func (s *Store) Exists(uri *url.URL) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (s *Store) id(uri *url.URL) string {
+	clone := *uri
+	clone.RawQuery = ""
+	return clone.String()
 }
