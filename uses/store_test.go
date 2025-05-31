@@ -56,7 +56,7 @@ func TestNewStore(t *testing.T) {
 		},
 		{
 			name: "error creating index file",
-			setup: func(fs afero.Fs) error {
+			setup: func(_ afero.Fs) error {
 				// No setup needed, we'll use a read-only filesystem
 				return nil
 			},
@@ -223,7 +223,7 @@ func TestStoreStore(t *testing.T) {
 			initialIndex: map[string]Descriptor{},
 			uri:          "https://example.com/workflow?param=value",
 			content:      "hello params!",
-			validate: func(t *testing.T, s *Store, contentHex string) {
+			validate: func(t *testing.T, s *Store, _ string) {
 				assert.Len(t, s.index, 1)
 				_, exists := s.index["https://example.com/workflow"]
 				assert.True(t, exists)

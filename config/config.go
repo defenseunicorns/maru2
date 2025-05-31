@@ -54,6 +54,7 @@ type FetchPolicy string
 
 var _ pflag.Value = (*FetchPolicy)(nil)
 
+// AvailablePolicies returns a list of available fetch policies
 func AvailablePolicies() []string {
 	return []string{
 		string(FetchPolicyAlways),
@@ -73,10 +74,12 @@ const (
 	DefaultFetchPolicy FetchPolicy = FetchPolicyIfNotPresent
 )
 
+// String implements the pflag.Value and fmt.Stringer interfaces
 func (f *FetchPolicy) String() string {
 	return string(*f)
 }
 
+// Set implements the pflag.Value interface
 func (f *FetchPolicy) Set(value string) error {
 	switch value {
 	case string(FetchPolicyAlways):
@@ -91,6 +94,7 @@ func (f *FetchPolicy) Set(value string) error {
 	return nil
 }
 
+// Type implements the pflag.Value interface
 func (f *FetchPolicy) Type() string {
 	return "string"
 }
