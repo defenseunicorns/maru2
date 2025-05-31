@@ -22,13 +22,11 @@ type StoreFetcher struct {
 
 // Fetch implements the Fetcher interface
 func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
-	key := uri.String()
-
 	switch f.Policy {
 	case config.FetchPolicyNever:
 		return f.Store.Fetch(ctx, uri)
 	case config.FetchPolicyIfNotPresent:
-		if exists, err := f.Store.Exists(key); err == nil && exists {
+		if exists, err := f.Store.Exists(uri); err == nil && exists {
 			rc, err := f.Store.Fetch(ctx, uri)
 			if err == nil {
 				return rc, nil
@@ -41,7 +39,7 @@ func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 			return nil, err
 		}
 
-		if err := f.Store.Store(rc, key); err != nil {
+		if err := f.Store.Store(rc, uri); err != nil {
 			return nil, err
 		}
 

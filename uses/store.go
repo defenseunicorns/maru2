@@ -96,7 +96,7 @@ func (s *Store) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
 }
 
 // Store a workflow in the store.
-func (s *Store) Store(rc io.ReadCloser, uri string) error {
+func (s *Store) Store(rc io.ReadCloser, uri *url.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -116,7 +116,7 @@ func (s *Store) Store(rc io.ReadCloser, uri string) error {
 		return err
 	}
 
-	s.index[uri] = Descriptor{
+	s.index[uri.String()] = Descriptor{
 		Size: int64(buf.Len()),
 		Hex:  hex,
 	}
@@ -130,11 +130,11 @@ func (s *Store) Store(rc io.ReadCloser, uri string) error {
 }
 
 // Exists checks if a workflow exists in the store.
-func (s *Store) Exists(uri string) (bool, error) {
+func (s *Store) Exists(uri *url.URL) (bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	desc, ok := s.index[uri]
+	desc, ok := s.index[uri.String()]
 	if !ok {
 		return false, nil
 	}
