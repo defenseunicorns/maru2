@@ -145,8 +145,15 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			s := os.ExpandEnv(s)
 
-			if err := os.MkdirAll(s, 0o744); err != nil {
-				return fmt.Errorf("failed to create directory: %w", err)
+			_, err := fs.Stat(s)
+			if err != nil {
+				if os.IsNotExist(err) {
+					if err := fs.MkdirAll(s, 0o744); err != nil {
+						return err
+					}
+				} else {
+					return err
+				}
 			}
 
 			store, err := uses.NewStore(afero.NewBasePathFs(fs, s))

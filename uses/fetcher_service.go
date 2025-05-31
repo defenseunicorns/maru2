@@ -74,6 +74,7 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 		aliases: make(map[string]config.Alias),
 		mu:      sync.RWMutex{},
 		cache:   make(map[string]Fetcher),
+		policy:  config.DefaultFetchPolicy,
 	}
 
 	for _, opt := range opts {
@@ -86,6 +87,10 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 
 	if svc.client == nil {
 		svc.client = &http.Client{}
+	}
+
+	if svc.policy == config.FetchPolicyNever && svc.store == nil {
+		return nil, fmt.Errorf("store is not initialized")
 	}
 
 	return svc, nil
@@ -103,9 +108,6 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 	}
 
 	if s.policy == config.FetchPolicyNever {
-		if s.store == nil {
-			return nil, fmt.Errorf("store is not initialized")
-		}
 		return s.store, nil
 	}
 
