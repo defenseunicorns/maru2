@@ -145,7 +145,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			s := os.ExpandEnv(s)
 
-			if err := os.MkdirAll(s, 0o644); err != nil {
+			if err := os.MkdirAll(s, 0o744); err != nil {
 				return fmt.Errorf("failed to create directory: %w", err)
 			}
 
