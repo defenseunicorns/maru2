@@ -17,13 +17,13 @@ import (
 
 // FetcherService creates and manages fetchers
 type FetcherService struct {
-	aliases     map[string]config.Alias
-	client      *http.Client
-	fsys        afero.Fs
-	cache       map[string]Fetcher
-	store       *Store
-	fetchPolicy config.FetchPolicy
-	mu          sync.RWMutex
+	aliases map[string]config.Alias
+	client  *http.Client
+	fsys    afero.Fs
+	cache   map[string]Fetcher
+	store   *Store
+	policy  config.FetchPolicy
+	mu      sync.RWMutex
 }
 
 // FetcherServiceOption is a function that configures a FetcherService
@@ -60,7 +60,11 @@ func WithStore(store *Store) FetcherServiceOption {
 // WithFetchPolicy sets the fetch policy to be used by the fetcher service
 func WithFetchPolicy(policy config.FetchPolicy) FetcherServiceOption {
 	return func(s *FetcherService) {
-		s.fetchPolicy = policy
+		// don't set the policy if its not a valid policy
+		if err := policy.Set(policy.String()); err != nil {
+			return
+		}
+		s.policy = policy
 	}
 }
 
@@ -84,14 +88,6 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 		svc.client = &http.Client{}
 	}
 
-	if svc.store == nil || svc.fetchPolicy == config.FetchPolicyAlways {
-		store, err := NewStore(afero.NewMemMapFs())
-		if err != nil {
-			return nil, err
-		}
-		svc.store = store
-	}
-
 	return svc, nil
 }
 
@@ -106,13 +102,16 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		return nil, fmt.Errorf("uri cannot be nil")
 	}
 
-	if s.fetchPolicy == config.FetchPolicyNever {
-		return s.createFetcher(uri)
+	if s.policy == config.FetchPolicyNever {
+		if s.store == nil {
+			return nil, fmt.Errorf("store is not initialized")
+		}
+		return s.store, nil
 	}
 
 	s.mu.RLock()
 	if fetcher, exists := s.cache[uri.String()]; exists {
-		if s.fetchPolicy == config.FetchPolicyAlways {
+		if s.policy == config.FetchPolicyAlways {
 			s.mu.RUnlock()
 			return fetcher, nil
 		}
@@ -128,14 +127,13 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		fetcher = &StoreFetcher{
 			Source: fetcher,
 			Store:  s.store,
+			Policy: s.policy,
 		}
 	}
 
-	if s.fetchPolicy == config.FetchPolicyIfNotPresent || s.fetchPolicy == config.FetchPolicyAlways {
-		s.mu.Lock()
-		s.cache[uri.String()] = fetcher
-		s.mu.Unlock()
-	}
+	s.mu.Lock()
+	s.cache[uri.String()] = fetcher
+	s.mu.Unlock()
 
 	return fetcher, nil
 }

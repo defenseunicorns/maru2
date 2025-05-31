@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"sync"
 
@@ -77,11 +78,11 @@ func NewStore(fs afero.Fs) (*Store, error) {
 }
 
 // Fetch retrieves a workflow from the store
-func (s *Store) Fetch(_ context.Context, uri string) (io.ReadCloser, error) {
+func (s *Store) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	desc, ok := s.index[uri]
+	desc, ok := s.index[uri.String()]
 	if !ok {
 		return nil, fmt.Errorf("descriptor not found")
 	}
