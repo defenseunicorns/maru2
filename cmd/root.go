@@ -44,8 +44,6 @@ func NewRootCmd() *cobra.Command {
 
 	var cfg *config.Config
 
-	fs := afero.NewOsFs()
-
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
@@ -69,7 +67,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			loader := &config.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(fs, configDir),
+				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
 			}
 
 			cfg, err = loader.LoadConfig()
@@ -144,6 +142,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			from = strings.Trim(from, `'`)
 
 			s := os.ExpandEnv(s)
+
+			fs := afero.NewOsFs()
 
 			_, err := fs.Stat(s)
 			if err != nil {
