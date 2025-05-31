@@ -26,6 +26,7 @@ func TestE2E(t *testing.T) {
 		Dir: filepath.Join("..", "testdata"),
 		Setup: func(env *testscript.Env) error {
 			env.Setenv("NO_COLOR", "true")
+			env.Setenv("HOME", env.WorkDir)
 			return nil
 		},
 	})

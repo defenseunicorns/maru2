@@ -111,10 +111,8 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 
 	s.mu.RLock()
 	if fetcher, exists := s.cache[uri.String()]; exists {
-		if s.policy == config.FetchPolicyAlways {
-			s.mu.RUnlock()
-			return fetcher, nil
-		}
+		s.mu.RUnlock()
+		return fetcher, nil
 	}
 	s.mu.RUnlock()
 
