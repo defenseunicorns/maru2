@@ -16,16 +16,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewStore(t *testing.T) {
+func TestNewLocalStore(t *testing.T) {
 	testCases := []struct {
 		name        string
 		setup       func(fs afero.Fs) error
 		expectedErr string
-		validate    func(t *testing.T, s *Store)
+		validate    func(t *testing.T, s *LocalStore)
 	}{
 		{
 			name: "new store without existing index",
-			validate: func(t *testing.T, s *Store) {
+			validate: func(t *testing.T, s *LocalStore) {
 				assert.NotNil(t, s.index)
 				assert.Empty(t, s.index)
 
@@ -39,7 +39,7 @@ func TestNewStore(t *testing.T) {
 			setup: func(fs afero.Fs) error {
 				return afero.WriteFile(fs, IndexFileName, []byte(`{"https://example.com": {"Size": 10, "Hex": "abcd1234"}}`), 0644)
 			},
-			validate: func(t *testing.T, s *Store) {
+			validate: func(t *testing.T, s *LocalStore) {
 				assert.NotNil(t, s.index)
 				assert.Len(t, s.index, 1)
 				assert.Contains(t, s.index, "https://example.com")
@@ -77,7 +77,7 @@ func TestNewStore(t *testing.T) {
 				fs = afero.NewReadOnlyFs(fs)
 			}
 
-			store, err := NewStore(fs)
+			store, err := NewLocalStore(fs)
 
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)
@@ -95,7 +95,7 @@ func TestNewStore(t *testing.T) {
 	}
 }
 
-func TestStoreFetch(t *testing.T) {
+func TestLocalStoreFetch(t *testing.T) {
 	testCases := []struct {
 		name        string
 		index       map[string]Descriptor
@@ -156,7 +156,7 @@ func TestStoreFetch(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fs := afero.NewMemMapFs()
 
-			store := &Store{
+			store := &LocalStore{
 				index: tc.index,
 				fs:    fs,
 			}
@@ -187,21 +187,21 @@ func TestStoreFetch(t *testing.T) {
 	}
 }
 
-func TestStoreStore(t *testing.T) {
+func TestLocalStoreStore(t *testing.T) {
 	testCases := []struct {
 		name         string
 		initialIndex map[string]Descriptor
 		uri          string
 		content      string
 		expectedErr  string
-		validate     func(t *testing.T, s *Store, contentHex string)
+		validate     func(t *testing.T, s *LocalStore, contentHex string)
 	}{
 		{
 			name:         "store new workflow",
 			initialIndex: map[string]Descriptor{},
 			uri:          "https://example.com/workflow",
 			content:      "hello world!",
-			validate: func(t *testing.T, s *Store, contentHex string) {
+			validate: func(t *testing.T, s *LocalStore, contentHex string) {
 				assert.Len(t, s.index, 1)
 				desc, exists := s.index["https://example.com/workflow"]
 				assert.True(t, exists)
@@ -223,7 +223,7 @@ func TestStoreStore(t *testing.T) {
 			initialIndex: map[string]Descriptor{},
 			uri:          "https://example.com/workflow?param=value",
 			content:      "hello params!",
-			validate: func(t *testing.T, s *Store, _ string) {
+			validate: func(t *testing.T, s *LocalStore, _ string) {
 				assert.Len(t, s.index, 1)
 				_, exists := s.index["https://example.com/workflow"]
 				assert.True(t, exists)
@@ -239,7 +239,7 @@ func TestStoreStore(t *testing.T) {
 			},
 			uri:     "https://example.com/workflow",
 			content: "updated content",
-			validate: func(t *testing.T, s *Store, contentHex string) {
+			validate: func(t *testing.T, s *LocalStore, contentHex string) {
 				assert.Len(t, s.index, 1)
 				desc := s.index["https://example.com/workflow"]
 				assert.Equal(t, int64(15), desc.Size)
@@ -253,7 +253,7 @@ func TestStoreStore(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fs := afero.NewMemMapFs()
 
-			store := &Store{
+			store := &LocalStore{
 				index: tc.initialIndex,
 				fs:    fs,
 			}
@@ -286,7 +286,7 @@ func TestStoreStore(t *testing.T) {
 	}
 }
 
-func TestStoreExists(t *testing.T) {
+func TestLocalStoreExists(t *testing.T) {
 	testCases := []struct {
 		name        string
 		index       map[string]Descriptor
@@ -375,7 +375,7 @@ func TestStoreExists(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fs := afero.NewMemMapFs()
 
-			store := &Store{
+			store := &LocalStore{
 				index: tc.index,
 				fs:    fs,
 			}

@@ -16,7 +16,7 @@ import (
 // in a store according to the cache policy.
 type StoreFetcher struct {
 	Source Fetcher
-	Store  *Store
+	Store  Storage
 	Policy config.FetchPolicy
 }
 

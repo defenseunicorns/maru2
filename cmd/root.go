@@ -75,6 +75,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return err
 			}
 
+			// default < cfg < flags
+			if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
+				return err
+			}
+
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
@@ -156,14 +161,14 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			store, err := uses.NewStore(afero.NewBasePathFs(fs, s))
+			store, err := uses.NewLocalStore(afero.NewBasePathFs(fs, s))
 			if err != nil {
 				return fmt.Errorf("failed to initialize store: %w", err)
 			}
 
 			svc, err := uses.NewFetcherService(
 				uses.WithAliases(cfg.Aliases),
-				uses.WithStore(store),
+				uses.WithStorage(store),
 				uses.WithFetchPolicy(policy),
 			)
 			if err != nil {

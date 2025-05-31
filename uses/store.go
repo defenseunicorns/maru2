@@ -28,8 +28,15 @@ type Descriptor struct {
 // IndexFileName is the name of the index file.
 const IndexFileName = "index.json"
 
-// Store is a cache for storing and retrieving remote workflows.
-type Store struct {
+// Storage interface for storing and retrieving cached remote workflows.
+type Storage interface {
+	Fetcher
+	Exists(uri *url.URL) (bool, error)
+	Store(rc io.ReadCloser, uri *url.URL) error
+}
+
+// LocalStore is a cache for storing and retrieving cached remote workflows from a filesystem.
+type LocalStore struct {
 	index map[string]Descriptor
 
 	fs afero.Fs
@@ -37,8 +44,8 @@ type Store struct {
 	mu sync.RWMutex
 }
 
-// NewStore creates a new store at the given path.
-func NewStore(fs afero.Fs) (*Store, error) {
+// NewLocalStore creates a new store at the given path.
+func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
 	index := make(map[string]Descriptor, 0)
 
 	_, err := fs.Stat(IndexFileName)
@@ -53,7 +60,7 @@ func NewStore(fs afero.Fs) (*Store, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &Store{
+		return &LocalStore{
 			fs:    fs,
 			index: index,
 		}, nil
@@ -71,14 +78,14 @@ func NewStore(fs afero.Fs) (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{
+	return &LocalStore{
 		fs:    fs,
 		index: index,
 	}, nil
 }
 
 // Fetch retrieves a workflow from the store
-func (s *Store) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
+func (s *LocalStore) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -96,7 +103,7 @@ func (s *Store) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
 }
 
 // Store a workflow in the store.
-func (s *Store) Store(rc io.ReadCloser, uri *url.URL) error {
+func (s *LocalStore) Store(rc io.ReadCloser, uri *url.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -130,7 +137,7 @@ func (s *Store) Store(rc io.ReadCloser, uri *url.URL) error {
 }
 
 // Exists checks if a workflow exists in the store.
-func (s *Store) Exists(uri *url.URL) (bool, error) {
+func (s *LocalStore) Exists(uri *url.URL) (bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -170,7 +177,7 @@ func (s *Store) Exists(uri *url.URL) (bool, error) {
 	return true, nil
 }
 
-func (s *Store) id(uri *url.URL) string {
+func (s *LocalStore) id(uri *url.URL) string {
 	clone := *uri
 	clone.RawQuery = ""
 	return clone.String()
