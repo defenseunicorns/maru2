@@ -339,7 +339,7 @@ func TestStoreExists(t *testing.T) {
 			},
 			files:       map[string][]byte{},
 			uri:         "https://example.com/workflow",
-			expectedErr: "descriptor exists in index, but no corresponding file was found",
+			expectedErr: "descriptor exists in index, but no corresponding file was found, possible cache corruption: 1234abcd",
 		},
 		{
 			name: "size mismatch",
