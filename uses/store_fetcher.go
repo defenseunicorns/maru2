@@ -6,6 +6,7 @@ package uses
 import (
 	"context"
 	"io"
+	"net/url"
 )
 
 // StoreFetcher is a fetcher that wraps another fetcher and caches the results
@@ -16,9 +17,11 @@ type StoreFetcher struct {
 }
 
 // Fetch implements the Fetcher interface
-func (f *StoreFetcher) Fetch(ctx context.Context, uri string) (io.ReadCloser, error) {
-	if exists, err := f.Store.Exists(uri); err == nil && exists {
-		rc, err := f.Store.Fetch(ctx, uri)
+func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+	key := uri.String()
+
+	if exists, err := f.Store.Exists(key); err == nil && exists {
+		rc, err := f.Store.Fetch(ctx, key)
 		if err == nil {
 			return rc, nil
 		}
@@ -29,9 +32,9 @@ func (f *StoreFetcher) Fetch(ctx context.Context, uri string) (io.ReadCloser, er
 		return nil, err
 	}
 
-	if err := f.Store.Store(rc, uri); err != nil {
+	if err := f.Store.Store(rc, key); err != nil {
 		return nil, err
 	}
 
-	return f.Store.Fetch(ctx, uri)
+	return f.Store.Fetch(ctx, key)
 }
