@@ -36,12 +36,15 @@ func NewRootCmd() *cobra.Command {
 		list    bool
 		from    string
 		policy  config.FetchPolicy = config.DefaultFetchPolicy
+		s       string
 		timeout time.Duration
 		dry     bool
 		dir     string
 	)
 
 	var cfg *config.Config
+
+	fs := afero.NewOsFs()
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -66,7 +69,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			loader := &config.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+				Fs: afero.NewBasePathFs(fs, configDir),
 			}
 
 			cfg, err = loader.LoadConfig()
@@ -140,8 +143,21 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			from = strings.Trim(from, `"`)
 			from = strings.Trim(from, `'`)
 
+			s := os.ExpandEnv(s)
+
+			if err := os.MkdirAll(s, 0o644); err != nil {
+				return fmt.Errorf("failed to create directory: %w", err)
+			}
+
+			store, err := uses.NewStore(afero.NewBasePathFs(fs, s))
+			if err != nil {
+				return fmt.Errorf("failed to initialize store: %w", err)
+			}
+
 			svc, err := uses.NewFetcherService(
 				uses.WithAliases(cfg.Aliases),
+				uses.WithStore(store),
+				uses.WithFetchPolicy(policy),
 			)
 			if err != nil {
 				return fmt.Errorf("failed to initialize fetcher service: %w", err)
@@ -216,10 +232,13 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
+	_ = root.MarkFlagDirname("directory")
 	root.Flags().VarP(&policy, "fetch-policy", "p", fmt.Sprintf(`Set fetch policy ("%s")`, strings.Join(config.AvailablePolicies(), `", "`)))
 	root.RegisterFlagCompletionFunc("fetch-policy", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return config.AvailablePolicies(), cobra.ShellCompDirectiveNoFileComp
 	})
+	root.Flags().StringVarP(&s, "store", "s", "${HOME}/.maru2/store", "Set storage directory")
+	_ = root.MarkFlagDirname("store")
 
 	root.CompletionOptions.DisableDefaultCmd = true
 
