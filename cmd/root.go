@@ -35,7 +35,7 @@ func NewRootCmd() *cobra.Command {
 		ver     bool
 		list    bool
 		from    string
-		policy  string
+		policy  config.FetchPolicy = config.DefaultFetchPolicy
 		timeout time.Duration
 		dry     bool
 		dir     string
@@ -207,6 +207,9 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 	root.Flags().StringToStringVarP(&w, "with", "w", nil, "Pass key=value pairs to the called task(s)")
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
+	root.RegisterFlagCompletionFunc("log-level", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(), log.ErrorLevel.String(), log.FatalLevel.String()}, cobra.ShellCompDirectiveNoFileComp
+	})
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
 	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read location as workflow definition")
@@ -215,6 +218,10 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
 	root.Flags().StringVarP(&fetchPolicy, "fetch-policy", "p", string(config.DefaultFetchPolicy), "Set fetch policy")
 	root.Flags().StringVarP(&policy, "fetch-policy", "p", string(config.DefaultFetchPolicy), "Set fetch policy")
+	root.Flags().VarP(&policy, "fetch-policy", "p", fmt.Sprintf(`Set fetch policy ("%s")`, strings.Join(config.AvailablePolicies(), `", "`)))
+	root.RegisterFlagCompletionFunc("fetch-policy", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return config.AvailablePolicies(), cobra.ShellCompDirectiveNoFileComp
+	})
 
 	root.CompletionOptions.DisableDefaultCmd = true
 

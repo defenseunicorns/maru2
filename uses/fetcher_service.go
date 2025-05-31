@@ -131,7 +131,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		}
 	}
 
-	if s.fetchPolicy == config.FetchPolicyIfMissing || s.fetchPolicy == config.FetchPolicyAlways {
+	if s.fetchPolicy == config.FetchPolicyIfNotPresent || s.fetchPolicy == config.FetchPolicyAlways {
 		s.mu.Lock()
 		s.cache[uri.String()] = fetcher
 		s.mu.Unlock()
