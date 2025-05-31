@@ -22,10 +22,12 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 Flags:
   -C, --directory string      Change to directory before doing anything
       --dry-run               Don't actually run anything; just print
+  -p, --fetch-policy string   Set fetch policy ("always", "if-not-present", "never") (default "if-not-present")
   -f, --from string           Read location as workflow definition (default "file:tasks.yaml")
   -h, --help                  help for maru2
       --list                  Print list of available tasks and exit
   -l, --log-level string      Set log level (default "info")
+  -s, --store string          Set storage directory (default "${HOME}/.maru2/store")
   -t, --timeout duration      Maximum time allowed for execution (default 1h0m0s)
   -V, --version               Print version number and exit
   -w, --with stringToString   Pass key=value pairs to the called task(s) (default [])
@@ -143,6 +145,26 @@ Any [`uses` syntax](./syntax.md#run-a-task-from-a-remote-file) is also acceptabl
 $ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
 ```
 
+## Fetch policy
+
+The `--fetch-policy` or `-p` flag controls how Maru2 fetches remote workflows:
+
+```sh
+$ maru2 --fetch-policy always
+```
+
+Available fetch policies:
+
+- `always`: Always fetch remote workflows, even if they exist in the local cache
+- `if-not-present`: Only fetch remote workflows if they don't exist in the local cache (default)
+- `never`: Never fetch remote workflows, only use the local cache
+
+If you want to re-fetch all references without running any local code, you can use:
+
+```sh
+$ maru2 --dry-run --log-level error --fetch-policy always
+```
+
 ## Shell completions
 
 Like `make`, `maru2` only has a single command. As such, shell completions are not generated in the normal way most Cobra CLI applications are (i.e. `maru2 completion bash`). Instead, you can use the following snippet to generate completions for your shell:
@@ -193,3 +215,13 @@ Available log levels (from least to most verbose):
 - `warn`: Show errors and warnings
 - `info`: Show errors, warnings, and informational messages (default)
 - `debug`: Show all messages, including debug information
+
+## Store directory
+
+The `--store` or `-s` flag allows you to specify a custom directory for storing cached remote workflows and other Maru2 data:
+
+```sh
+$ maru2 --store /path/to/custom/store
+```
+
+By default, Maru2 uses `${HOME}/.maru2/store` as the storage directory.

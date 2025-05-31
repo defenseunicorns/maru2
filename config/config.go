@@ -92,7 +92,7 @@ func (f *FetchPolicy) Set(value string) error {
 }
 
 func (f *FetchPolicy) Type() string {
-	return "fetch policy"
+	return "string"
 }
 
 // FileSystemConfigLoader loads configuration from the file system
