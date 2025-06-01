@@ -76,11 +76,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			// default < cfg < flags
-			if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
-				return err
-			}
-
-			return nil
+			return policy.Set(cfg.FetchPolicy.String())
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			svc, err := uses.NewFetcherService(

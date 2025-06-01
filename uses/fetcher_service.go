@@ -72,7 +72,6 @@ func WithFetchPolicy(policy config.FetchPolicy) FetcherServiceOption {
 func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	svc := &FetcherService{
 		aliases:      make(map[string]config.Alias),
-		mu:           sync.RWMutex{},
 		fetcherCache: make(map[string]Fetcher),
 		policy:       config.DefaultFetchPolicy,
 	}

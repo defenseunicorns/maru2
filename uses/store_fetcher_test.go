@@ -78,11 +78,8 @@ func TestStoreFetcher(t *testing.T) {
 		{
 			name:   "FetchPolicyNever: always fetch from store",
 			policy: config.FetchPolicyNever,
-			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
-					return io.NopCloser(strings.NewReader("from source")), nil
-				}
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+			setup: func(_ *mockFetcher, store *mockStorage) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from store")), nil
 				}
 			},
@@ -98,8 +95,8 @@ func TestStoreFetcher(t *testing.T) {
 		{
 			name:   "FetchPolicyNever: store fetch error",
 			policy: config.FetchPolicyNever,
-			setup: func(source *mockFetcher, store *mockStorage) {
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+			setup: func(_ *mockFetcher, store *mockStorage) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return nil, errors.New("store fetch error")
 				}
 			},
@@ -116,13 +113,13 @@ func TestStoreFetcher(t *testing.T) {
 			name:   "FetchPolicyIfNotPresent: exists in store",
 			policy: config.FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.existsFunc = func(uri *url.URL) (bool, error) {
+				store.existsFunc = func(_ *url.URL) (bool, error) {
 					return true, nil
 				}
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from store")), nil
 				}
 			},
@@ -139,16 +136,16 @@ func TestStoreFetcher(t *testing.T) {
 			name:   "FetchPolicyIfNotPresent: store exists check error",
 			policy: config.FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.existsFunc = func(uri *url.URL) (bool, error) {
+				store.existsFunc = func(_ *url.URL) (bool, error) {
 					return false, errors.New("exists error")
 				}
-				store.storeFunc = func(rc io.ReadCloser, uri *url.URL) error {
+				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
 					return nil
 				}
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from store after fetch")), nil
 				}
 			},
@@ -165,14 +162,14 @@ func TestStoreFetcher(t *testing.T) {
 			name:   "FetchPolicyIfNotPresent: exists but fetch from store fails",
 			policy: config.FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.existsFunc = func(uri *url.URL) (bool, error) {
+				store.existsFunc = func(_ *url.URL) (bool, error) {
 					return true, nil
 				}
 				// Store fetch implementation is done via counter in the test setup
-				store.storeFunc = func(rc io.ReadCloser, uri *url.URL) error {
+				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
 					return nil
 				}
 			},
@@ -189,16 +186,16 @@ func TestStoreFetcher(t *testing.T) {
 			name:   "FetchPolicyIfNotPresent: not in store",
 			policy: config.FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.existsFunc = func(uri *url.URL) (bool, error) {
+				store.existsFunc = func(_ *url.URL) (bool, error) {
 					return false, nil
 				}
-				store.storeFunc = func(rc io.ReadCloser, uri *url.URL) error {
+				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
 					return nil
 				}
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from store after fetch")), nil
 				}
 			},
@@ -215,13 +212,13 @@ func TestStoreFetcher(t *testing.T) {
 			name:   "FetchPolicyAlways: always fetch from source and update store",
 			policy: config.FetchPolicyAlways,
 			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.storeFunc = func(rc io.ReadCloser, uri *url.URL) error {
+				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
 					return nil
 				}
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from store after fetch")), nil
 				}
 			},
@@ -237,8 +234,8 @@ func TestStoreFetcher(t *testing.T) {
 		{
 			name:   "FetchPolicyAlways: source fetch error",
 			policy: config.FetchPolicyAlways,
-			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+			setup: func(source *mockFetcher, _ *mockStorage) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return nil, errors.New("source fetch error")
 				}
 			},
@@ -255,10 +252,10 @@ func TestStoreFetcher(t *testing.T) {
 			name:   "FetchPolicyAlways: store error",
 			policy: config.FetchPolicyAlways,
 			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.storeFunc = func(rc io.ReadCloser, uri *url.URL) error {
+				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
 					return errors.New("store error")
 				}
 			},
@@ -275,13 +272,13 @@ func TestStoreFetcher(t *testing.T) {
 			name:   "FetchPolicyAlways: store fetch error after store",
 			policy: config.FetchPolicyAlways,
 			setup: func(source *mockFetcher, store *mockStorage) {
-				source.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.storeFunc = func(rc io.ReadCloser, uri *url.URL) error {
+				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
 					return nil
 				}
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return nil, errors.New("store fetch error")
 				}
 			},
@@ -320,7 +317,7 @@ func TestStoreFetcher(t *testing.T) {
 			// For tests involving fetch from store fails then succeeds
 			if tc.name == "FetchPolicyIfNotPresent: exists but fetch from store fails" {
 				var fetchCount int
-				store.fetchFunc = func(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
+				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					fetchCount++
 					if fetchCount == 1 {
 						return nil, errors.New("store fetch error")
@@ -337,7 +334,7 @@ func TestStoreFetcher(t *testing.T) {
 			uri, err := url.Parse(tc.uri)
 			require.NoError(t, err)
 
-			rc, err := fetcher.Fetch(context.Background(), uri)
+			rc, err := fetcher.Fetch(t.Context(), uri)
 
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)
