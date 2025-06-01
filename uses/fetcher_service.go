@@ -60,10 +60,6 @@ func WithStorage(store Storage) FetcherServiceOption {
 // WithFetchPolicy sets the fetch policy to be used by the fetcher service
 func WithFetchPolicy(policy config.FetchPolicy) FetcherServiceOption {
 	return func(s *FetcherService) {
-		// don't set the policy if its not a valid policy
-		if err := policy.Set(policy.String()); err != nil {
-			return
-		}
 		s.policy = policy
 	}
 }
@@ -90,6 +86,11 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 
 	if svc.policy == config.FetchPolicyNever && svc.storage == nil {
 		return nil, fmt.Errorf("store is not initialized")
+	}
+
+	// check the policy is valid
+	if err := svc.policy.Set(svc.policy.String()); err != nil {
+		return nil, err
 	}
 
 	return svc, nil

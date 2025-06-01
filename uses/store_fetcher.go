@@ -38,6 +38,7 @@ func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 		if err != nil {
 			return nil, err
 		}
+		defer rc.Close()
 
 		if err := f.Store.Store(rc, uri); err != nil {
 			return nil, err

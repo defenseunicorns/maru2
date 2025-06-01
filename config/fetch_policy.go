@@ -15,11 +15,11 @@ type FetchPolicy string
 var _ pflag.Value = (*FetchPolicy)(nil)
 
 const (
-	// FetchPolicyAlways will always use the cache if available, never fetching from source
+	// FetchPolicyAlways will always fetch from source, then cache the result, overriding any existing cache entry
 	FetchPolicyAlways FetchPolicy = "always"
 	// FetchPolicyIfNotPresent will use the cache if available, otherwise fetch from source
 	FetchPolicyIfNotPresent FetchPolicy = "if-not-present"
-	// FetchPolicyNever will never use the cache, always fetching from source
+	// FetchPolicyNever will never fetch from source, only using the cache (which must exist)
 	FetchPolicyNever FetchPolicy = "never"
 	// DefaultFetchPolicy is the default fetch policy used when none is specified
 	DefaultFetchPolicy FetchPolicy = FetchPolicyIfNotPresent

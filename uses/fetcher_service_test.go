@@ -27,7 +27,7 @@ func TestFetcherService(t *testing.T) {
 			existsFunc: func(_ *url.URL) (bool, error) {
 				return true, nil
 			},
-			storeFunc: func(_ io.ReadCloser, _ *url.URL) error {
+			storeFunc: func(_ io.Reader, _ *url.URL) error {
 				return nil
 			},
 		}

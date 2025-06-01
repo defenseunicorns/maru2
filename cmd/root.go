@@ -54,7 +54,7 @@ maru2 -f ../foo.yaml bar baz -w zab="zaz"
 
 maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
 `,
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if dir != "" {
 				if err := os.Chdir(dir); err != nil {
 					return err
@@ -76,7 +76,10 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			// default < cfg < flags
-			return policy.Set(cfg.FetchPolicy.String())
+			if !cmd.Flags().Changed("fetch-policy") {
+				return policy.Set(cfg.FetchPolicy.String())
+			}
+			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			svc, err := uses.NewFetcherService(

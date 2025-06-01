@@ -32,7 +32,7 @@ const IndexFileName = "index.json"
 type Storage interface {
 	Fetcher
 	Exists(uri *url.URL) (bool, error)
-	Store(rc io.ReadCloser, uri *url.URL) error
+	Store(r io.Reader, uri *url.URL) error
 }
 
 // LocalStore is a cache for storing and retrieving cached remote workflows from a filesystem.
@@ -103,7 +103,7 @@ func (s *LocalStore) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, erro
 }
 
 // Store a workflow in the store.
-func (s *LocalStore) Store(rc io.ReadCloser, uri *url.URL) error {
+func (s *LocalStore) Store(rc io.Reader, uri *url.URL) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

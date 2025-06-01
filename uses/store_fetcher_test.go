@@ -35,7 +35,7 @@ func (m *mockFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, e
 type mockStorage struct {
 	fetchFunc   func(ctx context.Context, uri *url.URL) (io.ReadCloser, error)
 	existsFunc  func(uri *url.URL) (bool, error)
-	storeFunc   func(rc io.ReadCloser, uri *url.URL) error
+	storeFunc   func(r io.Reader, uri *url.URL) error
 	fetchCalls  int
 	existsCalls int
 	storeCalls  int
@@ -57,12 +57,12 @@ func (m *mockStorage) Exists(uri *url.URL) (bool, error) {
 	return m.existsFunc(uri)
 }
 
-func (m *mockStorage) Store(rc io.ReadCloser, uri *url.URL) error {
+func (m *mockStorage) Store(r io.Reader, uri *url.URL) error {
 	m.storeCalls++
 	if m.storeFunc == nil {
 		return fmt.Errorf("storeFunc not implemented")
 	}
-	return m.storeFunc(rc, uri)
+	return m.storeFunc(r, uri)
 }
 
 func TestStoreFetcher(t *testing.T) {
@@ -142,7 +142,7 @@ func TestStoreFetcher(t *testing.T) {
 				store.existsFunc = func(_ *url.URL) (bool, error) {
 					return false, errors.New("exists error")
 				}
-				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
+				store.storeFunc = func(_ io.Reader, _ *url.URL) error {
 					return nil
 				}
 				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
@@ -169,7 +169,7 @@ func TestStoreFetcher(t *testing.T) {
 					return true, nil
 				}
 				// Store fetch implementation is done via counter in the test setup
-				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
+				store.storeFunc = func(_ io.Reader, _ *url.URL) error {
 					return nil
 				}
 			},
@@ -192,7 +192,7 @@ func TestStoreFetcher(t *testing.T) {
 				store.existsFunc = func(_ *url.URL) (bool, error) {
 					return false, nil
 				}
-				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
+				store.storeFunc = func(_ io.Reader, _ *url.URL) error {
 					return nil
 				}
 				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
@@ -215,7 +215,7 @@ func TestStoreFetcher(t *testing.T) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
+				store.storeFunc = func(_ io.Reader, _ *url.URL) error {
 					return nil
 				}
 				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
@@ -255,7 +255,7 @@ func TestStoreFetcher(t *testing.T) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
+				store.storeFunc = func(_ io.Reader, _ *url.URL) error {
 					return errors.New("store error")
 				}
 			},
@@ -275,7 +275,7 @@ func TestStoreFetcher(t *testing.T) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
 				}
-				store.storeFunc = func(_ io.ReadCloser, _ *url.URL) error {
+				store.storeFunc = func(_ io.Reader, _ *url.URL) error {
 					return nil
 				}
 				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
