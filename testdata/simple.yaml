@@ -15,3 +15,11 @@ tasks:
 
   pwd:
     - run: pwd
+
+  chuck:
+    - uses: builtin:fetch
+      with:
+        url: https://api.chucknorris.io/jokes/random
+        timeout: 10s
+        headers:
+          Accept: application/json
