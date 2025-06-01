@@ -5,14 +5,12 @@ package uses
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/defenseunicorns/maru2/config"
-	"github.com/package-url/packageurl-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,8 +38,7 @@ func TestFetcherService(t *testing.T) {
 		expectedType   any
 		expectedErr    string
 		checkSameCache bool
-		verifyPURL     func(*testing.T, packageurl.PackageURL)
-		verifyStore    func(*testing.T, Fetcher)
+		verify         func(t *testing.T, f Fetcher)
 	}{
 		{
 			name:         "new service with defaults",
@@ -97,7 +94,7 @@ func TestFetcherService(t *testing.T) {
 			},
 			uri:          "https://example.com",
 			expectedType: &mockStorage{},
-			verifyStore: func(t *testing.T, f Fetcher) {
+			verify: func(t *testing.T, f Fetcher) {
 				store, ok := f.(*mockStorage)
 				require.True(t, ok)
 
@@ -121,12 +118,6 @@ func TestFetcherService(t *testing.T) {
 			},
 			uri:          "pkg:github/defenseunicorns/maru2",
 			expectedType: &mockStorage{},
-			verifyStore: func(t *testing.T, f Fetcher) {
-				// Even with pkg scheme, should return the storage directly, not wrapped
-				_, ok := f.(*mockStorage)
-				require.True(t, ok, "Expected a direct storage instance, not wrapped in StoreFetcher")
-				assert.NotEqual(t, "*uses.StoreFetcher", fmt.Sprintf("%T", f))
-			},
 		},
 		{
 			name: "with FetchPolicyAlways with storage - file scheme",
@@ -145,10 +136,11 @@ func TestFetcherService(t *testing.T) {
 			},
 			uri:          "https://example.com",
 			expectedType: &StoreFetcher{},
-			verifyStore: func(t *testing.T, f Fetcher) {
+			verify: func(t *testing.T, f Fetcher) {
 				storeFetcher, ok := f.(*StoreFetcher)
 				require.True(t, ok)
 				assert.IsType(t, &HTTPClient{}, storeFetcher.Source)
+				assert.IsType(t, &mockStorage{}, storeFetcher.Store)
 				assert.Equal(t, config.FetchPolicyAlways, storeFetcher.Policy)
 			},
 		},
@@ -160,10 +152,11 @@ func TestFetcherService(t *testing.T) {
 			},
 			uri:          "https://example.com",
 			expectedType: &StoreFetcher{},
-			verifyStore: func(t *testing.T, f Fetcher) {
+			verify: func(t *testing.T, f Fetcher) {
 				storeFetcher, ok := f.(*StoreFetcher)
 				require.True(t, ok)
 				assert.IsType(t, &HTTPClient{}, storeFetcher.Source)
+				assert.IsType(t, &mockStorage{}, storeFetcher.Store)
 				assert.Equal(t, config.FetchPolicyIfNotPresent, storeFetcher.Policy)
 			},
 		},
@@ -217,8 +210,8 @@ func TestFetcherService(t *testing.T) {
 				assert.Same(t, fetcher, fetcher2, "fetchers should be the same instance due to caching")
 			}
 
-			if tc.verifyStore != nil {
-				tc.verifyStore(t, fetcher)
+			if tc.verify != nil {
+				tc.verify(t, fetcher)
 			}
 		})
 	}

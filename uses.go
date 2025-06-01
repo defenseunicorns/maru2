@@ -60,7 +60,12 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflo
 		return Workflow{}, err
 	}
 
-	logger.Debug("fetching", "url", uri, "fetcher", fmt.Sprintf("%T", fetcher))
+	fetcherType := fmt.Sprintf("%T", fetcher)
+	if sf, ok := fetcher.(*uses.StoreFetcher); ok {
+		fetcherType = fmt.Sprintf("%T|%T", sf.Store, sf.Source)
+	}
+
+	logger.Debug("fetching", "url", uri, "fetcher", fetcherType)
 
 	rc, err := fetcher.Fetch(ctx, uri)
 	if err != nil {

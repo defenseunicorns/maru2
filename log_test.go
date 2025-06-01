@@ -4,12 +4,43 @@
 package maru2
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/alecthomas/chroma/v2"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
 )
+
+type errLexer struct {
+	name string
+}
+
+var _ chroma.Lexer = (*errLexer)(nil)
+
+func (l *errLexer) Config() *chroma.Config {
+	return &chroma.Config{
+		Name: l.name,
+	}
+}
+
+func (l *errLexer) Tokenise(_ *chroma.TokeniseOptions, _ string) (chroma.Iterator, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (l *errLexer) SetRegistry(_ *chroma.LexerRegistry) chroma.Lexer {
+	return l
+}
+
+func (l *errLexer) SetAnalyser(_ func(text string) float32) chroma.Lexer {
+	return l
+}
+
+func (l *errLexer) AnalyseText(_ string) float32 {
+	return 0.0
+}
 
 func TestPrintScript(t *testing.T) {
 	testCases := []struct {
@@ -58,6 +89,17 @@ $ echo !
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
+
+	curr := lexers.Get("shell")
+	t.Cleanup(func() {
+		lexers.Register(curr)
+	})
+
+	lexers.Register(&errLexer{name: "shell"}) // overrides shell lexer
+
+	var buf strings.Builder
+	printScript(log.New(&buf), "echo hello")
+	assert.Equal(t, "$ echo hello\n", buf.String())
 }
 
 func TestPrintBuiltin(t *testing.T) {
@@ -110,4 +152,18 @@ func TestPrintBuiltin(t *testing.T) {
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
+
+	curr := lexers.Get("yaml")
+	t.Cleanup(func() {
+		lexers.Register(curr)
+	})
+
+	lexers.Register(&errLexer{name: "yaml"}) // overrides yaml lexer
+
+	var buf strings.Builder
+	printBuiltin(log.New(&buf), With{"text": "echo hello"})
+	assert.Equal(t, `with:
+  text: echo hello
+
+`, buf.String())
 }
