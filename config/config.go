@@ -13,7 +13,6 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
 	"github.com/spf13/afero"
-	"github.com/spf13/pflag"
 )
 
 // DefaultFileName is the default file name for the config file
@@ -47,56 +46,6 @@ func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 		tokenFromEnv.Description = "Environment variable containing the token for authentication"
 		tokenFromEnv.Pattern = "^[a-zA-Z_]+[a-zA-Z0-9_]*$" // EnvVariablePattern.String(), a little bit of copying never hurt anyone
 	}
-}
-
-// FetchPolicy defines the fetching behavior for the fetcher service
-type FetchPolicy string
-
-var _ pflag.Value = (*FetchPolicy)(nil)
-
-// AvailablePolicies returns a list of available fetch policies
-func AvailablePolicies() []string {
-	return []string{
-		string(FetchPolicyAlways),
-		string(FetchPolicyIfNotPresent),
-		string(FetchPolicyNever),
-	}
-}
-
-const (
-	// FetchPolicyAlways will always use the cache if available, never fetching from source
-	FetchPolicyAlways FetchPolicy = "always"
-	// FetchPolicyIfNotPresent will use the cache if available, otherwise fetch from source
-	FetchPolicyIfNotPresent FetchPolicy = "if-not-present"
-	// FetchPolicyNever will never use the cache, always fetching from source
-	FetchPolicyNever FetchPolicy = "never"
-	// DefaultFetchPolicy is the default fetch policy used when none is specified
-	DefaultFetchPolicy FetchPolicy = FetchPolicyIfNotPresent
-)
-
-// String implements the pflag.Value and fmt.Stringer interfaces
-func (f *FetchPolicy) String() string {
-	return string(*f)
-}
-
-// Set implements the pflag.Value interface
-func (f *FetchPolicy) Set(value string) error {
-	switch value {
-	case string(FetchPolicyAlways):
-		*f = FetchPolicyAlways
-	case string(FetchPolicyIfNotPresent):
-		*f = FetchPolicyIfNotPresent
-	case string(FetchPolicyNever):
-		*f = FetchPolicyNever
-	default:
-		return fmt.Errorf("invalid fetch policy: %s", value)
-	}
-	return nil
-}
-
-// Type implements the pflag.Value interface
-func (f *FetchPolicy) Type() string {
-	return "string"
 }
 
 // FileSystemConfigLoader loads configuration from the file system
