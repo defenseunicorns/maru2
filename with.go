@@ -244,25 +244,25 @@ func MergeWithAndParams(ctx context.Context, with With, params InputMap) (With, 
 		if param.Default != nil && with[name] != nil {
 			switch param.Default.(type) {
 			case bool:
-				casted, err := cast.ToBoolE(with[name])
+				casted, err := cast.ToE[bool](with[name])
 				if err != nil {
 					return nil, err
 				}
 				merged[name] = casted
 			case string:
-				casted, err := cast.ToStringE(with[name])
+				casted, err := cast.ToE[string](with[name])
 				if err != nil {
 					return nil, err
 				}
 				merged[name] = casted
 			case int:
-				casted, err := cast.ToIntE(with[name])
+				casted, err := cast.ToE[int](with[name])
 				if err != nil {
 					return nil, err
 				}
 				merged[name] = casted
 			case uint64:
-				casted, err := cast.ToUint64E(with[name])
+				casted, err := cast.ToE[uint64](with[name])
 				if err != nil {
 					return nil, err
 				}
@@ -273,7 +273,7 @@ func MergeWithAndParams(ctx context.Context, with With, params InputMap) (With, 
 		}
 
 		if param.Validate != "" {
-			stringified, err := cast.ToStringE(merged[name])
+			stringified, err := cast.ToE[string](merged[name])
 			if err != nil {
 				return nil, err
 			}
