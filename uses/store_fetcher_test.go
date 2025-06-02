@@ -149,13 +149,13 @@ func TestStoreFetcher(t *testing.T) {
 					return io.NopCloser(strings.NewReader("from store after fetch")), nil
 				}
 			},
-			uri:      "https://example.com/workflow",
-			expected: "from store after fetch",
+			uri:         "https://example.com/workflow",
+			expectedErr: "exists error",
 			verifyCallCount: func(t *testing.T, source *mockFetcher, store *mockStorage) {
-				assert.Equal(t, 1, source.fetchCalls)
-				assert.Equal(t, 1, store.fetchCalls)
+				assert.Equal(t, 0, source.fetchCalls)
+				assert.Equal(t, 0, store.fetchCalls)
 				assert.Equal(t, 1, store.existsCalls)
-				assert.Equal(t, 1, store.storeCalls)
+				assert.Equal(t, 0, store.storeCalls)
 			},
 		},
 		{
@@ -173,13 +173,13 @@ func TestStoreFetcher(t *testing.T) {
 					return nil
 				}
 			},
-			uri:      "https://example.com/workflow",
-			expected: "from store after fetch",
+			uri:         "https://example.com/workflow",
+			expectedErr: "store fetch error",
 			verifyCallCount: func(t *testing.T, source *mockFetcher, store *mockStorage) {
-				assert.Equal(t, 1, source.fetchCalls)
-				assert.Equal(t, 2, store.fetchCalls)
+				assert.Equal(t, 0, source.fetchCalls)
+				assert.Equal(t, 1, store.fetchCalls)
 				assert.Equal(t, 1, store.existsCalls)
-				assert.Equal(t, 1, store.storeCalls)
+				assert.Equal(t, 0, store.storeCalls)
 			},
 		},
 		{
@@ -314,15 +314,10 @@ func TestStoreFetcher(t *testing.T) {
 				tc.setup(source, store)
 			}
 
-			// For tests involving fetch from store fails then succeeds
+			// Set up fetch function for specific test cases
 			if tc.name == "FetchPolicyIfNotPresent: exists but fetch from store fails" {
-				var fetchCount int
 				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
-					fetchCount++
-					if fetchCount == 1 {
-						return nil, errors.New("store fetch error")
-					}
-					return io.NopCloser(strings.NewReader("from store after fetch")), nil
+					return nil, errors.New("store fetch error")
 				}
 			}
 			fetcher := &StoreFetcher{

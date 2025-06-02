@@ -26,13 +26,14 @@ func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 	case config.FetchPolicyNever:
 		return f.Store.Fetch(ctx, uri)
 	case config.FetchPolicyIfNotPresent:
-		if exists, err := f.Store.Exists(uri); err == nil && exists {
-			rc, err := f.Store.Fetch(ctx, uri)
-			if err == nil {
-				return rc, nil
-			}
+		exists, err := f.Store.Exists(uri)
+		if err != nil {
+			return nil, err
 		}
-		fallthrough // I FINALLY FOUND A USECASE FOR THIS KEYWORD
+		if exists {
+			return f.Store.Fetch(ctx, uri)
+		}
+		fallthrough
 	case config.FetchPolicyAlways:
 		rc, err := f.Source.Fetch(ctx, uri)
 		if err != nil {
