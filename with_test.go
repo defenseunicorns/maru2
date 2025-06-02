@@ -434,7 +434,7 @@ func TestMergeWithAndParams(t *testing.T) {
 					Default: 42,
 				},
 			},
-			expectedError: "unable to cast \"not-a-number\" of type string to int64",
+			expectedError: "unable to cast \"not-a-number\" of type string to int",
 		},
 		{
 			name: "valid regex validation passes",
