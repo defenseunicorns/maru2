@@ -6,11 +6,14 @@ package uses
 import (
 	"context"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/defenseunicorns/maru2/config"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,11 +41,58 @@ func TestFetcherService(t *testing.T) {
 		expectedType   any
 		expectedErr    string
 		checkSameCache bool
-		verify         func(t *testing.T, f Fetcher)
+		verifyService  func(t *testing.T, s *FetcherService)
+		verifyFetcher  func(t *testing.T, f Fetcher)
 	}{
 		{
 			name:         "new service with defaults",
-			expectedType: nil,
+			uri:          "https://example.com",
+			expectedType: &HTTPClient{},
+			verifyService: func(t *testing.T, s *FetcherService) {
+				assert.NotNil(t, s.PkgAliases())
+				assert.Empty(t, s.PkgAliases())
+				assert.NotNil(t, s.client)
+				assert.NotNil(t, s.fsys)
+				assert.NotNil(t, s.fetcherCache)
+				assert.Nil(t, s.storage)
+				assert.Equal(t, config.DefaultFetchPolicy, s.policy)
+			},
+		},
+		{
+			name:         "new service with fs",
+			uri:          "https://example.com",
+			expectedType: &HTTPClient{},
+			opts: []FetcherServiceOption{
+				WithFS(afero.NewMemMapFs()),
+			},
+			verifyService: func(t *testing.T, s *FetcherService) {
+				assert.IsType(t, afero.NewMemMapFs(), s.fsys)
+			},
+		},
+		{
+			name: "new service with client",
+			opts: []FetcherServiceOption{
+				WithClient(&http.Client{Timeout: 10 * time.Second}),
+			},
+			uri:          "https://example.com",
+			expectedType: &HTTPClient{},
+			verifyService: func(t *testing.T, s *FetcherService) {
+				assert.Equal(t, 10*time.Second, s.client.Timeout)
+			},
+			verifyFetcher: func(t *testing.T, f Fetcher) {
+				assert.IsType(t, &HTTPClient{}, f)
+				assert.Equal(t, 10*time.Second, f.(*HTTPClient).client.Timeout)
+			},
+		},
+		{
+			name: "new service with aliases",
+			opts: []FetcherServiceOption{
+				WithAliases(map[string]config.Alias{
+					"test": {Type: "github", Base: "https://example.com"},
+				}),
+			},
+			uri:         "pkg:test/defenseunicorns/maru2",
+			expectedErr: "unsupported package type: \"test\"", // TODO: really gotta figure out when aliases should be applied
 		},
 		{
 			name:         "get http fetcher",
@@ -94,7 +144,7 @@ func TestFetcherService(t *testing.T) {
 			},
 			uri:          "https://example.com",
 			expectedType: &mockStorage{},
-			verify: func(t *testing.T, f Fetcher) {
+			verifyFetcher: func(t *testing.T, f Fetcher) {
 				store, ok := f.(*mockStorage)
 				require.True(t, ok)
 
@@ -136,7 +186,7 @@ func TestFetcherService(t *testing.T) {
 			},
 			uri:          "https://example.com",
 			expectedType: &StoreFetcher{},
-			verify: func(t *testing.T, f Fetcher) {
+			verifyFetcher: func(t *testing.T, f Fetcher) {
 				storeFetcher, ok := f.(*StoreFetcher)
 				require.True(t, ok)
 				assert.IsType(t, &HTTPClient{}, storeFetcher.Source)
@@ -152,7 +202,7 @@ func TestFetcherService(t *testing.T) {
 			},
 			uri:          "https://example.com",
 			expectedType: &StoreFetcher{},
-			verify: func(t *testing.T, f Fetcher) {
+			verifyFetcher: func(t *testing.T, f Fetcher) {
 				storeFetcher, ok := f.(*StoreFetcher)
 				require.True(t, ok)
 				assert.IsType(t, &HTTPClient{}, storeFetcher.Source)
@@ -180,15 +230,8 @@ func TestFetcherService(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotNil(t, service)
 
-			if tc.name == "new service with defaults" {
-				assert.NotNil(t, service.PkgAliases())
-				assert.Empty(t, service.PkgAliases())
-				assert.NotNil(t, service.client)
-				assert.NotNil(t, service.fsys)
-				assert.NotNil(t, service.fetcherCache)
-				assert.Nil(t, service.storage)
-				assert.Equal(t, config.DefaultFetchPolicy, service.policy)
-				return
+			if tc.verifyService != nil {
+				tc.verifyService(t, service)
 			}
 
 			uri, err := url.Parse(tc.uri)
@@ -210,8 +253,8 @@ func TestFetcherService(t *testing.T) {
 				assert.Same(t, fetcher, fetcher2, "fetchers should be the same instance due to caching")
 			}
 
-			if tc.verify != nil {
-				tc.verify(t, fetcher)
+			if tc.verifyFetcher != nil {
+				tc.verifyFetcher(t, fetcher)
 			}
 		})
 	}
