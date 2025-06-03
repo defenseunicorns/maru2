@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -147,24 +148,26 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			from = strings.Trim(from, `"`)
 			from = strings.Trim(from, `'`)
 
-			s := os.ExpandEnv(s)
-
 			fs := afero.NewOsFs()
 
-			_, err := fs.Stat(s)
+			s := filepath.Clean(os.ExpandEnv(s))
+
+			fi, err := fs.Stat(filepath.Join(".maru2", "store"))
+			if (err == nil && fi.IsDir()) || s == "." {
+				cwd, err := os.Getwd()
+				if err != nil {
+					return err
+				}
+				s = filepath.Join(cwd, ".maru2", "store")
+			}
+
+			_, err = fs.Stat(s)
 			if err != nil {
 				if os.IsNotExist(err) {
 					if err := fs.MkdirAll(s, 0o744); err != nil {
 						return err
 					}
 				} else {
-					return err
-				}
-			}
-
-			if s == "." {
-				s, err = os.Getwd()
-				if err != nil {
 					return err
 				}
 			}
