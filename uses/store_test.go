@@ -31,28 +31,28 @@ func TestNewLocalStore(t *testing.T) {
 
 				content, err := afero.ReadFile(s.fs, IndexFileName)
 				require.NoError(t, err)
-				assert.Equal(t, "{}", string(content))
+				assert.Empty(t, string(content))
 			},
 		},
 		{
 			name: "new store with existing valid index",
 			setup: func(fs afero.Fs) error {
-				return afero.WriteFile(fs, IndexFileName, []byte(`{"https://example.com": {"Size": 10, "Hex": "abcd1234"}}`), 0644)
+				return afero.WriteFile(fs, IndexFileName, []byte(`https://example.com h1:abcd1234 10`), 0644)
 			},
 			validate: func(t *testing.T, s *LocalStore) {
 				assert.NotNil(t, s.index)
 				assert.Len(t, s.index, 1)
 				assert.Contains(t, s.index, "https://example.com")
 				assert.Equal(t, int64(10), s.index["https://example.com"].Size)
-				assert.Equal(t, "abcd1234", s.index["https://example.com"].Hex)
+				assert.Equal(t, "h1:abcd1234", s.index["https://example.com"].Hex)
 			},
 		},
 		{
 			name: "new store with existing invalid index",
 			setup: func(fs afero.Fs) error {
-				return afero.WriteFile(fs, IndexFileName, []byte(`invalid json`), 0644)
+				return afero.WriteFile(fs, IndexFileName, []byte(`invalid txt`), 0644)
 			},
-			expectedErr: "invalid character 'i' looking for beginning of value",
+			expectedErr: "invalid line format",
 		},
 		{
 			name: "error creating index file",

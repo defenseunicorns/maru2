@@ -30,16 +30,18 @@ import (
 // NewRootCmd creates the root command for the maru2 CLI.
 func NewRootCmd() *cobra.Command {
 	var (
-		w       map[string]string
-		level   string
-		ver     bool
-		list    bool
-		from    string
-		policy  = config.DefaultFetchPolicy // VarP does not allow you to set a default value
-		s       string
-		timeout time.Duration
-		dry     bool
-		dir     string
+		w        map[string]string
+		level    string
+		ver      bool
+		list     bool
+		from     string
+		policy   = config.DefaultFetchPolicy // VarP does not allow you to set a default value
+		s        string
+		timeout  time.Duration
+		dry      bool
+		dir      string
+		fetchAll bool
+		gc       bool
 	)
 
 	var cfg *config.Config // cfg is not set via CLI flag
@@ -160,6 +162,13 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
+			if s == "." {
+				s, err = os.Getwd()
+				if err != nil {
+					return err
+				}
+			}
+
 			store, err := uses.NewLocalStore(afero.NewBasePathFs(fs, s))
 			if err != nil {
 				return fmt.Errorf("failed to initialize store: %w", err)
@@ -228,6 +237,17 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					return err
 				}
 			}
+
+			if fetchAll {
+				logger.Debug("fetching all", "tasks", wf.Tasks.OrderedTaskNames())
+				if err := maru2.FetchAll(ctx, svc, wf); err != nil {
+					return err
+				}
+			}
+
+			if gc {
+				return store.GC()
+			}
 			return nil
 		},
 	}
@@ -250,6 +270,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	})
 	root.Flags().StringVarP(&s, "store", "s", "${HOME}/.maru2/store", "Set storage directory")
 	_ = root.MarkFlagDirname("store")
+	root.Flags().BoolVar(&gc, "gc", false, "Perform garbage collection on the store")
+	root.Flags().BoolVar(&fetchAll, "fetch-all", false, "Fetch all tasks")
 
 	root.CompletionOptions.DisableDefaultCmd = true
 

@@ -5,15 +5,18 @@
 package uses
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
+	"slices"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/spf13/afero"
@@ -26,7 +29,7 @@ type Descriptor struct {
 }
 
 // IndexFileName is the name of the index file.
-const IndexFileName = "index.json"
+const IndexFileName = "index.txt"
 
 // Storage interface for storing and retrieving cached remote workflows.
 type Storage interface {
@@ -56,10 +59,6 @@ func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
 		}
 		defer f.Close()
 
-		_, err = f.WriteString("{}")
-		if err != nil {
-			return nil, err
-		}
 		return &LocalStore{
 			fs:    fs,
 			index: index,
@@ -69,13 +68,29 @@ func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
 		return nil, err
 	}
 
-	b, err := afero.ReadFile(fs, IndexFileName)
+	f, err := fs.Open(IndexFileName)
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 
-	if err := json.Unmarshal(b, &index); err != nil {
-		return nil, err
+	scanner := bufio.NewScanner(bufio.NewReader(f))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		var desc Descriptor
+		fields := strings.Fields(line)
+		if len(fields) != 3 {
+			return nil, fmt.Errorf("invalid line format")
+		}
+		desc.Size, err = strconv.ParseInt(fields[2], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		desc.Hex = strings.TrimPrefix(fields[1], "h1:")
+		index[fields[0]] = desc
 	}
 
 	return &LocalStore{
@@ -128,9 +143,16 @@ func (s *LocalStore) Store(rc io.Reader, uri *url.URL) error {
 		Hex:  hex,
 	}
 
-	b, err := json.Marshal(s.index)
-	if err != nil {
-		return err
+	var keys []string
+	for key := range s.index {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+
+	var b []byte
+	for _, key := range keys {
+		desc := s.index[key]
+		b = fmt.Appendf(b, "%s h1:%s %d\n", key, desc.Hex, desc.Size)
 	}
 
 	return afero.WriteFile(s.fs, IndexFileName, b, 0644)
@@ -177,8 +199,38 @@ func (s *LocalStore) Exists(uri *url.URL) (bool, error) {
 	return true, nil
 }
 
+// GC performs garbage collection on the store.
+func (s *LocalStore) GC() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	all, err := afero.ReadDir(s.fs, ".")
+	if err != nil {
+		return err
+	}
+
+dirLoop:
+	for _, fi := range all {
+		if fi.IsDir() || fi.Name() == "index.txt" {
+			continue
+		}
+
+		for _, desc := range s.index {
+			if desc.Hex == fi.Name() {
+				continue dirLoop
+			}
+			if err := s.fs.Remove(fi.Name()); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *LocalStore) id(uri *url.URL) string {
 	clone := *uri
 	clone.RawQuery = ""
+	clone.User = nil
 	return clone.String()
 }

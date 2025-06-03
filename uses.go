@@ -75,3 +75,39 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflo
 
 	return ReadAndValidate(rc)
 }
+
+// FetchAll fetches all workflows from a given URL.
+func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow) error {
+	refs := []string{}
+
+	for _, task := range wf.Tasks {
+		for _, step := range task {
+			if step.Uses != "" {
+				refs = append(refs, step.Uses)
+			}
+		}
+	}
+
+	fetched := map[string]struct{}{}
+
+	for _, ref := range refs {
+		if _, ok := fetched[ref]; ok {
+			continue
+		}
+		resolved, err := uses.ResolveRelative(nil, ref, wf.Aliases)
+		if err != nil {
+			return fmt.Errorf("failed to resolve %q: %w", ref, err)
+		}
+		wf, err = Fetch(ctx, svc, resolved)
+		if err != nil {
+			return err
+		}
+		fetched[resolved.String()] = struct{}{}
+		err = FetchAll(ctx, svc, wf)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
