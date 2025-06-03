@@ -80,8 +80,15 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			// default < cfg < flags
 			if !cmd.Flags().Changed("fetch-policy") {
-				return policy.Set(cfg.FetchPolicy.String())
+				if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
+					return err
+				}
 			}
+
+			if policy == config.FetchPolicyNever && fetchAll {
+				return fmt.Errorf("cannot fetch all with fetch policy %q", policy)
+			}
+
 			return nil
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
@@ -242,8 +249,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if fetchAll {
-				logger.Debug("fetching all", "tasks", wf.Tasks.OrderedTaskNames())
-				if err := maru2.FetchAll(ctx, svc, wf); err != nil {
+				logger.Debug("fetching all", "tasks", wf.Tasks.OrderedTaskNames(), "from", resolved)
+				if err := maru2.FetchAll(ctx, svc, wf, resolved); err != nil {
 					return err
 				}
 			}
