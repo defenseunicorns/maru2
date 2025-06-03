@@ -44,7 +44,7 @@ func TestNewLocalStore(t *testing.T) {
 				assert.Len(t, s.index, 1)
 				assert.Contains(t, s.index, "https://example.com")
 				assert.Equal(t, int64(10), s.index["https://example.com"].Size)
-				assert.Equal(t, "h1:abcd1234", s.index["https://example.com"].Hex)
+				assert.Equal(t, "abcd1234", s.index["https://example.com"].Hex)
 			},
 		},
 		{
