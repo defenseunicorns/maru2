@@ -77,7 +77,7 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflo
 }
 
 // FetchAll fetches all workflows from a given URL.
-func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow) error {
+func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *url.URL) error {
 	refs := []string{}
 
 	for _, task := range wf.Tasks {
@@ -94,7 +94,7 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow) error 
 		if _, ok := fetched[ref]; ok {
 			continue
 		}
-		resolved, err := uses.ResolveRelative(nil, ref, wf.Aliases)
+		resolved, err := uses.ResolveRelative(src, ref, wf.Aliases)
 		if err != nil {
 			return fmt.Errorf("failed to resolve %q: %w", ref, err)
 		}
@@ -103,7 +103,7 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow) error 
 			return err
 		}
 		fetched[resolved.String()] = struct{}{}
-		err = FetchAll(ctx, svc, wf)
+		err = FetchAll(ctx, svc, wf, src)
 		if err != nil {
 			return err
 		}
