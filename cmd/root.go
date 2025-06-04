@@ -101,12 +101,12 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			resolved, err := uses.ResolveRelative(nil, from)
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			wf, err := maru2.Fetch(cmd.Context(), svc, resolved, cfg.Aliases)
+			wf, err := maru2.Fetch(cmd.Context(), svc, resolved)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
@@ -199,12 +199,12 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				defer cancel()
 			}
 
-			resolved, err := uses.ResolveRelative(nil, from)
+			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
 				return fmt.Errorf("failed to resolve %q: %w", from, err)
 			}
 
-			wf, err := maru2.Fetch(ctx, svc, resolved, cfg.Aliases)
+			wf, err := maru2.Fetch(ctx, svc, resolved)
 			if err != nil {
 				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
 			}

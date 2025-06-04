@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/defenseunicorns/maru2/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,6 +18,7 @@ func TestResolveURL(t *testing.T) {
 		name        string
 		prev        string
 		uri         string
+		aliases     map[string]config.Alias
 		next        string
 		expectedErr string
 	}{
@@ -246,43 +248,43 @@ func TestResolveURL(t *testing.T) {
 			uri:  "file:.",
 			next: "file:dir",
 		},
-		// {
-		// 	name: "file -> pkg with alias resolution",
-		// 	prev: "file:dir/foo.yaml",
-		// 	uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
-		// 	aliases: map[string]config.Alias{
-		// 		"github": {
-		// 			Type: "github",
-		// 			Base: "https://github.com/",
-		// 		},
-		// 	},
-		// 	next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com%2F#dir/bar.yaml",
-		// },
-		// {
-		// 	name: "pkg -> file with alias resolution",
-		// 	prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
-		// 	uri:  "file:bar.yaml",
-		// 	aliases: map[string]config.Alias{
-		// 		"github": {
-		// 			Type: "github",
-		// 			Base: "https://github.com",
-		// 		},
-		// 	},
-		// 	next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com#dir/bar.yaml",
-		// },
-		// {
-		// 	name: "pkg -> file with task param and alias resolution",
-		// 	prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
-		// 	uri:  "file:bar.yaml?task=baz",
-		// 	aliases: map[string]config.Alias{
-		// 		"github": {
-		// 			Type:         "github",
-		// 			Base:         "https://github.com",
-		// 			TokenFromEnv: "GITHUB_TOKEN",
-		// 		},
-		// 	},
-		// 	next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com&task=baz&token-from-env=GITHUB_TOKEN#dir/bar.yaml",
-		// },
+		{
+			name: "file -> pkg with alias resolution",
+			prev: "file:dir/foo.yaml",
+			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
+			aliases: map[string]config.Alias{
+				"github": {
+					Type: "github",
+					Base: "https://github.com/",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com%2F#dir/bar.yaml",
+		},
+		{
+			name: "pkg -> file with alias resolution",
+			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
+			uri:  "file:bar.yaml",
+			aliases: map[string]config.Alias{
+				"github": {
+					Type: "github",
+					Base: "https://github.com",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com#dir/bar.yaml",
+		},
+		{
+			name: "pkg -> file with task param and alias resolution",
+			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
+			uri:  "file:bar.yaml?task=baz",
+			aliases: map[string]config.Alias{
+				"github": {
+					Type:         "github",
+					Base:         "https://github.com",
+					TokenFromEnv: "GITHUB_TOKEN",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com&task=baz&token-from-env=GITHUB_TOKEN#dir/bar.yaml",
+		},
 		{
 			name:        "pkg -> file with invalid package URL",
 			prev:        "pkg:invalid",
@@ -338,7 +340,7 @@ func TestResolveURL(t *testing.T) {
 				u = nil
 			}
 
-			next, err := ResolveRelative(u, tc.uri)
+			next, err := ResolveRelative(u, tc.uri, tc.aliases)
 
 			if tc.expectedErr != "" {
 				require.EqualError(t, err, tc.expectedErr)

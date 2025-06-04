@@ -96,8 +96,13 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	return svc, nil
 }
 
+// PkgAliases returns the aliases used by the fetcher service
+func (s *FetcherService) PkgAliases() map[string]config.Alias {
+	return maps.Clone(s.aliases)
+}
+
 // GetFetcher returns a fetcher for the given URL
-func (s *FetcherService) GetFetcher(uri *url.URL, pkgAliases map[string]config.Alias) (Fetcher, error) {
+func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 	if uri == nil {
 		return nil, fmt.Errorf("uri cannot be nil")
 	}
@@ -113,7 +118,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL, pkgAliases map[string]config.A
 	}
 	s.mu.RUnlock()
 
-	fetcher, err := s.createFetcher(uri, pkgAliases)
+	fetcher, err := s.createFetcher(uri)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +139,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL, pkgAliases map[string]config.A
 }
 
 // createFetcher creates a new fetcher for the given URI
-func (s *FetcherService) createFetcher(uri *url.URL, pkgAliases map[string]config.Alias) (Fetcher, error) {
+func (s *FetcherService) createFetcher(uri *url.URL) (Fetcher, error) {
 	var fetcher Fetcher
 
 	switch uri.Scheme {
@@ -144,13 +149,6 @@ func (s *FetcherService) createFetcher(uri *url.URL, pkgAliases map[string]confi
 		pURL, err := packageurl.FromString(uri.String())
 		if err != nil {
 			return nil, err
-		}
-
-		aliases := maps.Clone(s.aliases)
-		maps.Copy(aliases, pkgAliases)
-		resolvedPURL, isAlias := ResolveAlias(pURL, aliases)
-		if isAlias {
-			pURL = resolvedPURL
 		}
 
 		qualifiers := pURL.Qualifiers.Map()

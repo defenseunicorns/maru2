@@ -6,12 +6,12 @@ package maru2
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/url"
 	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -33,12 +33,15 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf
 		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
 	}
 
-	next, err := uses.ResolveRelative(origin, step.Uses)
+	aliases := svc.PkgAliases()
+	maps.Copy(aliases, wf.Aliases)
+
+	next, err := uses.ResolveRelative(origin, step.Uses, aliases)
 	if err != nil {
 		return nil, err
 	}
 
-	nextWf, err := Fetch(ctx, svc, next, wf.Aliases)
+	nextWf, err := Fetch(ctx, svc, next)
 	if err != nil {
 		return nil, err
 	}
@@ -49,10 +52,10 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf
 }
 
 // Fetch fetches a workflow from a given URL.
-func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL, aliases map[string]config.Alias) (Workflow, error) {
+func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflow, error) {
 	logger := log.FromContext(ctx)
 
-	fetcher, err := svc.GetFetcher(uri, aliases)
+	fetcher, err := svc.GetFetcher(uri)
 	if err != nil {
 		return Workflow{}, err
 	}
@@ -91,11 +94,11 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *u
 		if _, ok := fetched[ref]; ok {
 			continue
 		}
-		resolved, err := uses.ResolveRelative(src, ref)
+		resolved, err := uses.ResolveRelative(src, ref, wf.Aliases)
 		if err != nil {
 			return fmt.Errorf("failed to resolve %q: %w", ref, err)
 		}
-		wf, err = Fetch(ctx, svc, resolved, wf.Aliases)
+		wf, err = Fetch(ctx, svc, resolved)
 		if err != nil {
 			return err
 		}
