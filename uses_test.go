@@ -29,25 +29,6 @@ func TestFetchAll(t *testing.T) {
 		},
 	}
 
-	workflowWithRefs := Workflow{
-		Tasks: TaskMap{
-			"default": {
-				Step{Run: "echo 'start'"},
-				Step{Uses: "file:testdata/hello-world.yaml"},
-				Step{Uses: "file:testdata/hello-world.yaml?task=another-task"},
-			},
-		},
-	}
-
-	workflowWithDuplicates := Workflow{
-		Tasks: TaskMap{
-			"default": {
-				Step{Uses: "file:testdata/hello-world.yaml"},
-				Step{Uses: "file:testdata/hello-world.yaml"},
-			},
-		},
-	}
-
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/workflow1.yaml":
@@ -55,7 +36,6 @@ func TestFetchAll(t *testing.T) {
 			_, _ = w.Write(b)
 
 		case "/workflow2.yaml":
-			// Create a workflow that references another workflow on the same server
 			wf := Workflow{
 				Tasks: TaskMap{
 					"default": {
@@ -78,6 +58,17 @@ func TestFetchAll(t *testing.T) {
 		case "/invalid.yaml":
 			_, _ = w.Write([]byte("not a valid workflow yaml"))
 
+		case "/nested404.yaml":
+			wf := Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: "file:dne.yaml"},
+					},
+				},
+			}
+			b, _ := yaml.Marshal(wf)
+			_, _ = w.Write(b)
+
 		default:
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = w.Write([]byte("not found"))
@@ -97,12 +88,15 @@ func TestFetchAll(t *testing.T) {
 			wf:   workflowNoRefs,
 		},
 		{
-			name: "with references",
-			wf:   workflowWithRefs,
-		},
-		{
 			name: "with duplicate references",
-			wf:   workflowWithDuplicates,
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/workflow1.yaml?task=default"},
+						Step{Uses: server.URL + "/workflow1.yaml?task=other"},
+					},
+				},
+			},
 		},
 		{
 			name: "with remote references",
@@ -178,6 +172,17 @@ func TestFetchAll(t *testing.T) {
 				},
 			},
 			expectedErr: "failed to resolve \"invalid:///url\": unsupported scheme: \"invalid\" in \"invalid:///url\"",
+		},
+		{
+			name: "with nested non_existent_references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/nested404.yaml"},
+					},
+				},
+			},
+			expectedErr: "get \"" + server.URL + "/dne.yaml\": 404 Not Found",
 		},
 	}
 

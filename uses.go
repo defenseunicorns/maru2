@@ -88,15 +88,10 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *u
 		}
 	}
 
-	fetched := map[string]struct{}{}
-
 	aliases := svc.PkgAliases()
 	maps.Copy(aliases, wf.Aliases)
 
 	for _, ref := range refs {
-		if _, ok := fetched[ref]; ok {
-			continue
-		}
 		resolved, err := uses.ResolveRelative(src, ref, aliases)
 		if err != nil {
 			return fmt.Errorf("failed to resolve %q: %w", ref, err)
@@ -105,7 +100,6 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *u
 		if err != nil {
 			return err
 		}
-		fetched[resolved.String()] = struct{}{}
 		err = FetchAll(ctx, svc, wf, resolved)
 		if err != nil {
 			return err
