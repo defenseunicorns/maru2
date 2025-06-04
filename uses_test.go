@@ -19,6 +19,183 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFetchAll(t *testing.T) {
+	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
+	require.NoError(t, err)
+
+	workflowNoRefs := Workflow{
+		Tasks: TaskMap{
+			"default": {Step{Run: "echo 'hello'"}},
+		},
+	}
+
+	workflowWithRefs := Workflow{
+		Tasks: TaskMap{
+			"default": {
+				Step{Run: "echo 'start'"},
+				Step{Uses: "file:testdata/hello-world.yaml"},
+				Step{Uses: "file:testdata/hello-world.yaml?task=another-task"},
+			},
+		},
+	}
+
+	workflowWithDuplicates := Workflow{
+		Tasks: TaskMap{
+			"default": {
+				Step{Uses: "file:testdata/hello-world.yaml"},
+				Step{Uses: "file:testdata/hello-world.yaml"},
+			},
+		},
+	}
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/workflow1.yaml":
+			b, _ := yaml.Marshal(workflowNoRefs)
+			_, _ = w.Write(b)
+
+		case "/workflow2.yaml":
+			// Create a workflow that references another workflow on the same server
+			wf := Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Run: "echo 'nested start'"},
+						Step{Uses: "file:workflow3.yaml"},
+					},
+				},
+			}
+			b, _ := yaml.Marshal(wf)
+			_, _ = w.Write(b)
+
+		case "/workflow3.yaml":
+			b, _ := yaml.Marshal(workflowNoRefs)
+			_, _ = w.Write(b)
+
+		case "/error.yaml":
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("server error"))
+
+		case "/invalid.yaml":
+			_, _ = w.Write([]byte("not a valid workflow yaml"))
+
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte("not found"))
+		}
+	})
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	tests := []struct {
+		name        string
+		wf          Workflow
+		expectedErr string
+	}{
+		{
+			name: "no references",
+			wf:   workflowNoRefs,
+		},
+		{
+			name: "with references",
+			wf:   workflowWithRefs,
+		},
+		{
+			name: "with duplicate references",
+			wf:   workflowWithDuplicates,
+		},
+		{
+			name: "with remote references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/workflow1.yaml"},
+					},
+				},
+			},
+		},
+		{
+			name: "with nested remote references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/workflow2.yaml"},
+					},
+				},
+			},
+		},
+		{
+			name: "with_invalid_remote_references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/invalid.yaml"},
+					},
+				},
+			},
+			expectedErr: "[1:1] string was used where mapping is expected\n>  1 | not a valid workflow yaml\n       ^\n",
+		},
+		{
+			name: "with_server_error_references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/error.yaml"},
+					},
+				},
+			},
+			expectedErr: "get \"" + server.URL + "/error.yaml\": 500 Internal Server Error",
+		},
+		{
+			name: "with_invalid_url_references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: "invalid:///url"},
+					},
+				},
+			},
+			expectedErr: "failed to resolve \"invalid:///url\": unsupported scheme: \"invalid\" in \"invalid:///url\"",
+		},
+		{
+			name: "with_non_existent_references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/non-existent.yaml"},
+					},
+				},
+			},
+			expectedErr: "get \"" + server.URL + "/non-existent.yaml\": 404 Not Found",
+		},
+		{
+			name: "with invalid url references",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: "invalid:///url"},
+					},
+				},
+			},
+			expectedErr: "failed to resolve \"invalid:///url\": unsupported scheme: \"invalid\" in \"invalid:///url\"",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+
+			err := FetchAll(ctx, svc, tt.wf, nil)
+
+			if tt.expectedErr != "" {
+				require.EqualError(t, err, tt.expectedErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestExecuteUses(t *testing.T) {
 	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
 	require.NoError(t, err)
