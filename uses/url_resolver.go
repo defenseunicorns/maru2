@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 )
 
@@ -19,8 +18,8 @@ func SupportedSchemes() []string {
 }
 
 // ResolveRelative resolves a URI relative to a previous URI.
-// It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias) (*url.URL, error) {
+// It handles different schemes (file, http, https, pkg)
+func ResolveRelative(prev *url.URL, u string) (*url.URL, error) {
 	uri, err := url.Parse(u)
 	if err != nil {
 		return nil, err
@@ -71,10 +70,6 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 			}
 			if pURL.Version == "" {
 				pURL.Version = DefaultVersion
-			}
-			resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
-			if isAlias {
-				return url.Parse(resolvedPURL.String())
 			}
 			return url.Parse(pURL.String())
 		}
@@ -127,11 +122,6 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 			qm[QualifierTask] = taskName
 		}
 		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
-
-		resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
-		if isAlias {
-			pURL = resolvedPURL
-		}
 
 		return url.Parse(pURL.String())
 	}
