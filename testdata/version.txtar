@@ -1,4 +1,4 @@
 exec maru2 --version
-stderr (devel)
+stdout (devel)
 exec maru2 -V
-stderr (devel)
+stdout (devel)

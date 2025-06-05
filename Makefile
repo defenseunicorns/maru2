@@ -13,10 +13,6 @@ lint:
 clean:
 	rm -rf bin/
 
-alias:
-	@echo "alias maru2='$(PWD)/bin/maru2'" >>  ~/.config/fish/config.fish
-	@echo "MARU2_COMPLETION=true maru2 completion fish | source" >> ~/.config/fish/config.fish
-
 hello-world:
 	echo "Hello, World!"
 
@@ -24,4 +20,4 @@ ARGS ?=
 %:
 	./bin/maru2 $* $(ARGS)
 
-.PHONY: build clean alias hello-world lint
+.PHONY: build lint clean hello-world

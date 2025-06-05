@@ -132,7 +132,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				if !ok {
 					return fmt.Errorf("version information not available")
 				}
-				logger.Printf("%s", bi.Main.Version)
+				fmt.Fprintln(os.Stdout, bi.Main.Version)
 				return nil
 			}
 
