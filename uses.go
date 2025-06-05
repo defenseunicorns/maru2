@@ -60,7 +60,12 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflo
 		return Workflow{}, err
 	}
 
-	logger.Debug("fetching", "url", uri, "fetcher", fmt.Sprintf("%T", fetcher))
+	fetcherType := fmt.Sprintf("%T", fetcher)
+	if sf, ok := fetcher.(*uses.StoreFetcher); ok {
+		fetcherType = fmt.Sprintf("%T|%T", sf.Store, sf.Source)
+	}
+
+	logger.Debug("fetching", "url", uri, "fetcher", fetcherType)
 
 	rc, err := fetcher.Fetch(ctx, uri)
 	if err != nil {
@@ -69,4 +74,37 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflo
 	defer rc.Close()
 
 	return ReadAndValidate(rc)
+}
+
+// FetchAll fetches all workflows from a given URL.
+func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *url.URL) error {
+	refs := []string{}
+
+	for _, task := range wf.Tasks {
+		for _, step := range task {
+			if step.Uses != "" {
+				refs = append(refs, step.Uses)
+			}
+		}
+	}
+
+	aliases := svc.PkgAliases()
+	maps.Copy(aliases, wf.Aliases)
+
+	for _, ref := range refs {
+		resolved, err := uses.ResolveRelative(src, ref, aliases)
+		if err != nil {
+			return fmt.Errorf("failed to resolve %q: %w", ref, err)
+		}
+		wf, err = Fetch(ctx, svc, resolved)
+		if err != nil {
+			return err
+		}
+		err = FetchAll(ctx, svc, wf, resolved)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

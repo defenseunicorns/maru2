@@ -17,11 +17,13 @@ import (
 
 // FetcherService creates and manages fetchers
 type FetcherService struct {
-	aliases map[string]config.Alias
-	client  *http.Client
-	fsys    afero.Fs
-	cache   map[string]Fetcher
-	mu      sync.RWMutex
+	aliases      map[string]config.Alias
+	client       *http.Client
+	fsys         afero.Fs
+	fetcherCache map[string]Fetcher
+	storage      Storage
+	policy       config.FetchPolicy
+	mu           sync.RWMutex
 }
 
 // FetcherServiceOption is a function that configures a FetcherService
@@ -48,12 +50,26 @@ func WithClient(client *http.Client) FetcherServiceOption {
 	}
 }
 
+// WithStorage sets the store to be used by the fetcher service
+func WithStorage(store Storage) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.storage = store
+	}
+}
+
+// WithFetchPolicy sets the fetch policy to be used by the fetcher service
+func WithFetchPolicy(policy config.FetchPolicy) FetcherServiceOption {
+	return func(s *FetcherService) {
+		s.policy = policy
+	}
+}
+
 // NewFetcherService creates a new FetcherService with custom resolver and filesystem
 func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	svc := &FetcherService{
-		aliases: make(map[string]config.Alias),
-		mu:      sync.RWMutex{},
-		cache:   make(map[string]Fetcher),
+		aliases:      make(map[string]config.Alias),
+		fetcherCache: make(map[string]Fetcher),
+		policy:       config.DefaultFetchPolicy,
 	}
 
 	for _, opt := range opts {
@@ -68,6 +84,15 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 		svc.client = &http.Client{}
 	}
 
+	if svc.policy == config.FetchPolicyNever && svc.storage == nil {
+		return nil, fmt.Errorf("store is not initialized")
+	}
+
+	// check the policy is valid
+	if err := svc.policy.Set(svc.policy.String()); err != nil {
+		return nil, err
+	}
+
 	return svc, nil
 }
 
@@ -78,22 +103,43 @@ func (s *FetcherService) PkgAliases() map[string]config.Alias {
 
 // GetFetcher returns a fetcher for the given URL
 func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
-	cacheKey := uri.String()
+	if uri == nil {
+		return nil, fmt.Errorf("uri cannot be nil")
+	}
+
+	if s.policy == config.FetchPolicyNever {
+		return s.storage, nil
+	}
 
 	s.mu.RLock()
-	if fetcher, ok := s.cache[cacheKey]; ok {
+	if fetcher, exists := s.fetcherCache[uri.String()]; exists && fetcher != nil {
 		s.mu.RUnlock()
 		return fetcher, nil
 	}
 	s.mu.RUnlock()
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if fetcher, ok := s.cache[cacheKey]; ok {
-		return fetcher, nil
+	fetcher, err := s.createFetcher(uri)
+	if err != nil {
+		return nil, err
 	}
 
+	if s.storage != nil && uri.Scheme != "file" {
+		fetcher = &StoreFetcher{
+			Source: fetcher,
+			Store:  s.storage,
+			Policy: s.policy,
+		}
+	}
+
+	s.mu.Lock()
+	s.fetcherCache[uri.String()] = fetcher
+	s.mu.Unlock()
+
+	return fetcher, nil
+}
+
+// createFetcher creates a new fetcher for the given URI
+func (s *FetcherService) createFetcher(uri *url.URL) (Fetcher, error) {
 	var fetcher Fetcher
 
 	switch uri.Scheme {
@@ -128,6 +174,5 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		return nil, fmt.Errorf("unsupported scheme: %q", uri.Scheme)
 	}
 
-	s.cache[cacheKey] = fetcher
 	return fetcher, nil
 }

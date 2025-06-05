@@ -34,19 +34,6 @@ tasks:
   benchmark:
     - run: hyperfine './bin/maru2 hello-world' 'make hello-world' -N --warmup 10
 
-  chuck:
-    - uses: builtin:fetch
-      with:
-        url: https://api.chucknorris.io/jokes/random
-        timeout: 10s
-        headers:
-          Accept: application/json
-
-  complex-imports:
-    - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-    - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
-    - uses: pkg:gitlab/defenseunicorns/maru2?base=https://gitlab.example.com
-
   fails:
     - run: exit 2
 
@@ -56,17 +43,3 @@ tasks:
     - run: echo 3
     - if: always
       run: echo 3
-
-  bad-echo:
-    - run: echo "${{ input "text2" }}"
-
-  show-stack-trace:
-    - uses: bad-echo
-    - uses: builtin:echo
-      with:
-        text: ${{ input "text2" }}
-    - uses: continues
-
-  pwd:
-    - run: pwd
-    - uses: file:testdata/simple.yaml?task=pwd

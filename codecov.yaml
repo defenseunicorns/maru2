@@ -1,4 +1,3 @@
 ignore:
-  - gen/main.go
+  - cmd/maru2-schema/main.go
   - cmd/maru2/main.go
-  - cmd/root.go

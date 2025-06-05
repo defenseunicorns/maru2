@@ -1,13 +1,21 @@
 exec maru2 __complete status
 cmp stdout stdout.txt
-cmp stderr stderr.txt
+cmp stderr good-stderr.txt
+
+exec maru2 __complete --fetch-policy status
+cmp stdout stdout-fetch-policy.txt
+cmp stderr good-stderr.txt
+
+exec maru2 __complete --log-level status
+cmp stdout stdout-log-level.txt
+cmp stderr good-stderr.txt
 
 -- stdout.txt --
 default
 bar
 foo
 :4
--- stderr.txt --
+-- good-stderr.txt --
 Completion ended with directive: ShellCompDirectiveNoFileComp
 -- tasks.yaml --
 tasks:
@@ -17,3 +25,15 @@ tasks:
     - run: echo "foo"
   bar:
     - run: echo "bar"
+-- stdout-fetch-policy.txt --
+always
+if-not-present
+never
+:4
+-- stdout-log-level.txt --
+debug
+info
+warn
+error
+fatal
+:4

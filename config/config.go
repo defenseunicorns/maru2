@@ -20,7 +20,8 @@ const DefaultFileName = "config.yaml"
 
 // Config is the system configuration file for maru2
 type Config struct {
-	Aliases map[string]Alias `yaml:"aliases"`
+	Aliases     map[string]Alias `yaml:"aliases"`
+	FetchPolicy FetchPolicy      `yaml:"fetch-policy"`
 }
 
 // Alias defines how an alias should be resolved
@@ -65,7 +66,8 @@ func DefaultDirectory() (string, error) {
 // LoadConfig loads the configuration from the file system
 func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 	config := &Config{
-		Aliases: map[string]Alias{},
+		Aliases:     map[string]Alias{},
+		FetchPolicy: DefaultFetchPolicy,
 	}
 
 	f, err := l.Fs.Open(DefaultFileName)

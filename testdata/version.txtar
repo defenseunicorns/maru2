@@ -1,0 +1,4 @@
+exec maru2 --version
+stdout (devel)
+exec maru2 -V
+stdout (devel)
