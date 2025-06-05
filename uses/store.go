@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -21,6 +22,8 @@ import (
 
 	"github.com/spf13/afero"
 )
+
+var DigestPattern = regexp.MustCompile(`^h1:([a-fA-F0-9]{64})$`)
 
 // Descriptor describes a file to use for caching.
 type Descriptor struct {
@@ -74,7 +77,22 @@ func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
 	}
 	defer f.Close()
 
-	scanner := bufio.NewScanner(bufio.NewReader(f))
+	index, err = ParseIndex(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LocalStore{
+		fs:    fs,
+		index: index,
+	}, nil
+}
+
+// ParseIndex parses an index file.
+func ParseIndex(r io.Reader) (map[string]Descriptor, error) {
+	index := make(map[string]Descriptor, 0)
+
+	scanner := bufio.NewScanner(bufio.NewReader(r))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
@@ -85,18 +103,26 @@ func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
 		if len(fields) != 3 {
 			return nil, fmt.Errorf("invalid line format")
 		}
+		var err error
 		desc.Size, err = strconv.ParseInt(fields[2], 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		desc.Hex = strings.TrimPrefix(fields[1], "h1:")
+		matches := DigestPattern.FindStringSubmatch(fields[1])
+		if len(matches) < 2 {
+			return nil, fmt.Errorf("invalid digest format or unable to extract hex: %s", fields[1])
+		}
+		desc.Hex = matches[1]
+
+		_, err = url.Parse(fields[0])
+		if err != nil {
+			return nil, err
+		}
+
 		index[fields[0]] = desc
 	}
 
-	return &LocalStore{
-		fs:    fs,
-		index: index,
-	}, nil
+	return index, nil
 }
 
 // Fetch retrieves a workflow from the store
@@ -209,7 +235,7 @@ func (s *LocalStore) GC() error {
 		return err
 	}
 
-dirLoop:
+outer:
 	for _, fi := range all {
 		if fi.IsDir() || fi.Name() == "index.txt" {
 			continue
@@ -217,11 +243,11 @@ dirLoop:
 
 		for _, desc := range s.index {
 			if desc.Hex == fi.Name() {
-				continue dirLoop
+				continue outer
 			}
-			if err := s.fs.Remove(fi.Name()); err != nil {
-				return err
-			}
+		}
+		if err := s.fs.Remove(fi.Name()); err != nil {
+			return err
 		}
 	}
 

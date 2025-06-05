@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -37,14 +39,14 @@ func TestNewLocalStore(t *testing.T) {
 		{
 			name: "new store with existing valid index",
 			setup: func(fs afero.Fs) error {
-				return afero.WriteFile(fs, IndexFileName, []byte(`https://example.com h1:abcd1234 10`), 0644)
+				return afero.WriteFile(fs, IndexFileName, []byte(`https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10`), 0644)
 			},
 			validate: func(t *testing.T, s *LocalStore) {
 				assert.NotNil(t, s.index)
 				assert.Len(t, s.index, 1)
 				assert.Contains(t, s.index, "https://example.com")
 				assert.Equal(t, int64(10), s.index["https://example.com"].Size)
-				assert.Equal(t, "abcd1234", s.index["https://example.com"].Hex)
+				assert.Equal(t, "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9", s.index["https://example.com"].Hex)
 			},
 		},
 		{
@@ -290,7 +292,7 @@ func TestLocalStoreExists(t *testing.T) {
 	testCases := []struct {
 		name        string
 		index       map[string]Descriptor
-		files       map[string][]byte
+		files       map[string]string
 		uri         string
 		expected    bool
 		expectedErr string
@@ -303,8 +305,8 @@ func TestLocalStoreExists(t *testing.T) {
 					Hex:  "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
 				},
 			},
-			files: map[string][]byte{
-				"7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9": []byte("hello world!"),
+			files: map[string]string{
+				"7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9": "hello world!",
 			},
 			uri:      "https://example.com/workflow",
 			expected: true,
@@ -317,8 +319,8 @@ func TestLocalStoreExists(t *testing.T) {
 					Hex:  "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
 				},
 			},
-			files: map[string][]byte{
-				"7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9": []byte("hello world!"),
+			files: map[string]string{
+				"7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9": "hello world!",
 			},
 			uri:      "https://example.com/workflow?param=value",
 			expected: true,
@@ -337,7 +339,7 @@ func TestLocalStoreExists(t *testing.T) {
 					Hex:  "1234abcd",
 				},
 			},
-			files:       map[string][]byte{},
+			files:       map[string]string{},
 			uri:         "https://example.com/workflow",
 			expectedErr: "descriptor exists in index, but no corresponding file was found, possible cache corruption: 1234abcd",
 		},
@@ -349,8 +351,8 @@ func TestLocalStoreExists(t *testing.T) {
 					Hex:  "1234abcd",
 				},
 			},
-			files: map[string][]byte{
-				"1234abcd": []byte("hello world!"), // Actual size is 12
+			files: map[string]string{
+				"1234abcd": "hello world!", // Actual size is 12
 			},
 			uri:         "https://example.com/workflow",
 			expectedErr: "size mismatch, expected 20, got 12",
@@ -363,8 +365,8 @@ func TestLocalStoreExists(t *testing.T) {
 					Hex:  "wrong_hash", // Wrong hash
 				},
 			},
-			files: map[string][]byte{
-				"wrong_hash": []byte("hello world!"),
+			files: map[string]string{
+				"wrong_hash": "hello world!",
 			},
 			uri:         "https://example.com/workflow",
 			expectedErr: "hash mismatch",
@@ -381,7 +383,7 @@ func TestLocalStoreExists(t *testing.T) {
 			}
 
 			for name, content := range tc.files {
-				err := afero.WriteFile(fs, name, content, 0644)
+				err := afero.WriteFile(fs, name, []byte(content), 0644)
 				require.NoError(t, err)
 			}
 
@@ -399,4 +401,105 @@ func TestLocalStoreExists(t *testing.T) {
 			assert.Equal(t, tc.expected, exists)
 		})
 	}
+}
+
+func TestLocalStoreGC(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	store, err := NewLocalStore(fs)
+	require.NoError(t, err)
+
+	err = store.Store(strings.NewReader("hello world!"), &url.URL{Scheme: "https", Host: "example.com", Path: "/workflow"})
+	require.NoError(t, err)
+
+	assert.Len(t, store.index, 1)
+	wf1 := store.index["https://example.com/workflow"].Hex
+	require.NotEmpty(t, wf1)
+
+	indexContent, err := afero.ReadFile(fs, IndexFileName)
+	require.NoError(t, err)
+	assert.Equal(t, "https://example.com/workflow h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 12\n", string(indexContent))
+
+	err = store.GC()
+	require.NoError(t, err)
+
+	_, err = fs.Stat(wf1)
+	require.NoError(t, err)
+
+	indexContentAfterGC, err := afero.ReadFile(fs, IndexFileName)
+	require.NoError(t, err)
+	assert.Equal(t, indexContent, indexContentAfterGC)
+
+	unusedFile := "unused123"
+	err = afero.WriteFile(fs, unusedFile, []byte("unused content"), 0644)
+	require.NoError(t, err)
+
+	_, err = fs.Stat(unusedFile)
+	require.NoError(t, err)
+
+	err = store.GC()
+	require.NoError(t, err)
+
+	_, err = fs.Stat(wf1)
+	require.NoError(t, err)
+
+	_, err = fs.Stat(unusedFile)
+	require.ErrorIs(t, err, os.ErrNotExist)
+
+	indexContentAfterRemoval, err := afero.ReadFile(fs, IndexFileName)
+	require.NoError(t, err)
+	assert.Equal(t, string(indexContent), string(indexContentAfterRemoval))
+
+	_, err = fs.Stat(IndexFileName)
+	require.NoError(t, err)
+
+	err = fs.Mkdir("testdir", 0755)
+	require.NoError(t, err)
+
+	err = store.GC()
+	require.NoError(t, err)
+
+	fi, err := fs.Stat("testdir")
+	require.NoError(t, err)
+	require.True(t, fi.IsDir())
+
+	err = store.Store(strings.NewReader("new content"), &url.URL{Scheme: "https", Host: "example.com", Path: "/new-workflow"})
+	require.NoError(t, err)
+
+	wf2 := store.index["https://example.com/new-workflow"].Hex
+	require.NotEmpty(t, wf2)
+
+	updatedIndexContent, err := afero.ReadFile(fs, IndexFileName)
+	require.NoError(t, err)
+	assert.Equal(t, `https://example.com/new-workflow h1:fe32608c9ef5b6cf7e3f946480253ff76f24f4ec0678f3d0f07f9844cbff9601 11
+https://example.com/workflow h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 12
+`, string(updatedIndexContent))
+
+	err = store.GC()
+	require.NoError(t, err)
+
+	_, err = fs.Stat(wf1)
+	require.NoError(t, err)
+
+	_, err = fs.Stat(wf2)
+	require.NoError(t, err)
+
+	err = store.Store(strings.NewReader("more"), &url.URL{Scheme: "https", Host: "example.com", Path: "/workflow"})
+	require.NoError(t, err)
+
+	err = store.GC()
+	require.NoError(t, err)
+
+	assert.Len(t, store.index, 2)
+
+	updatedIndexContent, err = afero.ReadFile(fs, IndexFileName)
+	require.NoError(t, err)
+	assert.Equal(t, `https://example.com/new-workflow h1:fe32608c9ef5b6cf7e3f946480253ff76f24f4ec0678f3d0f07f9844cbff9601 11
+https://example.com/workflow h1:187897ce0afcf20b50ba2b37dca84a951b7046f29ed5ab94f010619f69d6e189 4
+`, string(updatedIndexContent))
+
+	_, err = fs.Stat(wf1)
+	require.ErrorIs(t, err, os.ErrNotExist)
+
+	_, err = fs.Stat(wf2)
+	require.NoError(t, err)
 }
