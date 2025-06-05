@@ -5,7 +5,7 @@
 
 build:
 	CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2
-	go run gen/main.go
+	go run cmd/maru2-schema/main.go > maru2.schema.json
 
 lint:
 	golangci-lint run ./...
@@ -20,7 +20,7 @@ alias:
 hello-world:
 	echo "Hello, World!"
 
-ARGS ?= 
+ARGS ?=
 %:
 	./bin/maru2 $* $(ARGS)
 

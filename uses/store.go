@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/afero"
 )
 
+// DigestPattern is the regexp for a digest entry in an index
 var DigestPattern = regexp.MustCompile(`^h1:([a-fA-F0-9]{64})$`)
 
 // Descriptor describes a file to use for caching.
