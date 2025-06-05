@@ -1,0 +1,4 @@
+exec maru2 --version
+stderr (devel)
+exec maru2 -V
+stderr (devel)

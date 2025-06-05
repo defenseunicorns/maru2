@@ -212,10 +212,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			if list {
 				names := wf.Tasks.OrderedTaskNames()
 
-				if len(names) == 0 {
-					return fmt.Errorf("no tasks available")
-				}
-
 				logger.Print("Available:\n")
 				for _, n := range names {
 					logger.Printf("- %s", n)
