@@ -181,7 +181,7 @@ func TemplateWithMap(ctx context.Context, input With, previousOutputs CommandOut
 
 // templateSlice recursively processes a slice and templates all string values
 func templateSlice(ctx context.Context, input With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
-	result := make([]any, 0, len(slice))
+	result := make([]any, len(slice))
 	for i, v := range slice {
 		switch val := v.(type) {
 		case string:
