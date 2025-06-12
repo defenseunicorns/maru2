@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -166,7 +167,7 @@ func prepareEnvironment(withDefaults With, outFileName string) []string {
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 			val = fmt.Sprintf("%d", v)
 		case bool:
-			val = fmt.Sprintf("%t", v)
+			val = strconv.FormatBool(v)
 		}
 		env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
 	}
