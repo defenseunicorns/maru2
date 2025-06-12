@@ -9,8 +9,9 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
+
+	"github.com/defenseunicorns/maru2/config"
 )
 
 // SupportedSchemes returns a list of supported schemes

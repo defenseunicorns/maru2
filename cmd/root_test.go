@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/cmd"
 	"github.com/rogpeppe/go-internal/testscript"
+
+	"github.com/defenseunicorns/maru2/cmd"
 )
 
 func TestMain(m *testing.M) {

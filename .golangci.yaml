@@ -57,6 +57,10 @@ linters:
       - builtin$
       - examples$
 formatters:
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/defenseunicorns/maru2
   enable:
     - goimports
   exclusions:

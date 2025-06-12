@@ -13,9 +13,10 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
-	"github.com/defenseunicorns/maru2/uses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestRunExtended(t *testing.T) {

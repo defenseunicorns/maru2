@@ -7,8 +7,9 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/invopop/jsonschema"
+
+	"github.com/defenseunicorns/maru2/config"
 )
 
 // DefaultTaskName is the default task name

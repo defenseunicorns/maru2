@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
-	"github.com/defenseunicorns/maru2/builtins"
 	"github.com/go-viper/mapstructure/v2"
+
+	"github.com/defenseunicorns/maru2/builtins"
 )
 
 // ExecuteBuiltin determines which builtin to run based upon the uses string, converts the With map to the expected struct, then calls the builtin's Execute method

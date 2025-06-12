@@ -12,9 +12,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/config"
 )
 
 // mockFetcher implements the Fetcher interface for testing

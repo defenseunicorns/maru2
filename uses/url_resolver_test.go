@@ -8,9 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/config"
 )
 
 func TestResolveURL(t *testing.T) {

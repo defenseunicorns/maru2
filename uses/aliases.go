@@ -4,8 +4,9 @@
 package uses
 
 import (
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
+
+	"github.com/defenseunicorns/maru2/config"
 )
 
 // ResolveAlias resolves a package URL using the given aliases map

@@ -13,10 +13,11 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/defenseunicorns/maru2/config"
-	"github.com/defenseunicorns/maru2/uses"
 	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/config"
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestFetchAll(t *testing.T) {

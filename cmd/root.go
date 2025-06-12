@@ -21,11 +21,12 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	"github.com/spf13/afero"
+	"github.com/spf13/cobra"
+
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
-	"github.com/spf13/afero"
-	"github.com/spf13/cobra"
 )
 
 // NewRootCmd creates the root command for the maru2 CLI.
