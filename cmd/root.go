@@ -120,6 +120,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 			logger := log.FromContext(cmd.Context())
 			logger.SetLevel(l)
+
 			return nil
 		},
 		SilenceUsage:  true,
@@ -255,6 +256,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			if gc {
 				return store.GC()
 			}
+
 			return nil
 		},
 	}

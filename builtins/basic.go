@@ -31,8 +31,8 @@ func (b *echo) Execute(ctx context.Context) (map[string]any, error) {
 
 // fetch is a sample builtin to showcase configuration and schema gen
 type fetch struct {
-	URL     string            `json:"url" jsonschema:"description=URL to fetch"`
-	Method  string            `json:"method,omitempty" jsonschema:"description=HTTP method to use"`
+	URL     string            `json:"url"               jsonschema:"description=URL to fetch"`
+	Method  string            `json:"method,omitempty"  jsonschema:"description=HTTP method to use"`
 	Timeout string            `json:"timeout,omitempty" jsonschema:"description=Timeout for the request"`
 	Headers map[string]string `json:"headers,omitempty" jsonschema:"description=HTTP headers to send"`
 }

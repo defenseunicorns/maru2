@@ -57,7 +57,6 @@ func TestBuiltinEcho(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			var buf bytes.Buffer
 			logger := log.New(&buf)
 			ctx := log.WithContext(t.Context(), logger)
