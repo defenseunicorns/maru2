@@ -21,11 +21,12 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	"github.com/spf13/afero"
+	"github.com/spf13/cobra"
+
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
-	"github.com/spf13/afero"
-	"github.com/spf13/cobra"
 )
 
 // NewRootCmd creates the root command for the maru2 CLI.
@@ -119,6 +120,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 			logger := log.FromContext(cmd.Context())
 			logger.SetLevel(l)
+
 			return nil
 		},
 		SilenceUsage:  true,
@@ -254,6 +256,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			if gc {
 				return store.GC()
 			}
+
 			return nil
 		},
 	}

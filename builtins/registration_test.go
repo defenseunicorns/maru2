@@ -103,7 +103,7 @@ func TestRegister(t *testing.T) {
 				builtin := Get(tc.builtinName)
 				require.NotNil(t, builtin)
 
-				result, execErr := builtin.Execute(context.Background())
+				result, execErr := builtin.Execute(t.Context())
 				require.NoError(t, execErr)
 				assert.Equal(t, "test", result["result"])
 			} else {

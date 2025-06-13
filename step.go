@@ -6,8 +6,9 @@ package maru2
 import (
 	"fmt"
 
-	"github.com/defenseunicorns/maru2/builtins"
 	"github.com/invopop/jsonschema"
+
+	"github.com/defenseunicorns/maru2/builtins"
 )
 
 // InputMap is a map of input parameters for a workflow

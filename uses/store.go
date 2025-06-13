@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -159,18 +160,18 @@ func (s *LocalStore) Store(rc io.Reader, uri *url.URL) error {
 		return err
 	}
 
-	hex := fmt.Sprintf("%x", hasher.Sum(nil))
+	encoded := hex.EncodeToString(hasher.Sum(nil))
 
-	if err := afero.WriteFile(s.fs, hex, buf.Bytes(), 0644); err != nil {
+	if err := afero.WriteFile(s.fs, encoded, buf.Bytes(), 0644); err != nil {
 		return err
 	}
 
 	s.index[s.id(uri)] = Descriptor{
 		Size: int64(buf.Len()),
-		Hex:  hex,
+		Hex:  encoded,
 	}
 
-	var keys []string
+	keys := make([]string, 0, len(s.index))
 	for key := range s.index {
 		keys = append(keys, key)
 	}
@@ -219,7 +220,7 @@ func (s *LocalStore) Exists(uri *url.URL) (bool, error) {
 		return false, err
 	}
 
-	if fmt.Sprintf("%x", hasher.Sum(nil)) != desc.Hex {
+	if hex.EncodeToString(hasher.Sum(nil)) != desc.Hex {
 		return false, errors.New("hash mismatch")
 	}
 

@@ -6,7 +6,7 @@ package uses
 import (
 	"bytes"
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 	"io"
 	"net/url"
 	"os"
@@ -279,7 +279,7 @@ func TestLocalStoreStore(t *testing.T) {
 			hasher := sha256.New()
 			_, err = hasher.Write([]byte(tc.content))
 			require.NoError(t, err)
-			contentHash := fmt.Sprintf("%x", hasher.Sum(nil))
+			contentHash := hex.EncodeToString(hasher.Sum(nil))
 
 			if tc.validate != nil {
 				tc.validate(t, store, contentHash)

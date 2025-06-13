@@ -15,10 +15,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/defenseunicorns/maru2/config"
-	"github.com/defenseunicorns/maru2/uses"
 	"github.com/goccy/go-yaml"
 	"github.com/xeipuuv/gojsonschema"
+
+	"github.com/defenseunicorns/maru2/config"
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 // TaskNamePattern is a regular expression for valid task names, it is also used for step IDs

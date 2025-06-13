@@ -10,9 +10,10 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
+
+	"github.com/defenseunicorns/maru2/config"
 )
 
 // FetcherService creates and manages fetchers

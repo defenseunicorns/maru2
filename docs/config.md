@@ -68,7 +68,7 @@ aliases:
 Once configured, you can use aliases in package URLs:
 
 ```yaml
-pkg:gh/owner/repo@main#path/to/file.yaml  # Using the 'gh' alias
+pkg:gh/owner/repo@main#path/to/file.yaml # Using the 'gh' alias
 ```
 
 Instead of the full type name:
