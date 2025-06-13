@@ -434,7 +434,7 @@ func TestMergeWithAndParams(t *testing.T) {
 					Default: 42,
 				},
 			},
-			expectedError: "unable to cast \"not-a-number\" of type string to int",
+			expectedError: "unable to cast \"not-a-number\" of type string to int: strconv.ParseInt: parsing \"not-a-number\": invalid syntax",
 		},
 		{
 			name: "valid regex validation passes",
