@@ -4,6 +4,8 @@ run:
   allow-parallel-runners: true
 linters:
   default: fast
+  enable:
+    - revive
   disable:
     - depguard
     - funlen

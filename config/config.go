@@ -103,6 +103,7 @@ var _schema string
 var _schemaOnce sync.Once
 var _schemaOnceErr error
 
+// Validate checks if a config adheres to the JSON schema
 func Validate(config *Config) error {
 	_schemaOnce.Do(func() {
 		s := Schema()
@@ -136,6 +137,7 @@ func Validate(config *Config) error {
 	return resErr
 }
 
+// Schema returns the JSON schema for the Config type
 func Schema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{ExpandedStruct: true}
 	return reflector.Reflect(&Config{})

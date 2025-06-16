@@ -152,7 +152,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 }
 
-func TestConfigSchema(t *testing.T) {
+func TestAliasSchema(t *testing.T) {
 	f, err := os.Open("../maru2.schema.json")
 	require.NoError(t, err)
 	defer f.Close()
