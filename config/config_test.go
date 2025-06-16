@@ -5,11 +5,13 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"testing"
 
 	"github.com/invopop/jsonschema"
@@ -272,5 +274,22 @@ func TestValidate(t *testing.T) {
 				require.NoError(t, err)
 			}
 		})
+	}
+
+	t.Cleanup(func() {
+		_schema = ""
+		_schemaOnce = sync.Once{}
+		_schemaOnceErr = nil
+	})
+
+	errMsg := "schema generation error"
+
+	_schemaOnceErr = errors.New(errMsg)
+
+	for range 3 {
+		err := Validate(nil)
+
+		require.Error(t, err)
+		assert.EqualError(t, _schemaOnceErr, errMsg)
 	}
 }
