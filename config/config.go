@@ -105,8 +105,7 @@ var _schemaOnceErr error
 
 func Validate(config *Config) error {
 	_schemaOnce.Do(func() {
-		reflector := jsonschema.Reflector{ExpandedStruct: true}
-		s := reflector.Reflect(&Config{})
+		s := Schema()
 		b, err := json.Marshal(s)
 		if err != nil {
 			_schemaOnceErr = err
@@ -135,4 +134,9 @@ func Validate(config *Config) error {
 	}
 
 	return resErr
+}
+
+func Schema() *jsonschema.Schema {
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	return reflector.Reflect(&Config{})
 }
