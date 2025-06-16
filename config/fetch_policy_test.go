@@ -66,6 +66,7 @@ func TestFetchPolicy(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("set_%s", tc.value), func(t *testing.T) {
+				t.Parallel()
 				var policy FetchPolicy
 				err := policy.Set(tc.value)
 				require.Error(t, err)

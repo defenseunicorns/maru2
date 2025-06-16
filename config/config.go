@@ -5,14 +5,18 @@
 package config
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
 	"github.com/spf13/afero"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // DefaultFileName is the default file name for the config file
@@ -20,8 +24,8 @@ const DefaultFileName = "config.yaml"
 
 // Config is the system configuration file for maru2
 type Config struct {
-	Aliases     map[string]Alias `yaml:"aliases"`
-	FetchPolicy FetchPolicy      `yaml:"fetch-policy"`
+	Aliases     map[string]Alias `json:"aliases"`
+	FetchPolicy FetchPolicy      `json:"fetch-policy"`
 }
 
 // Alias defines how an alias should be resolved
@@ -88,5 +92,53 @@ func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
+	if err := Validate(config); err != nil {
+		return nil, err
+	}
+
 	return config, nil
+}
+
+var _schema string
+var _schemaOnce sync.Once
+var _schemaOnceErr error
+
+// Validate checks if a config adheres to the JSON schema
+func Validate(config *Config) error {
+	_schemaOnce.Do(func() {
+		s := Schema()
+		b, err := json.Marshal(s)
+		if err != nil {
+			_schemaOnceErr = err
+		}
+		_schema = string(b)
+	})
+
+	if _schemaOnceErr != nil {
+		return _schemaOnceErr
+	}
+
+	schemaLoader := gojsonschema.NewStringLoader(_schema)
+
+	result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(config))
+	if err != nil {
+		return err
+	}
+
+	if result.Valid() {
+		return nil
+	}
+
+	var resErr error
+	for _, err := range result.Errors() {
+		resErr = errors.Join(resErr, errors.New(err.String()))
+	}
+
+	return resErr
+}
+
+// Schema returns the JSON schema for the Config type
+func Schema() *jsonschema.Schema {
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	return reflector.Reflect(&Config{})
 }

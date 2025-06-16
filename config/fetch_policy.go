@@ -6,6 +6,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/invopop/jsonschema"
 	"github.com/spf13/pflag"
 )
 
@@ -57,4 +58,15 @@ func (f *FetchPolicy) Set(value string) error {
 // Type implements the pflag.Value interface
 func (f *FetchPolicy) Type() string {
 	return "string"
+}
+
+// JSONSchemaExtend extends the JSON schema for FetchPolicy
+func (FetchPolicy) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Type = "string"
+	all := []any{}
+	for _, fp := range AvailablePolicies() {
+		all = append(all, fp)
+	}
+	schema.Enum = all
+	schema.Description = "Policy for fetching resources"
 }
