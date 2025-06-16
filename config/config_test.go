@@ -264,6 +264,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			err := Validate(tt.config)
 			if tt.wantErr {
 				require.Error(t, err)
