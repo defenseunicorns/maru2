@@ -277,20 +277,22 @@ func TestValidate(t *testing.T) {
 		})
 	}
 
-	t.Cleanup(func() {
-		_schema = ""
-		_schemaOnce = sync.Once{}
-		_schemaOnceErr = nil
+	t.Run("schema generation error", func(t *testing.T) {
+		t.Cleanup(func() {
+			_schema = ""
+			_schemaOnce = sync.Once{}
+			_schemaOnceErr = nil
+		})
+
+		errMsg := "schema generation error"
+
+		_schemaOnceErr = errors.New(errMsg)
+
+		for range 3 {
+			err := Validate(nil)
+
+			require.Error(t, err)
+			assert.EqualError(t, _schemaOnceErr, errMsg)
+		}
 	})
-
-	errMsg := "schema generation error"
-
-	_schemaOnceErr = errors.New(errMsg)
-
-	for range 3 {
-		err := Validate(nil)
-
-		require.Error(t, err)
-		assert.EqualError(t, _schemaOnceErr, errMsg)
-	}
 }
