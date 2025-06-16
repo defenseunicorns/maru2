@@ -5,14 +5,18 @@
 package config
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
 	"github.com/spf13/afero"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 // DefaultFileName is the default file name for the config file
@@ -88,5 +92,47 @@ func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
+	if err := Validate(config); err != nil {
+		return nil, err
+	}
+
 	return config, nil
+}
+
+var _schema string
+var _schemaOnce sync.Once
+var _schemaOnceErr error
+
+func Validate(config *Config) error {
+	_schemaOnce.Do(func() {
+		reflector := jsonschema.Reflector{ExpandedStruct: true}
+		s := reflector.Reflect(&Config{})
+		b, err := json.Marshal(s)
+		if err != nil {
+			_schemaOnceErr = err
+		}
+		_schema = string(b)
+	})
+
+	if _schemaOnceErr != nil {
+		return _schemaOnceErr
+	}
+
+	schemaLoader := gojsonschema.NewStringLoader(_schema)
+
+	result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(config))
+	if err != nil {
+		return err
+	}
+
+	if result.Valid() {
+		return nil
+	}
+
+	var resErr error
+	for _, err := range result.Errors() {
+		resErr = errors.Join(resErr, errors.New(err.String()))
+	}
+
+	return resErr
 }
