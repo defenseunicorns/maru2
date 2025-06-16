@@ -24,8 +24,8 @@ const DefaultFileName = "config.yaml"
 
 // Config is the system configuration file for maru2
 type Config struct {
-	Aliases     map[string]Alias `yaml:"aliases"`
-	FetchPolicy FetchPolicy      `yaml:"fetch-policy"`
+	Aliases     map[string]Alias `json:"aliases"`
+	FetchPolicy FetchPolicy      `json:"fetch-policy"`
 }
 
 // Alias defines how an alias should be resolved

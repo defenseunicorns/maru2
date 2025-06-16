@@ -176,3 +176,101 @@ func TestConfigSchema(t *testing.T) {
 
 	assert.JSONEq(t, string(b), string(b2))
 }
+
+func TestValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  *Config
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid config",
+			config: &Config{
+				Aliases: map[string]Alias{
+					"gh": {
+						Type: packageurl.TypeGithub,
+					},
+					"gl": {
+						Type: packageurl.TypeGitlab,
+						Base: "https://gitlab.example.com",
+					},
+					"custom": {
+						Type:         packageurl.TypeGithub,
+						TokenFromEnv: "GITHUB_TOKEN",
+					},
+				},
+				FetchPolicy: FetchPolicyIfNotPresent,
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid alias type",
+			config: &Config{
+				Aliases: map[string]Alias{
+					"invalid": {
+						Type: "invalid-type",
+					},
+				},
+				FetchPolicy: FetchPolicyIfNotPresent,
+			},
+			wantErr: true,
+			errMsg:  "aliases.invalid.type: aliases.invalid.type must be one of the following: \"github\", \"gitlab\"",
+		},
+		{
+			name: "invalid token environment variable format",
+			config: &Config{
+				Aliases: map[string]Alias{
+					"gh": {
+						Type:         packageurl.TypeGithub,
+						TokenFromEnv: "123-invalid",
+					},
+				},
+				FetchPolicy: FetchPolicyIfNotPresent,
+			},
+			wantErr: true,
+			errMsg:  "aliases.gh.token-from-env: Does not match pattern '^[a-zA-Z_]+[a-zA-Z0-9_]*$'",
+		},
+		{
+			name: "invalid fetch policy",
+			config: &Config{
+				Aliases: map[string]Alias{
+					"gh": {
+						Type: packageurl.TypeGithub,
+					},
+				},
+				FetchPolicy: FetchPolicy("invalid-policy"),
+			},
+			wantErr: true,
+			errMsg:  "fetch-policy: fetch-policy must be one of the following: \"always\", \"if-not-present\", \"never\"",
+		},
+		{
+			name: "multiple validation errors",
+			config: &Config{
+				Aliases: map[string]Alias{
+					"invalid": {
+						Type:         "invalid-type",
+						TokenFromEnv: "123-invalid",
+					},
+				},
+				FetchPolicy: "invalid-policy",
+			},
+			wantErr: true,
+			// We're not testing the exact error message here as the order of errors might vary
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.config)
+			if tt.wantErr {
+				require.Error(t, err)
+				if tt.errMsg != "" {
+					assert.Contains(t, err.Error(), tt.errMsg)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
