@@ -5,7 +5,6 @@ package maru2
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/charmbracelet/log"
@@ -31,11 +30,9 @@ func TestExecuteBuiltin(t *testing.T) {
 					"text": "Hello, World!",
 				},
 			},
-			with:          With{},
-			dry:           false,
-			expectedError: "",
-			expectedLog:   "Hello, World!\n",
-			expected:      map[string]any{"stdout": "Hello, World!"},
+			with:        With{},
+			expectedLog: "Hello, World!\n",
+			expected:    map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "echo builtin dry run",
@@ -45,11 +42,9 @@ func TestExecuteBuiltin(t *testing.T) {
 					"text": "Hello, World!",
 				},
 			},
-			with:          With{},
-			dry:           true,
-			expectedError: "",
-			expectedLog:   "dry run",
-			expected:      nil,
+			with:        With{},
+			dry:         true,
+			expectedLog: "dry run",
 		},
 		{
 			name: "fetch builtin",
@@ -60,11 +55,9 @@ func TestExecuteBuiltin(t *testing.T) {
 					"method": "GET",
 				},
 			},
-			with:          With{},
-			dry:           true, // Use dry run to avoid actual HTTP requests
-			expectedError: "",
-			expectedLog:   "dry run",
-			expected:      nil,
+			with:        With{},
+			dry:         true, // Use dry run to avoid actual HTTP requests
+			expectedLog: "dry run",
 		},
 		{
 			name: "non-existent builtin",
@@ -72,9 +65,7 @@ func TestExecuteBuiltin(t *testing.T) {
 				Uses: "builtin:nonexistent",
 			},
 			with:          With{},
-			dry:           false,
 			expectedError: "builtin:nonexistent not found",
-			expected:      nil,
 		},
 		{
 			name: "echo builtin with invalid with",
@@ -85,9 +76,7 @@ func TestExecuteBuiltin(t *testing.T) {
 				},
 			},
 			with:          With{},
-			dry:           false,
-			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type 'chan int', value:",
-			expected:      nil,
+			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type 'chan int'",
 		},
 		{
 			name: "fetch builtin with invalid with",
@@ -95,9 +84,7 @@ func TestExecuteBuiltin(t *testing.T) {
 				Uses: "builtin:fetch",
 			},
 			with:          With{},
-			dry:           false,
 			expectedError: "builtin:fetch: error executing request: Get \"\": unsupported protocol scheme \"\"",
-			expected:      nil,
 		},
 		{
 			name: "echo builtin with templated with",
@@ -107,11 +94,9 @@ func TestExecuteBuiltin(t *testing.T) {
 					"text": "${{ input \"greeting\" }}",
 				},
 			},
-			with:          With{"greeting": "Hello from template"},
-			dry:           false,
-			expectedError: "",
-			expectedLog:   "Hello from template\n",
-			expected:      map[string]any{"stdout": "Hello from template"},
+			with:        With{"greeting": "Hello from template"},
+			expectedLog: "Hello from template\n",
+			expected:    map[string]any{"stdout": "Hello from template"},
 		},
 		{
 			name: "echo builtin with broken structure",
@@ -122,9 +107,7 @@ func TestExecuteBuiltin(t *testing.T) {
 				},
 			},
 			with:          With{},
-			dry:           false,
-			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type '[]string', value: '[not a string]'",
-			expected:      nil,
+			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type '[]string'",
 		},
 	}
 
@@ -139,12 +122,7 @@ func TestExecuteBuiltin(t *testing.T) {
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
-				if tc.expected != nil {
-					assert.Equal(t, tc.expected, result)
-				}
-			} else if strings.Contains(tc.expectedError, "got unconvertible type 'chan int'") {
-				require.ErrorContains(t, err, tc.expectedError)
-				assert.Nil(t, result)
+				assert.Equal(t, tc.expected, result)
 			} else {
 				require.EqualError(t, err, tc.expectedError)
 				assert.Nil(t, result)
