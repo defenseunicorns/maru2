@@ -17,10 +17,9 @@ import (
 
 func TestLocalFetcher(t *testing.T) {
 	testCases := []struct {
-		name string
-		uses string
-		rc   io.ReadCloser
-
+		name        string
+		uses        string
+		rc          io.ReadCloser
 		expectedErr string
 	}{
 		{
@@ -68,6 +67,7 @@ func TestLocalFetcher(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			fetcher := NewLocalFetcher(fs)
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 

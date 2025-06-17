@@ -641,6 +641,7 @@ func TestMergeWithAndParams(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 			result, err := MergeWithAndParams(ctx, tc.with, tc.params)

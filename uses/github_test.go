@@ -16,6 +16,7 @@ import (
 
 func TestGitHubFetcher(t *testing.T) {
 	t.Run("basic fetch", func(t *testing.T) {
+		t.Parallel()
 		if testing.Short() {
 			t.Skip("skipping tests that require network access")
 		}
@@ -78,6 +79,7 @@ echo:
 	})
 
 	t.Run("base url", func(t *testing.T) {
+		t.Parallel()
 		_, err := NewGitHubClient(nil, ":%invalid", "")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid base URL")

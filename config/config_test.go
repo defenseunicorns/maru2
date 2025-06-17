@@ -104,7 +104,6 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	}
 
 	t.Run("invalid config", func(t *testing.T) {
-		t.Parallel()
 		fsys = afero.NewMemMapFs()
 		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
 		require.NoError(t, err)
@@ -116,7 +115,6 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 
 	t.Run("nonexistent config", func(t *testing.T) {
-		t.Parallel()
 		loader := &FileSystemConfigLoader{
 			Fs: afero.NewBasePathFs(fsys, "nonexistent"),
 		}
@@ -127,7 +125,6 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 
 	t.Run("read error", func(t *testing.T) {
-		t.Parallel()
 		tmpDir := t.TempDir()
 
 		configDir := filepath.Join(tmpDir, DefaultFileName)
@@ -143,7 +140,6 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 
 	t.Run("open error", func(t *testing.T) {
-		t.Parallel()
 		tmpDir := t.TempDir()
 
 		configPath := filepath.Join(tmpDir, DefaultFileName)

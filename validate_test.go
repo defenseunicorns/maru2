@@ -230,7 +230,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "",
 		},
 		{
 			name: "no tasks",
@@ -356,7 +355,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "",
 		},
 		{
 			name: "uses with valid URL scheme",
@@ -368,7 +366,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "",
 		},
 		{
 			name: "uses with invalid scheme",
@@ -392,7 +389,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "",
 		},
 		{
 			name: "input with valid regex validation",
@@ -409,7 +405,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "",
 		},
 		{
 			name: "input with invalid regex validation pattern",
@@ -462,7 +457,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "",
 		},
 		{
 			name: "task with both run and uses",
@@ -567,7 +561,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: "",
 		},
 	}
 
@@ -608,7 +601,6 @@ tasks:
 				},
 				Aliases: map[string]config.Alias{},
 			},
-			expectedError: "",
 		},
 		{
 			name: "workflow with inputs",
@@ -636,7 +628,6 @@ inputs:
 				},
 				Aliases: map[string]config.Alias{},
 			},
-			expectedError: "",
 		},
 		{
 			name: "workflow with inputs and aliases",
@@ -672,7 +663,6 @@ aliases:
 					},
 				},
 			},
-			expectedError: "",
 		},
 		{
 			name: "workflow with extension keys",
@@ -693,7 +683,6 @@ x-metadata:
 				},
 				Aliases: map[string]config.Alias{},
 			},
-			expectedError: "",
 		},
 		{
 			name: "invalid yaml",
