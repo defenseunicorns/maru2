@@ -55,7 +55,6 @@ func TestFetcherService(t *testing.T) {
 				assert.NotNil(t, s.client)
 				assert.NotNil(t, s.fsys)
 				assert.NotNil(t, s.fetcherCache)
-				assert.Nil(t, s.storage)
 				assert.Equal(t, config.DefaultFetchPolicy, s.policy)
 			},
 		},

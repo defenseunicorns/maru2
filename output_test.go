@@ -20,10 +20,9 @@ func TestParseOutputFile(t *testing.T) {
 		initialRead int
 	}{
 		{
-			name:        "empty file",
-			rs:          strings.NewReader(""),
-			expected:    map[string]string{},
-			expectedErr: "",
+			name:     "empty file",
+			rs:       strings.NewReader(""),
+			expected: map[string]string{},
 		},
 		{
 			name: "single key value pair",
@@ -31,7 +30,6 @@ func TestParseOutputFile(t *testing.T) {
 			expected: map[string]string{
 				"a": "b",
 			},
-			expectedErr: "",
 		},
 		{
 			name: "multiple key value pair",
@@ -42,7 +40,6 @@ a=b`),
 				"a":   "b",
 				"foo": "bar",
 			},
-			expectedErr: "",
 		},
 		{
 			name: "invalid multiline value",
@@ -87,7 +84,6 @@ c=d`),
 				"c":         "d",
 				"multiline": "1\n2\n3",
 			},
-			expectedErr: "",
 		},
 	}
 

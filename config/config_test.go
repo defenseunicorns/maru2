@@ -155,6 +155,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 }
 
 func TestAliasSchema(t *testing.T) {
+	t.Parallel()
 	f, err := os.Open("../maru2.schema.json")
 	require.NoError(t, err)
 	defer f.Close()
@@ -180,6 +181,7 @@ func TestAliasSchema(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		config  *Config
@@ -204,7 +206,6 @@ func TestValidate(t *testing.T) {
 				},
 				FetchPolicy: FetchPolicyIfNotPresent,
 			},
-			wantErr: false,
 		},
 		{
 			name: "invalid alias type",

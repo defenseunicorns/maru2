@@ -1,6 +1,6 @@
 # maru2 (for now)
 
-A simple task runner. Imagine GitHub actions and Makefile had a baby.
+A simple task runner.
 
 > [!CAUTION]
 > This project is still in its early stages. Expect breaking changes.

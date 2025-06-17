@@ -34,9 +34,8 @@ func TestRegister(t *testing.T) {
 		expectedError    string
 	}{
 		{
-			name:         "register new builtin",
-			builtinName:  "test-builtin",
-			existingName: false,
+			name:        "register new builtin",
+			builtinName: "test-builtin",
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
 					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
@@ -44,7 +43,6 @@ func TestRegister(t *testing.T) {
 					},
 				}
 			},
-			expectedError: "",
 		},
 		{
 			name:         "register duplicate builtin",
@@ -60,9 +58,8 @@ func TestRegister(t *testing.T) {
 			expectedError: "\"duplicate-builtin\" is already registered",
 		},
 		{
-			name:         "register with empty name",
-			builtinName:  "",
-			existingName: false,
+			name:        "register with empty name",
+			builtinName: "",
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
 					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
@@ -73,11 +70,9 @@ func TestRegister(t *testing.T) {
 			expectedError: "builtin name cannot be empty",
 		},
 		{
-			name:             "register with nil function",
-			builtinName:      "nil-func",
-			existingName:     false,
-			registrationFunc: nil,
-			expectedError:    "registration function cannot be nil",
+			name:          "register with nil function",
+			builtinName:   "nil-func",
+			expectedError: "registration function cannot be nil",
 		},
 	}
 
@@ -103,8 +98,8 @@ func TestRegister(t *testing.T) {
 				builtin := Get(tc.builtinName)
 				require.NotNil(t, builtin)
 
-				result, execErr := builtin.Execute(t.Context())
-				require.NoError(t, execErr)
+				result, err := builtin.Execute(t.Context())
+				require.NoError(t, err)
 				assert.Equal(t, "test", result["result"])
 			} else {
 				require.EqualError(t, err, tc.expectedError)

@@ -298,16 +298,17 @@ func TestStoreFetcher(t *testing.T) {
 			uri:         "https://example.com/workflow",
 			expectedErr: "unsupported fetch policy: invalid",
 			verifyCallCount: func(t *testing.T, source *mockFetcher, store *mockStorage) {
-				assert.Equal(t, 0, source.fetchCalls)
-				assert.Equal(t, 0, store.fetchCalls)
-				assert.Equal(t, 0, store.existsCalls)
-				assert.Equal(t, 0, store.storeCalls)
+				assert.Zero(t, source.fetchCalls)
+				assert.Zero(t, store.fetchCalls)
+				assert.Zero(t, store.existsCalls)
+				assert.Zero(t, store.storeCalls)
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			source := &mockFetcher{}
 			store := &mockStorage{}
 

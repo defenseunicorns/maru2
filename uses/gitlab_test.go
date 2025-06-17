@@ -15,6 +15,7 @@ import (
 
 func TestGitLabFetcher(t *testing.T) {
 	t.Run("basic fetch", func(t *testing.T) {
+		t.Parallel()
 		if testing.Short() {
 			t.Skip("skipping tests that require network access")
 		}
@@ -74,6 +75,7 @@ hello-world:
 	})
 
 	t.Run("base url", func(t *testing.T) {
+		t.Parallel()
 		client, err := NewGitLabClient(nil, "", "")
 		require.NoError(t, err)
 		assert.NotNil(t, client)
