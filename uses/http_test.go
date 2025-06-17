@@ -21,24 +21,19 @@ func TestHTTPFetcher(t *testing.T) {
 	hw := `echo: [run: "Hello, World!"]`
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		// handle /hello-world.yaml
-		if r.URL.Path == "/hello-world.yaml" {
+		switch r.URL.Path {
+		case "/hello-world.yaml":
 			_, _ = w.Write([]byte(hw))
-			return
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte("not found"))
 		}
-
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("not found"))
 	}
 	s1 := httptest.NewTLSServer(http.HandlerFunc(handler))
-	t.Cleanup(func() {
-		s1.Close()
-	})
+	t.Cleanup(s1.Close)
 
 	s2 := httptest.NewServer(http.HandlerFunc(handler))
-	t.Cleanup(func() {
-		s2.Close()
-	})
+	t.Cleanup(s2.Close)
 
 	f := func(server *httptest.Server) {
 		client := NewHTTPClient(server.Client())
