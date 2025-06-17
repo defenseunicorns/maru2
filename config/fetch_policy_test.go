@@ -13,6 +13,7 @@ import (
 
 func TestFetchPolicy(t *testing.T) {
 	t.Run("constants", func(t *testing.T) {
+		t.Parallel()
 		assert.Equal(t, FetchPolicyAlways, FetchPolicy("always"))
 		assert.Equal(t, FetchPolicyIfNotPresent, FetchPolicy("if-not-present"))
 		assert.Equal(t, FetchPolicyNever, FetchPolicy("never"))
@@ -20,6 +21,7 @@ func TestFetchPolicy(t *testing.T) {
 	})
 
 	t.Run("available policies", func(t *testing.T) {
+		t.Parallel()
 		policies := AvailablePolicies()
 		assert.Len(t, policies, 3)
 		assert.Contains(t, policies, string(FetchPolicyAlways))
@@ -28,6 +30,7 @@ func TestFetchPolicy(t *testing.T) {
 	})
 
 	t.Run("pflag value interface", func(t *testing.T) {
+		t.Parallel()
 		// Test String() method
 		var policy = FetchPolicyAlways
 		assert.Equal(t, "always", policy.String())
@@ -55,6 +58,7 @@ func TestFetchPolicy(t *testing.T) {
 	})
 
 	t.Run("set method edge cases", func(t *testing.T) {
+		t.Parallel()
 		testCases := []struct {
 			value       string
 			expectedErr string
@@ -66,7 +70,6 @@ func TestFetchPolicy(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("set_%s", tc.value), func(t *testing.T) {
-				t.Parallel()
 				var policy FetchPolicy
 				err := policy.Set(tc.value)
 				require.Error(t, err)

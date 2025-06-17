@@ -57,6 +57,7 @@ func TestBuiltinEcho(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			var buf bytes.Buffer
 			logger := log.New(&buf)
 			ctx := log.WithContext(t.Context(), logger)
@@ -107,7 +108,6 @@ func TestBuiltinFetch(t *testing.T) {
 				URL:    server.URL + "/json",
 				Method: "GET",
 			},
-			expectedError: false,
 		},
 		{
 			name: "fetch text",
@@ -115,14 +115,12 @@ func TestBuiltinFetch(t *testing.T) {
 				URL:    server.URL + "/text",
 				Method: "GET",
 			},
-			expectedError: false,
 		},
 		{
 			name: "default method",
 			fetch: fetch{
 				URL: server.URL + "/text",
 			},
-			expectedError: false,
 		},
 		{
 			name: "with headers",
@@ -133,7 +131,6 @@ func TestBuiltinFetch(t *testing.T) {
 					"X-Custom-Header": "custom-value",
 				},
 			},
-			expectedError: false,
 		},
 		{
 			name: "with timeout",
@@ -142,7 +139,6 @@ func TestBuiltinFetch(t *testing.T) {
 				Method:  "GET",
 				Timeout: "1s",
 			},
-			expectedError: false,
 		},
 		{
 			name: "invalid url",
@@ -168,7 +164,6 @@ func TestBuiltinFetch(t *testing.T) {
 				Method:  "GET",
 				Timeout: "",
 			},
-			expectedError: false,
 		},
 		{
 			name: "complex timeout",
@@ -177,7 +172,6 @@ func TestBuiltinFetch(t *testing.T) {
 				Method:  "GET",
 				Timeout: "1m30s",
 			},
-			expectedError: false,
 		},
 		{
 			name: "invalid request",
@@ -191,6 +185,7 @@ func TestBuiltinFetch(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 			result, err := tc.fetch.Execute(ctx)

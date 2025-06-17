@@ -30,5 +30,6 @@ func TestE2E(t *testing.T) {
 			env.Setenv("HOME", filepath.Join(env.WorkDir, "home"))
 			return nil
 		},
+		RequireUniqueNames: true,
 	})
 }

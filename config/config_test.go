@@ -104,6 +104,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	}
 
 	t.Run("invalid config", func(t *testing.T) {
+		t.Parallel()
 		fsys = afero.NewMemMapFs()
 		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
 		require.NoError(t, err)
@@ -115,6 +116,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 
 	t.Run("nonexistent config", func(t *testing.T) {
+		t.Parallel()
 		loader := &FileSystemConfigLoader{
 			Fs: afero.NewBasePathFs(fsys, "nonexistent"),
 		}
@@ -125,6 +127,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 
 	t.Run("read error", func(t *testing.T) {
+		t.Parallel()
 		tmpDir := t.TempDir()
 
 		configDir := filepath.Join(tmpDir, DefaultFileName)
@@ -140,6 +143,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 
 	t.Run("open error", func(t *testing.T) {
+		t.Parallel()
 		tmpDir := t.TempDir()
 
 		configPath := filepath.Join(tmpDir, DefaultFileName)
@@ -155,6 +159,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 }
 
 func TestAliasSchema(t *testing.T) {
+	t.Parallel()
 	f, err := os.Open("../maru2.schema.json")
 	require.NoError(t, err)
 	defer f.Close()
@@ -180,6 +185,7 @@ func TestAliasSchema(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name    string
 		config  *Config
@@ -204,7 +210,6 @@ func TestValidate(t *testing.T) {
 				},
 				FetchPolicy: FetchPolicyIfNotPresent,
 			},
-			wantErr: false,
 		},
 		{
 			name: "invalid alias type",
