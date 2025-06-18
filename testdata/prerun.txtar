@@ -4,6 +4,16 @@ stderr 'ERRO chdir foo: no such file or directory'
 ! exec maru2 --fetch-policy never --fetch-all
 stderr 'ERRO cannot fetch all with fetch policy "never"'
 
+! exec maru2 --fetch-policy invalid
+stderr 'ERRO invalid argument "invalid" for "-p, --fetch-policy" flag: invalid fetch policy: invalid'
+
+exec maru2 --store . echo
+stdout 'Hello World!'
+stderr '\$ echo "Hello World!"'
+
+! exec maru2 -f ssh:foo
+stderr 'ERRO failed to resolve "ssh:foo": unsupported scheme: "ssh" in "ssh:foo"'
+
 mkdir home/.maru2
 mv bad/invalid.yaml home/.maru2/config.yaml
 ! exec maru2
@@ -19,10 +29,6 @@ stderr 'ERRO aliases.gh.type: aliases.gh.type must be one of the following: "git
 
 rm home/.maru2/config.yaml
 
-env HOME=foo
-! exec maru2
-stderr 'ERRO failed to fetch "file:tasks.yaml": stat tasks.yaml: no such file or directory'
-
 -- bad/invalid.yaml --
 invalid yaml
 -- bad/fetch-policy.yaml --
@@ -31,3 +37,6 @@ fetch-policy: foo
 aliases:
   gh:
     type: bitbucket
+-- tasks.yaml --
+tasks:
+  echo: [run: echo "Hello World!"]
