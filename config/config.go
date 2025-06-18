@@ -108,9 +108,7 @@ func Validate(config *Config) error {
 	_schemaOnce.Do(func() {
 		s := Schema()
 		b, err := json.Marshal(s)
-		if err != nil {
-			_schemaOnceErr = err
-		}
+		_schemaOnceErr = err
 		_schema = string(b)
 	})
 

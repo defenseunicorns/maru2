@@ -60,9 +60,21 @@ func Read(r io.Reader) (Workflow, error) {
 
 var _schema string
 var _schemaOnce sync.Once
+var _schemaOnceErr error
 
 // Validate validates a workflow
 func Validate(wf Workflow) error {
+	_schemaOnce.Do(func() {
+		s := WorkFlowSchema()
+		b, err := json.Marshal(s)
+		_schemaOnceErr = err
+		_schema = string(b)
+	})
+
+	if _schemaOnceErr != nil {
+		return _schemaOnceErr
+	}
+
 	if len(wf.Tasks) == 0 {
 		return errors.New("no tasks available")
 	}
@@ -139,15 +151,6 @@ func Validate(wf Workflow) error {
 			}
 		}
 	}
-
-	_schemaOnce.Do(func() {
-		s := WorkFlowSchema()
-		b, err := json.Marshal(s)
-		if err != nil {
-			panic(err)
-		}
-		_schema = string(b)
-	})
 
 	schemaLoader := gojsonschema.NewStringLoader(_schema)
 
