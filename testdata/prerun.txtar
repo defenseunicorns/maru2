@@ -7,7 +7,7 @@ stderr 'ERRO cannot fetch all with fetch policy "never"'
 ! exec maru2 --fetch-policy invalid
 stderr 'ERRO invalid argument "invalid" for "-p, --fetch-policy" flag: invalid fetch policy: invalid'
 
-exec maru2 --store . echo
+exec maru2 --store . --fetch-all --gc echo
 stdout 'Hello World!'
 stderr '\$ echo "Hello World!"'
 
