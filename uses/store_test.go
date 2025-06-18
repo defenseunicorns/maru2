@@ -403,6 +403,116 @@ func TestLocalStoreExists(t *testing.T) {
 	}
 }
 
+func TestParseIndex(t *testing.T) {
+	testCases := []struct {
+		name        string
+		input       string
+		expected    map[string]Descriptor
+		expectedErr string
+	}{
+		{
+			name:     "empty input",
+			input:    "",
+			expected: map[string]Descriptor{},
+		},
+		{
+			name:     "single empty line",
+			input:    "\n",
+			expected: map[string]Descriptor{},
+		},
+		{
+			name:     "multiple empty lines",
+			input:    "\n\n\n",
+			expected: map[string]Descriptor{},
+		},
+		{
+			name:  "single valid entry",
+			input: "https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10\n",
+			expected: map[string]Descriptor{
+				"https://example.com": {
+					Size: 10,
+					Hex:  "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+				},
+			},
+		},
+		{
+			name:  "multiple valid entries",
+			input: "https://example.com/file1 h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10\nhttps://example.com/file2 h1:abcde5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 20\n",
+			expected: map[string]Descriptor{
+				"https://example.com/file1": {
+					Size: 10,
+					Hex:  "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+				},
+				"https://example.com/file2": {
+					Size: 20,
+					Hex:  "abcde5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+				},
+			},
+		},
+		{
+			name:        "invalid format - too few fields",
+			input:       "https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9\n",
+			expectedErr: "invalid line format",
+		},
+		{
+			name:        "invalid format - too many fields",
+			input:       "https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10 extra\n",
+			expectedErr: "invalid line format",
+		},
+		{
+			name:        "invalid size",
+			input:       "https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 not_a_number\n",
+			expectedErr: "strconv.ParseInt: parsing \"not_a_number\": invalid syntax",
+		},
+		{
+			name:        "invalid digest format",
+			input:       "https://example.com h2:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10\n",
+			expectedErr: "invalid digest format or unable to extract hex: h2:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+		},
+		{
+			name:        "invalid hex length",
+			input:       "https://example.com h1:75 10\n",
+			expectedErr: "invalid digest format or unable to extract hex: h1:75",
+		},
+		{
+			name:        "invalid URL",
+			input:       "not a url h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10\n",
+			expectedErr: "invalid line format",
+		},
+		{
+			name:  "valid entry with trailing empty line",
+			input: "https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10\n\n",
+			expected: map[string]Descriptor{
+				"https://example.com": {
+					Size: 10,
+					Hex:  "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+				},
+			},
+		},
+		{
+			name:        "entry with spaces in URL",
+			input:       "https://example.com/path with spaces h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10\n",
+			expectedErr: "invalid line format",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result, err := ParseIndex(strings.NewReader(tc.input))
+
+			if tc.expectedErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
 func TestLocalStoreGC(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	store, err := NewLocalStore(fs)
