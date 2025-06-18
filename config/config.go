@@ -99,24 +99,20 @@ func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 	return config, nil
 }
 
-var _schema string
-var _schemaOnce sync.Once
-var _schemaOnceErr error
+var schemaOnce = sync.OnceValues(func() (string, error) {
+	s := Schema()
+	b, err := json.Marshal(s)
+	return string(b), err
+})
 
 // Validate checks if a config adheres to the JSON schema
 func Validate(config *Config) error {
-	_schemaOnce.Do(func() {
-		s := Schema()
-		b, err := json.Marshal(s)
-		_schemaOnceErr = err
-		_schema = string(b)
-	})
-
-	if _schemaOnceErr != nil {
-		return _schemaOnceErr
+	schema, err := schemaOnce()
+	if err != nil {
+		return err
 	}
 
-	schemaLoader := gojsonschema.NewStringLoader(_schema)
+	schemaLoader := gojsonschema.NewStringLoader(schema)
 
 	result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(config))
 	if err != nil {

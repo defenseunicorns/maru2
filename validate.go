@@ -58,23 +58,14 @@ func Read(r io.Reader) (Workflow, error) {
 	return wf, nil
 }
 
-var _schema string
-var _schemaOnce sync.Once
-var _schemaOnceErr error
+var schemaOnce = sync.OnceValues(func() (string, error) {
+	s := WorkFlowSchema()
+	b, err := json.Marshal(s)
+	return string(b), err
+})
 
 // Validate validates a workflow
 func Validate(wf Workflow) error {
-	_schemaOnce.Do(func() {
-		s := WorkFlowSchema()
-		b, err := json.Marshal(s)
-		_schemaOnceErr = err
-		_schema = string(b)
-	})
-
-	if _schemaOnceErr != nil {
-		return _schemaOnceErr
-	}
-
 	if len(wf.Tasks) == 0 {
 		return errors.New("no tasks available")
 	}
@@ -152,7 +143,12 @@ func Validate(wf Workflow) error {
 		}
 	}
 
-	schemaLoader := gojsonschema.NewStringLoader(_schema)
+	schema, err := schemaOnce()
+	if err != nil {
+		return err
+	}
+
+	schemaLoader := gojsonschema.NewStringLoader(schema)
 
 	result, err := gojsonschema.Validate(schemaLoader, gojsonschema.NewGoLoader(wf))
 	if err != nil {
