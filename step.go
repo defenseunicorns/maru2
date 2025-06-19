@@ -133,7 +133,7 @@ type Step struct {
 	// Name is a human-readable name for the step, pure sugar
 	Name string `json:"name,omitempty"`
 	// If controls whether the step is executed
-	If string `json:"if,omitempty"`
+	If `json:"if,omitempty"`
 	// Dir is the directory to run the step in
 	Dir string `json:"dir,omitempty"`
 }

@@ -47,7 +47,7 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 
 	start := time.Now()
 	for i, step := range task {
-		if (firstError == nil && step.If == "failure") || (firstError != nil && step.If == "") {
+		if (firstError == nil && step.If == IfFailure) || (firstError != nil && step.If == "") {
 			logger.Debug("skip", "step", fmt.Sprintf("%s[%d]", taskName, i), "if", step.If)
 			continue
 		}
