@@ -179,10 +179,6 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-ou
 		Description: `Expression that controls whether the step is executed
 
 See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if`,
-		Enum: []any{
-			"failure",
-			"always",
-		},
 	})
 	props.Set("dir", &jsonschema.Schema{
 		Type:        "string",

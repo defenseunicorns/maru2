@@ -47,7 +47,11 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 
 	start := time.Now()
 	for i, step := range task {
-		if (firstError == nil && step.If == IfFailure) || (firstError != nil && step.If == "") {
+		shouldRun, err := step.If.ShouldRun(ctx, firstError != nil)
+		if err != nil {
+			return nil, err // TODO: decide how this interacts w/ trace
+		}
+		if !shouldRun {
 			logger.Debug("skip", "step", fmt.Sprintf("%s[%d]", taskName, i), "if", step.If)
 			continue
 		}

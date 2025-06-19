@@ -12,17 +12,17 @@ tasks:
 
   continues:
     - run: echo 0
-    - if: failure
+    - if: failure()
       run: echo 1
     - run: echo 2
     - uses: fails
     - run: echo 3
-    - if: always
+    - if: always()
       run: echo 4
     - run: echo 5
-    - if: always
+    - if: always()
       run: echo 6
-    - if: failure
+    - if: failure()
       run: echo 7
 
 -- stderr.txt --

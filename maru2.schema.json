@@ -434,10 +434,6 @@
         },
         "if": {
           "type": "string",
-          "enum": [
-            "failure",
-            "always"
-          ],
           "description": "Expression that controls whether the step is executed\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if"
         },
         "dir": {
