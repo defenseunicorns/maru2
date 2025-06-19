@@ -20,7 +20,7 @@ func (i If) String() string {
 }
 
 // ShouldRun executes If logic using expr as the engine
-func (i If) ShouldRun(_ context.Context, hasFailed bool) (bool, error) {
+func (i If) ShouldRun(_ context.Context, hasFailed bool, with With, from CommandOutputs) (bool, error) {
 	if i == "" {
 		return !hasFailed, nil
 	}
@@ -48,7 +48,12 @@ func (i If) ShouldRun(_ context.Context, hasFailed bool) (bool, error) {
 		return false, err
 	}
 
-	out, err := expr.Run(program, nil)
+	env := map[string]any{
+		"inputs": with,
+		"from":   from,
+	}
+
+	out, err := expr.Run(program, env)
 	if err != nil {
 		return false, err
 	}

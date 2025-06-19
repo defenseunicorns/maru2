@@ -11,11 +11,13 @@ import (
 
 func TestIf(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       string
-		hasFailed   bool
-		expected    bool
-		expectedErr string
+		name            string
+		input           string
+		with            With
+		previousOutputs CommandOutputs
+		hasFailed       bool
+		expected        bool
+		expectedErr     string
 	}{
 		{
 			name:     "empty",
@@ -53,11 +55,23 @@ func TestIf(t *testing.T) {
 			input:    "always() and failure()",
 			expected: true,
 		},
+		{
+			name:     "based upon with",
+			input:    `inputs.foo == "bar"`,
+			with:     With{"foo": "bar"},
+			expected: true,
+		},
+		{
+			name:        "based upon with failure map access",
+			input:       `inputs.bar == "foo"`,
+			with:        With{"foo": "bar"},
+			expectedErr: "dne",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := If(tt.input).ShouldRun(t.Context(), tt.hasFailed)
+			actual, err := If(tt.input).ShouldRun(t.Context(), tt.hasFailed, tt.with, tt.previousOutputs)
 
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)
@@ -69,7 +83,7 @@ func TestIf(t *testing.T) {
 		})
 	}
 
-	tests = []struct {
+	tests2 := []struct {
 		name        string
 		input       string
 		hasFailed   bool
@@ -108,23 +122,23 @@ func TestIf(t *testing.T) {
 			expected:  true,
 		},
 		{
-			name:     "always always wins",
+			name:     "always wins",
 			input:    "${{ and always failure }}",
 			expected: true,
 		},
 		{
-			name:     "always always wins2",
+			name:     "always wins2",
 			input:    "${{ and failure always }}",
 			expected: false, // what is this logic?
 		},
 		{
-			name:     "always always wins3",
+			name:     "always wins3",
 			input:    "${{if and always failure}}true${{end}}", // this is so gross
 			expected: true,
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range tests2 {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, err := If(tt.input).ShouldRunTemplate(t.Context(), tt.hasFailed)
 
