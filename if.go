@@ -4,7 +4,6 @@
 package maru2
 
 import (
-	"context"
 	"html/template"
 	"strings"
 
@@ -20,7 +19,7 @@ func (i If) String() string {
 }
 
 // ShouldRun executes If logic using expr as the engine
-func (i If) ShouldRun(_ context.Context, hasFailed bool, with With, from CommandOutputs) (bool, error) {
+func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs) (bool, error) {
 	if i == "" {
 		return !hasFailed, nil
 	}
@@ -66,7 +65,7 @@ func (i If) ShouldRun(_ context.Context, hasFailed bool, with With, from Command
 }
 
 // ShouldRunTemplate executes If logic using text/template as the engine
-func (i If) ShouldRunTemplate(_ context.Context, hasFailed bool) (bool, error) {
+func (i If) ShouldRunTemplate(hasFailed bool) (bool, error) {
 	if i == "" {
 		return !hasFailed, nil
 	}
