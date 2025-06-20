@@ -4,7 +4,10 @@
 package maru2
 
 import (
+	"fmt"
 	"html/template"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/expr-lang/expr"
@@ -42,17 +45,17 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs) (bool, err
 		new(func() bool),
 	)
 
-	program, err := expr.Compile(i.String(), expr.AsBool(), failure, always)
+	type env struct {
+		Inputs With           `expr:"inputs"`
+		From   CommandOutputs `expr:"from"`
+	}
+
+	program, err := expr.Compile(i.String(), expr.Env(env{}), expr.AsBool(), failure, always)
 	if err != nil {
 		return false, err
 	}
 
-	env := map[string]any{
-		"inputs": with,
-		"from":   from,
-	}
-
-	out, err := expr.Run(program, env)
+	out, err := expr.Run(program, env{with, from})
 	if err != nil {
 		return false, err
 	}
@@ -65,10 +68,16 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs) (bool, err
 }
 
 // ShouldRunTemplate executes If logic using text/template as the engine
-func (i If) ShouldRunTemplate(hasFailed bool) (bool, error) {
+func (i If) ShouldRunTemplate(hasFailed bool, with With, from CommandOutputs) (bool, error) {
 	if i == "" {
 		return !hasFailed, nil
 	}
+
+	inputKeys := make([]string, 0, len(with))
+	for k := range maps.Keys(with) {
+		inputKeys = append(inputKeys, k)
+	}
+	slices.Sort(inputKeys)
 
 	var alwaysTriggered bool
 	fm := template.FuncMap{
@@ -78,6 +87,27 @@ func (i If) ShouldRunTemplate(hasFailed bool) (bool, error) {
 		"always": func() bool {
 			alwaysTriggered = true
 			return true
+		},
+		// same as TemplateString
+		"input": func(in string) (any, error) {
+			v, ok := with[in]
+			if !ok {
+				return "", fmt.Errorf("input %q does not exist in %s", in, inputKeys)
+			}
+			return v, nil
+		},
+		// same as TemplateString
+		"from": func(stepName, id string) (any, error) {
+			stepOutputs, ok := from[stepName]
+			if !ok {
+				return "", fmt.Errorf("no outputs from step %q", stepName)
+			}
+
+			v, ok := stepOutputs[id]
+			if ok {
+				return v, nil
+			}
+			return "", fmt.Errorf("no output %q from step %q", id, stepName)
 		},
 	}
 

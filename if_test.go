@@ -180,11 +180,13 @@ func TestIf(t *testing.T) {
 	}
 
 	tests2 := []struct {
-		name        string
-		input       string
-		hasFailed   bool
-		expected    bool
-		expectedErr string
+		name            string
+		input           string
+		with            With
+		previousOutputs CommandOutputs
+		hasFailed       bool
+		expected        bool
+		expectedErr     string
 	}{
 		{
 			name:     "empty",
@@ -236,7 +238,7 @@ func TestIf(t *testing.T) {
 
 	for _, tt := range tests2 {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := If(tt.input).ShouldRunTemplate(tt.hasFailed)
+			actual, err := If(tt.input).ShouldRunTemplate(tt.hasFailed, tt.with, tt.previousOutputs)
 
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)
