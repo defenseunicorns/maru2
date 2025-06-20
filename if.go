@@ -109,6 +109,9 @@ func (i If) ShouldRunTemplate(hasFailed bool, with With, from CommandOutputs) (b
 			}
 			return "", fmt.Errorf("no output %q from step %q", id, stepName)
 		},
+		"add": func(a, b int) int {
+			return a + b
+		},
 	}
 
 	tmpl, err := template.New("should run").Funcs(fm).Option("missingkey=error").Delims("${{", "}}").Parse(i.String())
