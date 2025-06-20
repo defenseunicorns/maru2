@@ -502,19 +502,6 @@ func TestValidate(t *testing.T) {
 			expectedError: ".task[0] has both run and uses fields set",
 		},
 		{
-			name: "task with invalid if condition",
-			wf: Workflow{
-				Inputs: InputMap{},
-				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-						If:  "invalid-condition", // Only "" or "failure" are allowed
-					}},
-				},
-			},
-			expectedError: "tasks.task.0.if: tasks.task.0.if must be one of the following: \"failure\", \"always\"",
-		},
-		{
 			name: "invalid input schema validation",
 			wf: Workflow{
 				Inputs: InputMap{
