@@ -13,11 +13,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/spf13/cast"
 
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -90,15 +90,15 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 func handleRunStep(ctx context.Context, step Step, withDefaults With,
 	outputs CommandOutputs, dry bool) (map[string]any, error) {
 
-	templatedRun, err := TemplateString(ctx, withDefaults, outputs, step.Run, dry)
+	script, err := TemplateString(ctx, withDefaults, outputs, step.Run, dry)
 	if err != nil {
 		if dry {
-			printScript(log.FromContext(ctx), templatedRun)
+			printScript(log.FromContext(ctx), script)
 		}
 		return nil, err
 	}
 
-	printScript(log.FromContext(ctx), templatedRun)
+	printScript(log.FromContext(ctx), script)
 	if dry {
 		return nil, nil
 	}
@@ -114,7 +114,7 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 
 	env := prepareEnvironment(withDefaults, outFile.Name())
 
-	cmd := exec.CommandContext(ctx, "sh", "-e", "-c", templatedRun)
+	cmd := exec.CommandContext(ctx, "sh", "-e", "-u", "-c", script)
 	cmd.Env = env
 	cmd.Dir = filepath.Join(CWDFromContext(ctx), step.Dir)
 	cmd.Stdout = os.Stdout
@@ -125,20 +125,21 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 		return nil, err
 	}
 
-	if step.ID != "" {
-		out, err := ParseOutput(outFile)
-		if err != nil || len(out) == 0 {
-			return nil, err
-		}
-
-		result := make(map[string]any, len(out))
-		for k, v := range out {
-			result[k] = v
-		}
-
-		return result, nil
+	if step.ID == "" {
+		return nil, nil
 	}
-	return nil, nil
+
+	out, err := ParseOutput(outFile)
+	if err != nil || len(out) == 0 {
+		return nil, err
+	}
+
+	result := make(map[string]any, len(out))
+	for k, v := range out {
+		result[k] = v
+	}
+
+	return result, nil
 }
 
 type contextKey struct{ string }
@@ -164,15 +165,7 @@ func prepareEnvironment(withDefaults With, outFileName string) []string {
 	env := os.Environ()
 
 	for k, v := range withDefaults {
-		var val string
-		switch v := v.(type) {
-		case string:
-			val = v
-		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-			val = fmt.Sprintf("%d", v)
-		case bool:
-			val = strconv.FormatBool(v)
-		}
+		val := cast.ToString(v)
 		env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
 	}
 
