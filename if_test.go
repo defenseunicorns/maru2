@@ -4,8 +4,10 @@
 package maru2
 
 import (
+	"io"
 	"testing"
 
+	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -166,10 +168,10 @@ func TestIf(t *testing.T) {
 		},
 		{
 			name:        "typo",
-			inputExpr:   `input.foo == bar`,
+			inputExpr:   `nputs.foo == bar`,
 			dry:         true,
 			with:        With{"foo": "bar"},
-			expectedErr: "unknown name input (1:1)\n | input.foo == bar\n | ^",
+			expectedErr: "unknown name nputs (1:1)\n | nputs.foo == bar\n | ^",
 		},
 		{
 			name:      "dry run",
@@ -181,7 +183,8 @@ func TestIf(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := If(tt.inputExpr).ShouldRun(tt.hasFailed, tt.with, tt.previousOutputs, tt.dry)
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			actual, err := If(tt.inputExpr).ShouldRun(ctx, tt.hasFailed, tt.with, tt.previousOutputs, tt.dry)
 
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)

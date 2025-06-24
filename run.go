@@ -47,7 +47,8 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 
 	start := time.Now()
 	for i, step := range task {
-		shouldRun, err := step.If.ShouldRun(firstError != nil, withDefaults, outputs, dry)
+		hasFailed := firstError != nil
+		shouldRun, err := step.If.ShouldRun(ctx, hasFailed, withDefaults, outputs, dry)
 		if err != nil {
 			return nil, err // TODO: decide how this interacts w/ trace
 		}
