@@ -16,6 +16,7 @@ func TestIf(t *testing.T) {
 		inputTemplate       string
 		with                With
 		previousOutputs     CommandOutputs
+		dry                 bool
 		hasFailed           bool
 		expected            bool
 		expectedExprErr     string
@@ -201,12 +202,28 @@ func TestIf(t *testing.T) {
 			expectedExprErr:     "unexpected token EOF (1:14)\n | inputs.foo == \n | .............^",
 			expectedTemplateErr: "template: should run:1:4: executing \"should run\" at <eq (input \"foo\")>: error calling eq: missing argument for comparison",
 		},
+		{
+			name:                "typo",
+			inputExpr:           `input.foo == bar`,
+			dry:                 true,
+			inputTemplate:       `${{ eq (inputs "foo") }}`,
+			with:                With{"foo": "bar"},
+			expectedExprErr:     "unknown name input (1:1)\n | input.foo == bar\n | ^",
+			expectedTemplateErr: "template: should run:1: function \"inputs\" not defined",
+		},
+		{
+			name:          "dry run",
+			dry:           true,
+			inputExpr:     "true",
+			inputTemplate: "${{ true }}",
+			expected:      false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.inputExpr != "" || (tt.inputExpr == "" && tt.inputTemplate == "") {
-				actual, err := If(tt.inputExpr).ShouldRun(tt.hasFailed, tt.with, tt.previousOutputs)
+				actual, err := If(tt.inputExpr).ShouldRun(tt.hasFailed, tt.with, tt.previousOutputs, tt.dry)
 
 				if tt.expectedExprErr != "" {
 					require.EqualError(t, err, tt.expectedExprErr)
@@ -218,7 +235,7 @@ func TestIf(t *testing.T) {
 			}
 
 			if tt.inputTemplate != "" {
-				actual, err := If(tt.inputTemplate).ShouldRunTemplate(tt.hasFailed, tt.with, tt.previousOutputs)
+				actual, err := If(tt.inputTemplate).ShouldRunTemplate(tt.hasFailed, tt.with, tt.previousOutputs, tt.dry)
 
 				if tt.expectedTemplateErr != "" {
 					require.EqualError(t, err, tt.expectedTemplateErr)

@@ -22,7 +22,7 @@ func (i If) String() string {
 }
 
 // ShouldRun executes If logic using expr as the engine
-func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs) (bool, error) {
+func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) (bool, error) {
 	if i == "" {
 		return !hasFailed, nil
 	}
@@ -55,6 +55,10 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs) (bool, err
 		return false, err
 	}
 
+	if dry {
+		return false, nil
+	}
+
 	out, err := expr.Run(program, env{with, from})
 	if err != nil {
 		return false, err
@@ -68,7 +72,7 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs) (bool, err
 }
 
 // ShouldRunTemplate executes If logic using text/template as the engine
-func (i If) ShouldRunTemplate(hasFailed bool, with With, from CommandOutputs) (bool, error) {
+func (i If) ShouldRunTemplate(hasFailed bool, with With, from CommandOutputs, dry bool) (bool, error) {
 	if i == "" {
 		return !hasFailed, nil
 	}
@@ -117,6 +121,10 @@ func (i If) ShouldRunTemplate(hasFailed bool, with With, from CommandOutputs) (b
 	tmpl, err := template.New("should run").Funcs(fm).Option("missingkey=error").Delims("${{", "}}").Parse(i.String())
 	if err != nil {
 		return false, err
+	}
+
+	if dry {
+		return false, nil
 	}
 
 	var result strings.Builder
