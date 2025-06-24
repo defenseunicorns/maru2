@@ -52,7 +52,6 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 	}()
 	for i, step := range task {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
-		sub.Debug("run")
 		hasFailed := firstError != nil
 		shouldRun, err := step.If.ShouldRun(hasFailed, withDefaults, outputs, dry)
 		if err != nil {
@@ -73,12 +72,12 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
 		}
 
-		sub.Debug("ran", "outputs", len(stepResult), "duration", time.Since(start))
-
 		if err != nil && firstError == nil {
 			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
 			continue
 		}
+
+		sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
 
 		if isLastStep && stepResult != nil {
 			return stepResult, firstError
