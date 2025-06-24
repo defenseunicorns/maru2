@@ -232,11 +232,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			for _, call := range args {
-				start := time.Now()
-				logger.Debug("run", "task", call, "from", resolved, "dry-run", dry)
-				defer func() {
-					logger.Debug("ran", "task", call, "from", resolved, "dry-run", dry, "duration", time.Since(start))
-				}()
 				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, dry)
 				if err != nil {
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {

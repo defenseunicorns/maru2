@@ -46,21 +46,26 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 	var firstError error
 
 	start := time.Now()
+	logger.Debug("run", "task", taskName, "from", origin, "dry-run", dry)
+	defer func() {
+		logger.Debug("ran", "task", taskName, "from", origin, "duration", time.Since(start))
+	}()
 	for i, step := range task {
+		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
+		sub.Debug("run")
 		hasFailed := firstError != nil
-		shouldRun, err := step.If.ShouldRun(ctx, hasFailed, withDefaults, outputs, dry)
+		shouldRun, err := step.If.ShouldRun(hasFailed, withDefaults, outputs, dry)
 		if err != nil {
-			return nil, err // TODO: decide how this interacts w/ trace
+			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
+			continue
 		}
 		if !shouldRun {
-			logger.Debug("skip", "step", fmt.Sprintf("%s[%d]", taskName, i), "if", step.If)
+			sub.Debug("skip", "if", strings.ReplaceAll(step.If.String(), `"`, `'`))
 			continue
 		}
 
 		var stepResult map[string]any
 		isLastStep := i == len(task)-1
-
-		logger.Debug("run", "step", fmt.Sprintf("%s[%d]", taskName, i))
 
 		if step.Uses != "" {
 			stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
@@ -68,7 +73,7 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
 		}
 
-		logger.Debug("ran", "step", fmt.Sprintf("%s[%d]", taskName, i), "outputs", len(stepResult), "duration", time.Since(start))
+		sub.Debug("ran", "outputs", len(stepResult), "duration", time.Since(start))
 
 		if err != nil && firstError == nil {
 			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
