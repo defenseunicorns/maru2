@@ -59,7 +59,7 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 			continue
 		}
 		if !shouldRun {
-			sub.Debug("skip", "if", strings.ReplaceAll(step.If.String(), `"`, `'`))
+			sub.Debug("completed", "skipped", true)
 			continue
 		}
 
