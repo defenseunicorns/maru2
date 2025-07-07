@@ -64,7 +64,6 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 		}
 
 		var stepResult map[string]any
-		isLastStep := i == len(task)-1
 
 		if step.Uses != "" {
 			stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
@@ -79,11 +78,12 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 
 		sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
 
-		if isLastStep && stepResult != nil {
+		isLastStep := i == len(task)-1
+		if isLastStep {
 			return stepResult, firstError
 		}
 
-		if step.ID != "" && stepResult != nil {
+		if step.ID != "" && len(stepResult) > 0 {
 			outputs[step.ID] = make(map[string]any, len(stepResult))
 			maps.Copy(outputs[step.ID], stepResult)
 		}
@@ -128,10 +128,6 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 
 	if err := cmd.Run(); err != nil {
 		return nil, err
-	}
-
-	if step.ID == "" {
-		return nil, nil
 	}
 
 	out, err := ParseOutput(outFile)

@@ -6,6 +6,7 @@ package maru2
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -185,10 +186,10 @@ func TestIf(t *testing.T) {
 
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)
-				require.False(t, actual)
+				assert.False(t, actual)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tt.expected, actual)
+				assert.Equal(t, tt.expected, actual)
 			}
 		})
 	}

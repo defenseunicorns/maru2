@@ -4,11 +4,20 @@ stdout 'The selected color is green'
 
 -- tasks.yaml --
 tasks:
+  print:
+    - run: echo "out=${{ input "text" }}" >> $MARU2_OUTPUT
   color:
     - run: |
         echo "selected-color=green" >> $MARU2_OUTPUT
       id: color-selector
     - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
+    - uses: print
+      with:
+        text: Hello World!
+      id: output
+    - run: echo "The output was ${{ from "output" "out" }}"
 -- stderr.txt --
 $ echo "selected-color=green" >> $MARU2_OUTPUT
 $ echo "The selected color is green"
+$ echo "out=Hello World!" >> $MARU2_OUTPUT
+$ echo "The output was Hello World!"

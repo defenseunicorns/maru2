@@ -470,12 +470,10 @@ Validation is performed after any default values are applied and before the task
 
 ## Conditional execution with `if`
 
-Maru2 supports conditional execution of steps based on the status of previous steps using the `if` directive. This allows you to control the flow of your workflow based on whether previous steps have succeeded or failed.
+Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to `from`, `inputs`, all expr stdlib functions, and two extra helper functions:
 
-There are two conditional values supported:
-
-- `failure`: Run this step only if a previous step has failed
-- `always`: Run this step regardless of whether previous steps have succeeded or failed
+- `failure()`: Run this step only if a previous step has failed
+- `always()`: Run this step regardless of whether previous steps have succeeded or failed
 
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 
@@ -485,31 +483,41 @@ tasks:
     - run: echo "This step always runs first"
     - run: exit 1 # This step will fail
     - run: echo "This step will be skipped because the previous step failed"
-    - if: failure
+    - if: failure()
       run: echo "This step runs because a previous step failed"
-    - if: always
+    - if: always()
       run: echo "This step always runs, regardless of previous failures"
 ```
 
 ```sh
-maru2 example
+maru2 example >/dev/null
 
 $ echo "This step always runs first"
-This step always runs first
 $ exit 1
 $ echo "This step runs because a previous step failed"
-This step runs because a previous step failed
 $ echo "This step always runs, regardless of previous failures"
-This step always runs, regardless of previous failures
 
 ERRO exit status 1
-  traceback (most recent call first)=
-  │ at example[1] (file:tasks.yaml)
+ERRO at example[1] (file:tasks.yaml)
 ```
 
-This feature is particularly useful for implementing cleanup steps, error handling, or notifications that should run regardless of the workflow's success or failure.
+With access:
 
-For information about built-in tasks provided by Maru2, see the [Built-in Tasks](builtins.md) documentation.
+```yaml
+tasks:
+  print:
+    - run: echo "out=${{ input "text" }}" >> $MARU2_OUTPUT
+
+  example:
+    - run: echo "step 1"
+    - uses: print
+      with:
+        text: Hello World!
+      id: step-2
+    - run: echo ${{ from "step-2" "out" }}
+    - run: echo "step 3"
+      if: from["step-2"].out == "Hello World!"
+```
 
 ## Error handling and traceback
 
