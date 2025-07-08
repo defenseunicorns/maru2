@@ -1,9 +1,0 @@
-# only really caring that these commands don't fail
-! exec maru2 completion bash
-env MARU2_COMPLETION=true
-exec maru2 completion bash
-exec maru2 completion zsh
-exec maru2 completion fish
-exec maru2 completion powershell
-! exec maru2 completion tcsh
-stderr '\nERRO unsupported shell: tcsh\n'

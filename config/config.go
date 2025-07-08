@@ -15,6 +15,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
+	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -39,7 +40,7 @@ type Alias struct {
 func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if typ, ok := schema.Properties.Get("type"); ok && typ != nil {
 		typ.Description = "Type of the alias, maps to a package URL type"
-		typ.Enum = []any{"github", "gitlab"}
+		typ.Enum = []any{packageurl.TypeGithub, packageurl.TypeGitlab}
 	}
 
 	if base, ok := schema.Properties.Get("base"); ok && base != nil {
