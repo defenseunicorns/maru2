@@ -127,13 +127,13 @@ type Step struct {
 	// Uses is a reference to another task
 	Uses string `json:"uses,omitempty"`
 	// With is a map of additional parameters for the step/task call
-	With `json:"with,omitempty"`
+	With With `json:"with,omitempty"`
 	// ID is a unique identifier for the step
 	ID string `json:"id,omitempty"`
 	// Name is a human-readable name for the step, pure sugar
 	Name string `json:"name,omitempty"`
 	// If controls whether the step is executed
-	If string `json:"if,omitempty"`
+	If If `json:"if,omitempty"`
 	// Dir is the directory to run the step in
 	Dir string `json:"dir,omitempty"`
 }
@@ -179,10 +179,6 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-ou
 		Description: `Expression that controls whether the step is executed
 
 See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if`,
-		Enum: []any{
-			"failure",
-			"always",
-		},
 	})
 	props.Set("dir", &jsonschema.Schema{
 		Type:        "string",

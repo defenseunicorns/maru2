@@ -106,7 +106,7 @@ func TestRunExtended(t *testing.T) {
 						{
 							Run: "echo failure step",
 							ID:  "failure-step",
-							If:  "failure",
+							If:  "failure()",
 						},
 					},
 				},
@@ -132,7 +132,7 @@ func TestRunExtended(t *testing.T) {
 						{
 							Run: "echo \"result=handled\" >> $MARU2_OUTPUT",
 							ID:  "failure-step",
-							If:  "failure",
+							If:  "failure()",
 						},
 					},
 				},

@@ -9,18 +9,6 @@ inputs:
     default: false
 
 tasks:
-  default:
-    - uses: echo
-      with:
-        text: input was '${{ input "text" }}'
-    - run: |
-        echo "$INPUT_TEXT"
-        echo "${{ input "text" }}"
-    - run: echo "bar=baz" >> $MARU2_OUTPUT
-      id: foo
-    - run: |
-        echo "got: ${{ from "foo" "bar" }}"
-
   echo:
     - run: echo "${{ input "text" }}"
 
@@ -34,12 +22,14 @@ tasks:
   benchmark:
     - run: hyperfine './bin/maru2 hello-world' 'make hello-world' -N --warmup 10
 
-  fails:
-    - run: exit 2
-
-  continues:
-    - run: echo 1
-    - uses: fails
-    - run: echo 3
-    - if: always
-      run: echo 3
+  complex:
+    - uses: echo
+      with:
+        text: input was '${{ input "text" }}'
+    - run: |
+        echo "$INPUT_TEXT"
+        echo "${{ input "text" }}"
+    - run: echo "bar=baz" >> $MARU2_OUTPUT
+      id: foo
+    - run: |
+        echo "got: ${{ from "foo" "bar" }}"

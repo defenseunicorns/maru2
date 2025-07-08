@@ -23,3 +23,13 @@ tasks:
         timeout: 10s
         headers:
           Accept: application/json
+
+  fails:
+    - run: exit 2
+
+  continues:
+    - run: echo 1
+    - uses: fails
+    - run: echo 3
+    - if: always()
+      run: echo 3
