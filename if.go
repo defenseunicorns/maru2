@@ -10,7 +10,7 @@ import (
 // If controls whether a step is run
 type If string
 
-// String implements fmt.Stringers
+// String implements fmt.Stringer
 func (i If) String() string {
 	return string(i)
 }

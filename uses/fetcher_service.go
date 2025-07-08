@@ -119,9 +119,6 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 	}
 	s.mu.RUnlock()
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	fetcher, err := s.createFetcher(uri)
 	if err != nil {
 		return nil, err
@@ -135,7 +132,9 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		}
 	}
 
+	s.mu.Lock()
 	s.fetcherCache[uri.String()] = fetcher
+	s.mu.Unlock()
 
 	return fetcher, nil
 }
