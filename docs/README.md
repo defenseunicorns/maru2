@@ -1,12 +1,20 @@
 # Maru2 Documentation
 
-Maru2 is a simple task runner designed to make workflow automation easy and intuitive.
+Maru2 is a simple task runner designed to make workflow automation easy and intuitive. Inspired by the simplicity of Makefiles but with modern features, Maru2 helps you define, organize, and execute tasks with minimal configuration.
+
+## Documentation Navigation
+
+- **[Getting Started](#getting-started)** - Start here for an introduction to Maru2
+- **[CLI Documentation](cli.md)** - Learn how to use the Maru2 command line interface
+- **[Workflow Syntax](syntax.md)** - Understand the syntax for defining tasks and workflows
+- **[Built-in Tasks](builtins.md)** - Explore the built-in tasks provided by Maru2
+- **[Configuration](config.md)** - Configure Maru2 with global settings
 
 ## Getting Started
 
-- [CLI Documentation](cli.md) - Learn how to use the Maru2 command line interface
-- [Workflow Syntax](syntax.md) - Understand the syntax for defining tasks and workflows
-- [Built-in Tasks](builtins.md) - Explore the built-in tasks provided by Maru2
+1. **New to Maru2?** Start with the [Example Workflow](#example-workflow) below to see Maru2 in action.
+2. **Installation:** (Documentation coming soon)
+3. **Next Steps:** After exploring the example, continue to the [CLI Documentation](cli.md) to learn more.
 
 ## Core Concepts
 
@@ -47,10 +55,13 @@ maru2 --with message="Hello, Maru2!"
 
 ## Advanced Features
 
-- Conditional execution with `if` directives
-- Error handling and traceback
-- Environment variable integration
-- Remote task execution
-- Input validation
+Maru2 includes powerful features for complex workflows:
 
-For more details on these features, see the [Workflow Syntax](syntax.md) documentation.
+- **Conditional execution** - Control step execution with `if` directives
+- **Error handling and traceback** - Get detailed information about errors
+- **Environment variable integration** - Use environment variables as input defaults
+- **Remote task execution** - Execute tasks from remote repositories
+- **Input validation** - Validate inputs using regular expressions
+- **Package URL aliases** - Create shortcuts for common repositories
+
+For more details on these features, see the [Workflow Syntax](syntax.md) documentation and the [Configuration](config.md) guide.

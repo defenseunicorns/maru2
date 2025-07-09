@@ -118,17 +118,23 @@ The task named `default` in a Maru2 workflow is the task that will be run when n
 $ maru2
 # is equivalent to
 $ maru2 default
-# but this will only run the 'hello-world' task
+```
+
+When you specify a task name, only that task runs:
+
+```sh
 $ maru2 hello-world
 ```
 
 ## Run multiple tasks
 
-Like `make`, you can run multiple tasks in a single command.
+Like `make`, you can run multiple tasks in a single command:
 
 ```sh
 $ maru2 task1 task2
 ```
+
+Tasks are executed in the order they are specified on the command line.
 
 ## Specify a local workflow file
 
@@ -143,7 +149,8 @@ $ maru2 --from path/to/other.yaml
 Any [`uses` syntax](./syntax.md#run-a-task-from-a-remote-file) is also acceptable as a workflow location.
 
 ```sh
-# NOTE: referencing remote workflows requires quoting, since the package-url spec leverages reserved shell characters (like # and @)!!!
+# NOTE: referencing remote workflows requires quoting, since the package-url spec
+# leverages reserved shell characters (like # and @)
 $ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
 ```
 
@@ -191,11 +198,13 @@ Completions are only generated when the `MARU2_COMPLETION` environment variable 
 
 This is because `completion bash|fish|etc...` are valid task names in a Maru2 workflow, so the CLI would attempt to run these tasks. By setting the environment variable, the CLI knows to generate completions instead of running tasks.
 
-> If using `fish` and attempting to perform tab completions w/ a remote workflow, surround your query in both sets of quotes. This is due to the way that Cobra's completion script is generated, the first set of quotes is stripped, and the underlying string will cause a completion error.
+> **Fish shell note**: If using `fish` and attempting to perform tab completions with a remote workflow, surround your query in both sets of quotes. This is due to the way that Cobra's completion script is generated, the first set of quotes is stripped, and the underlying string will cause a completion error.
 >
 > ```sh
+> # For tab completion in fish shell
 > $ maru2 --from "'pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml'" [tab][tab]
-> # or just use --list to discover tasks
+>
+> # Or use --list to discover tasks (works in all shells)
 > $ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
 > ```
 

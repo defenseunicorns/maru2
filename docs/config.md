@@ -96,6 +96,19 @@ pkg:gl/owner/repo@main?base=https://my-gitlab.com#path/to/file.yaml
 
 This will use `https://my-gitlab.com` instead of the base URL configured in the alias.
 
+### Token Authentication for Private Repositories
+
+For private repositories, you can configure authentication tokens using the `token-from-env` property:
+
+```yaml
+aliases:
+  private:
+    type: github
+    token-from-env: GITHUB_TOKEN
+```
+
+With this configuration, Maru2 will read the token from the specified environment variable and use it for authentication when accessing repositories through this alias.
+
 ## Future Configuration Options
 
 The global configuration file is designed to be extensible. Future versions of Maru2 may add additional configuration options beyond aliases.
