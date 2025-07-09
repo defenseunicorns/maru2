@@ -477,7 +477,12 @@ Maru2 supports conditional execution of steps using `if`. `if` statements are [e
 
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 
-```yaml {filename="tasks.yaml"}
+```yaml
+inputs:
+  text:
+    description: Some text to echo
+    default: foo
+
 tasks:
   example:
     - run: echo "This step always runs first"
@@ -487,6 +492,8 @@ tasks:
       run: echo "This step runs because a previous step failed"
     - if: always()
       run: echo "This step always runs, regardless of previous failures"
+    - if: len(input.text) > 5
+      run: echo "I only run when ${{ input "text" }} has a len greater than 5"
 ```
 
 ```sh
@@ -499,24 +506,6 @@ $ echo "This step always runs, regardless of previous failures"
 
 ERRO exit status 1
 ERRO at example[1] (file:tasks.yaml)
-```
-
-With access:
-
-```yaml
-tasks:
-  print:
-    - run: echo "out=${{ input "text" }}" >> $MARU2_OUTPUT
-
-  example:
-    - run: echo "step 1"
-    - uses: print
-      with:
-        text: Hello World!
-      id: step-2
-    - run: echo ${{ from "step-2" "out" }}
-    - run: echo "step 3"
-      if: from["step-2"].out == "Hello World!"
 ```
 
 ## Error handling and traceback
