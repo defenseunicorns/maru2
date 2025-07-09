@@ -222,6 +222,13 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil
 			}
 
+			if fetchAll {
+				logger.Debug("fetching all", "tasks", wf.Tasks.OrderedTaskNames(), "from", resolved)
+				if err := maru2.FetchAll(ctx, svc, wf, resolved); err != nil {
+					return err
+				}
+			}
+
 			with := make(maru2.With, len(w))
 			for k, v := range w {
 				with[k] = v
@@ -237,13 +244,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 						return fmt.Errorf("task %q timed out", call)
 					}
-					return err
-				}
-			}
-
-			if fetchAll {
-				logger.Debug("fetching all", "tasks", wf.Tasks.OrderedTaskNames(), "from", resolved)
-				if err := maru2.FetchAll(ctx, svc, wf, resolved); err != nil {
 					return err
 				}
 			}
