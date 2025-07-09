@@ -40,8 +40,8 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 	)
 
 	env := map[string]any{
-		"inputs": With{},
-		"from":   CommandOutputs{},
+		"input": With{},
+		"from":  CommandOutputs{},
 	}
 
 	program, err := expr.Compile(i.String(), expr.Env(env), expr.AsBool(), failure, always)
@@ -53,7 +53,7 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 		return false, nil
 	}
 
-	out, err := expr.Run(program, map[string]any{"inputs": with, "from": from})
+	out, err := expr.Run(program, map[string]any{"input": with, "from": from})
 	if err != nil {
 		return false, err
 	}
