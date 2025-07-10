@@ -49,25 +49,6 @@ This means:
 2. After the first character, task names can contain letters, numbers, underscores, and hyphens
 3. Task names cannot contain spaces or other special characters
 
-<!-- Try it out below:
-
-<input spellcheck="false" placeholder="some-task" id="task-name-regex" />
-<span id="regex-result"></span>
-
-<script type="module" defer>
-  const input = document.getElementById('task-name-regex');
-  const result = document.getElementById('regex-result');
-  input.addEventListener('input', () => {
-    const regex = /^[_a-zA-Z][a-zA-Z0-9_-]*$/;
-    if (input.value === '') {
-      result.textContent = '';
-      return;
-    }
-    const valid = regex.test(input.value);
-    result.textContent = valid ? '✅' : '❌';
-  });
-</script> -->
-
 Valid task names:
 
 ```yaml
@@ -154,7 +135,7 @@ Input parameters have the following properties:
 - `description`: A description of the parameter (required)
 - `required`: Whether the parameter is required (defaults to `true`)
 - `default`: A default value for the parameter
-- `default-from-env`: An environment variable to use as the default value
+- `default-from-env`: An environment variable to use as the default value. Environment variable names must start with a letter or underscore, and can contain letters, numbers, and underscores (e.g., `MY_ENV_VAR`, `_ANOTHER_VAR`).
 - `validate`: A regular expression to validate the parameter value
 - `deprecated-message`: A warning message to display when the parameter is used (for deprecated parameters)
 
@@ -244,6 +225,8 @@ maru2 echo --with message="Hello, World!"
 Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Configuration](./config.md#aliases-configuration) document.
 
 You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in the global configuration file located at `~/.maru2/config.yaml`.
+
+If a version is not specified in a `pkg` URL, it defaults to `main`.
 
 Example configuration with aliases:
 
@@ -470,14 +453,19 @@ Validation is performed after any default values are applied and before the task
 
 ## Conditional execution with `if`
 
-Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to `from`, `inputs`, all expr stdlib functions, and two extra helper functions:
+Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to `from`, `input`, all expr stdlib functions, and two extra helper functions:
 
 - `failure()`: Run this step only if a previous step has failed
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
 
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 
-```yaml {filename="tasks.yaml"}
+```yaml
+inputs:
+  text:
+    description: Some text to echo
+    default: foo
+
 tasks:
   example:
     - run: echo "This step always runs first"
@@ -487,6 +475,8 @@ tasks:
       run: echo "This step runs because a previous step failed"
     - if: always()
       run: echo "This step always runs, regardless of previous failures"
+    - if: len(input.text) > 5
+      run: echo "I only run when ${{ input "text" }} has a len greater than 5"
 ```
 
 ```sh
@@ -499,24 +489,6 @@ $ echo "This step always runs, regardless of previous failures"
 
 ERRO exit status 1
 ERRO at example[1] (file:tasks.yaml)
-```
-
-With access:
-
-```yaml
-tasks:
-  print:
-    - run: echo "out=${{ input "text" }}" >> $MARU2_OUTPUT
-
-  example:
-    - run: echo "step 1"
-    - uses: print
-      with:
-        text: Hello World!
-      id: step-2
-    - run: echo ${{ from "step-2" "out" }}
-    - run: echo "step 3"
-      if: from["step-2"].out == "Hello World!"
 ```
 
 ## Error handling and traceback
@@ -548,5 +520,3 @@ ERRO exit status 1
 ```
 
 The traceback shows that the error occurred in the first step (`[0]`) of the `fail` task, which was called from the second step (`[1]`) of the `caller` task.
-
-This traceback information is particularly valuable when debugging complex workflows with multiple levels of task nesting or when using remote tasks.

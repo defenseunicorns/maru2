@@ -47,7 +47,7 @@ Where:
 - `alias_name`: A short name you want to use as an alias
 - `type`: The actual package URL type (github, gitlab, etc.) - this is required
 - `base`: (Optional) Base URL for the repository (useful for self-hosted instances)
-- `token-from-env`: (Optional) Environment variable name containing an access token
+- `token-from-env`: (Optional) Environment variable name containing an access token. Environment variable names must start with a letter or underscore, and can contain letters, numbers, and underscores (e.g., `MY_ENV_VAR`, `_ANOTHER_VAR`).
 
 ### Example Aliases Configuration
 
@@ -95,6 +95,19 @@ pkg:gl/owner/repo@main?base=https://my-gitlab.com#path/to/file.yaml
 ```
 
 This will use `https://my-gitlab.com` instead of the base URL configured in the alias.
+
+### Token Authentication for Private Repositories
+
+For private repositories, you can configure authentication tokens using the `token-from-env` property:
+
+```yaml
+aliases:
+  private:
+    type: github
+    token-from-env: GITHUB_TOKEN
+```
+
+With this configuration, Maru2 will read the token from the specified environment variable and use it for authentication when accessing repositories through this alias.
 
 ## Future Configuration Options
 
