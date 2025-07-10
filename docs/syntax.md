@@ -154,7 +154,7 @@ Input parameters have the following properties:
 - `description`: A description of the parameter (required)
 - `required`: Whether the parameter is required (defaults to `true`)
 - `default`: A default value for the parameter
-- `default-from-env`: An environment variable to use as the default value
+- `default-from-env`: An environment variable to use as the default value. Environment variable names must start with a letter or underscore, and can contain letters, numbers, and underscores (e.g., `MY_ENV_VAR`, `_ANOTHER_VAR`).
 - `validate`: A regular expression to validate the parameter value
 - `deprecated-message`: A warning message to display when the parameter is used (for deprecated parameters)
 
@@ -244,6 +244,8 @@ maru2 echo --with message="Hello, World!"
 Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types. For detailed information on setting up and using aliases, see the [Configuration](./config.md#aliases-configuration) document.
 
 You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers. Aliases are defined in the global configuration file located at `~/.maru2/config.yaml`.
+
+If a version is not specified in a `pkg` URL, it defaults to `main`.
 
 Example configuration with aliases:
 
