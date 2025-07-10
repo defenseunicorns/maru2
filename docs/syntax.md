@@ -49,25 +49,6 @@ This means:
 2. After the first character, task names can contain letters, numbers, underscores, and hyphens
 3. Task names cannot contain spaces or other special characters
 
-<!-- Try it out below:
-
-<input spellcheck="false" placeholder="some-task" id="task-name-regex" />
-<span id="regex-result"></span>
-
-<script type="module" defer>
-  const input = document.getElementById('task-name-regex');
-  const result = document.getElementById('regex-result');
-  input.addEventListener('input', () => {
-    const regex = /^[_a-zA-Z][a-zA-Z0-9_-]*$/;
-    if (input.value === '') {
-      result.textContent = '';
-      return;
-    }
-    const valid = regex.test(input.value);
-    result.textContent = valid ? '✅' : '❌';
-  });
-</script> -->
-
 Valid task names:
 
 ```yaml
@@ -472,7 +453,7 @@ Validation is performed after any default values are applied and before the task
 
 ## Conditional execution with `if`
 
-Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to `from`, `inputs`, all expr stdlib functions, and two extra helper functions:
+Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to `from`, `input`, all expr stdlib functions, and two extra helper functions:
 
 - `failure()`: Run this step only if a previous step has failed
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
@@ -539,5 +520,3 @@ ERRO exit status 1
 ```
 
 The traceback shows that the error occurred in the first step (`[0]`) of the `fail` task, which was called from the second step (`[1]`) of the `caller` task.
-
-This traceback information is particularly valuable when debugging complex workflows with multiple levels of task nesting or when using remote tasks.
