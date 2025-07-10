@@ -159,24 +159,22 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			fs := afero.NewOsFs()
 
-			s := filepath.Clean(os.ExpandEnv(s))
-
-			fi, err := fs.Stat(filepath.Join(".maru2", "store"))
-			if (err == nil && fi.IsDir()) || s == "." {
-				cwd, err := os.Getwd()
-				if err != nil {
-					return err
+			createDir := true
+			if !cmd.Flags().Changed("store") {
+				localStorePath := ".maru2/store"
+				if fi, err := fs.Stat(localStorePath); err == nil && fi.IsDir() {
+					s = localStorePath
+					createDir = false
 				}
-				s = filepath.Join(cwd, ".maru2", "store")
 			}
 
-			_, err = fs.Stat(s)
-			if err != nil {
-				if os.IsNotExist(err) {
-					if err := fs.MkdirAll(s, 0o744); err != nil {
-						return err
-					}
-				} else {
+			s = filepath.Clean(os.ExpandEnv(s))
+			if s == "." {
+				s = ".maru2/store"
+			}
+
+			if createDir {
+				if err := fs.MkdirAll(s, 0o744); err != nil {
 					return err
 				}
 			}
