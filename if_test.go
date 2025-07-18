@@ -64,6 +64,11 @@ func TestIf(t *testing.T) {
 			expected:  true,
 		},
 		{
+			name:      "presets",
+			inputExpr: "len(arch) > 0 && len(os) > 0",
+			expected:  true,
+		},
+		{
 			name:      "complex boolean expression (true)",
 			inputExpr: `(input.foo == "bar" && !failure()) || always()`,
 			with:      With{"foo": "bar"},

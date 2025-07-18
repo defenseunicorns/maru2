@@ -4,6 +4,8 @@
 package maru2
 
 import (
+	"runtime"
+
 	"github.com/expr-lang/expr"
 )
 
@@ -42,6 +44,8 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 	env := map[string]any{
 		"input": With{},
 		"from":  CommandOutputs{},
+		"os":    "",
+		"arch":  "",
 	}
 
 	program, err := expr.Compile(i.String(), expr.Env(env), expr.AsBool(), failure, always)
@@ -53,7 +57,10 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 		return false, nil
 	}
 
-	out, err := expr.Run(program, map[string]any{"input": with, "from": from})
+	out, err := expr.Run(
+		program,
+		map[string]any{"input": with, "from": from, "os": runtime.GOOS, "arch": runtime.GOARCH},
+	)
 	if err != nil {
 		return false, err
 	}
