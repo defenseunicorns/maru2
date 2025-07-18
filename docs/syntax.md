@@ -145,10 +145,10 @@ Note that `default` and `default-from-env` are mutually exclusive - you can only
 
 On top of the builtin behavior, Maru2 provides a few additional helpers:
 
-- `${{ input <name> }}`: calling an input
+- `${{ input "<name>" }}`: calling an input
   - If the task is top-level (called via CLI), `with` values are received from the `--with` flag.
   - If the task is called from another task, `with` values are passed from the calling step.
-- `os`, `arch`, `platform`: the current OS, architecture, or platform
+- `OS`, `ARCH`, `PLATFORM`: the current OS, architecture, or platform
 
 ```yaml {filename="tasks.yaml"}
 inputs:
@@ -453,10 +453,14 @@ Validation is performed after any default values are applied and before the task
 
 ## Conditional execution with `if`
 
-Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to `from`, `input`, all expr stdlib functions, and two extra helper functions:
+Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to all expr stdlib functions, and four extra helper functions:
 
 - `failure()`: Run this step only if a previous step has failed
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
+- `input("name")`: Access an input value by name. Only one argument is allowed. Returns the value of the input, which may be a string, number, or boolean.
+- `from("step-id", "output-key")`: Access an output from a previous step. Only two arguments are allowed: the step ID and the output key.
+
+Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: the current OS, architecture, or platform
 
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 
@@ -475,7 +479,7 @@ tasks:
       run: echo "This step runs because a previous step failed"
     - if: always()
       run: echo "This step always runs, regardless of previous failures"
-    - if: len(input.text) > 5
+    - if: len(input("text")) > 5
       run: echo "I only run when ${{ input "text" }} has a len greater than 5"
 ```
 

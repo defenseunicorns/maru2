@@ -59,103 +59,110 @@ func TestIf(t *testing.T) {
 		},
 		{
 			name:      "based upon with",
-			inputExpr: `input.foo == "bar"`,
+			inputExpr: `input("foo") == "bar"`,
 			with:      With{"foo": "bar"},
 			expected:  true,
 		},
 		{
+			name:      "presets",
+			inputExpr: `len(arch) > 0 && len(os) > 0 && indexOf(platform, "/") > 0`,
+			expected:  true,
+		},
+		{
 			name:      "complex boolean expression (true)",
-			inputExpr: `(input.foo == "bar" && !failure()) || always()`,
+			inputExpr: `(input("foo") == "bar" && !failure()) || always()`,
 			with:      With{"foo": "bar"},
 			expected:  true,
 		},
 		{
 			name:      "complex boolean expression (false)",
-			inputExpr: `input.foo == "baz" && !failure()`,
+			inputExpr: `input("foo") == "baz" && !failure()`,
 			with:      With{"foo": "bar"},
 			expected:  false,
 		},
 		{
 			name:      "access nested map in inputs",
-			inputExpr: `input.nested.value == "nested-value"`,
+			inputExpr: `input("nested", "value") == "wrong-value"`,
 			with:      With{"nested": map[string]any{"value": "nested-value"}},
-			expected:  true,
-		},
-		{
-			name:      "access nested map in inputs (false)",
-			inputExpr: `input.nested.value == "wrong-value"`,
-			with:      With{"nested": map[string]any{"value": "nested-value"}},
-			expected:  false,
+			expectedErr: `too many arguments to call input (1:1)
+ | input("nested", "value") == "wrong-value"
+ | ^`,
 		},
 		{
 			name:            "access from outputs",
-			inputExpr:       `from.step1.output == "step1-output"`,
+			inputExpr:       `from("step1", "output") == "step1-output"`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "step1-output"}},
 			expected:        true,
 		},
 		{
 			name:            "access from outputs (false)",
-			inputExpr:       `from.step1.output == "wrong-output"`,
+			inputExpr:       `from("step1", "output") == "wrong-output"`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "step1-output"}},
 			expected:        false,
 		},
 		{
 			name:            "access nested from outputs",
-			inputExpr:       `from.step1.nested.value == "nested-value"`,
+			inputExpr:       `from("step1", "nested", "value") == "nested-value"`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"nested": map[string]any{"value": "nested-value"}}},
-			expected:        true,
+			expectedErr: `too many arguments to call from (1:1)
+ | from("step1", "nested", "value") == "nested-value"
+ | ^`,
 		},
 		{
 			name:            "missing step in from",
-			inputExpr:       `from.missing.output == "value"`,
+			inputExpr:       `from("missing", "output") == "value"`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "value"}},
-			expected:        false,
+			expectedErr: `no outputs from step "missing" (1:1)
+ | from("missing", "output") == "value"
+ | ^`,
 		},
 		{
 			name:            "missing output in step",
-			inputExpr:       `from.step1.missing == "value"`,
+			inputExpr:       `from("step1", "missing") == "value"`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "value"}},
-			expected:        false,
+			expectedErr: `no output "missing" from step "step1" (1:1)
+ | from("step1", "missing") == "value"
+ | ^`,
 		},
 		{
 			name:      "numeric comparison (equal)",
-			inputExpr: `input.num == 42`,
+			inputExpr: `input("num") == 42`,
 			with:      With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (not equal)",
-			inputExpr: `input.num != 43`,
+			inputExpr: `input("num") != 43`,
 			with:      With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (greater than)",
-			inputExpr: `input.num > 40`,
+			inputExpr: `input("num") > 40`,
 			with:      With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (less than)",
-			inputExpr: `input.num < 50`,
+			inputExpr: `input("num") < 50`,
 			with:      With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs",
-			inputExpr: `input.enabled`,
+			inputExpr: `input("enabled")`,
 			with:      With{"enabled": true},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs (false)",
-			inputExpr: `!input.disabled`,
+			inputExpr: `!input("disabled")`,
 			with:      With{"disabled": false},
 			expected:  true,
 		},
 		{
 			name:      "mathematical operation",
-			inputExpr: `(input.num + 8) == 50`,
+			inputExpr: `(input("num") + 8) == 50`,
 			with:      With{"num": 42},
 			expected:  true,
 		},
