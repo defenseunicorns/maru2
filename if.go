@@ -4,7 +4,10 @@
 package maru2
 
 import (
+	"fmt"
+	"maps"
 	"runtime"
+	"slices"
 
 	"github.com/expr-lang/expr"
 )
@@ -41,14 +44,54 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 		new(func() bool),
 	)
 
-	env := map[string]any{
-		"input": With{},
-		"from":  CommandOutputs{},
-		"os":    "",
-		"arch":  "",
+	inputKeys := make([]string, 0, len(with))
+	for k := range maps.Keys(with) {
+		inputKeys = append(inputKeys, k)
+	}
+	slices.Sort(inputKeys)
+
+	// mirrors TemplateString func
+	inputFunc := expr.Function(
+		"input",
+		func(params ...any) (any, error) {
+			in := params[0].(string)
+			v, ok := with[in]
+			if !ok {
+				return nil, fmt.Errorf("input %q does not exist in %s", in, inputKeys)
+			}
+			return v, nil
+		},
+		new(func(string) (any, error)),
+	)
+
+	// mirrors TemplateString func
+	fromFunc := expr.Function(
+		"from",
+		func(params ...any) (any, error) {
+			stepName := params[0].(string)
+			id := params[1].(string)
+			stepOutputs, ok := from[stepName]
+			if !ok {
+				return "", fmt.Errorf("no outputs from step %q", stepName)
+			}
+
+			v, ok := stepOutputs[id]
+			if ok {
+				return v, nil
+			}
+			return "", fmt.Errorf("no output %q from step %q", id, stepName)
+		},
+		new(func(string, string) (any, error)),
+	)
+
+	// mirrors TemplateString presets
+	type env struct {
+		OS       string `expr:"os"`
+		Arch     string `expr:"arch"`
+		Platform string `expr:"platform"`
 	}
 
-	program, err := expr.Compile(i.String(), expr.Env(env), expr.AsBool(), failure, always)
+	program, err := expr.Compile(i.String(), expr.Env(env{}), expr.AsBool(), failure, always, inputFunc, fromFunc)
 	if err != nil {
 		return false, err
 	}
@@ -59,7 +102,7 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 
 	out, err := expr.Run(
 		program,
-		map[string]any{"input": with, "from": from, "os": runtime.GOOS, "arch": runtime.GOARCH},
+		env{OS: runtime.GOOS, Arch: runtime.GOARCH, Platform: fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)},
 	)
 	if err != nil {
 		return false, err
