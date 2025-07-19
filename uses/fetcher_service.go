@@ -113,11 +113,11 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 	}
 
 	s.mu.RLock()
-	if fetcher, exists := s.fetcherCache[uri.String()]; exists && fetcher != nil {
-		s.mu.RUnlock()
+	fetcher, exists := s.fetcherCache[uri.String()]
+	s.mu.RUnlock()
+	if exists && fetcher != nil {
 		return fetcher, nil
 	}
-	s.mu.RUnlock()
 
 	fetcher, err := s.createFetcher(uri)
 	if err != nil {
@@ -171,6 +171,14 @@ func (s *FetcherService) createFetcher(uri *url.URL) (Fetcher, error) {
 
 	case "file":
 		fetcher = NewLocalFetcher(s.fsys)
+	case "oci":
+		var err error
+		insecureSkipTLSVerify := uri.Query().Get("insecure-skip-tls-verify") == "true"
+		plainHTTP := uri.Query().Get("plain-http") == "true" // hoist these magic strings
+		fetcher, err = NewOCIClient(s.client, insecureSkipTLSVerify, plainHTTP)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, fmt.Errorf("unsupported scheme: %q", uri.Scheme)
 	}

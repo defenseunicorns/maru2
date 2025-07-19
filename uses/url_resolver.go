@@ -16,7 +16,7 @@ import (
 
 // SupportedSchemes returns a list of supported schemes
 func SupportedSchemes() []string {
-	return []string{"file", "http", "https", "pkg"}
+	return []string{"file", "http", "https", "pkg", "oci"}
 }
 
 // ResolveRelative resolves a URI relative to a previous URI.
@@ -59,7 +59,9 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		// https, http -> pkg
 		(prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "pkg",
 		// pkg -> http, https
-		prev.Scheme == "pkg" && (uri.Scheme == "https" || uri.Scheme == "http"):
+		prev.Scheme == "pkg" && (uri.Scheme == "https" || uri.Scheme == "http"),
+		// oci -> oci
+		prev.Scheme == "oci" && uri.Scheme == "oci":
 
 		if uri.Scheme == "pkg" {
 			pURL, err := packageurl.FromString(u)
@@ -135,6 +137,24 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias
 		}
 
 		return url.Parse(pURL.String())
+
+	// oci -> any (not oci)
+	case prev.Scheme == "oci":
+		next := *prev
+		switch uri.Scheme {
+		case "file":
+			// join the paths if they exist
+			path := filepath.Join(filepath.Dir(prev.Fragment), uri.Fragment)
+			if path == "." {
+				path = DefaultFileName
+			}
+			next.Fragment = path
+
+			return &next, nil
+		default:
+			next.Fragment = uri.String()
+			return &next, nil
+		}
 	}
 
 	return nil, fmt.Errorf("unable to resolve %q to %q", prev, uri)

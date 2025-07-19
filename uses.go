@@ -9,9 +9,11 @@ import (
 	"maps"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/log"
+	"github.com/spf13/afero"
 
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -83,9 +85,23 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *u
 
 	for _, task := range wf.Tasks {
 		for _, step := range task {
-			if step.Uses != "" {
-				refs = append(refs, step.Uses)
+			if step.Uses == "" {
+				continue
 			}
+			_, found := wf.Tasks.Find(step.Uses)
+			if found {
+				continue
+			}
+
+			if strings.HasPrefix(step.Uses, "builtin:") {
+				continue
+			}
+
+			if slices.Contains(refs, step.Uses) { // could use a map[string] here, would also need to dedup same import but different tasks
+				continue
+			}
+
+			refs = append(refs, step.Uses)
 		}
 	}
 
@@ -108,4 +124,75 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *u
 	}
 
 	return nil
+}
+
+// ListAllLocal recursively discovers all local references contained in a workflow
+func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, error) {
+	if src.Scheme != "file" {
+		return nil, nil
+	}
+
+	relativeRefs := []string{}
+
+	rc, err := uses.NewLocalFetcher(fs).Fetch(ctx, src)
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	wf, err := ReadAndValidate(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, task := range wf.Tasks {
+		for _, step := range task {
+			if step.Uses == "" {
+				continue
+			}
+			uri, err := url.Parse(step.Uses)
+			if err != nil {
+				return nil, err
+			}
+			if uri.Scheme != "file" {
+				continue
+			}
+
+			relativeRefs = append(relativeRefs, step.Uses)
+		}
+	}
+
+	fullRefs := []string{src.String()}
+
+	for _, ref := range relativeRefs {
+		resolved, err := uses.ResolveRelative(src, ref, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve %q: %w", ref, err)
+		}
+
+		// strip query params, like ?task=
+		resolved.RawQuery = ""
+
+		rc, err := uses.NewLocalFetcher(fs).Fetch(ctx, resolved)
+		if err != nil {
+			return nil, err
+		}
+		defer rc.Close()
+
+		_, err = ReadAndValidate(rc)
+		if err != nil {
+			return nil, err
+		}
+
+		// now we know its a valid workflow, we can save the location
+		fullRefs = append(fullRefs, resolved.String())
+
+		sub, err := ListAllLocal(ctx, resolved, fs)
+		if err != nil {
+			return nil, err
+		}
+		fullRefs = append(fullRefs, sub...)
+	}
+
+	return slices.Compact(fullRefs), nil
 }
