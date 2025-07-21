@@ -28,6 +28,7 @@ Maru2 is a simple, powerful task runner designed to make workflow automation eas
 - **[Example Workflow](#example-workflow)** - See a complete example with explanations
 - **[CLI Documentation](cli.md)** - Learn how to use the Maru2 command line interface
 - **[Workflow Syntax](syntax.md)** - Understand the syntax for defining tasks and workflows
+- **[Publishing Workflows](publish.md)** - Learn how to publish workflows as OCI artifacts
 - **[Built-in Tasks](builtins.md)** - Explore the built-in tasks provided by Maru2
 - **[Configuration](config.md)** - Configure Maru2 with global settings
 
