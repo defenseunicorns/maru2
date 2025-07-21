@@ -1,0 +1,8 @@
+! exec maru2-publish foo bar
+stderr 'ERRO accepts 1 arg\(s\), received 2'
+
+! exec maru2-publish foo
+stderr 'ERRO unable to parse reference: invalid reference: missing registry or repository'
+
+! exec maru2-publish registry.uds.sh/foo:@sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03
+stderr 'ERRO reference is not a tag'
