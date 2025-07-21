@@ -22,8 +22,8 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// WorkflowMediaType is the mediatype for all maru2 workflows
-const WorkflowMediaType = "application/vnd.maru2.v1.workflow+yaml"
+// MediaTypeWorkflow is the mediatype for all maru2 workflows
+const MediaTypeWorkflow = "application/vnd.maru2.v1.workflow+yaml"
 
 // Publish fetches all remote imports in <cwd>/tasks.yaml, stores them in a temp dir, then pushes them to a OCI registry
 func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, entrypoints []string) error {
@@ -92,7 +92,7 @@ func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, en
 	for name, storeDesc := range store.List() {
 		logger.Debug("staging", "entry", name)
 
-		desc, err := ociStore.Add(ctx, name, WorkflowMediaType, storeDesc.Hex)
+		desc, err := ociStore.Add(ctx, name, MediaTypeWorkflow, storeDesc.Hex)
 		if err != nil {
 			return err
 		}
@@ -118,14 +118,14 @@ func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, en
 		abs := filepath.Join(cwd, rel)
 
 		logger.Debug("staging", "entry", rel)
-		desc, err := ociStore.Add(ctx, localPath, WorkflowMediaType, abs)
+		desc, err := ociStore.Add(ctx, localPath, MediaTypeWorkflow, abs)
 		if err != nil {
 			return err
 		}
 		layers = append(layers, desc)
 	}
 
-	root, err := oras.PackManifest(ctx, ociStore, oras.PackManifestVersion1_1, WorkflowMediaType, oras.PackManifestOptions{
+	root, err := oras.PackManifest(ctx, ociStore, oras.PackManifestVersion1_1, MediaTypeWorkflow, oras.PackManifestOptions{
 		Layers: layers,
 	})
 	if err != nil {
