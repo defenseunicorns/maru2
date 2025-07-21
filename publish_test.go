@@ -30,12 +30,12 @@ func TestPublish(t *testing.T) {
 	ctx := log.WithContext(context.Background(), log.New(io.Discard))
 
 	tt := []struct {
-		name          string
-		workflow      string
-		files         map[string]string // map of filename to content
-		entrypoints   []string
-		expectedFiles []string
-		expectErr     string
+		name           string
+		workflow       string
+		files          map[string]string // map of filename to content
+		entrypoints    []string
+		expectedLayers []ocispec.Descriptor
+		expectErr      string
 	}{
 		{
 			name:        "simple workflow",
@@ -46,7 +46,7 @@ func TestPublish(t *testing.T) {
     - run: "true"
 `,
 			},
-			expectedFiles: []string{"file:tasks.yaml"},
+			expectedLayers: []ocispec.Descriptor{},
 		},
 		{
 			name:        "with local dependency",
@@ -61,7 +61,7 @@ func TestPublish(t *testing.T) {
     - run: "true"
 `,
 			},
-			expectedFiles: []string{"file:tasks.yaml", "file:dep.yaml"},
+			expectedLayers: []ocispec.Descriptor{},
 		},
 		{
 			name:        "with nested local dependency",
@@ -80,7 +80,7 @@ func TestPublish(t *testing.T) {
     - run: "true"
 `,
 			},
-			expectedFiles: []string{"file:tasks.yaml", "file:dep1.yaml", "file:dep2.yaml"},
+			expectedLayers: []ocispec.Descriptor{},
 		},
 		{
 			name:        "with directory dependency",
@@ -95,7 +95,7 @@ func TestPublish(t *testing.T) {
     - run: "true"
 `,
 			},
-			expectedFiles: []string{"file:tasks.yaml", "file:./nested/tasks.yaml"},
+			expectedLayers: []ocispec.Descriptor{},
 		},
 		{
 			name:        "non-existent entrypoint",
@@ -113,6 +113,44 @@ func TestPublish(t *testing.T) {
 `,
 			},
 			expectErr: "no such file or directory",
+		},
+		{
+			name:        "no entrypoints",
+			entrypoints: []string{},
+			files:       map[string]string{},
+			expectErr:   "need at least one entrypoint",
+		},
+		{
+			name:        "invalid entrypoint path",
+			entrypoints: []string{"::invalid.yaml"},
+			files:       map[string]string{},
+			expectErr:   "missing protocol scheme",
+		},
+		{
+			name:        "entrypoint with query params",
+			entrypoints: []string{"tasks.yaml?task=main"},
+			files: map[string]string{
+				"tasks.yaml": `tasks:
+  main:
+    - run: "true"
+`,
+			},
+			expectedLayers: []ocispec.Descriptor{},
+		},
+		{
+			name:        "multiple entrypoints",
+			entrypoints: []string{"tasks.yaml", "dep.yaml"},
+			files: map[string]string{
+				"tasks.yaml": `tasks:
+  main:
+    - run: "true"
+`,
+				"dep.yaml": `tasks:
+  dep:
+    - run: "true"
+`,
+			},
+			expectedLayers: []ocispec.Descriptor{},
 		},
 	}
 
@@ -165,13 +203,10 @@ func TestPublish(t *testing.T) {
 
 			assert.Equal(t, MediaTypeWorkflow, manifest.ArtifactType)
 			assert.Equal(t, ocispec.MediaTypeImageManifest, manifestDesc.MediaType)
+			assert.Equal(t, ocispec.MediaTypeImageManifest, manifest.MediaType)
+			assert.Equal(t, ocispec.DescriptorEmptyJSON, manifest.Config)
 
-			var foundFiles []string
-			for _, layer := range manifest.Layers {
-				foundFiles = append(foundFiles, layer.Annotations[ocispec.AnnotationTitle])
-			}
-
-			assert.ElementsMatch(t, tc.expectedFiles, foundFiles)
+			assert.ElementsMatch(t, tc.expectedLayers, manifest.Layers)
 		})
 	}
 }

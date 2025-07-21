@@ -162,7 +162,9 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 		}
 	}
 
-	fullRefs := []string{src.String()}
+	clone := *src
+	clone.RawQuery = ""
+	fullRefs := []string{clone.String()}
 
 	for _, ref := range relativeRefs {
 		resolved, err := uses.ResolveRelative(src, ref, nil)

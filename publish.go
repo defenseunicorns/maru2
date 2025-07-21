@@ -138,7 +138,7 @@ func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, en
 
 	desc, err := oras.Copy(ctx, ociStore, root.Digest.String(), dst, dst.Reference.Reference, oras.DefaultCopyOptions)
 	if err != nil {
-		return err // TODO: the most important thing to test here is the manifest exists at the correct tag and has the correct content
+		return err
 	}
 	logger.Info("published", "digest", desc.Digest, "to", dst.Reference.Reference)
 
