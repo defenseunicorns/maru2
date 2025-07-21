@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
@@ -22,6 +24,14 @@ import (
 )
 
 func main() {
+	code := Main()
+	os.Exit(code)
+}
+
+// Main executes the root command for the maru2-publish CLI.
+//
+// It returns 0 on success, 1 on failure and logs any errors.
+func Main() int {
 	var (
 		level           string
 		plainHTTP       bool
@@ -107,6 +117,9 @@ func main() {
 
 	ctx := context.Background()
 
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
+
 	var logger = log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
 	})
@@ -115,6 +128,7 @@ func main() {
 
 	if err := root.ExecuteContext(ctx); err != nil {
 		logger.Error(err)
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }
