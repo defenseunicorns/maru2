@@ -98,6 +98,7 @@ tasks:
 
 		rc, err := client.Fetch(ctx, uri)
 		require.NoError(t, err)
+		defer rc.Close()
 
 		tru := true
 		wf, err := maru2.Read(rc)
