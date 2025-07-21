@@ -4,7 +4,6 @@
 package maru2
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +19,7 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"oras.land/oras-go/v2/content"
 	"oras.land/oras-go/v2/registry/remote"
 
 	"net/http"
@@ -29,7 +29,7 @@ import (
 
 func TestPublish(t *testing.T) {
 	// not testing context cancellation at this time
-	ctx := log.WithContext(context.Background(), log.New(io.Discard))
+	ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 	remoteWorkflowContent := `tasks:
   remote:
@@ -46,11 +46,19 @@ func TestPublish(t *testing.T) {
 	})
 	remoteServer := httptest.NewServer(remoteHandler)
 	t.Cleanup(remoteServer.Close)
+	remoteDesc := content.NewDescriptorFromBytes(MediaTypeWorkflow, []byte(remoteWorkflowContent))
+	remoteDesc.Annotations = map[string]string{ocispec.AnnotationTitle: remoteServer.URL + "/remote-dep.yaml"}
+	usesRemoteContent := fmt.Sprintf(`tasks:
+  main:
+    - uses: "%s/remote-dep.yaml?task=remote"
+`, remoteServer.URL)
+	usesRemoteDesc := content.NewDescriptorFromBytes(MediaTypeWorkflow, []byte(usesRemoteContent))
+	usesRemoteDesc.Annotations = map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"}
 
 	tt := []struct {
 		name           string
 		workflow       string
-		files          map[string]string // map of filename to content
+		files          map[string]string
 		entrypoints    []string
 		expectedLayers []ocispec.Descriptor
 		expectErr      string
@@ -246,25 +254,11 @@ func TestPublish(t *testing.T) {
 			name:        "with remote dependency",
 			entrypoints: []string{"tasks.yaml"},
 			files: map[string]string{
-				"tasks.yaml": fmt.Sprintf(`tasks:
-  main:
-    - uses: "%s/remote-dep.yaml?task=remote"
-`,
-					remoteServer.URL),
+				"tasks.yaml": usesRemoteContent,
 			},
 			expectedLayers: []ocispec.Descriptor{
-				{
-					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:083dd91056ea12399edb42f99905d563fb55e7b1f4b3672b72efcda67582b660",
-					Size:        52,
-					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
-				},
-				{
-					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:76b5a65b41aab5e570aae6af57e61748954334c587e578cb7eaa5a808265c82f",
-					Size:        33,
-					Annotations: map[string]string{ocispec.AnnotationTitle: remoteServer.URL + "/remote-dep.yaml"},
-				},
+				usesRemoteDesc,
+				remoteDesc,
 			},
 		},
 	}
@@ -282,7 +276,6 @@ func TestPublish(t *testing.T) {
 				_ = r.Close()
 			})
 
-			// setup test directory
 			tmpDir := t.TempDir()
 			for path, content := range tc.files {
 				fullPath := filepath.Join(tmpDir, path)
@@ -291,10 +284,8 @@ func TestPublish(t *testing.T) {
 				err = os.WriteFile(fullPath, []byte(content), 0644)
 				require.NoError(t, err)
 			}
-			// change to test directory
 			t.Chdir(tmpDir)
 
-			// setup remote repository
 			serverURL, err := url.Parse(s.URL)
 			require.NoError(t, err)
 			ref := fmt.Sprintf("%s/test-repo:latest", serverURL.Host)
@@ -303,7 +294,6 @@ func TestPublish(t *testing.T) {
 			require.NoError(t, err)
 			dst.PlainHTTP = true
 
-			// publish the workflow
 			err = Publish(ctx, &config.Config{}, dst, tc.entrypoints)
 
 			if tc.expectErr != "" {
@@ -326,7 +316,6 @@ func TestPublish(t *testing.T) {
 	}
 }
 
-// fetchManifest fetches the manifest descriptor and manifest object from a remote repository.
 func fetchManifest(t *testing.T, repo *remote.Repository) (desc ocispec.Descriptor, manifest ocispec.Manifest, err error) {
 	t.Helper()
 
