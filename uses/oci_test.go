@@ -114,6 +114,37 @@ tasks:
 			}}},
 			Aliases: map[string]config.Alias{},
 		}, wf)
+
+		// fails w/ internal not found error
+		uri, err = url.Parse(fmt.Sprintf("oci:%s/workflow-1:latest#file:foo.yaml", registry))
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, uri)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, "file:foo.yaml: not found")
+
+		// fails w/ HTTP 404
+		uri, err = url.Parse(fmt.Sprintf("oci:%s/workflow-1:dne", registry))
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, uri)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, fmt.Sprintf("%s/workflow-1:dne: not found", registry))
+
+		// fails w/ nil uri
+		rc, err = client.Fetch(ctx, nil)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, "uri is nil")
+
+		// fails w/ non-oci protocol scheme
+		rc, err = client.Fetch(ctx, &url.URL{})
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `scheme is not "oci"`)
+
+		// fails w/ invalid reference
+		rc, err = client.Fetch(ctx, &url.URL{Scheme: "oci"})
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `invalid reference: missing registry or repository`)
 	}
 	seed(s1)
 	f(s1)

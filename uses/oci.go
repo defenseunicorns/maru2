@@ -117,5 +117,5 @@ func (c *OCIClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, err
 		}
 	}
 
-	return nil, fmt.Errorf("not found") // make a more descriptive error
+	return nil, fmt.Errorf("%s: not found", path)
 }

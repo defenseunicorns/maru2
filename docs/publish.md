@@ -77,12 +77,12 @@ tasks:
     - uses: oci:staging.uds.sh/public/my-workflow:latest
 ```
 
-By default, this looks for the `tasks.yaml` entry in the published manifest and runs the `default` task.
+By default, this looks for the `file:tasks.yaml` entry in the published manifest and runs the `default` task.
 
 To specify another path use the URL hash:
 
 ```yaml
-uses: oci:staging.uds.sh/public/my-workflow#tasks/helper.yaml
+uses: oci:staging.uds.sh/public/my-workflow#file:tasks/helper.yaml
 ```
 
 The following query parameters are supported:
