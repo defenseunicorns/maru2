@@ -20,6 +20,7 @@ import (
 	"oras.land/oras-go/v2/registry/remote/retry"
 
 	"github.com/defenseunicorns/maru2"
+	"github.com/defenseunicorns/maru2/cmd"
 	"github.com/defenseunicorns/maru2/config"
 )
 
@@ -123,6 +124,8 @@ func Main() int {
 	var logger = log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
 	})
+
+	logger.SetStyles(cmd.DefaultStyles())
 
 	ctx = log.WithContext(ctx, logger)
 
