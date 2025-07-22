@@ -1,0 +1,13 @@
+exec maru2-publish $REGISTRY/test-workflow:latest --plain-http --entrypoint tasks.yaml
+stderr 'INFO published digest=sha256:.* to=latest'
+
+-- tasks.yaml --
+inputs:
+  text:
+    description: Text to echo
+    default: "Hello, world!"
+    required: true
+
+tasks:
+  echo:
+    - run: echo "${{ input "text" }}"
