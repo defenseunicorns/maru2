@@ -58,7 +58,7 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 	var tmpl *template.Template
 
 	inputKeys := make([]string, 0, len(input))
-	for k := range maps.Keys(input) {
+	for k := range input {
 		inputKeys = append(inputKeys, k)
 	}
 	slices.Sort(inputKeys)

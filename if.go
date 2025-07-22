@@ -5,7 +5,6 @@ package maru2
 
 import (
 	"fmt"
-	"maps"
 	"runtime"
 	"slices"
 
@@ -45,7 +44,7 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 	)
 
 	inputKeys := make([]string, 0, len(with))
-	for k := range maps.Keys(with) {
+	for k := range with {
 		inputKeys = append(inputKeys, k)
 	}
 	slices.Sort(inputKeys)
