@@ -133,7 +133,17 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				if !ok {
 					return fmt.Errorf("version information not available")
 				}
-				fmt.Fprintln(os.Stdout, bi.Main.Version)
+				switch bi.Main.Path {
+				case "github.com/defenseunicorns/maru2":
+					fmt.Fprintln(os.Stdout, bi.Main.Version)
+				default:
+					for _, dep := range bi.Deps {
+						if dep.Path == "github.com/defenseunicorns/maru2" {
+							fmt.Fprintln(os.Stdout, dep.Version)
+							break
+						}
+					}
+				}
 				return nil
 			}
 
@@ -273,6 +283,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	_ = root.MarkFlagDirname("store")
 	root.Flags().BoolVar(&gc, "gc", false, "Perform garbage collection on the store")
 	root.Flags().BoolVar(&fetchAll, "fetch-all", false, "Fetch all tasks")
+
+	// root.Parent()
 
 	root.CompletionOptions.DisableDefaultCmd = true
 
