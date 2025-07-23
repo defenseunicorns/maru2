@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/log v0.4.2
 	github.com/expr-lang/expr v1.17.5
-	github.com/go-viper/mapstructure/v2 v2.3.0
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-github/v62 v62.0.0
 	github.com/invopop/jsonschema v0.13.0
@@ -19,11 +19,11 @@ require (
 	github.com/spf13/afero v1.14.0
 	github.com/spf13/cast v1.9.2
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	gitlab.com/gitlab-org/api/client-go v0.134.0
-	oras.land/oras-go/v2 v2.5.0
+	gitlab.com/gitlab-org/api/client-go v0.137.0
+	oras.land/oras-go/v2 v2.6.0
 )
 
 require (
