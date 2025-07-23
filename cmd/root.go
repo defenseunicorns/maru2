@@ -284,8 +284,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().BoolVar(&gc, "gc", false, "Perform garbage collection on the store")
 	root.Flags().BoolVar(&fetchAll, "fetch-all", false, "Fetch all tasks")
 
-	// root.Parent()
-
 	root.CompletionOptions.DisableDefaultCmd = true
 
 	return root
