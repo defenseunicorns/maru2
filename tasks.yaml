@@ -33,6 +33,3 @@ tasks:
       id: foo
     - run: |
         echo "got: ${{ from "foo" "bar" }}"
-
-  imports:
-    - uses: file:testdata/simple.yaml?task=echo

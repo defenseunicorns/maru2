@@ -173,8 +173,8 @@ func (s *FetcherService) createFetcher(uri *url.URL) (Fetcher, error) {
 		fetcher = NewLocalFetcher(s.fsys)
 	case "oci":
 		var err error
-		insecureSkipTLSVerify := uri.Query().Get("insecure-skip-tls-verify") == "true"
-		plainHTTP := uri.Query().Get("plain-http") == "true" // hoist these magic strings
+		insecureSkipTLSVerify := uri.Query().Get(OCIQueryParamInsecureSkipTLSVerify) == "true"
+		plainHTTP := uri.Query().Get(OCIQueryParamPlainHTTP) == "true"
 		fetcher, err = NewOCIClient(s.client, insecureSkipTLSVerify, plainHTTP)
 		if err != nil {
 			return nil, err

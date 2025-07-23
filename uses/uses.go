@@ -25,6 +25,12 @@ const QualifierBaseURL = "base"
 // QualifierTask is the qualifier for the task to use when fetching a package
 const QualifierTask = "task"
 
+// OCIQueryParamPlainHTTP is the query param for the OCI client to use plain HTTP
+const OCIQueryParamPlainHTTP = "plain-http"
+
+// OCIQueryParamInsecureSkipTLSVerify is the query param for the OCI client to allow for an insecure HTTPS connection
+const OCIQueryParamInsecureSkipTLSVerify = "insecure-skip-tls-verify"
+
 // Fetcher fetches a file from a remote location.
 type Fetcher interface {
 	Fetch(context.Context, *url.URL) (io.ReadCloser, error)

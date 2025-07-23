@@ -23,7 +23,7 @@ import (
 )
 
 // MediaTypeWorkflow is the mediatype for all maru2 workflows
-const MediaTypeWorkflow = "application/vnd.maru2.v1.workflow+yaml"
+const MediaTypeWorkflow = "application/vnd.maru2.workflow.v1+yaml"
 
 // Publish fetches all remote imports in <cwd>/tasks.yaml, stores them in a temp dir, then pushes them to a OCI registry
 func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, entrypoints []string) error {

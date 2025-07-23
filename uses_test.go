@@ -89,6 +89,56 @@ func TestFetchAll(t *testing.T) {
 			wf:   workflowNoRefs,
 		},
 		{
+			name: "with empty uses field",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Run: "echo 'start'"},
+						Step{Uses: ""},
+						Step{Run: "echo 'end'"},
+					},
+				},
+			},
+		},
+		{
+			name: "with uses referring to internal task",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Run: "echo 'start'"},
+						Step{Uses: "another-task"},
+						Step{Run: "echo 'end'"},
+					},
+					"another-task": {
+						Step{Run: "echo 'internal task'"},
+					},
+				},
+			},
+		},
+		{
+			name: "with builtin uses",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Run: "echo 'start'"},
+						Step{Uses: "builtin:foo"},
+						Step{Run: "echo 'end'"},
+					},
+				},
+			},
+		},
+		{
+			name: "with exact duplicate uses strings",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"default": {
+						Step{Uses: server.URL + "/workflow1.yaml"},
+						Step{Uses: server.URL + "/workflow1.yaml"},
+					},
+				},
+			},
+		},
+		{
 			name: "with duplicate references",
 			wf: Workflow{
 				Tasks: TaskMap{
