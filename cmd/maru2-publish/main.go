@@ -110,7 +110,7 @@ func Main() int {
 	_ = root.RegisterFlagCompletionFunc("log-level", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(), log.ErrorLevel.String(), log.FatalLevel.String()}, cobra.ShellCompDirectiveNoFileComp
 	})
-	root.Flags().BoolVar(&plainHTTP, "plain-http", false, "Allow insecure connections to registry without SSL check")
+	root.Flags().BoolVar(&plainHTTP, "plain-http", false, "Force the connections over HTTP instead of HTTPS")
 	root.Flags().BoolVar(&insecureSkipTLS, "insecure-skip-tls-verify", false, "Allow connections to SSL registry without certs")
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
 	_ = root.MarkFlagDirname("directory")
