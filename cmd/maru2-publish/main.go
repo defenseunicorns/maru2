@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/charmbracelet/log"
@@ -17,6 +18,8 @@ import (
 	"github.com/spf13/cobra"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
+	"oras.land/oras-go/v2/registry/remote/credentials"
 	"oras.land/oras-go/v2/registry/remote/retry"
 
 	"github.com/defenseunicorns/maru2"
@@ -35,6 +38,7 @@ func main() {
 func Main() int {
 	var (
 		level           string
+		ver             bool
 		plainHTTP       bool
 		insecureSkipTLS bool
 		dir             string
@@ -42,9 +46,14 @@ func Main() int {
 	)
 
 	root := &cobra.Command{
-		Use:           "maru2-publish",
-		Short:         "Pack a maru2 workflow into an OCI artifact and publish",
-		Args:          cobra.ExactArgs(1),
+		Use:   "maru2-publish",
+		Short: "Pack a maru2 workflow into an OCI artifact and publish",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if ver && len(args) == 0 {
+				return nil
+			}
+			return cobra.ExactArgs(1)(cmd, args)
+		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -60,6 +69,25 @@ func Main() int {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
+
+			if ver && len(args) == 0 {
+				bi, ok := debug.ReadBuildInfo()
+				if !ok {
+					return fmt.Errorf("version information not available")
+				}
+				switch bi.Main.Path {
+				case "github.com/defenseunicorns/maru2":
+					fmt.Fprintln(os.Stdout, bi.Main.Version)
+				default:
+					for _, dep := range bi.Deps {
+						if dep.Path == "github.com/defenseunicorns/maru2" {
+							fmt.Fprintln(os.Stdout, dep.Version)
+							break
+						}
+					}
+				}
+				return nil
+			}
 
 			logger.Warnf("THIS FEATURE IS IN ALPHA EXPECT FREQUENT BREAKING CHANGES")
 
@@ -98,9 +126,20 @@ func Main() int {
 			dst.PlainHTTP = plainHTTP
 			transport := http.DefaultTransport.(*http.Transport).Clone()
 			transport.TLSClientConfig.InsecureSkipVerify = insecureSkipTLS
-			dst.Client = &http.Client{
-				Transport: retry.NewTransport(transport),
+
+			storeOpts := credentials.StoreOptions{}
+			credStore, err := credentials.NewStoreFromDocker(storeOpts)
+			if err != nil {
+				return err
 			}
+
+			client := &auth.Client{
+				Client:     &http.Client{Transport: retry.NewTransport(transport)},
+				Cache:      auth.NewCache(),
+				Credential: credentials.Credential(credStore),
+			}
+			client.SetUserAgent("maru2-publish")
+			dst.Client = client
 
 			return maru2.Publish(ctx, cfg, dst, entrypoints)
 		},
@@ -110,6 +149,7 @@ func Main() int {
 	_ = root.RegisterFlagCompletionFunc("log-level", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(), log.ErrorLevel.String(), log.FatalLevel.String()}, cobra.ShellCompDirectiveNoFileComp
 	})
+	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&plainHTTP, "plain-http", false, "Force the connections over HTTP instead of HTTPS")
 	root.Flags().BoolVar(&insecureSkipTLS, "insecure-skip-tls-verify", false, "Allow connections to SSL registry without certs")
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
