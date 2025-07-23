@@ -101,6 +101,24 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
+			// if we are a sub-command, load the cfg as PersistentPreRun isnt run
+			// when performing tab completions on sub-commands
+			if cmd.Parent() != nil {
+				configDir, err := config.DefaultDirectory()
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				loader := &config.FileSystemConfigLoader{
+					Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+				}
+
+				cfg, err = loader.LoadConfig()
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+			}
+
 			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
@@ -145,21 +163,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					}
 				}
 				return nil
-			}
-
-			if cmpl, ok := os.LookupEnv("MARU2_COMPLETION"); ok && cmpl == "true" && len(args) == 2 && args[0] == "completion" {
-				switch args[1] {
-				case "bash":
-					return cmd.GenBashCompletion(os.Stdout)
-				case "zsh":
-					return cmd.GenZshCompletion(os.Stdout)
-				case "fish":
-					return cmd.GenFishCompletion(os.Stdout, true)
-				case "powershell":
-					return cmd.GenPowerShellCompletionWithDesc(os.Stdout)
-				default:
-					return fmt.Errorf("unsupported shell: %s", args[1])
-				}
 			}
 
 			// fix fish needing "'pkg:...'" for tab completion
@@ -282,8 +285,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().BoolVar(&gc, "gc", false, "Perform garbage collection on the store")
 	root.Flags().BoolVar(&fetchAll, "fetch-all", false, "Fetch all tasks")
 
-	root.CompletionOptions.DisableDefaultCmd = true
-
 	return root
 }
 
@@ -305,7 +306,8 @@ func Main() int {
 	logger.SetStyles(DefaultStyles())
 
 	ctx = log.WithContext(ctx, logger)
-	if cmd, err := cli.ExecuteContextC(ctx); err != nil {
+	cmd, err := cli.ExecuteContextC(ctx)
+	if err != nil {
 		logger.Print("")
 
 		if errors.Is(cmd.Context().Err(), context.DeadlineExceeded) {
@@ -325,13 +327,25 @@ func Main() int {
 		} else {
 			logger.Error(err)
 		}
-		var eErr *exec.ExitError
-		if errors.As(err, &eErr) {
-			if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
-				return status.ExitStatus()
-			}
-		}
-		return 1
 	}
-	return 0
+	return ParseExitCode(err)
+}
+
+// ParseExitCode calculates the exit code from a given error
+//
+// 0 - the error was nil
+// 1 - there was some error
+// n - the underlying error from an exec.Command
+func ParseExitCode(err error) int {
+	if err == nil {
+		return 0
+	}
+
+	var eErr *exec.ExitError
+	if errors.As(err, &eErr) {
+		if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
+			return status.ExitStatus()
+		}
+	}
+	return 1
 }

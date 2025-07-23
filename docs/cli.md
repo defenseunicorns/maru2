@@ -253,29 +253,27 @@ Choose the command for your shell:
 **Bash**:
 
 ```bash
-MARU2_COMPLETION=true maru2 completion bash > ~/.maru2/maru2_completion.bash
+maru2 completion bash > ~/.maru2/maru2_completion.bash
 echo 'source ~/.maru2/maru2_completion.bash' >> ~/.bashrc
 ```
 
 **Zsh**:
 
 ```zsh
-MARU2_COMPLETION=true maru2 completion zsh > ~/.maru2/maru2_completion.zsh
+maru2 completion zsh > ~/.maru2/maru2_completion.zsh
 echo 'source ~/.maru2/maru2_completion.zsh' >> ~/.zshrc
 ```
 
 **Fish**:
 
 ```fish
-MARU2_COMPLETION=true maru2 completion fish > ~/.config/fish/completions/maru2.fish
+maru2 completion fish > ~/.config/fish/completions/maru2.fish
 ```
 
 **PowerShell**:
 
 ```powershell
-$env:MARU2_COMPLETION='true'
 maru2 completion powershell > $PROFILE.CurrentUserAllHosts
-$env:MARU2_COMPLETION=$null
 ```
 
 ### Completion with Remote Workflows
@@ -289,10 +287,6 @@ $ maru2 --from "'pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml'" [t
 # Alternative: use --list to discover available tasks
 $ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
 ```
-
-### How Completions Work
-
-Unlike typical Cobra CLI applications, Maru2 requires the `MARU2_COMPLETION` environment variable to be set to `true` when generating completions. This is because `completion bash|fish|etc...` could be valid task names in a workflow.
 
 ## Additional Options
 

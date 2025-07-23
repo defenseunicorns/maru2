@@ -37,6 +37,8 @@ go install github.com/defenseunicorns/maru2/cmd/maru2@main
 - [Workflow Syntax](docs/syntax.md)
 - [Built-in Tasks](docs/builtins.md)
 
+If you are looking to embed maru2 into another Cobra CLI, take a look at the example in [`cmd/internal`](./cmd/internal/main.go).
+
 ## Schema Validation
 
 Enabling schema validation in VSCode:
