@@ -55,7 +55,8 @@ func main() {
 	if err != nil {
 		// the below is a copy-paste from maru2, as the formatting of
 		// logging maru2's final error is left up to implementation
-		// this is what users will see if they use maru2 as a standalone CLI
+		//
+		// the below is what users will see if they use maru2 as a standalone CLI
 
 		logger.Print("")
 
