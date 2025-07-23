@@ -25,8 +25,9 @@ type With = map[string]any
 
 var shortcuts = sync.Map{}
 
-func RegisterShortcut(short, full string) {
-	shortcuts.Store(short, full)
+// RegisterShortcut registers a key-value pair to be expanded during command templating
+func RegisterShortcut(key, value string) {
+	shortcuts.Store(key, value)
 }
 
 // TemplateWith templates a With map with the given input and previous outputs
@@ -72,17 +73,17 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 
 	logger := log.FromContext(ctx)
 
-	which := func(shortcut string) (string, error) {
-		full, ok := shortcuts.Load(shortcut)
+	which := func(key string) (string, error) {
+		value, ok := shortcuts.Load(key)
 		if !ok {
-			return "", fmt.Errorf("shortcut %q not found", shortcut)
+			return "", fmt.Errorf("shortcut %q not found", key)
 		}
-		f, ok := full.(string)
+		full, ok := value.(string)
 		if !ok {
-			return "", fmt.Errorf("shortcut %q (%T) is not of type string", shortcut, full)
+			return "", fmt.Errorf("shortcut %q (%T) is not of type string", key, value)
 		}
 
-		return f, nil
+		return full, nil
 	}
 
 	if dry {
