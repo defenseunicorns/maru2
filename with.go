@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/charmbracelet/lipgloss"
@@ -21,6 +22,12 @@ import (
 
 // With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
 type With = map[string]any
+
+var shortcuts = sync.Map{}
+
+func RegisterShortcut(short, full string) {
+	shortcuts.Store(short, full)
+}
 
 // TemplateWith templates a With map with the given input and previous outputs
 func TemplateWith(ctx context.Context, input, local With, previousOutputs CommandOutputs, dry bool) (With, error) {
@@ -65,6 +72,19 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 
 	logger := log.FromContext(ctx)
 
+	which := func(shortcut string) (string, error) {
+		full, ok := shortcuts.Load(shortcut)
+		if !ok {
+			return "", fmt.Errorf("shortcut %q not found", shortcut)
+		}
+		f, ok := full.(string)
+		if !ok {
+			return "", fmt.Errorf("shortcut %q (%T) is not of type string", shortcut, full)
+		}
+
+		return f, nil
+	}
+
 	if dry {
 		style := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFBF00")) // amber
 
@@ -91,6 +111,7 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 				logger.Warnf("no output %q from %q", id, stepName)
 				return style.Render(fmt.Sprintf("❯ from %s %s ❮", stepName, id)), nil
 			},
+			"which": which,
 		}
 		tmpl = template.New("dry-run expression evaluator").Funcs(fm)
 	} else {
@@ -114,6 +135,7 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 				}
 				return "", fmt.Errorf("no output %q from step %q", id, stepName)
 			},
+			"which": which,
 		}
 		tmpl = template.New("expression evaluator").Funcs(fm)
 	}
