@@ -101,6 +101,24 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
+			// if we are a sub-command, load the cfg as PersistentPreRun isnt run
+			// when performing tab completions on sub-commands
+			if cmd.Parent() != nil {
+				configDir, err := config.DefaultDirectory()
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+
+				loader := &config.FileSystemConfigLoader{
+					Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
+				}
+
+				cfg, err = loader.LoadConfig()
+				if err != nil {
+					return nil, cobra.ShellCompDirectiveError
+				}
+			}
+
 			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError

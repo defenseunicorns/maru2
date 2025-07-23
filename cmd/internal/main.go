@@ -31,6 +31,8 @@ func main() {
 	}
 
 	cli := maru2cmd.NewRootCmd()
+	cli.Use = "run"
+	cli.Aliases = []string{"maru2", "r"}
 
 	root.AddCommand(cli)
 
