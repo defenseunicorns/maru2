@@ -1,6 +1,6 @@
 # Publishing Workflows
 
-Maru2 provides a command to publish your workflows as OCI artifacts to an OCI-compliant registry. This allows you to version and share your workflows in a standardized way.
+Maru2 provides a command to publish your workflows as OCI artifacts to UDS Registry (or any OCI compliant registry for that matter).
 
 > [!WARNING]
 > The `maru2-publish` command is currently in **ALPHA**. Expect frequent breaking changes.
@@ -13,7 +13,7 @@ At the very minimum, ./syntax.md MUST be updated to showcase the `oci:` uses syn
 
 ## The `maru2-publish` Command
 
-The `maru2-publish` command packs your workflow file(s) and any local `uses:` references into an OCI artifact and pushes it to a registry.
+The `maru2-publish` command packs your workflow file(s) and any `uses:` references into an OCI artifact and pushes it to a registry.
 
 ### Installation
 
@@ -31,7 +31,7 @@ maru2-publish <oci-image-reference> --entrypoint ... --entrypoint ...
 ```
 
 - `--entrypoint`: Relative path(s) to local workflow entrypoints (e.g., `tasks.yaml`).
-- `<oci-image-reference>`: The OCI image reference for your workflow (e.g., `staging.uds.sh/public/my-workflow:latest`).
+- `<oci-image-reference>`: The OCI image reference to publish to (e.g., `staging.uds.sh/public/my-workflow:latest`).
 
 ### Example
 
