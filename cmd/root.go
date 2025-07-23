@@ -147,21 +147,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil
 			}
 
-			if cmpl, ok := os.LookupEnv("MARU2_COMPLETION"); ok && cmpl == "true" && len(args) == 2 && args[0] == "completion" {
-				switch args[1] {
-				case "bash":
-					return cmd.GenBashCompletion(os.Stdout)
-				case "zsh":
-					return cmd.GenZshCompletion(os.Stdout)
-				case "fish":
-					return cmd.GenFishCompletion(os.Stdout, true)
-				case "powershell":
-					return cmd.GenPowerShellCompletionWithDesc(os.Stdout)
-				default:
-					return fmt.Errorf("unsupported shell: %s", args[1])
-				}
-			}
-
 			// fix fish needing "'pkg:...'" for tab completion
 			from = strings.Trim(from, `"`)
 			from = strings.Trim(from, `'`)
@@ -281,8 +266,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	_ = root.MarkFlagDirname("store")
 	root.Flags().BoolVar(&gc, "gc", false, "Perform garbage collection on the store")
 	root.Flags().BoolVar(&fetchAll, "fetch-all", false, "Fetch all tasks")
-
-	root.CompletionOptions.DisableDefaultCmd = true
 
 	return root
 }
