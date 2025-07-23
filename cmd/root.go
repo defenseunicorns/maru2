@@ -206,6 +206,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				var cancel context.CancelFunc
 				ctx, cancel = context.WithTimeout(ctx, timeout)
 				defer cancel()
+				cmd.SetContext(ctx)
 			}
 
 			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
@@ -248,9 +249,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			for _, call := range args {
 				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, dry)
 				if err != nil {
-					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-						return fmt.Errorf("task %q timed out", call)
-					}
 					return err
 				}
 			}
@@ -307,8 +305,13 @@ func Main() int {
 	logger.SetStyles(DefaultStyles())
 
 	ctx = log.WithContext(ctx, logger)
-	if err := cli.ExecuteContext(ctx); err != nil {
+	if cmd, err := cli.ExecuteContextC(ctx); err != nil {
 		logger.Print("")
+
+		if errors.Is(cmd.Context().Err(), context.DeadlineExceeded) {
+			logger.Error("task timed out")
+		}
+
 		var tErr *maru2.TraceError
 		if errors.As(err, &tErr) && len(tErr.Trace) > 0 {
 			trace := tErr.Trace
@@ -322,8 +325,9 @@ func Main() int {
 		} else {
 			logger.Error(err)
 		}
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+		var eErr *exec.ExitError
+		if errors.As(err, &eErr) {
+			if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
 				return status.ExitStatus()
 			}
 		}
