@@ -31,12 +31,14 @@ func main() {
 	}
 
 	cli := maru2cmd.NewRootCmd()
+	// rename maru2 -> run (or w/e you wish to call the command)
 	cli.Use = "run"
 	cli.Aliases = []string{"maru2", "r"}
 
 	root.AddCommand(cli)
 
 	// standard setup for context and logger
+	// customize as you see fit
 	ctx := context.Background()
 
 	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
