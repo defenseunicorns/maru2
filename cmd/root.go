@@ -305,7 +305,8 @@ func Main() int {
 	logger.SetStyles(DefaultStyles())
 
 	ctx = log.WithContext(ctx, logger)
-	if cmd, err := cli.ExecuteContextC(ctx); err != nil {
+	cmd, err := cli.ExecuteContextC(ctx)
+	if err != nil {
 		logger.Print("")
 
 		if errors.Is(cmd.Context().Err(), context.DeadlineExceeded) {
@@ -325,13 +326,25 @@ func Main() int {
 		} else {
 			logger.Error(err)
 		}
-		var eErr *exec.ExitError
-		if errors.As(err, &eErr) {
-			if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
-				return status.ExitStatus()
-			}
-		}
-		return 1
 	}
-	return 0
+	return ParseExitCode(err)
+}
+
+// ParseExitCode calculates the exit code from a given error
+//
+// 0 - the error was nil
+// 1 - there was some error
+// n - the underlying error from an exec.Command
+func ParseExitCode(err error) int {
+	if err == nil {
+		return 0
+	}
+
+	var eErr *exec.ExitError
+	if errors.As(err, &eErr) {
+		if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
+			return status.ExitStatus()
+		}
+	}
+	return 1
 }

@@ -43,7 +43,6 @@ func main() {
 	case "maru2":
 		os.Exit(maru2cmd.Main())
 	default:
-		// internalRoot.Execute()
-		internalRoot.GenBashCompletion(os.Stdout)
+		internalRoot.Execute()
 	}
 }
