@@ -23,10 +23,12 @@ import (
 // With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
 type With = map[string]any
 
+// shortcuts is a concurrent map used to store key-value pairs for the "which" text template function.
+// It allows dynamic registration and lookup of shortcuts that can be expanded in templates via the "which" function.
 var shortcuts = sync.Map{}
 
-// RegisterWhich registers a key-value pair to be expanded during the "which" text template function
-func RegisterWhich(key, value string) {
+// RegisterWhichShortcut registers a key-value pair to be expanded during the "which" text template function
+func RegisterWhichShortcut(key, value string) {
 	shortcuts.Store(key, value)
 }
 
@@ -80,6 +82,7 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 		}
 		full, ok := value.(string)
 		if !ok {
+			// realistically should never happen due to registration being type safe, but better to be safe than panic
 			return "", fmt.Errorf("shortcut %q (%T) is not of type string", key, value)
 		}
 
