@@ -87,6 +87,31 @@ func TestTemplateString(t *testing.T) {
 			str:           "Hello ${{ input",
 			expectedError: "unclosed action",
 		},
+		// "which" function tests
+		{
+			name:     "with which shortcut",
+			str:      "shortcut: ${{ which \"foo\" }}",
+			expected: "shortcut: bar",
+			dryRun:   false,
+		},
+		{
+			name:          "with missing which shortcut",
+			str:           "shortcut: ${{ which \"missing\" }}",
+			expectedError: "shortcut \"missing\" not found",
+			dryRun:        false,
+		},
+		{
+			name:     "dry run - with which shortcut",
+			str:      "shortcut: ${{ which \"foo\" }}",
+			expected: "shortcut: bar",
+			dryRun:   true,
+		},
+		{
+			name:          "dry run - with missing which shortcut",
+			str:           "shortcut: ${{ which \"missing\" }}",
+			expectedError: "shortcut \"missing\" not found",
+			dryRun:        true,
+		},
 		// Dry run tests
 		{
 			name:     "dry run - no template",
@@ -161,6 +186,9 @@ func TestTemplateString(t *testing.T) {
 			dryRun:        true,
 		},
 	}
+
+	// Register a shortcut for "which" tests
+	RegisterWhich("foo", "bar")
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

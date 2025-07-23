@@ -25,8 +25,8 @@ type With = map[string]any
 
 var shortcuts = sync.Map{}
 
-// RegisterShortcut registers a key-value pair to be expanded during command templating
-func RegisterShortcut(key, value string) {
+// RegisterWhich registers a key-value pair to be expanded during the "which" text template function
+func RegisterWhich(key, value string) {
 	shortcuts.Store(key, value)
 }
 
