@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"slices"
 	"strings"
 	"syscall"
@@ -51,6 +52,17 @@ func main() {
 	logger.SetStyles(maru2cmd.DefaultStyles())
 	// end context and logger setup
 
+	// register uds, zarf, kubectl and other shortcuts
+	executablePath, err := getFinalExecutablePath()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	maru2.RegisterWhichShortcut("uds", executablePath)
+	maru2.RegisterWhichShortcut("zarf", executablePath+" zarf")
+	maru2.RegisterWhichShortcut("kubectl", executablePath+" zarf tools kubectl")
+	// end registration
+
 	// run the root, handle the errors
 	// ExecuteContextC is the most preferred method
 	cmd, err := root.ExecuteContextC(ctx)
@@ -84,4 +96,17 @@ func main() {
 	// calculate the exit code from the CLI execution
 	code := maru2cmd.ParseExitCode(err)
 	os.Exit(code)
+}
+
+// getFinalExecutablePath returns the absolute path to the current executable, following any symlinks along the way.
+//
+// copied from https://github.com/defenseunicorns/pkg/blob/main/exec/utils.go while I figure out if I want to use this lib
+func getFinalExecutablePath() (string, error) {
+	binaryPath, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+
+	// In case the binary is symlinked somewhere else, get the final destination
+	return filepath.EvalSymlinks(binaryPath)
 }
