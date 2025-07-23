@@ -6,6 +6,7 @@ package uses
 import (
 	"context"
 	"io"
+	"iter"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,6 +31,9 @@ func TestFetcherService(t *testing.T) {
 				return true, nil
 			},
 			storeFunc: func(_ io.Reader, _ *url.URL) error {
+				return nil
+			},
+			listFunc: func() iter.Seq2[string, Descriptor] {
 				return nil
 			},
 		}

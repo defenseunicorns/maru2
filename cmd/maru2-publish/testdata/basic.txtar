@@ -1,0 +1,20 @@
+exec maru2-publish --help
+
+exec maru2-publish completion bash
+exec maru2-publish completion zsh
+exec maru2-publish completion fish
+exec maru2-publish completion powershell
+
+exec maru2-publish __complete --log-level status
+cmp stdout stdout-log-level.txt
+cmp stderr good-stderr.txt
+
+-- good-stderr.txt --
+Completion ended with directive: ShellCompDirectiveNoFileComp
+-- stdout-log-level.txt --
+debug
+info
+warn
+error
+fatal
+:4

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/url"
 	"strings"
 	"testing"
@@ -37,6 +38,7 @@ type mockStorage struct {
 	fetchFunc   func(ctx context.Context, uri *url.URL) (io.ReadCloser, error)
 	existsFunc  func(uri *url.URL) (bool, error)
 	storeFunc   func(r io.Reader, uri *url.URL) error
+	listFunc    func() iter.Seq2[string, Descriptor]
 	fetchCalls  int
 	existsCalls int
 	storeCalls  int
@@ -64,6 +66,13 @@ func (m *mockStorage) Store(r io.Reader, uri *url.URL) error {
 		return fmt.Errorf("storeFunc not implemented")
 	}
 	return m.storeFunc(r, uri)
+}
+
+func (m *mockStorage) List() iter.Seq2[string, Descriptor] {
+	if m.listFunc == nil {
+		return nil
+	}
+	return m.listFunc()
 }
 
 func TestStoreFetcher(t *testing.T) {

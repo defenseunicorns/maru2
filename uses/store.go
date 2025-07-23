@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/url"
 	"os"
 	"regexp"
@@ -41,6 +42,7 @@ type Storage interface {
 	Fetcher
 	Exists(uri *url.URL) (bool, error)
 	Store(r io.Reader, uri *url.URL) error
+	List() iter.Seq2[string, Descriptor]
 }
 
 // LocalStore is a cache for storing and retrieving cached remote workflows from a filesystem.
@@ -225,6 +227,20 @@ func (s *LocalStore) Exists(uri *url.URL) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// List returns a Go 1.23+ iterator to loop over all of the stored workflows
+//
+// ok but does this really need to be an iterator, no
+// ill prob move it to a regular map access w/ maps.Copy, but this was still fun
+func (s *LocalStore) List() iter.Seq2[string, Descriptor] {
+	return func(yield func(string, Descriptor) bool) {
+		for k, v := range s.index {
+			if !yield(k, v) {
+				return
+			}
+		}
+	}
 }
 
 // GC performs garbage collection on the store.

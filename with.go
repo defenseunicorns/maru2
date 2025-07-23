@@ -20,10 +20,6 @@ import (
 )
 
 // With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
-//
-// Each key will be mapped to an equivalent environment variable
-// when the command is run. eg. `with: {foo: bar}` will be passed
-// as `foo=bar` to the command.
 type With = map[string]any
 
 // TemplateWith templates a With map with the given input and previous outputs
@@ -62,7 +58,7 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 	var tmpl *template.Template
 
 	inputKeys := make([]string, 0, len(input))
-	for k := range maps.Keys(input) {
+	for k := range input {
 		inputKeys = append(inputKeys, k)
 	}
 	slices.Sort(inputKeys)

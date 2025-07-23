@@ -31,5 +31,6 @@ func TestE2E(t *testing.T) {
 			return nil
 		},
 		RequireUniqueNames: true,
+		// UpdateScripts:      true,
 	})
 }

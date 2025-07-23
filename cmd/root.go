@@ -19,7 +19,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -134,7 +133,17 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				if !ok {
 					return fmt.Errorf("version information not available")
 				}
-				fmt.Fprintln(os.Stdout, bi.Main.Version)
+				switch bi.Main.Path {
+				case "github.com/defenseunicorns/maru2":
+					fmt.Fprintln(os.Stdout, bi.Main.Version)
+				default:
+					for _, dep := range bi.Deps {
+						if dep.Path == "github.com/defenseunicorns/maru2" {
+							fmt.Fprintln(os.Stdout, dep.Version)
+							break
+						}
+					}
+				}
 				return nil
 			}
 
@@ -197,6 +206,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				var cancel context.CancelFunc
 				ctx, cancel = context.WithTimeout(ctx, timeout)
 				defer cancel()
+				cmd.SetContext(ctx)
 			}
 
 			resolved, err := uses.ResolveRelative(nil, from, cfg.Aliases)
@@ -239,9 +249,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			for _, call := range args {
 				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, dry)
 				if err != nil {
-					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-						return fmt.Errorf("task %q timed out", call)
-					}
 					return err
 				}
 			}
@@ -295,35 +302,16 @@ func Main() int {
 		ReportTimestamp: false,
 	})
 
-	styles := log.DefaultStyles()
-
-	// https://github.com/charmbracelet/vhs/blob/main/themes.json
-	styles.Levels[log.DebugLevel] = styles.Levels[log.DebugLevel].Foreground(lipgloss.AdaptiveColor{
-		Light: "#2e7de9", // tokyonight-day blue
-		Dark:  "#7aa2f7", // tokyonight blue
-	})
-	styles.Levels[log.InfoLevel] = styles.Levels[log.InfoLevel].Foreground(lipgloss.AdaptiveColor{
-		Light: "#007197", // tokyonight-day cyan
-		Dark:  "#7dcfff", // tokyonight cyan
-	})
-	styles.Levels[log.WarnLevel] = styles.Levels[log.WarnLevel].Foreground(lipgloss.AdaptiveColor{
-		Light: "#8c6c3e", // tokyonight-day amber/yellow
-		Dark:  "#e0af68", // tokyonight amber/yellow
-	})
-	styles.Levels[log.ErrorLevel] = styles.Levels[log.ErrorLevel].Foreground(lipgloss.AdaptiveColor{
-		Light: "#f52a65", // tokyonight-day red
-		Dark:  "#f7768e", // tokyonight red
-	})
-	styles.Levels[log.FatalLevel] = styles.Levels[log.FatalLevel].Foreground(lipgloss.AdaptiveColor{
-		Light: "#9854f1", // tokyonight-day magenta (deep red alternative)
-		Dark:  "#bb9af7", // tokyonight magenta (deep red alternative)
-	})
-
-	logger.SetStyles(styles)
+	logger.SetStyles(DefaultStyles())
 
 	ctx = log.WithContext(ctx, logger)
-	if err := cli.ExecuteContext(ctx); err != nil {
+	if cmd, err := cli.ExecuteContextC(ctx); err != nil {
 		logger.Print("")
+
+		if errors.Is(cmd.Context().Err(), context.DeadlineExceeded) {
+			logger.Error("task timed out")
+		}
+
 		var tErr *maru2.TraceError
 		if errors.As(err, &tErr) && len(tErr.Trace) > 0 {
 			trace := tErr.Trace
@@ -337,8 +325,9 @@ func Main() int {
 		} else {
 			logger.Error(err)
 		}
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+		var eErr *exec.ExitError
+		if errors.As(err, &eErr) {
+			if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
 				return status.ExitStatus()
 			}
 		}

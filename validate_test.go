@@ -340,7 +340,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].uses \"invalid\" is not one of [file, http, https, pkg, builtin]",
+			expectedError: ".task[0].uses \"invalid\" is not one of [file, http, https, pkg, oci, builtin]",
 		},
 		{
 			name: "uses with valid task reference",
@@ -366,18 +366,6 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-		},
-		{
-			name: "uses with invalid scheme",
-			wf: Workflow{
-				Inputs: InputMap{},
-				Tasks: TaskMap{
-					"task": Task{Step{
-						Uses: "invalid://example.com",
-					}},
-				},
-			},
-			expectedError: ".task[0].uses \"invalid\" is not one of [file, http, https, pkg, builtin]",
 		},
 		{
 			name: "valid workflow",
