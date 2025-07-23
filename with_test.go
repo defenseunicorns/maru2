@@ -189,6 +189,9 @@ func TestTemplateString(t *testing.T) {
 
 	// Register a shortcut for "which" tests
 	RegisterWhichShortcut("foo", "bar")
+	t.Cleanup(func() {
+		shortcuts.Clear()
+	})
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
