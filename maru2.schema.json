@@ -440,6 +440,10 @@
           "type": "string",
           "description": "Relative directory to run the step in"
         },
+        "shell": {
+          "type": "string",
+          "description": "Set a custom shell to execute run with"
+        },
         "with": {
           "type": "object"
         }
