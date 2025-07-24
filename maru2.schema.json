@@ -442,7 +442,13 @@
         },
         "shell": {
           "type": "string",
-          "description": "Set a custom shell to execute run with"
+          "enum": [
+            "sh",
+            "bash",
+            "pwsh",
+            "powershell"
+          ],
+          "description": "Set the shell to execute run with (default: sh)\n\nsh -e -u -c {}\nbash -e -u -o pipefail -c {}\npwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }\npowershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"
         },
         "with": {
           "type": "object"

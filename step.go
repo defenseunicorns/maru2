@@ -32,7 +32,7 @@ type Step struct {
 	If If `json:"if,omitempty"`
 	// Dir is the directory to run the step in
 	Dir string `json:"dir,omitempty"`
-	// Set a custom shell to execute run with
+	// Set the shell to execute run with (default: sh)
 	Shell string `json:"shell,omitempty"`
 }
 
@@ -83,8 +83,14 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditiona
 		Description: "Relative directory to run the step in",
 	})
 	props.Set("shell", &jsonschema.Schema{
-		Type:        "string",
-		Description: "Set a custom shell to execute run with",
+		Type: "string",
+		Description: `Set the shell to execute run with (default: sh)
+
+sh -e -u -c {}
+bash -e -u -o pipefail -c {}
+pwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
+powershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`,
+		Enum: []any{"sh", "bash", "pwsh", "powershell"},
 	})
 
 	runProps := jsonschema.NewProperties()
