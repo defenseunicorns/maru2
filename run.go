@@ -95,15 +95,17 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 func handleRunStep(ctx context.Context, step Step, withDefaults With,
 	outputs CommandOutputs, dry bool) (map[string]any, error) {
 
+	logger := log.FromContext(ctx)
+
 	script, err := TemplateString(ctx, withDefaults, outputs, step.Run, dry)
 	if err != nil {
 		if dry {
-			printScript(log.FromContext(ctx), script)
+			printScript(logger, script)
 		}
 		return nil, err
 	}
 
-	printScript(log.FromContext(ctx), script)
+	printScript(logger, script)
 	if dry {
 		return nil, nil
 	}
@@ -127,6 +129,7 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 		shell = step.Shell
 		args = []string{"-e", "-u", "-o", "pipefail", "-c", script}
 	case "pwsh", "powershell":
+		logger.Warn("support for this shell is currently untested and will potentially be removed in future versions", "shell", step.Shell)
 		shell = step.Shell
 		args = []string{"-Command", "$ErrorActionPreference = 'Stop';", script, "; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"}
 	}
