@@ -119,7 +119,19 @@ func handleRunStep(ctx context.Context, step Step, withDefaults With,
 
 	env := prepareEnvironment(withDefaults, outFile.Name())
 
-	cmd := exec.CommandContext(ctx, "sh", "-e", "-u", "-c", script)
+	shell := "sh"
+	args := []string{"-e", "-u", "-c", script}
+
+	switch step.Shell {
+	case "bash":
+		shell = step.Shell
+		args = []string{"-e", "-u", "-o", "pipefail", "-c", script}
+	case "pwsh", "powershell":
+		shell = step.Shell
+		args = []string{"-Command", "$ErrorActionPreference = 'Stop';", script, "; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"}
+	}
+
+	cmd := exec.CommandContext(ctx, shell, args...)
 	cmd.Env = env
 	cmd.Dir = filepath.Join(CWDFromContext(ctx), step.Dir)
 	cmd.Stdout = os.Stdout
