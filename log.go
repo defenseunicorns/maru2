@@ -24,12 +24,7 @@ func printScript(logger *log.Logger, lang, script string) {
 		return
 	}
 
-	switch lang {
-	case "pwsh", "powershell":
-		lang = "powershell"
-	case "":
-		fallthrough
-	default:
+	if lang == "" {
 		lang = "shell"
 	}
 
