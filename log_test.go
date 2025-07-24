@@ -68,14 +68,10 @@ func TestPrintScript(t *testing.T) {
 			color:    false,
 		},
 		{
-			name:   "multiline",
-			script: "echo hello\necho world\n\necho !",
-			expected: `$ echo hello
-$ echo world
-$ 
-$ echo !
-`,
-			color: false,
+			name:     "multiline",
+			script:   "echo hello\necho world\n\necho !",
+			expected: "$ echo hello\n$ echo world\n$ \n$ echo !\n",
+			color:    false,
 		},
 	}
 
@@ -85,7 +81,7 @@ $ echo !
 				t.Setenv("NO_COLOR", "true")
 			}
 			var buf strings.Builder
-			printScript(log.New(&buf), tc.script)
+			printScript(log.New(&buf), "", tc.script)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
@@ -98,7 +94,7 @@ $ echo !
 	lexers.Register(&errLexer{name: "shell"}) // overrides shell lexer
 
 	var buf strings.Builder
-	printScript(log.New(&buf), "echo hello")
+	printScript(log.New(&buf), "", "echo hello")
 	assert.Equal(t, "$ echo hello\n", buf.String())
 }
 

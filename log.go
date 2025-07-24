@@ -13,7 +13,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-func printScript(logger *log.Logger, script string) {
+func printScript(logger *log.Logger, lang, script string) {
 	script = strings.TrimSpace(script)
 	prefix := "$"
 
@@ -24,12 +24,21 @@ func printScript(logger *log.Logger, script string) {
 		return
 	}
 
+	switch lang {
+	case "pwsh", "powershell":
+		lang = "powershell"
+	case "":
+		fallthrough
+	default:
+		lang = "shell"
+	}
+
 	var buf strings.Builder
 	style := "tokyonight-day"
 	if lipgloss.HasDarkBackground() {
 		style = "tokyonight-moon"
 	}
-	if err := quick.Highlight(&buf, script, "shell", "terminal256", style); err != nil {
+	if err := quick.Highlight(&buf, script, lang, "terminal256", style); err != nil {
 		logger.Debugf("failed to highlight: %v", err)
 		for line := range strings.SplitSeq(script, "\n") {
 			logger.Printf("%s %s", prefix, line)
