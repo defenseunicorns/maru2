@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/charmbracelet/lipgloss"
@@ -21,6 +22,15 @@ import (
 
 // With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
 type With = map[string]any
+
+// shortcuts is a concurrent map used to store key-value pairs for the "which" text template function.
+// It allows dynamic registration and lookup of shortcuts that can be expanded in templates via the "which" function.
+var shortcuts = sync.Map{}
+
+// RegisterWhichShortcut registers a key-value pair to be expanded during the "which" text template function
+func RegisterWhichShortcut(key, value string) {
+	shortcuts.Store(key, value)
+}
 
 // TemplateWith templates a With map with the given input and previous outputs
 func TemplateWith(ctx context.Context, input, local With, previousOutputs CommandOutputs, dry bool) (With, error) {
@@ -65,6 +75,20 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 
 	logger := log.FromContext(ctx)
 
+	which := func(key string) (string, error) {
+		value, ok := shortcuts.Load(key)
+		if !ok {
+			return "", fmt.Errorf("shortcut %q not found", key)
+		}
+		full, ok := value.(string)
+		if !ok {
+			// realistically should never happen due to registration being type safe, but better to be safe than panic
+			return "", fmt.Errorf("shortcut %q (%T) is not of type string", key, value)
+		}
+
+		return full, nil
+	}
+
 	if dry {
 		style := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFBF00")) // amber
 
@@ -91,6 +115,7 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 				logger.Warnf("no output %q from %q", id, stepName)
 				return style.Render(fmt.Sprintf("❯ from %s %s ❮", stepName, id)), nil
 			},
+			"which": which,
 		}
 		tmpl = template.New("dry-run expression evaluator").Funcs(fm)
 	} else {
@@ -114,6 +139,7 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 				}
 				return "", fmt.Errorf("no output %q from step %q", id, stepName)
 			},
+			"which": which,
 		}
 		tmpl = template.New("expression evaluator").Funcs(fm)
 	}

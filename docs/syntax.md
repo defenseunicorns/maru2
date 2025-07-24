@@ -148,6 +148,9 @@ On top of the builtin behavior, Maru2 provides a few additional helpers:
 - `${{ input "<name>" }}`: calling an input
   - If the task is top-level (called via CLI), `with` values are received from the `--with` flag.
   - If the task is called from another task, `with` values are passed from the calling step.
+- `${{ which "<key>" }}`: expands `key` to a registered executable (registrations are configured via Maru2 wrappers)
+  - There are no `which` shortcuts configured for Maru2, these are left up to wrapper implementations.
+  - ex: `${{ which "uds" }} --version` when Maru2 is run as: `uds run foo ...` renders as `/absolute/path/to/uds --version`
 - `OS`, `ARCH`, `PLATFORM`: the current OS, architecture, or platform
 
 ```yaml {filename="tasks.yaml"}
