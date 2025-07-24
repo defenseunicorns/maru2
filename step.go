@@ -84,7 +84,7 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditiona
 	})
 	props.Set("shell", &jsonschema.Schema{
 		Type: "string",
-		Description: `Set the shell to execute run with (default: sh)
+		Description: `Set the shell to execute (default: sh)
 
 sh -e -u -c {}
 bash -e -u -o pipefail -c {}
