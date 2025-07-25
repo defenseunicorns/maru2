@@ -281,6 +281,34 @@ func TestHandleRunStep(t *testing.T) {
 			expectedLog:  "$ echo hello world\n",
 		},
 		{
+			name: "bash array works",
+			step: Step{
+				Run:   `arr=(a b c); echo "${arr[1]}"`,
+				Shell: "bash",
+			},
+			withDefaults: With{},
+			expectedLog:  "$ arr=(a b c); echo \"${arr[1]}\"\n",
+		},
+		{
+			name: "[[ ... ]] works in bash",
+			step: Step{
+				Run:   `if [[ "foo" == "foo" ]]; then echo "match"; fi`,
+				Shell: "bash",
+			},
+			withDefaults: With{},
+			expectedLog:  "$ if [[ \"foo\" == \"foo\" ]]; then echo \"match\"; fi\n",
+		},
+		{
+			name: "unsupported shell",
+			step: Step{
+				Run:   "echo foo",
+				Shell: "fish",
+			},
+			withDefaults:  With{},
+			expectedLog:   "$ echo foo\n",
+			expectedError: "unsupported shell: fish",
+		},
+		{
 			name: "dry run",
 			step: Step{
 				Run: "echo hello",

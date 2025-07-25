@@ -82,6 +82,45 @@ Note that the same naming rules apply to step IDs. This consistency makes it eas
 
 Both can be used interchangeably within a task, and interoperate cleanly with `with`.
 
+### Selecting the Shell for `run` Steps
+
+By default, Maru2 runs shell commands using `sh`. You can specify a different shell for a step using the `shell` field. Supported shells are:
+
+- `sh` (default)
+- `bash`
+- `pwsh`
+- `powershell`
+
+Example:
+
+```yaml
+tasks:
+  build:
+    # Run this step only on Linux
+    - run: echo "Hello from sh on Linux"
+      shell: sh
+      if: os == "linux"
+
+    # Run this step only on macOS
+    - run: echo "Hello from bash on macOS"
+      shell: bash
+      if: os == "darwin"
+
+    # Run this step only on Windows
+    - run: Write-Host "Hello from PowerShell on Windows"
+      shell: powershell
+      if: os == "windows"
+```
+
+The shell field changes how the command is executed:
+
+- `sh`: `sh -e -u -c {script}`
+- `bash`: `bash -e -u -o pipefail -c {script}`
+- `pwsh`: `pwsh -Command $ErrorActionPreference = 'Stop'; {script}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`
+- `powershell`: `powershell -Command $ErrorActionPreference = 'Stop'; {script}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`
+
+> **Note:** Support for `pwsh` and `powershell` is experimental and may change in future versions.
+
 ## Working directory with `dir`
 
 You can specify a working directory for a step using the `dir` field. This applies to both `run` and `uses` steps.

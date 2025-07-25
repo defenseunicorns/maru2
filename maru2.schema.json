@@ -440,6 +440,16 @@
           "type": "string",
           "description": "Relative directory to run the step in"
         },
+        "shell": {
+          "type": "string",
+          "enum": [
+            "sh",
+            "bash",
+            "pwsh",
+            "powershell"
+          ],
+          "description": "Set the shell to execute (default: sh)\n\nsh -e -u -c {}\nbash -e -u -o pipefail -c {}\npwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }\npowershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"
+        },
         "with": {
           "type": "object"
         }
