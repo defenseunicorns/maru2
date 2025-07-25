@@ -299,6 +299,16 @@ func TestHandleRunStep(t *testing.T) {
 			expectedLog:  "$ if [[ \"foo\" == \"foo\" ]]; then echo \"match\"; fi\n",
 		},
 		{
+			name: "unsupported shell",
+			step: Step{
+				Run:   "echo foo",
+				Shell: "fish",
+			},
+			withDefaults:  With{},
+			expectedLog:   "$ echo foo\n",
+			expectedError: "unsupported shell: fish",
+		},
+		{
 			name: "dry run",
 			step: Step{
 				Run: "echo hello",
