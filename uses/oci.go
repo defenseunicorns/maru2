@@ -40,11 +40,12 @@ func NewOCIClient(baseClient *http.Client, insecureSkipTLSVerify, plainHTTP bool
 
 	if baseClient.Transport != nil {
 		if transport, ok := baseClient.Transport.(*http.Transport); ok {
-			if transport.TLSClientConfig == nil {
-				transport.TLSClientConfig = &tls.Config{}
+			clone := transport.Clone()
+			if clone.TLSClientConfig == nil {
+				clone.TLSClientConfig = &tls.Config{}
 			}
-			transport.TLSClientConfig.InsecureSkipVerify = insecureSkipTLSVerify
-			httpClient.Transport = transport
+			clone.TLSClientConfig.InsecureSkipVerify = insecureSkipTLSVerify
+			httpClient.Transport = clone
 		}
 	} else {
 		transport := http.DefaultTransport.(*http.Transport).Clone()
