@@ -78,7 +78,7 @@ tasks:
 			Client: server.Client(),
 		}
 
-		err = maru2.Publish(ctx, &config.Config{}, dst, []string{uses.DefaultFileName})
+		err = maru2.Publish(ctx, dst, []string{uses.DefaultFileName}, nil)
 		require.NoError(t, err)
 	}
 

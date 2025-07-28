@@ -26,7 +26,7 @@ import (
 const MediaTypeWorkflow = "application/vnd.maru2.workflow.v1+yaml"
 
 // Publish fetches all remote imports in <cwd>/tasks.yaml, stores them in a temp dir, then pushes them to a OCI registry
-func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, entrypoints []string) error {
+func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string, aliases map[string]config.Alias) error {
 	logger := log.FromContext(ctx)
 
 	if len(entrypoints) == 0 {
@@ -44,7 +44,6 @@ func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, en
 	}
 
 	svc, err := uses.NewFetcherService(
-		uses.WithAliases(cfg.Aliases),
 		uses.WithStorage(store),
 		uses.WithFetchPolicy(config.FetchPolicyAlways),
 	)
@@ -56,7 +55,7 @@ func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, en
 
 	fs := afero.NewOsFs()
 	for _, point := range entrypoints {
-		src, err := uses.ResolveRelative(nil, point, cfg.Aliases)
+		src, err := uses.ResolveRelative(nil, point, aliases)
 		if err != nil {
 			return err
 		}

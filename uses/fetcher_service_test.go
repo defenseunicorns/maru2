@@ -54,8 +54,6 @@ func TestFetcherService(t *testing.T) {
 			uri:          "https://example.com",
 			expectedType: &HTTPClient{},
 			verifyService: func(t *testing.T, s *FetcherService) {
-				assert.NotNil(t, s.PkgAliases())
-				assert.Empty(t, s.PkgAliases())
 				assert.NotNil(t, s.client)
 				assert.NotNil(t, s.fsys)
 				assert.NotNil(t, s.fetcherCache)
@@ -87,16 +85,6 @@ func TestFetcherService(t *testing.T) {
 				assert.IsType(t, &HTTPClient{}, f)
 				assert.Equal(t, 10*time.Second, f.(*HTTPClient).client.Timeout)
 			},
-		},
-		{
-			name: "new service with aliases",
-			opts: []FetcherServiceOption{
-				WithAliases(map[string]config.Alias{
-					"test": {Type: "github", Base: "https://example.com"},
-				}),
-			},
-			uri:         "pkg:test/defenseunicorns/maru2",
-			expectedErr: "unsupported package type: \"test\"", // TODO: really gotta figure out when aliases should be applied
 		},
 		{
 			name:         "get http fetcher",

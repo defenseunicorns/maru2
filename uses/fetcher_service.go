@@ -5,7 +5,6 @@ package uses
 
 import (
 	"fmt"
-	"maps"
 	"net/http"
 	"net/url"
 	"sync"
@@ -18,7 +17,6 @@ import (
 
 // FetcherService creates and manages fetchers
 type FetcherService struct {
-	aliases      map[string]config.Alias
 	client       *http.Client
 	fsys         afero.Fs
 	fetcherCache map[string]Fetcher
@@ -29,13 +27,6 @@ type FetcherService struct {
 
 // FetcherServiceOption is a function that configures a FetcherService
 type FetcherServiceOption func(*FetcherService)
-
-// WithAliases sets the aliases to be used by the fetcher service
-func WithAliases(aliases map[string]config.Alias) FetcherServiceOption {
-	return func(s *FetcherService) {
-		s.aliases = aliases
-	}
-}
 
 // WithFS sets the filesystem to be used by the fetcher service
 func WithFS(fs afero.Fs) FetcherServiceOption {
@@ -68,7 +59,6 @@ func WithFetchPolicy(policy config.FetchPolicy) FetcherServiceOption {
 // NewFetcherService creates a new FetcherService with custom resolver and filesystem
 func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	svc := &FetcherService{
-		aliases:      make(map[string]config.Alias),
 		fetcherCache: make(map[string]Fetcher),
 		policy:       config.DefaultFetchPolicy,
 	}
@@ -95,11 +85,6 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	}
 
 	return svc, nil
-}
-
-// PkgAliases returns the aliases used by the fetcher service
-func (s *FetcherService) PkgAliases() map[string]config.Alias {
-	return maps.Clone(s.aliases)
 }
 
 // GetFetcher returns a fetcher for the given URL
