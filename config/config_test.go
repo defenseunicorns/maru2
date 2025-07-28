@@ -10,11 +10,12 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/uses"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestFileSystemConfigLoader(t *testing.T) {

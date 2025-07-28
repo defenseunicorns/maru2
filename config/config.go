@@ -13,11 +13,12 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/defenseunicorns/maru2/uses"
 	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
 	"github.com/spf13/afero"
 	"github.com/xeipuuv/gojsonschema"
+
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 // DefaultFileName is the default file name for the config file
