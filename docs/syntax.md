@@ -259,10 +259,19 @@ maru2 echo --with message="Hello, World!"
 
 ## Run a task from a remote file
 
-> [!IMPORTANT]
-> `uses` syntax leverages the [package-url spec](https://github.com/package-url/purl-spec)
+If a `uses` reference is not within the workflow, nor a `file:` reference, it is parsed as a URL, then fetched based upon the URL protocol scheme. If no task is specifed, the `task` query parameter is set to `default`.
 
-If a `uses` reference is not within the workflow, nor a `file:` reference, it is parsed as a URL, then fetched based upon the URL protocol scheme.
+- `pkg:`: leverages the [package-url spec](https://github.com/package-url/purl-spec) to create authenticated Go clients for GitHub / GitLab. Has access to [aliases](package-url-aliases).
+- `http:/https:`: leverages standard HTTP GET requests for raw content.
+- `oci:`: leverages ORAS and the ALPHA [`maru2-publish`](./publish.md) CLI to fetch. While this feature is currently in ALPHA, the following usage samples for other protocol schemes will generally apply.
+
+examples:
+
+```yaml
+pkg:github/defenseunicorns/maru2@main?task=echo
+https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
+oci:staging.uds.sh/public/my-workflow:latest
+```
 
 ### Package URL Aliases
 
