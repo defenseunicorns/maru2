@@ -4,12 +4,15 @@
 package uses
 
 import (
+	"encoding/json"
+	"io"
+	"os"
 	"testing"
 
+	"github.com/invopop/jsonschema"
 	"github.com/package-url/packageurl-go"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/defenseunicorns/maru2/config"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigBasedResolver(t *testing.T) {
@@ -18,7 +21,7 @@ func TestConfigBasedResolver(t *testing.T) {
 		name            string
 		inputType       string
 		inputQualifiers map[string]string
-		aliasConfig     *config.Config
+		aliases         map[string]Alias
 		wantType        string
 		wantQualifiers  map[string]string
 		wantResolved    bool
@@ -27,22 +30,18 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "no alias",
 			inputType:       packageurl.TypeGithub,
 			inputQualifiers: map[string]string{},
-			aliasConfig: &config.Config{
-				Aliases: map[string]config.Alias{},
-			},
-			wantType:       packageurl.TypeGithub,
-			wantQualifiers: map[string]string{},
-			wantResolved:   false,
+			aliases:         map[string]Alias{},
+			wantType:        packageurl.TypeGithub,
+			wantQualifiers:  map[string]string{},
+			wantResolved:    false,
 		},
 		{
 			name:            "simple alias",
 			inputType:       "custom",
 			inputQualifiers: map[string]string{},
-			aliasConfig: &config.Config{
-				Aliases: map[string]config.Alias{
-					"custom": {
-						Type: packageurl.TypeGithub,
-					},
+			aliases: map[string]Alias{
+				"custom": {
+					Type: packageurl.TypeGithub,
 				},
 			},
 			wantType:       packageurl.TypeGithub,
@@ -53,12 +52,10 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "alias with base",
 			inputType:       "gl",
 			inputQualifiers: map[string]string{},
-			aliasConfig: &config.Config{
-				Aliases: map[string]config.Alias{
-					"gl": {
-						Type: packageurl.TypeGitlab,
-						Base: "https://gitlab.example.com",
-					},
+			aliases: map[string]Alias{
+				"gl": {
+					Type: packageurl.TypeGitlab,
+					Base: "https://gitlab.example.com",
 				},
 			},
 			wantType:       packageurl.TypeGitlab,
@@ -69,12 +66,10 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "alias with overridden base",
 			inputType:       "gl",
 			inputQualifiers: map[string]string{QualifierBaseURL: "https://my-gitlab.com"},
-			aliasConfig: &config.Config{
-				Aliases: map[string]config.Alias{
-					"gl": {
-						Type: packageurl.TypeGitlab,
-						Base: "https://gitlab.example.com",
-					},
+			aliases: map[string]Alias{
+				"gl": {
+					Type: packageurl.TypeGitlab,
+					Base: "https://gitlab.example.com",
 				},
 			},
 			wantType:       packageurl.TypeGitlab,
@@ -85,12 +80,10 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "alias with token from env",
 			inputType:       "another",
 			inputQualifiers: map[string]string{},
-			aliasConfig: &config.Config{
-				Aliases: map[string]config.Alias{
-					"another": {
-						Type:         packageurl.TypeGithub,
-						TokenFromEnv: "GITHUB2_TOKEN",
-					},
+			aliases: map[string]Alias{
+				"another": {
+					Type:         packageurl.TypeGithub,
+					TokenFromEnv: "GITHUB2_TOKEN",
 				},
 			},
 			wantType:       packageurl.TypeGithub,
@@ -112,7 +105,7 @@ func TestConfigBasedResolver(t *testing.T) {
 				Subpath:    "path/to/file.yaml",
 			}
 
-			resolvedPURL, isResolved := ResolveAlias(inputPURL, tt.aliasConfig.Aliases)
+			resolvedPURL, isResolved := ResolveAlias(inputPURL, tt.aliases)
 
 			assert.Equal(t, tt.wantResolved, isResolved)
 			assert.Equal(t, tt.wantType, resolvedPURL.Type)
@@ -126,4 +119,30 @@ func TestConfigBasedResolver(t *testing.T) {
 			assert.Equal(t, inputPURL.Subpath, resolvedPURL.Subpath)
 		})
 	}
+}
+
+func TestAliasSchema(t *testing.T) {
+	t.Parallel()
+	f, err := os.Open("../maru2.schema.json")
+	require.NoError(t, err)
+	defer f.Close()
+
+	data, err := io.ReadAll(f)
+	require.NoError(t, err)
+
+	var schema map[string]any
+	require.NoError(t, json.Unmarshal(data, &schema))
+
+	curr := schema["$defs"].(map[string]any)["Alias"]
+	b, err := json.Marshal(curr)
+	require.NoError(t, err)
+
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	aliasSchema := reflector.Reflect(&Alias{})
+	aliasSchema.Version = ""
+	aliasSchema.ID = ""
+	b2, err := json.Marshal(aliasSchema)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(b), string(b2))
 }

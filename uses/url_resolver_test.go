@@ -10,8 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 func TestResolveURL(t *testing.T) {
@@ -19,7 +17,7 @@ func TestResolveURL(t *testing.T) {
 		name        string
 		prev        string
 		uri         string
-		aliases     map[string]config.Alias
+		aliases     map[string]Alias
 		next        string
 		expectedErr string
 	}{
@@ -253,7 +251,7 @@ func TestResolveURL(t *testing.T) {
 			name: "file -> pkg with alias resolution",
 			prev: "file:dir/foo.yaml",
 			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
-			aliases: map[string]config.Alias{
+			aliases: map[string]Alias{
 				"github": {
 					Type: "github",
 					Base: "https://github.com/",
@@ -265,7 +263,7 @@ func TestResolveURL(t *testing.T) {
 			name: "pkg -> file with alias resolution",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:bar.yaml",
-			aliases: map[string]config.Alias{
+			aliases: map[string]Alias{
 				"github": {
 					Type: "github",
 					Base: "https://github.com",
@@ -277,7 +275,7 @@ func TestResolveURL(t *testing.T) {
 			name: "pkg -> file with task param and alias resolution",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:bar.yaml?task=baz",
-			aliases: map[string]config.Alias{
+			aliases: map[string]Alias{
 				"github": {
 					Type:         "github",
 					Base:         "https://github.com",

@@ -9,7 +9,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 
-	"github.com/defenseunicorns/maru2/config"
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 // DefaultTaskName is the default task name
@@ -19,9 +19,9 @@ const DefaultTaskName = "default"
 //
 // It represents a "tasks.yaml" file
 type Workflow struct {
-	Inputs  InputMap                `json:"inputs,omitempty"`
-	Tasks   TaskMap                 `json:"tasks,omitempty"`
-	Aliases map[string]config.Alias `json:"aliases,omitempty"`
+	Inputs  InputMap              `json:"inputs,omitempty"`
+	Tasks   TaskMap               `json:"tasks,omitempty"`
+	Aliases map[string]uses.Alias `json:"aliases,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow

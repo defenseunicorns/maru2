@@ -4,19 +4,18 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 
-	"github.com/invopop/jsonschema"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestFileSystemConfigLoader(t *testing.T) {
@@ -32,7 +31,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 `
 
 	cfg := &Config{
-		Aliases: map[string]Alias{
+		Aliases: map[string]uses.Alias{
 			"gl": {
 				Type: packageurl.TypeGitlab,
 				Base: "https://gitlab.example.com",
@@ -152,32 +151,6 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	})
 }
 
-func TestAliasSchema(t *testing.T) {
-	t.Parallel()
-	f, err := os.Open("../maru2.schema.json")
-	require.NoError(t, err)
-	defer f.Close()
-
-	data, err := io.ReadAll(f)
-	require.NoError(t, err)
-
-	var schema map[string]any
-	require.NoError(t, json.Unmarshal(data, &schema))
-
-	curr := schema["$defs"].(map[string]any)["Alias"]
-	b, err := json.Marshal(curr)
-	require.NoError(t, err)
-
-	reflector := jsonschema.Reflector{ExpandedStruct: true}
-	aliasSchema := reflector.Reflect(&Alias{})
-	aliasSchema.Version = ""
-	aliasSchema.ID = ""
-	b2, err := json.Marshal(aliasSchema)
-	require.NoError(t, err)
-
-	assert.JSONEq(t, string(b), string(b2))
-}
-
 func TestValidate(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -189,7 +162,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid config",
 			config: &Config{
-				Aliases: map[string]Alias{
+				Aliases: map[string]uses.Alias{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -202,18 +175,18 @@ func TestValidate(t *testing.T) {
 						TokenFromEnv: "GITHUB_TOKEN",
 					},
 				},
-				FetchPolicy: FetchPolicyIfNotPresent,
+				FetchPolicy: uses.FetchPolicyIfNotPresent,
 			},
 		},
 		{
 			name: "invalid alias type",
 			config: &Config{
-				Aliases: map[string]Alias{
+				Aliases: map[string]uses.Alias{
 					"invalid": {
 						Type: "invalid-type",
 					},
 				},
-				FetchPolicy: FetchPolicyIfNotPresent,
+				FetchPolicy: uses.FetchPolicyIfNotPresent,
 			},
 			wantErr: true,
 			errMsg:  "aliases.invalid.type: aliases.invalid.type must be one of the following: \"github\", \"gitlab\"",
@@ -221,13 +194,13 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid token environment variable format",
 			config: &Config{
-				Aliases: map[string]Alias{
+				Aliases: map[string]uses.Alias{
 					"gh": {
 						Type:         packageurl.TypeGithub,
 						TokenFromEnv: "123-invalid",
 					},
 				},
-				FetchPolicy: FetchPolicyIfNotPresent,
+				FetchPolicy: uses.FetchPolicyIfNotPresent,
 			},
 			wantErr: true,
 			errMsg:  "aliases.gh.token-from-env: Does not match pattern '^[a-zA-Z_]+[a-zA-Z0-9_]*$'",
@@ -235,12 +208,12 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid fetch policy",
 			config: &Config{
-				Aliases: map[string]Alias{
+				Aliases: map[string]uses.Alias{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
 				},
-				FetchPolicy: FetchPolicy("invalid-policy"),
+				FetchPolicy: uses.FetchPolicy("invalid-policy"),
 			},
 			wantErr: true,
 			errMsg:  "fetch-policy: fetch-policy must be one of the following: \"always\", \"if-not-present\", \"never\"",
@@ -248,7 +221,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "multiple validation errors",
 			config: &Config{
-				Aliases: map[string]Alias{
+				Aliases: map[string]uses.Alias{
 					"invalid": {
 						Type:         "invalid-type",
 						TokenFromEnv: "123-invalid",
