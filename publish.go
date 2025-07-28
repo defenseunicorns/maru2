@@ -44,7 +44,6 @@ func Publish(ctx context.Context, cfg *config.Config, dst *remote.Repository, en
 	}
 
 	svc, err := uses.NewFetcherService(
-		uses.WithAliases(cfg.Aliases),
 		uses.WithStorage(store),
 		uses.WithFetchPolicy(config.FetchPolicyAlways),
 	)

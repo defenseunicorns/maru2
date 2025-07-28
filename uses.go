@@ -6,7 +6,6 @@ package maru2
 import (
 	"context"
 	"fmt"
-	"maps"
 	"net/url"
 	"path/filepath"
 	"slices"
@@ -36,10 +35,7 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf
 		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
 	}
 
-	aliases := svc.PkgAliases()
-	maps.Copy(aliases, wf.Aliases)
-
-	next, err := uses.ResolveRelative(origin, step.Uses, aliases)
+	next, err := uses.ResolveRelative(origin, step.Uses, wf.Aliases)
 	if err != nil {
 		return nil, err
 	}
@@ -105,11 +101,8 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *u
 		}
 	}
 
-	aliases := svc.PkgAliases()
-	maps.Copy(aliases, wf.Aliases)
-
 	for _, ref := range refs {
-		resolved, err := uses.ResolveRelative(src, ref, aliases)
+		resolved, err := uses.ResolveRelative(src, ref, wf.Aliases)
 		if err != nil {
 			return fmt.Errorf("failed to resolve %q: %w", ref, err)
 		}
