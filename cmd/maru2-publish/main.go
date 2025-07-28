@@ -141,7 +141,7 @@ func Main() int {
 			client.SetUserAgent("maru2-publish")
 			dst.Client = client
 
-			return maru2.Publish(ctx, cfg, dst, entrypoints)
+			return maru2.Publish(ctx, dst, entrypoints, cfg.Aliases)
 		},
 	}
 

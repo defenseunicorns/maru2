@@ -23,8 +23,6 @@ import (
 	"oras.land/oras-go/v2/registry/remote"
 
 	"net/http"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 func TestPublish(t *testing.T) {
@@ -294,7 +292,8 @@ func TestPublish(t *testing.T) {
 			require.NoError(t, err)
 			dst.PlainHTTP = true
 
-			err = Publish(ctx, &config.Config{}, dst, tc.entrypoints)
+			// TODO: test w/ aliases?
+			err = Publish(ctx, dst, tc.entrypoints, nil)
 
 			if tc.expectErr != "" {
 				require.Error(t, err)
