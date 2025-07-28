@@ -4,16 +4,13 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 
 	"github.com/defenseunicorns/maru2/uses"
-	"github.com/invopop/jsonschema"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -151,32 +148,6 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		_, err = loader.LoadConfig()
 		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, DefaultFileName)))
 	})
-}
-
-func TestAliasSchema(t *testing.T) {
-	t.Parallel()
-	f, err := os.Open("../maru2.schema.json")
-	require.NoError(t, err)
-	defer f.Close()
-
-	data, err := io.ReadAll(f)
-	require.NoError(t, err)
-
-	var schema map[string]any
-	require.NoError(t, json.Unmarshal(data, &schema))
-
-	curr := schema["$defs"].(map[string]any)["Alias"]
-	b, err := json.Marshal(curr)
-	require.NoError(t, err)
-
-	reflector := jsonschema.Reflector{ExpandedStruct: true}
-	aliasSchema := reflector.Reflect(&uses.Alias{})
-	aliasSchema.Version = ""
-	aliasSchema.ID = ""
-	b2, err := json.Marshal(aliasSchema)
-	require.NoError(t, err)
-
-	assert.JSONEq(t, string(b), string(b2))
 }
 
 func TestValidate(t *testing.T) {

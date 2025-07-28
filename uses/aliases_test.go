@@ -4,10 +4,15 @@
 package uses
 
 import (
+	"encoding/json"
+	"io"
+	"os"
 	"testing"
 
+	"github.com/invopop/jsonschema"
 	"github.com/package-url/packageurl-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigBasedResolver(t *testing.T) {
@@ -114,4 +119,30 @@ func TestConfigBasedResolver(t *testing.T) {
 			assert.Equal(t, inputPURL.Subpath, resolvedPURL.Subpath)
 		})
 	}
+}
+
+func TestAliasSchema(t *testing.T) {
+	t.Parallel()
+	f, err := os.Open("../maru2.schema.json")
+	require.NoError(t, err)
+	defer f.Close()
+
+	data, err := io.ReadAll(f)
+	require.NoError(t, err)
+
+	var schema map[string]any
+	require.NoError(t, json.Unmarshal(data, &schema))
+
+	curr := schema["$defs"].(map[string]any)["Alias"]
+	b, err := json.Marshal(curr)
+	require.NoError(t, err)
+
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	aliasSchema := reflector.Reflect(&Alias{})
+	aliasSchema.Version = ""
+	aliasSchema.ID = ""
+	b2, err := json.Marshal(aliasSchema)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(b), string(b2))
 }
