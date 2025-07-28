@@ -10,9 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/defenseunicorns/maru2/uses"
 	"github.com/stretchr/testify/require"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 type badReadSeeker struct {
@@ -574,7 +573,7 @@ tasks:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 		},
 		{
@@ -601,7 +600,7 @@ inputs:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 		},
 		{
@@ -632,7 +631,7 @@ aliases:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]config.Alias{
+				Aliases: map[string]uses.Alias{
 					"gh": {
 						Type: "github",
 					},
@@ -656,7 +655,7 @@ x-metadata:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 		},
 		{
@@ -665,7 +664,7 @@ x-metadata:
 			expected: Workflow{
 				Inputs:  InputMap{},
 				Tasks:   TaskMap{},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedError: `[1:10] mapping value is not allowed in this context
 >  1 | invalid: yaml::
@@ -678,7 +677,7 @@ x-metadata:
 			expected: Workflow{
 				Inputs:  InputMap{},
 				Tasks:   TaskMap{},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedError: "read failed",
 		},
@@ -688,7 +687,7 @@ x-metadata:
 			expected: Workflow{
 				Inputs:  InputMap{},
 				Tasks:   TaskMap{},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedError: "seek failed",
 		},
@@ -704,7 +703,7 @@ tasks:
 			expected: Workflow{
 				Inputs:  InputMap{},
 				Tasks:   TaskMap{},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedError: `[6:7] sequence was used where mapping is expected
    3 |   echo:
@@ -728,7 +727,7 @@ inputs:
 			expected: Workflow{
 				Inputs:  InputMap{},
 				Tasks:   TaskMap{},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedError: `[8:18] cannot unmarshal []interface {} into Go struct field Workflow.Inputs of type string
    6 | inputs:
@@ -776,7 +775,7 @@ tasks:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedReadErr:     "",
 			expectedValidateErr: "",
@@ -787,7 +786,7 @@ tasks:
 			expected: Workflow{
 				Inputs:  InputMap{},
 				Tasks:   TaskMap{},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedReadErr:     "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml::\n                ^\n",
 			expectedValidateErr: "",
@@ -806,7 +805,7 @@ tasks:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]config.Alias{},
+				Aliases: map[string]uses.Alias{},
 			},
 			expectedReadErr:     "",
 			expectedValidateErr: fmt.Sprintf("task name \"2-echo\" does not satisfy %q", TaskNamePattern.String()),

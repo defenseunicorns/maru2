@@ -20,7 +20,6 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 
 	"github.com/defenseunicorns/maru2"
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -112,7 +111,7 @@ tasks:
 			Tasks: maru2.TaskMap{"echo": maru2.Task{{
 				Run: `echo "${{ input "text" }}"`,
 			}}},
-			Aliases: map[string]config.Alias{},
+			Aliases: map[string]uses.Alias{},
 		}, wf)
 
 		// fails w/ internal not found error

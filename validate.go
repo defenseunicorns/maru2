@@ -18,7 +18,6 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/xeipuuv/gojsonschema"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -43,7 +42,7 @@ func Read(r io.Reader) (Workflow, error) {
 	wf := Workflow{
 		Inputs:  make(InputMap),
 		Tasks:   make(TaskMap),
-		Aliases: make(map[string]config.Alias),
+		Aliases: make(map[string]uses.Alias),
 	}
 
 	d := yaml.NewDecoder(r)

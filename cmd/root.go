@@ -36,7 +36,7 @@ func NewRootCmd() *cobra.Command {
 		ver      bool
 		list     bool
 		from     string
-		policy   = config.DefaultFetchPolicy // VarP does not allow you to set a default value
+		policy   = uses.DefaultFetchPolicy // VarP does not allow you to set a default value
 		s        string
 		timeout  time.Duration
 		dry      bool
@@ -85,7 +85,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			if policy == config.FetchPolicyNever && fetchAll {
+			if policy == uses.FetchPolicyNever && fetchAll {
 				return fmt.Errorf("cannot fetch all with fetch policy %q", policy)
 			}
 
@@ -275,9 +275,9 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
 	_ = root.MarkFlagDirname("directory")
-	root.Flags().VarP(&policy, "fetch-policy", "p", fmt.Sprintf(`Set fetch policy ("%s")`, strings.Join(config.AvailablePolicies(), `", "`)))
+	root.Flags().VarP(&policy, "fetch-policy", "p", fmt.Sprintf(`Set fetch policy ("%s")`, strings.Join(uses.AvailablePolicies(), `", "`)))
 	_ = root.RegisterFlagCompletionFunc("fetch-policy", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		return config.AvailablePolicies(), cobra.ShellCompDirectiveNoFileComp
+		return uses.AvailablePolicies(), cobra.ShellCompDirectiveNoFileComp
 	})
 	root.Flags().StringVarP(&s, "store", "s", "${HOME}/.maru2/store", "Set storage directory")
 	_ = root.MarkFlagDirname("store")

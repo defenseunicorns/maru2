@@ -15,8 +15,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 // mockFetcher implements the Fetcher interface for testing
@@ -78,7 +76,7 @@ func (m *mockStorage) List() iter.Seq2[string, Descriptor] {
 func TestStoreFetcher(t *testing.T) {
 	testCases := []struct {
 		name            string
-		policy          config.FetchPolicy
+		policy          FetchPolicy
 		setup           func(source *mockFetcher, store *mockStorage)
 		uri             string
 		expected        string
@@ -87,7 +85,7 @@ func TestStoreFetcher(t *testing.T) {
 	}{
 		{
 			name:   "FetchPolicyNever: always fetch from store",
-			policy: config.FetchPolicyNever,
+			policy: FetchPolicyNever,
 			setup: func(_ *mockFetcher, store *mockStorage) {
 				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from store")), nil
@@ -104,7 +102,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyNever: store fetch error",
-			policy: config.FetchPolicyNever,
+			policy: FetchPolicyNever,
 			setup: func(_ *mockFetcher, store *mockStorage) {
 				store.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return nil, errors.New("store fetch error")
@@ -121,7 +119,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyIfNotPresent: exists in store",
-			policy: config.FetchPolicyIfNotPresent,
+			policy: FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
@@ -144,7 +142,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyIfNotPresent: store exists check error",
-			policy: config.FetchPolicyIfNotPresent,
+			policy: FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
@@ -170,7 +168,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyIfNotPresent: exists but fetch from store fails",
-			policy: config.FetchPolicyIfNotPresent,
+			policy: FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
@@ -194,7 +192,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyIfNotPresent: not in store",
-			policy: config.FetchPolicyIfNotPresent,
+			policy: FetchPolicyIfNotPresent,
 			setup: func(source *mockFetcher, store *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
@@ -220,7 +218,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyAlways: always fetch from source and update store",
-			policy: config.FetchPolicyAlways,
+			policy: FetchPolicyAlways,
 			setup: func(source *mockFetcher, store *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
@@ -243,7 +241,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyAlways: source fetch error",
-			policy: config.FetchPolicyAlways,
+			policy: FetchPolicyAlways,
 			setup: func(source *mockFetcher, _ *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return nil, errors.New("source fetch error")
@@ -260,7 +258,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyAlways: store error",
-			policy: config.FetchPolicyAlways,
+			policy: FetchPolicyAlways,
 			setup: func(source *mockFetcher, store *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil
@@ -280,7 +278,7 @@ func TestStoreFetcher(t *testing.T) {
 		},
 		{
 			name:   "FetchPolicyAlways: store fetch error after store",
-			policy: config.FetchPolicyAlways,
+			policy: FetchPolicyAlways,
 			setup: func(source *mockFetcher, store *mockStorage) {
 				source.fetchFunc = func(_ context.Context, _ *url.URL) (io.ReadCloser, error) {
 					return io.NopCloser(strings.NewReader("from source")), nil

@@ -11,8 +11,6 @@ import (
 
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 // FetcherService creates and manages fetchers
@@ -21,7 +19,7 @@ type FetcherService struct {
 	fsys         afero.Fs
 	fetcherCache map[string]Fetcher
 	storage      Storage
-	policy       config.FetchPolicy
+	policy       FetchPolicy
 	mu           sync.RWMutex
 }
 
@@ -50,7 +48,7 @@ func WithStorage(store Storage) FetcherServiceOption {
 }
 
 // WithFetchPolicy sets the fetch policy to be used by the fetcher service
-func WithFetchPolicy(policy config.FetchPolicy) FetcherServiceOption {
+func WithFetchPolicy(policy FetchPolicy) FetcherServiceOption {
 	return func(s *FetcherService) {
 		s.policy = policy
 	}
@@ -60,7 +58,7 @@ func WithFetchPolicy(policy config.FetchPolicy) FetcherServiceOption {
 func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	svc := &FetcherService{
 		fetcherCache: make(map[string]Fetcher),
-		policy:       config.DefaultFetchPolicy,
+		policy:       DefaultFetchPolicy,
 	}
 
 	for _, opt := range opts {
@@ -75,7 +73,7 @@ func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 		svc.client = &http.Client{}
 	}
 
-	if svc.policy == config.FetchPolicyNever && svc.storage == nil {
+	if svc.policy == FetchPolicyNever && svc.storage == nil {
 		return nil, fmt.Errorf("store is not initialized")
 	}
 
@@ -93,7 +91,7 @@ func (s *FetcherService) GetFetcher(uri *url.URL) (Fetcher, error) {
 		return nil, fmt.Errorf("uri cannot be nil")
 	}
 
-	if s.policy == config.FetchPolicyNever {
+	if s.policy == FetchPolicyNever {
 		return s.storage, nil
 	}
 

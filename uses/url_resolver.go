@@ -10,8 +10,6 @@ import (
 	"slices"
 
 	"github.com/package-url/packageurl-go"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 // SupportedSchemes returns a list of supported schemes
@@ -21,7 +19,7 @@ func SupportedSchemes() []string {
 
 // ResolveRelative resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]config.Alias) (*url.URL, error) {
+func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]Alias) (*url.URL, error) {
 	uri, err := url.Parse(u)
 	if err != nil {
 		return nil, err

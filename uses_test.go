@@ -16,7 +16,6 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/require"
 
-	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -304,7 +303,7 @@ func TestExecuteUses(t *testing.T) {
 		name        string
 		uses        string
 		origin      string
-		aliases     map[string]config.Alias
+		aliases     map[string]uses.Alias
 		skipShort   bool
 		expectedErr string
 	}{
@@ -351,7 +350,7 @@ func TestExecuteUses(t *testing.T) {
 			name:   "with map based resolver",
 			uses:   "pkg:custom/noxsios/mar2-test?task=hello-world",
 			origin: dummyOrigin,
-			aliases: map[string]config.Alias{
+			aliases: map[string]uses.Alias{
 				"custom": {
 					Type: "gitlab",
 				},

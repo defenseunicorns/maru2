@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 // StoreFetcher is a fetcher that wraps another fetcher and caches the results
@@ -17,15 +15,15 @@ import (
 type StoreFetcher struct {
 	Source Fetcher
 	Store  Storage
-	Policy config.FetchPolicy
+	Policy FetchPolicy
 }
 
 // Fetch implements the Fetcher interface
 func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	switch f.Policy {
-	case config.FetchPolicyNever:
+	case FetchPolicyNever:
 		return f.Store.Fetch(ctx, uri)
-	case config.FetchPolicyIfNotPresent:
+	case FetchPolicyIfNotPresent:
 		exists, err := f.Store.Exists(uri)
 		if err != nil {
 			return nil, err
@@ -34,7 +32,7 @@ func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 			return f.Store.Fetch(ctx, uri)
 		}
 		fallthrough
-	case config.FetchPolicyAlways:
+	case FetchPolicyAlways:
 		rc, err := f.Source.Fetch(ctx, uri)
 		if err != nil {
 			return nil, err

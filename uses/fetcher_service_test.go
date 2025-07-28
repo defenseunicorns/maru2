@@ -16,8 +16,6 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/defenseunicorns/maru2/config"
 )
 
 func TestFetcherService(t *testing.T) {
@@ -57,7 +55,7 @@ func TestFetcherService(t *testing.T) {
 				assert.NotNil(t, s.client)
 				assert.NotNil(t, s.fsys)
 				assert.NotNil(t, s.fetcherCache)
-				assert.Equal(t, config.DefaultFetchPolicy, s.policy)
+				assert.Equal(t, DefaultFetchPolicy, s.policy)
 			},
 		},
 		{
@@ -124,14 +122,14 @@ func TestFetcherService(t *testing.T) {
 		},
 		{
 			name:        "with FetchPolicyNever without storage",
-			opts:        []FetcherServiceOption{WithFetchPolicy(config.FetchPolicyNever)},
+			opts:        []FetcherServiceOption{WithFetchPolicy(FetchPolicyNever)},
 			uri:         "https://example.com",
 			expectedErr: "store is not initialized",
 		},
 		{
 			name: "with FetchPolicyNever with storage",
 			opts: []FetcherServiceOption{
-				WithFetchPolicy(config.FetchPolicyNever),
+				WithFetchPolicy(FetchPolicyNever),
 				WithStorage(createMockStorage("stored content")),
 			},
 			uri:          "https://example.com",
@@ -155,7 +153,7 @@ func TestFetcherService(t *testing.T) {
 		{
 			name: "with FetchPolicyNever with storage - pkg scheme",
 			opts: []FetcherServiceOption{
-				WithFetchPolicy(config.FetchPolicyNever),
+				WithFetchPolicy(FetchPolicyNever),
 				WithStorage(createMockStorage("stored content")),
 			},
 			uri:          "pkg:github/defenseunicorns/maru2",
@@ -164,7 +162,7 @@ func TestFetcherService(t *testing.T) {
 		{
 			name: "with FetchPolicyAlways with storage - file scheme",
 			opts: []FetcherServiceOption{
-				WithFetchPolicy(config.FetchPolicyAlways),
+				WithFetchPolicy(FetchPolicyAlways),
 				WithStorage(createMockStorage("stored content")),
 			},
 			uri:          "file:///tmp/example.txt",
@@ -173,7 +171,7 @@ func TestFetcherService(t *testing.T) {
 		{
 			name: "with FetchPolicyAlways with storage - http scheme",
 			opts: []FetcherServiceOption{
-				WithFetchPolicy(config.FetchPolicyAlways),
+				WithFetchPolicy(FetchPolicyAlways),
 				WithStorage(createMockStorage("stored content")),
 			},
 			uri:          "https://example.com",
@@ -183,13 +181,13 @@ func TestFetcherService(t *testing.T) {
 				require.True(t, ok)
 				assert.IsType(t, &HTTPClient{}, storeFetcher.Source)
 				assert.IsType(t, &mockStorage{}, storeFetcher.Store)
-				assert.Equal(t, config.FetchPolicyAlways, storeFetcher.Policy)
+				assert.Equal(t, FetchPolicyAlways, storeFetcher.Policy)
 			},
 		},
 		{
 			name: "with FetchPolicyIfNotPresent with storage",
 			opts: []FetcherServiceOption{
-				WithFetchPolicy(config.FetchPolicyIfNotPresent),
+				WithFetchPolicy(FetchPolicyIfNotPresent),
 				WithStorage(createMockStorage("stored content")),
 			},
 			uri:          "https://example.com",
@@ -199,7 +197,7 @@ func TestFetcherService(t *testing.T) {
 				require.True(t, ok)
 				assert.IsType(t, &HTTPClient{}, storeFetcher.Source)
 				assert.IsType(t, &mockStorage{}, storeFetcher.Store)
-				assert.Equal(t, config.FetchPolicyIfNotPresent, storeFetcher.Policy)
+				assert.Equal(t, FetchPolicyIfNotPresent, storeFetcher.Policy)
 			},
 		},
 	}
