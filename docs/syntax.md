@@ -10,7 +10,7 @@ Similar to `Makefile`s, a Maru2 workflow is a map of tasks, where each task is a
 
 Checkout the comparison below:
 
-```makefile {filename="Makefile"}
+```makefile
 .DEFAULT_GOAL := build
 
 build:
@@ -23,7 +23,7 @@ clean:
 	rm -rf bin/
 ```
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   default:
     - uses: build
@@ -125,7 +125,7 @@ The shell field changes how the command is executed:
 
 You can specify a working directory for a step using the `dir` field. This applies to both `run` and `uses` steps.
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   build:
     # Run a command in a specific directory
@@ -147,7 +147,7 @@ For `uses` steps, the referenced task is executed with the working directory set
 
 Maru2 allows you to define input parameters for your tasks. These parameters can be required or optional, and can have default values.
 
-```yaml {filename="tasks.yaml"}
+```yaml
 inputs:
   # Required input (default behavior)
   name:
@@ -192,7 +192,7 @@ On top of the builtin behavior, Maru2 provides a few additional helpers:
   - ex: `${{ which "uds" }} --version` when Maru2 is run as: `uds run foo ...` renders as `/absolute/path/to/uds --version`
 - `OS`, `ARCH`, `PLATFORM`: the current OS, architecture, or platform
 
-```yaml {filename="tasks.yaml"}
+```yaml
 inputs:
   date:
     description: The date
@@ -212,7 +212,7 @@ maru2 echo --with name=$(whoami) --with date=$(date)
 
 Calling another task within the same workflow is as simple as using the task name, similar to Makefile targets.
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   general-kenobi:
     - run: echo "General Kenobi, you are a bold one"
@@ -239,13 +239,13 @@ If the filepath is a directory, `tasks.yaml` is appended to the path.
 
 If the task name is not provided, the `default` task is run.
 
-```yaml {filename="tasks/echo.yaml"}
+```yaml
 tasks:
   simple:
     - run: echo "${{ input "message" }}"
 ```
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   echo:
     - uses: file:tasks/echo.yaml?task=simple
@@ -283,7 +283,7 @@ If a version is not specified in a `pkg` URL, it defaults to `main`.
 
 Examples of using aliases in workflow files:
 
-```yaml {filename="tasks.yaml"}
+```yaml
 aliases:
   gl:
     type: gitlab
@@ -325,7 +325,7 @@ An alias has the following properties:
 
 You can also override qualifiers defined in the alias by specifying them in the package URL:
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   remote-echo:
     - uses: pkg:gl/noxsios/maru2@main?base=https://other-gitlab.com&task=echo#testdata/simple.yaml
@@ -342,7 +342,7 @@ Each step in a Maru2 workflow can have an optional `id` and `name` field:
 
 The `id` field must follow the same naming rules as task names: `^[_a-zA-Z][a-zA-Z0-9_-]*$`
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   build:
     - name: "Install dependencies"
@@ -365,7 +365,7 @@ To set outputs from a step:
 2. Write to the `$MARU2_OUTPUT` file in the format `key=value`
 3. Reference the output in subsequent steps using `${{ from "step-id" "output-key" }}`
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   color:
     - run: |
@@ -384,7 +384,7 @@ The selected color is green
 
 You can set multiple outputs from a single step by writing multiple lines to the `$MARU2_OUTPUT` file:
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   multi-output:
     - run: |
@@ -535,7 +535,7 @@ ERRO at example[1] (file:tasks.yaml)
 
 When a step in a Maru2 workflow fails, the error is propagated up the call stack with a traceback that shows the path of execution. This helps you identify where in your workflow the error occurred, especially for complex workflows with nested task calls.
 
-```yaml {filename="tasks.yaml"}
+```yaml
 tasks:
   fail:
     - run: exit 1
