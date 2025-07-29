@@ -15,17 +15,26 @@ import (
 // DefaultTaskName is the default task name
 const DefaultTaskName = "default"
 
+const CurrentSchemaVersion = "v0" // TODO: v0 or v1 here?
+
 // Workflow is a wrapper struct around the input map and task map
 //
 // It represents a "tasks.yaml" file
 type Workflow struct {
-	Inputs  InputMap              `json:"inputs,omitempty"`
-	Tasks   TaskMap               `json:"tasks,omitempty"`
-	Aliases map[string]uses.Alias `json:"aliases,omitempty"`
+	SchemaVersion string                `json:"schemaVersion,omitempty"` // TODO: make it a required field?
+	Inputs        InputMap              `json:"inputs,omitempty"`
+	Tasks         TaskMap               `json:"tasks,omitempty"`
+	Aliases       map[string]uses.Alias `json:"aliases,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
+	if schemaVersion, ok := schema.Properties.Get("schemaVersion"); ok && schemaVersion != nil {
+		schemaVersion.Description = "" // TODO: fill me in
+		schemaVersion.Enum = []any{CurrentSchemaVersion}
+		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
+	}
+
 	if inputs, ok := schema.Properties.Get("inputs"); ok && inputs != nil {
 		inputs.Description = "Input parameters for the workflow"
 		inputs.PatternProperties = map[string]*jsonschema.Schema{

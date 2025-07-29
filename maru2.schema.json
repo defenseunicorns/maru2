@@ -475,6 +475,13 @@
     }
   },
   "properties": {
+    "schemaVersion": {
+      "additionalProperties": false,
+      "type": "string",
+      "enum": [
+        "v0"
+      ]
+    },
     "inputs": {
       "$ref": "#/$defs/InputMap",
       "patternProperties": {
