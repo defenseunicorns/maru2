@@ -40,22 +40,33 @@ func Read(r io.Reader) (Workflow, error) {
 		}
 	}
 
-	wf := Workflow{
-		Inputs:  make(InputMap),
-		Tasks:   make(TaskMap),
-		Aliases: make(map[string]uses.Alias),
-	}
-
-	d := yaml.NewDecoder(r)
-
-	if err := d.Decode(&wf); err != nil {
-		if err == io.EOF {
-			return wf, nil
-		}
+	data, err := io.ReadAll(r)
+	if err != nil {
 		return Workflow{}, err
 	}
 
-	return wf, nil
+	var versioned struct {
+		SchemaVersion string `json:"schemaVersion"`
+	}
+	if err := yaml.Unmarshal(data, &versioned); err != nil {
+		return Workflow{}, err
+	}
+
+	switch version := versioned.SchemaVersion; version {
+	case SchemaVersionCurrent, SchemaVersionLatest:
+		var wf Workflow
+		return wf, yaml.Unmarshal(data, &wf)
+	// case "old":
+	// 	var wfV1 WorkflowV1
+	// 	if err := yaml.Unmarshal(data, &wfV1); err != nil {
+	// 		return Workflow{}, err
+	// 	}
+	// 	return wfV1.Migrate(), nil
+	//
+	// TODO: what makes sense for version behavior if version is empty?
+	default:
+		return Workflow{}, fmt.Errorf("unsupported schema version: %s", version)
+	}
 }
 
 var schemaOnce = sync.OnceValues(func() (string, error) {

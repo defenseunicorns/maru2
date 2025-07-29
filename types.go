@@ -15,7 +15,8 @@ import (
 // DefaultTaskName is the default task name
 const DefaultTaskName = "default"
 
-const CurrentSchemaVersion = "v0" // TODO: v0 or v1 here?
+const SchemaVersionCurrent = "v0" // TODO: v0 or v1 here?
+const SchemaVersionLatest = "latest"
 
 // Workflow is a wrapper struct around the input map and task map
 //
@@ -31,7 +32,7 @@ type Workflow struct {
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schemaVersion"); ok && schemaVersion != nil {
 		schemaVersion.Description = "" // TODO: fill me in
-		schemaVersion.Enum = []any{CurrentSchemaVersion}
+		schemaVersion.Enum = []any{SchemaVersionLatest, SchemaVersionCurrent}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
 	}
 
