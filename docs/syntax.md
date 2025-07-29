@@ -530,33 +530,3 @@ $ echo "This step always runs, regardless of previous failures"
 ERRO exit status 1
 ERRO at example[1] (file:tasks.yaml)
 ```
-
-## Error handling and traceback
-
-When a step in a Maru2 workflow fails, the error is propagated up the call stack with a traceback that shows the path of execution. This helps you identify where in your workflow the error occurred, especially for complex workflows with nested task calls.
-
-```yaml
-tasks:
-  fail:
-    - run: exit 1
-
-  caller:
-    - run: echo "Starting workflow"
-    - uses: fail
-    - run: echo "This step will be skipped"
-```
-
-```sh
-maru2 caller
-
-$ echo "Starting workflow"
-Starting workflow
-$ exit 1
-
-ERRO exit status 1
-  traceback (most recent call first)=
-  │ at fail[0] (file:tasks.yaml)
-  │ at caller[1] (file:tasks.yaml)
-```
-
-The traceback shows that the error occurred in the first step (`[0]`) of the `fail` task, which was called from the second step (`[1]`) of the `caller` task.
