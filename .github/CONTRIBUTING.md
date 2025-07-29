@@ -17,7 +17,7 @@
 4. Run the tests, linters, and formatters.
 
    ```bash
-   make build lint test
+   make all lint test
    ```
 
 5. Commit your changes.
