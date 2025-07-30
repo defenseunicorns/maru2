@@ -51,16 +51,9 @@ func Read(r io.Reader) (Workflow, error) {
 	}
 
 	switch version := versioned.SchemaVersion; version {
-	case SchemaVersionCurrent, SchemaVersionLatest:
+	case SchemaVersionCurrent, SchemaVersionLatest, "":
 		var wf Workflow
 		return wf, yaml.Unmarshal(data, &wf)
-	// case "old":
-	// 	var wfV1 WorkflowV1
-	// 	if err := yaml.Unmarshal(data, &wfV1); err != nil {
-	// 		return Workflow{}, err
-	// 	}
-	// 	return wfV1.Migrate(), nil
-	//
 	default:
 		return Workflow{}, fmt.Errorf("unsupported schema version: %s", version)
 	}
