@@ -28,4 +28,4 @@ jobs:
           cache-dependency-path: go.sum
 
       - run: make
-      - run: ./bin/maru2 release-nightly
+      - run: ./bin/maru2 release-nightly -w uds-registry=registry.defenseunicorns.com
