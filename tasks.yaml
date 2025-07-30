@@ -7,6 +7,9 @@ inputs:
   short:
     description: Controls whether network tests are run
     default: false
+  uds-registry:
+    description: Registry location to publish nightly to
+    default: localhost:5005
 
 tasks:
   echo:
@@ -36,7 +39,8 @@ tasks:
 
   release-nightly:
     - run: |
-        mkdir -p bin
+        rm -r dist
+        mkdir -p dist
 
         title() {
             string="$1"
@@ -44,6 +48,8 @@ tasks:
             rest_of_string=$(printf %s "$string" | cut -c 2-)
             printf '%s%s\n' "$first_char" "$rest_of_string"
         }
+
+        export CGO_ENABLED=0
 
         oses=(linux darwin)
         arches=(amd64 arm64)
@@ -53,18 +59,23 @@ tasks:
               continue
             fi
 
-            bin="maru2_$(title "$os")_"
+            platform="$(title "$os")_"
             if [[ "${arch}" == "amd64" ]]; then
-              bin+="x86_64"
+              platform+="x86_64"
             else
-              bin+="${arch}"
+              platform+="${arch}"
             fi
-            echo "build $(title "$os")/$(arch) to bin/$bin"
 
-            export CGO_ENABLED=0
-
+            echo "build dist/maru2_$platform"
             GOARCH="$arch" GOOS="$os" \
-            go build -o "bin/$bin" -ldflags="-s -w" -trimpath ./cmd/maru2
+            go build -o "dist/maru2_$platform" -ldflags="-s -w" -trimpath ./cmd/maru2
+
+            echo "build dist/maru2-publish_$platform"
+            GOARCH="$arch" GOOS="$os" \
+            go build -o "dist/maru2-publish_$platform" -ldflags="-s -w" -trimpath ./cmd/maru2-publish
           done
         done
+      shell: bash
+    - run: |
+        go tool oras push ${{ input "uds-registry" }}/maru2-nightly:$(./bin/maru2 --version) dist/*
       shell: bash
