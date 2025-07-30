@@ -45,9 +45,7 @@ func Read(r io.Reader) (Workflow, error) {
 		return Workflow{}, err
 	}
 
-	var versioned struct {
-		SchemaVersion string `json:"schemaVersion"`
-	}
+	var versioned Versioned
 	if err := yaml.Unmarshal(data, &versioned); err != nil {
 		return Workflow{}, err
 	}
@@ -63,7 +61,6 @@ func Read(r io.Reader) (Workflow, error) {
 	// 	}
 	// 	return wfV1.Migrate(), nil
 	//
-	// TODO: what makes sense for version behavior if version is empty?
 	default:
 		return Workflow{}, fmt.Errorf("unsupported schema version: %s", version)
 	}

@@ -18,21 +18,29 @@ const DefaultTaskName = "default"
 const SchemaVersionCurrent = "v0" // TODO: v0 or v1 here?
 const SchemaVersionLatest = "latest"
 
+type Versioned struct {
+	// SchemaVersion is the workflow schema that this workflow follows
+	SchemaVersion string `json:"schema-version,omitempty"`
+}
+
 // Workflow is a wrapper struct around the input map and task map
 //
 // It represents a "tasks.yaml" file
 type Workflow struct {
-	SchemaVersion string                `json:"schemaVersion,omitempty"` // TODO: make it a required field?
-	Inputs        InputMap              `json:"inputs,omitempty"`
-	Tasks         TaskMap               `json:"tasks,omitempty"`
-	Aliases       map[string]uses.Alias `json:"aliases,omitempty"`
+	Versioned
+	Inputs  InputMap              `json:"inputs,omitempty"`
+	Tasks   TaskMap               `json:"tasks,omitempty"`
+	Aliases map[string]uses.Alias `json:"aliases,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
-	if schemaVersion, ok := schema.Properties.Get("schemaVersion"); ok && schemaVersion != nil {
-		schemaVersion.Description = "" // TODO: fill me in
-		schemaVersion.Enum = []any{SchemaVersionLatest, SchemaVersionCurrent}
+	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
+		schemaVersion.Description = `Workflow schema version. Controls parsing and validation:
+
+latest: parse and validate as the latest schema (same behavior if property does not exist)
+v0/v1/etc...: parse as the provided schema version, then migrate to the latest schema, then validate`
+		schemaVersion.Enum = []any{SchemaVersionCurrent, SchemaVersionLatest}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
 	}
 
