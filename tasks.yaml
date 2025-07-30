@@ -33,3 +33,38 @@ tasks:
       id: foo
     - run: |
         echo "got: ${{ from "foo" "bar" }}"
+
+  release-nightly:
+    - run: |
+        mkdir -p bin
+
+        title() {
+            string="$1"
+            first_char=$(printf %.1s "$string" | tr '[:lower:]' '[:upper:]')
+            rest_of_string=$(printf %s "$string" | cut -c 2-)
+            printf '%s%s\n' "$first_char" "$rest_of_string"
+        }
+
+        oses=(linux darwin)
+        arches=(amd64 arm64)
+        for os in "${oses[@]}"; do
+          for arch in "${arches[@]}"; do
+            if [[ "${os}/${arch}" == "darwin/amd64" ]]; then
+              continue
+            fi
+
+            bin="maru2_$(title "$os")_"
+            if [[ "${arch}" == "amd64" ]]; then
+              bin+="x86_64"
+            else
+              bin+="${arch}"
+            fi
+            echo "build $(title "$os")/$(arch) to bin/$bin"
+
+            export CGO_ENABLED=0
+
+            GOARCH="$arch" GOOS="$os" \
+            go build -o "bin/$bin" -ldflags="-s -w" -trimpath ./cmd/maru2
+          done
+        done
+      shell: bash
