@@ -25,4 +25,4 @@ Available:
 - hello-world
 -- stderr2.txt --
 
-ERRO failed to fetch "file:tasks.yaml": no tasks available
+ERRO failed to fetch "file:tasks.yaml": unsupported schema version: ""

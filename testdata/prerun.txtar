@@ -34,9 +34,11 @@ invalid yaml
 -- bad/fetch-policy.yaml --
 fetch-policy: foo
 -- bad/alias.yaml --
+schema-version: v0
 aliases:
   gh:
     type: bitbucket
 -- tasks.yaml --
+schema-version: v0
 tasks:
   echo: [run: echo "Hello World!"]

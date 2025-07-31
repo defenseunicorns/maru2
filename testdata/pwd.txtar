@@ -30,7 +30,7 @@ schema-version: v0
 tasks:
   pwd:
     - run: pwd
-    - uses: file:testdata/pwd.txtar?task=pwd
+    - uses: file:testdata/pwd.yaml?task=pwd
 -- testdata/pwd.yaml --
 schema-version: v0
 tasks:
