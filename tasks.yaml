@@ -82,7 +82,7 @@ tasks:
     - run: |
         go tool oras push \
           ${{ input "uds-registry" }}/ops/maru2-nightly:$(../bin/maru2 --version) \
-          $(find . | sed 's|$|:application/vnd.maru2.release.artifact.v1|') \
+          $(find . -mindepth 1 | sed 's|$|:application/vnd.maru2.release.artifact.v1|') \
           --artifact-type "application/vnd.maru2.release.manifest.v1"
       shell: bash
       dir: dist
