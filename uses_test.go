@@ -258,8 +258,8 @@ func TestExecuteUses(t *testing.T) {
 	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
 	require.NoError(t, err)
 
-	workflowFoo := Workflow{Tasks: TaskMap{"default": {Step{Run: "echo 'foo'"}, Step{Uses: "file:bar/baz.yaml?task=baz"}}}}
-	workflowBaz := Workflow{Tasks: TaskMap{"baz": {Step{Run: "echo 'baz'"}, Step{Uses: "file:../hello-world.yaml"}}}}
+	workflowFoo := Workflow{SchemaVersion: SchemaVersionV0, Tasks: TaskMap{"default": {Step{Run: "echo 'foo'"}, Step{Uses: "file:bar/baz.yaml?task=baz"}}}}
+	workflowBaz := Workflow{SchemaVersion: SchemaVersionV0, Tasks: TaskMap{"baz": {Step{Run: "echo 'baz'"}, Step{Uses: "file:../hello-world.yaml"}}}}
 
 	handleWF := func(w http.ResponseWriter, wf Workflow) {
 		b, err := yaml.Marshal(wf)

@@ -32,3 +32,4 @@ tasks:
     - run: cat content/hello.txt
     - run: cat tasks.yaml
       dir: ..
+

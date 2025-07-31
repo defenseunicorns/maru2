@@ -223,7 +223,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid workflow",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
@@ -345,7 +346,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "uses with valid task reference",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task1": Task{Step{
 						Run: "echo first",
@@ -359,7 +361,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "uses with valid URL scheme",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Uses: "http://example.com/task",
@@ -370,7 +373,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid workflow",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo",
@@ -381,6 +385,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "input with valid regex validation",
 			wf: Workflow{
+				SchemaVersion: SchemaVersionV0,
 				Inputs: InputMap{
 					"name": InputParameter{
 						Description: "Name with validation",
@@ -414,6 +419,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "multiple inputs with valid and invalid regex validation",
 			wf: Workflow{
+				SchemaVersion: SchemaVersionV0,
 				Inputs: InputMap{
 					"name": InputParameter{
 						Description: "Name with validation",
@@ -435,7 +441,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "uses with valid task reference",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task1": Task{Step{
 						Run: "echo first",
@@ -449,7 +456,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "task with both run and uses",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run:  "echo",
@@ -462,7 +470,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "task with neither run nor uses",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						// Missing both Run and Uses
@@ -474,7 +483,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "task with multiple validation errors",
 			wf: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{
 						Step{
@@ -524,6 +534,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid input schema",
 			wf: Workflow{
+				SchemaVersion: SchemaVersionV0,
 				Inputs: InputMap{
 					"input": InputParameter{
 						Description: "A test input",
@@ -599,12 +610,14 @@ func TestRead(t *testing.T) {
 		{
 			name: "simple workflow",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   echo:
     - run: echo
 `),
 			expected: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
@@ -616,6 +629,7 @@ tasks:
 		{
 			name: "workflow with inputs",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   echo:
     - run: echo
@@ -626,6 +640,7 @@ inputs:
     default: "default name"
 `),
 			expected: Workflow{
+				SchemaVersion: SchemaVersionV0,
 				Inputs: InputMap{
 					"name": InputParameter{
 						Description: "string",
@@ -643,6 +658,7 @@ inputs:
 		{
 			name: "workflow with inputs and aliases",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   echo:
     - run: echo
@@ -657,6 +673,7 @@ aliases:
     type: github
 `),
 			expected: Workflow{
+				SchemaVersion: SchemaVersionV0,
 				Inputs: InputMap{
 					"name": InputParameter{
 						Description: "string",
@@ -678,6 +695,7 @@ aliases:
 		{
 			name: "workflow with extension keys",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   echo:
     - run: echo
@@ -686,7 +704,8 @@ x-metadata:
   description: "This is a test workflow"
 `),
 			expected: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
@@ -731,6 +750,7 @@ x-metadata:
 		{
 			name: "error marshaling task",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   echo:
     - run: echo
@@ -742,17 +762,18 @@ tasks:
 				Tasks:   TaskMap{},
 				Aliases: map[string]uses.Alias{},
 			},
-			expectedError: `[6:7] sequence was used where mapping is expected
-   3 |   echo:
-   4 |     - run: echo
-   5 |       with:
->  6 |       - invalid
+			expectedError: `[7:7] sequence was used where mapping is expected
+   4 |   echo:
+   5 |     - run: echo
+   6 |       with:
+>  7 |       - invalid
              ^
 `,
 		},
 		{
 			name: "error marshaling input",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   echo:
     - run: echo
@@ -766,10 +787,10 @@ inputs:
 				Tasks:   TaskMap{},
 				Aliases: map[string]uses.Alias{},
 			},
-			expectedError: `[8:18] cannot unmarshal []interface {} into Go struct field Workflow.Inputs of type string
-   6 | inputs:
-   7 |   name:
->  8 |     description: []
+			expectedError: `[9:18] cannot unmarshal []interface {} into Go struct field Workflow.Inputs of type string
+   7 | inputs:
+   8 |   name:
+>  9 |     description: []
                         ^
 `,
 		},
@@ -801,12 +822,14 @@ func TestReadAndValidate(t *testing.T) {
 		{
 			name: "simple good read",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   echo:
     - run: echo
 `),
 			expected: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
@@ -831,12 +854,14 @@ tasks:
 		{
 			name: "validation error",
 			r: strings.NewReader(`
+schema-version: v0
 tasks:
   2-echo:
     - run: echo
 `),
 			expected: Workflow{
-				Inputs: InputMap{},
+				SchemaVersion: SchemaVersionV0,
+				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"2-echo": Task{Step{
 						Run: "echo",

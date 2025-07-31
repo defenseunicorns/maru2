@@ -15,6 +15,7 @@ import (
 // helloWorldWorkflow is a simple workflow that prints "Hello World!"
 // do not make changes to this variable within tests
 var helloWorldWorkflow = Workflow{
+	SchemaVersion: SchemaVersionV0,
 	Tasks: TaskMap{
 		"default": {Step{Run: "echo 'Hello World!'"}},
 		"a-task":  {Step{Run: "echo 'task a'"}},
