@@ -21,7 +21,7 @@ const SchemaVersionCurrent = "v0" // TODO: v0 or v1 here?
 // Versioned is a tiny struct used to grab the schema version for a workflow
 type Versioned struct {
 	// SchemaVersion is the workflow schema that this workflow follows
-	SchemaVersion string `json:"schema-version,omitempty"`
+	SchemaVersion string `json:"schema-version"`
 }
 
 // Workflow is a wrapper struct around the input map and task map
