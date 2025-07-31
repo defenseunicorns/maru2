@@ -42,3 +42,7 @@ Note: aliases configured via the config file only affect `-f/--from` alias resol
 ## Future Configuration Options
 
 The global configuration file is designed to be extensible. Future versions of Maru2 may add additional configuration options.
+
+## Schema Version and Migrations
+
+Maru2 workflow files require a top-level `schema-version` property (e.g., `schema-version: v0`). This ensures workflows are validated against the correct schema and enables future migration tooling. When a new schema version is released, Maru2 will provide migration guidance and tools to help you update your workflows. Configuration files themselves may also gain a `schema-version` property in the future to support config migrations.
