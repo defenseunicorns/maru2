@@ -482,7 +482,7 @@
         "v0",
         "latest"
       ],
-      "description": "Workflow schema version. Controls parsing and validation:\n\nlatest: parse and validate as the latest schema\nv0/v1/etc...: parse as the provided schema version, then migrate to the latest schema, then validate"
+      "description": "Workflow schema version. Controls parsing and validation:\n\nlatest: parse and validate as the latest schema (same behavior if property does not exist)\nv0/v1/etc...: parse as the provided schema version, then migrate to the latest schema, then validate"
     },
     "inputs": {
       "$ref": "#/$defs/InputMap",
