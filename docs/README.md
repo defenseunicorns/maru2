@@ -109,7 +109,8 @@ tasks:
   greet:
     - run: echo "stdout=${{ input "message" }}" >> $MARU2_OUTPUT
       id: greeter
-    - run: echo "The message was: ${{ from "greeter" "stdout" }}"
+    - run: |
+        echo "The message was: ${{ from "greeter" "stdout" }}"
 ```
 
 Run it with:
