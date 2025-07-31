@@ -29,7 +29,8 @@ jobs:
           cache-dependency-path: go.sum
 
       - run: make
-      - run: echo $UDS_REGISTRY_TOKEN | go tool oras login --identity-token-stdin registry.defenseunicorns.com
+      - run: echo "$UDS_REGISTRY_TOKEN" | go tool oras login -u "$UDS_REGISTRY_USER" --password-stdin registry.defenseunicorns.com
         env:
+          UDS_REGISTRY_USER: ${{ secrets.UDS_REGISTRY_USER  }}
           UDS_REGISTRY_TOKEN: ${{ secrets.UDS_REGISTRY_TOKEN  }}
       - run: ./bin/maru2 release-nightly -w uds-registry=registry.defenseunicorns.com
