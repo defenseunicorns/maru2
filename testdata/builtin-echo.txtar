@@ -2,6 +2,7 @@ exec maru2 echo-test
 cmp stderr stderr.txt
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   echo-test:
     - uses: builtin:echo

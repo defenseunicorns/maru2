@@ -2,6 +2,7 @@ exec maru2 -l debug
 stdout 'default\ndefault\ncallback\n'
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   default:
     - run: echo "default"
@@ -11,6 +12,7 @@ tasks:
     - run: echo "callback"
 
 -- dir/maru2-other.yaml --
+schema-version: v0
 tasks:
   default:
     - run: echo "default"

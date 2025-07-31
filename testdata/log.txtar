@@ -10,6 +10,7 @@ echo "default"
 -- stdout.txt --
 default
 -- tasks.yaml --
+schema-version: v0
 tasks:
   default:
     - run: echo "default"

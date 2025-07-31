@@ -2,6 +2,7 @@ exec maru2
 cmp stdout stdout.txt
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   default:
     - run: echo "default"
@@ -20,6 +21,7 @@ Hello World!
 default
 Hello World!
 
+schema-version: v0
 tasks:
   default:
     - run: echo "default"
@@ -30,4 +32,3 @@ tasks:
     - run: cat content/hello.txt
     - run: cat tasks.yaml
       dir: ..
-

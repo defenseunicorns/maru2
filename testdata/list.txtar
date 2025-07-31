@@ -7,6 +7,7 @@ exec touch tasks.yaml
 cmp stderr stderr2.txt
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   default:
     - run: echo "default"

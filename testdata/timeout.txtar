@@ -4,6 +4,7 @@ cmp stderr stderr.txt
 cmp stderr stderr-shorter.txt
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   sleep:
     - run: sleep 10
