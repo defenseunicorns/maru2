@@ -7,6 +7,9 @@ inputs:
   short:
     description: Controls whether network tests are run
     default: false
+  uds-registry:
+    description: Registry location to publish nightly to
+    default: localhost:5005
 
 tasks:
   echo:
@@ -33,3 +36,53 @@ tasks:
       id: foo
     - run: |
         echo "got: ${{ from "foo" "bar" }}"
+
+  release-nightly:
+    - run: |
+        rm -rf dist
+        mkdir -p dist
+
+        title() {
+            string="$1"
+            first_char=$(printf %.1s "$string" | tr '[:lower:]' '[:upper:]')
+            rest_of_string=$(printf %s "$string" | cut -c 2-)
+            printf '%s%s\n' "$first_char" "$rest_of_string"
+        }
+
+        export CGO_ENABLED=0
+
+        oses=(linux darwin)
+        arches=(amd64 arm64)
+        for os in "${oses[@]}"; do
+          for arch in "${arches[@]}"; do
+            if [[ "${os}/${arch}" == "darwin/amd64" ]]; then
+              continue
+            fi
+
+            platform="$(title "$os")_"
+            if [[ "${arch}" == "amd64" ]]; then
+              platform+="x86_64"
+            else
+              platform+="${arch}"
+            fi
+
+            echo "build dist/maru2_$platform"
+            GOARCH="$arch" GOOS="$os" \
+            go build -o "dist/maru2_$platform" -ldflags="-s -w" -trimpath ./cmd/maru2
+
+            echo "build dist/maru2-publish_$platform"
+            GOARCH="$arch" GOOS="$os" \
+            go build -o "dist/maru2-publish_$platform" -ldflags="-s -w" -trimpath ./cmd/maru2-publish
+          done
+        done
+      shell: bash
+    - run: |
+        cp LICENSE dist
+        cp maru2.schema.json dist
+    - run: |
+        go tool oras push \
+          ${{ input "uds-registry" }}/ops/maru2-nightly:$(../bin/maru2 --version) \
+          $(find . | sed 's|$|:application/vnd.maru2.release.artifact.v1|') \
+          --artifact-type "application/vnd.maru2.release.manifest.v1"
+      shell: bash
+      dir: dist

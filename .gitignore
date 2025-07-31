@@ -3,3 +3,4 @@ bin
 *.gif
 coverage.out
 coverage.html
+dist/
