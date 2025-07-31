@@ -81,7 +81,7 @@ tasks:
         cp maru2.schema.json dist
     - run: |
         go tool oras push \
-          ${{ input "uds-registry" }}/maru2-nightly:$(../bin/maru2 --version) \
+          ${{ input "uds-registry" }}/ops/maru2-nightly:$(../bin/maru2 --version) \
           $(find . | sed 's|$|:application/vnd.maru2.release.artifact.v1|') \
           --artifact-type "application/vnd.maru2.release.manifest.v1"
       shell: bash
