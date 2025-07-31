@@ -24,6 +24,7 @@ func TestFetchAll(t *testing.T) {
 	require.NoError(t, err)
 
 	workflowNoRefs := Workflow{
+		SchemaVersion: SchemaVersionV0,
 		Tasks: TaskMap{
 			"default": {Step{Run: "echo 'hello'"}},
 		},
@@ -37,6 +38,7 @@ func TestFetchAll(t *testing.T) {
 
 		case "/workflow2.yaml":
 			wf := Workflow{
+				SchemaVersion: SchemaVersionV0,
 				Tasks: TaskMap{
 					"default": {
 						Step{Run: "echo 'nested start'"},
@@ -60,6 +62,7 @@ func TestFetchAll(t *testing.T) {
 
 		case "/nested404.yaml":
 			wf := Workflow{
+				SchemaVersion: SchemaVersionV0,
 				Tasks: TaskMap{
 					"default": {
 						Step{Uses: "file:dne.yaml"},
