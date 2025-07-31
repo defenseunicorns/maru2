@@ -51,7 +51,7 @@ func Read(r io.Reader) (Workflow, error) {
 	}
 
 	switch version := versioned.SchemaVersion; version {
-	case SchemaVersionCurrent:
+	case SchemaVersionV0:
 		var wf Workflow
 		return wf, yaml.Unmarshal(data, &wf)
 	default:

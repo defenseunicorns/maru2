@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=maru2.schema.json
+schema-version: v0
 inputs:
   text:
     description: Text to echo

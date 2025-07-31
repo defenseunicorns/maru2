@@ -54,7 +54,9 @@ func TestOCIClient(t *testing.T) {
 	seed := func(server *httptest.Server) {
 		tmp := t.TempDir()
 		t.Chdir(tmp)
-		err := os.WriteFile(uses.DefaultFileName, []byte(`inputs:
+		err := os.WriteFile(uses.DefaultFileName, []byte(`
+schema-version: v0
+inputs:
   text:
     description: Text to echo
     default: "Hello, world!"
@@ -103,6 +105,7 @@ tasks:
 		wf, err := maru2.Read(rc)
 		require.NoError(t, err)
 		assert.Equal(t, maru2.Workflow{
+			SchemaVersion: maru2.SchemaVersionV0,
 			Inputs: maru2.InputMap{"text": maru2.InputParameter{
 				Description: "Text to echo",
 				Default:     "Hello, world!",

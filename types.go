@@ -15,8 +15,8 @@ import (
 // DefaultTaskName is the default task name
 const DefaultTaskName = "default"
 
-// SchemaVersionCurrent is the current schema version for workflows
-const SchemaVersionCurrent = "v0" // TODO: v0 or v1 here?
+// SchemaVersionV0 is the current schema version for workflows
+const SchemaVersionV0 = "v0"
 
 // Versioned is a tiny struct used to grab the schema version for a workflow
 type Versioned struct {
@@ -28,18 +28,17 @@ type Versioned struct {
 //
 // It represents a "tasks.yaml" file
 type Workflow struct {
-	Versioned
-
-	Inputs  InputMap              `json:"inputs,omitempty"`
-	Tasks   TaskMap               `json:"tasks,omitempty"`
-	Aliases map[string]uses.Alias `json:"aliases,omitempty"`
+	SchemaVersion string                `json:"schema-version"`
+	Inputs        InputMap              `json:"inputs,omitempty"`
+	Tasks         TaskMap               `json:"tasks,omitempty"`
+	Aliases       map[string]uses.Alias `json:"aliases,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
 		schemaVersion.Description = "Workflow schema version"
-		schemaVersion.Enum = []any{SchemaVersionCurrent}
+		schemaVersion.Enum = []any{SchemaVersionV0}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
 	}
 
