@@ -86,3 +86,35 @@ tasks:
           --artifact-type "application/vnd.maru2.release.manifest.v1"
       shell: bash
       dir: dist
+
+  test-nightly:
+    - run: |
+        version=$(go tool oras repo tags ${{ input "uds-registry" }}/ops/maru2-nightly | tail -n 1)
+        echo "version=$version" >> $MARU2_OUTPUT
+        echo "downloading maru2@$version"
+
+        manifest=$(go tool oras manifest fetch "${{ input "uds-registry" }}/ops/maru2-nightly:$version")
+
+        platform="$(uname)_$(uname -m)"
+        to_fetch=(maru2.schema.json "maru2_$platform" "maru2-publish_$platform")
+
+        for file in "${to_fetch[@]}"; do
+          digest=$(echo "$manifest" | jq -r ".layers[] | select(.annotations[\"org.opencontainers.image.title\"] == \"${file}\") | .digest")
+          go tool oras blob fetch "${{ input "uds-registry" }}/ops/maru2-nightly@$digest" --output $file
+        done
+
+        mv "maru2_$platform" maru2 && chmod +x maru2
+        mv "maru2-publish_$platform" maru2-publish && chmod +x maru2-publish
+      id: fetch
+    - run: |
+        if [[ "$(./maru2 --version)" != "${{ from "fetch" "version" }}" ]]; then
+          echo "maru2 version mismatch"
+          exit 1
+        fi
+
+        if [[ "$(./maru2-publish --version)" != "${{ from "fetch" "version" }}" ]]; then
+          echo "maru2-publish version mismatch"
+          exit 1
+        fi
+    - run: rm -f ./maru2 ./maru2-publish
+      if: always()
