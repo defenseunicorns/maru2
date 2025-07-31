@@ -105,14 +105,14 @@ tasks:
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:083dd91056ea12399edb42f99905d563fb55e7b1f4b3672b72efcda67582b660",
-					Size:        52,
+					Digest:      "sha256:ebd11b8920091e2a6e2f2050ee18d456bc8041a8601cf131a84507f6d1ad3b5a",
+					Size:        72,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:ce250b935a88555f72f9e4499353ff8173ab4dc0f476b46d51c566f1906c4a61",
-					Size:        32,
+					Digest:      "sha256:cf8bcd8f445d8611ba14b04f283ba9c4e1fa18a04635b30cf19d048abb60614d",
+					Size:        52,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep.yaml"},
 				},
 			},
@@ -143,19 +143,19 @@ tasks:
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:8c98231524bd8db5fd647c6d282e9f42956f72b71a571a5eefe6bf27852dc980",
-					Size:        54,
+					Digest:      "sha256:cfaa905058cee7a842b6a829db1098b5649b27fdc94192234ee8a88b00d84e3a",
+					Size:        74,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:26945f5cee5e3f2ebfdbc4b820bd6ce7abca6a25dd534b516d914f6545ca34a2",
-					Size:        54,
+					Digest:      "sha256:b4de33822540858d402dab6e7e46bc3988cf0bea060d8781b24d0cef3ac5b371",
+					Size:        74,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep1.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:8ff065cf16ba56474165bc2053a2fce530309b6a8a816d1a6f5f14d9c232c278",
+					Digest:      "sha256:066e03e70397ce63a111d086f09a584a6b8ac707c8cbe9ce68680d4aba185820",
 					Size:        53,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep2.yaml"},
 				},
@@ -181,14 +181,14 @@ tasks:
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:741938f3090969c83104f288b532cd41d5424e6c5ce8d77200e97eb74299b857",
-					Size:        63,
+					Digest:      "sha256:578d9a9ce72c8b11141df11deb355505ca0fac55b8b499c918783be309ae480d",
+					Size:        83,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:ce250b935a88555f72f9e4499353ff8173ab4dc0f476b46d51c566f1906c4a61",
-					Size:        32,
+					Digest:      "sha256:cf8bcd8f445d8611ba14b04f283ba9c4e1fa18a04635b30cf19d048abb60614d",
+					Size:        52,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:./nested/tasks.yaml"},
 				},
 			},
@@ -238,7 +238,7 @@ tasks:
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:a6c1eda52d254444e70b6be557e0e5e97726cad9c368b4b48622f8ca6006e2c4",
+					Digest:      "sha256:97e2c0262ec9cc6c5afb8b5c1298f475f1d2422e09db3ce5b511df2b23c49f0e",
 					Size:        53,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
@@ -264,14 +264,14 @@ tasks:
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:a6c1eda52d254444e70b6be557e0e5e97726cad9c368b4b48622f8ca6006e2c4",
+					Digest:      "sha256:97e2c0262ec9cc6c5afb8b5c1298f475f1d2422e09db3ce5b511df2b23c49f0e",
 					Size:        53,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:ce250b935a88555f72f9e4499353ff8173ab4dc0f476b46d51c566f1906c4a61",
-					Size:        32,
+					Digest:      "sha256:cf8bcd8f445d8611ba14b04f283ba9c4e1fa18a04635b30cf19d048abb60614d",
+					Size:        52,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep.yaml"},
 				},
 			},
