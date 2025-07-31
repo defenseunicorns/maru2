@@ -31,5 +31,5 @@ jobs:
       - run: make
       - run: echo $UDS_REGISTRY_TOKEN | go tools oras login --identity-token-stdin registry.defenseunicorns.com
         env:
-          UDS_REGISTRY_TOKEN: ${{ secrets.nightly-push-token }}
+          UDS_REGISTRY_TOKEN: ${{ secrets.UDS_REGISTRY_TOKEN  }}
       - run: ./bin/maru2 release-nightly -w uds-registry=registry.defenseunicorns.com
