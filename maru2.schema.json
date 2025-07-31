@@ -479,10 +479,9 @@
       "additionalProperties": false,
       "type": "string",
       "enum": [
-        "v0",
-        "latest"
+        "v0"
       ],
-      "description": "Workflow schema version. Controls parsing and validation:\n\nlatest: parse and validate as the latest schema (same behavior if property does not exist)\nv0/v1/etc...: parse as the provided schema version, then migrate to the latest schema, then validate"
+      "description": "Workflow schema version"
     },
     "inputs": {
       "$ref": "#/$defs/InputMap",
