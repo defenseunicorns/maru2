@@ -689,6 +689,16 @@ x-metadata:
 `,
 		},
 		{
+			name: "missing schema version",
+			r: strings.NewReader(`
+tasks:
+  echo:
+    - run: echo
+`),
+			expected:      Workflow{},
+			expectedError: `unsupported schema version: ""`,
+		},
+		{
 			name:          "read error from reader",
 			r:             badReadSeeker{failOnRead: true},
 			expected:      Workflow{},
