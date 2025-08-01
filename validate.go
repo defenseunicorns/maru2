@@ -52,11 +52,7 @@ func Read(r io.Reader) (Workflow, error) {
 
 	switch version := versioned.SchemaVersion; version {
 	case SchemaVersionV0:
-		wf := Workflow{
-			Inputs:  make(InputMap),
-			Tasks:   make(TaskMap),
-			Aliases: make(map[string]uses.Alias),
-		}
+		var wf Workflow
 		return wf, yaml.Unmarshal(data, &wf)
 	default:
 		return Workflow{}, fmt.Errorf("unsupported schema version: %q", version)

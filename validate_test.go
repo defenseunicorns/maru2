@@ -224,7 +224,6 @@ func TestValidate(t *testing.T) {
 			name: "valid workflow",
 			wf: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
@@ -233,17 +232,13 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "no tasks",
-			wf: Workflow{
-				Inputs: InputMap{},
-				Tasks:  TaskMap{},
-			},
+			name:          "no tasks",
+			wf:            Workflow{},
 			expectedError: "no tasks available",
 		},
 		{
 			name: "invalid task name",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"2-echo": Task{Step{
 						Run: "echo",
@@ -255,7 +250,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid step id",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
@@ -268,7 +262,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "duplicate step ids",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{
 						Step{
@@ -287,7 +280,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "both run and uses set",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run:  "echo",
@@ -300,7 +292,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "neither run nor uses set",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{}},
 				},
@@ -310,7 +301,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "uses with invalid URL",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Uses: ":\\invalid",
@@ -322,7 +312,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "uses with non-existent task",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Uses: "non-existent-task",
@@ -334,7 +323,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "uses with invalid scheme",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Uses: "invalid://scheme",
@@ -347,7 +335,6 @@ func TestValidate(t *testing.T) {
 			name: "uses with valid task reference",
 			wf: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task1": Task{Step{
 						Run: "echo first",
@@ -362,22 +349,9 @@ func TestValidate(t *testing.T) {
 			name: "uses with valid URL scheme",
 			wf: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Uses: "http://example.com/task",
-					}},
-				},
-			},
-		},
-		{
-			name: "valid workflow",
-			wf: Workflow{
-				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
-				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
 					}},
 				},
 			},
@@ -457,7 +431,6 @@ func TestValidate(t *testing.T) {
 			name: "task with both run and uses",
 			wf: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run:  "echo",
@@ -471,7 +444,6 @@ func TestValidate(t *testing.T) {
 			name: "task with neither run nor uses",
 			wf: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						// Missing both Run and Uses
@@ -484,7 +456,6 @@ func TestValidate(t *testing.T) {
 			name: "task with multiple validation errors",
 			wf: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"task": Task{
 						Step{
@@ -519,7 +490,6 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid task schema",
 			wf: Workflow{
-				Inputs: InputMap{},
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo",
@@ -617,13 +587,11 @@ tasks:
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]uses.Alias{},
 			},
 		},
 		{
@@ -652,7 +620,6 @@ inputs:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]uses.Alias{},
 			},
 		},
 		{
@@ -705,46 +672,32 @@ x-metadata:
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]uses.Alias{},
 			},
 		},
 		{
-			name: "invalid yaml",
-			r:    strings.NewReader(`invalid: yaml::`),
-			expected: Workflow{
-				Inputs:  InputMap{},
-				Tasks:   TaskMap{},
-				Aliases: map[string]uses.Alias{},
-			},
+			name:     "invalid yaml",
+			r:        strings.NewReader(`invalid: yaml::`),
+			expected: Workflow{},
 			expectedError: `[1:10] mapping value is not allowed in this context
 >  1 | invalid: yaml::
                 ^
 `,
 		},
 		{
-			name: "read error from reader",
-			r:    badReadSeeker{failOnRead: true},
-			expected: Workflow{
-				Inputs:  InputMap{},
-				Tasks:   TaskMap{},
-				Aliases: map[string]uses.Alias{},
-			},
+			name:          "read error from reader",
+			r:             badReadSeeker{failOnRead: true},
+			expected:      Workflow{},
 			expectedError: "read failed",
 		},
 		{
-			name: "seek error from reader",
-			r:    badReadSeeker{failOnSeek: true},
-			expected: Workflow{
-				Inputs:  InputMap{},
-				Tasks:   TaskMap{},
-				Aliases: map[string]uses.Alias{},
-			},
+			name:          "seek error from reader",
+			r:             badReadSeeker{failOnSeek: true},
+			expected:      Workflow{},
 			expectedError: "seek failed",
 		},
 		{
@@ -757,11 +710,7 @@ tasks:
       with:
       - invalid
 `),
-			expected: Workflow{
-				Inputs:  InputMap{},
-				Tasks:   TaskMap{},
-				Aliases: map[string]uses.Alias{},
-			},
+			expected: Workflow{},
 			expectedError: `[7:7] sequence was used where mapping is expected
    4 |   echo:
    5 |     - run: echo
@@ -782,11 +731,7 @@ inputs:
   name:
     description: []
 `),
-			expected: Workflow{
-				Inputs:  InputMap{},
-				Tasks:   TaskMap{},
-				Aliases: map[string]uses.Alias{},
-			},
+			expected: Workflow{},
 			expectedError: `[9:18] cannot unmarshal []interface {} into Go struct field Workflow.Inputs of type string
    7 | inputs:
    8 |   name:
@@ -829,25 +774,19 @@ tasks:
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"echo": Task{Step{
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]uses.Alias{},
 			},
 			expectedReadErr:     "",
 			expectedValidateErr: "",
 		},
 		{
-			name: "read error",
-			r:    strings.NewReader(`invalid: yaml::`),
-			expected: Workflow{
-				Inputs:  InputMap{},
-				Tasks:   TaskMap{},
-				Aliases: map[string]uses.Alias{},
-			},
+			name:                "read error",
+			r:                   strings.NewReader(`invalid: yaml::`),
+			expected:            Workflow{},
 			expectedReadErr:     "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml::\n                ^\n",
 			expectedValidateErr: "",
 		},
@@ -861,13 +800,11 @@ tasks:
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersionV0,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
 					"2-echo": Task{Step{
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]uses.Alias{},
 			},
 			expectedReadErr:     "",
 			expectedValidateErr: fmt.Sprintf("task name \"2-echo\" does not satisfy %q", TaskNamePattern.String()),

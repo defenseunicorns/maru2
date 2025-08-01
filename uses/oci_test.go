@@ -114,7 +114,6 @@ tasks:
 			Tasks: maru2.TaskMap{"echo": maru2.Task{{
 				Run: `echo "${{ input "text" }}"`,
 			}}},
-			Aliases: map[string]uses.Alias{},
 		}, wf)
 
 		// fails w/ internal not found error
