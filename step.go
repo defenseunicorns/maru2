@@ -199,6 +199,12 @@ pwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath v
 powershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`,
 		Enum: []any{"sh", "bash", "pwsh", "powershell"},
 	})
+	props.Set("timeout", &jsonschema.Schema{
+		Type: "string",
+		Description: `Set how long to run the command before timing out (e.g., "30s", "1m30s", "1h")
+
+See https://pkg.go.dev/time#Duration for more information.`,
+	})
 
 	runProps := jsonschema.NewProperties()
 	runProps.Set("run", &jsonschema.Schema{

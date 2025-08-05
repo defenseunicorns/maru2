@@ -1,6 +1,7 @@
 ! exec maru2 sleep &long&
 exec sleep 2
 kill -INT long
+wait
 cmp stderr stderr.txt
 
 -- tasks.yaml --

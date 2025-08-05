@@ -450,6 +450,10 @@
           ],
           "description": "Set the shell to execute (default: sh)\n\nsh -e -u -c {}\nbash -e -u -o pipefail -c {}\npwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }\npowershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"
         },
+        "timeout": {
+          "type": "string",
+          "description": "Set how long to run the command before timing out (e.g., \"30s\", \"1m30s\", \"1h\")\n\nSee https://pkg.go.dev/time#Duration for more information."
+        },
         "with": {
           "type": "object"
         }
