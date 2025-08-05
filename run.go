@@ -46,6 +46,7 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 	logger := log.FromContext(parent)
 	outputs := make(CommandOutputs)
 	var firstError error
+	var lastStepOutput map[string]any
 
 	start := time.Now()
 	logger.Debug("run", "task", taskName, "from", origin, "dry-run", dry)
@@ -107,10 +108,16 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 
 			sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
 
+			isLastStep := i == len(task)-1
+			if isLastStep {
+				lastStepOutput = stepResult
+			}
+
 			if step.ID != "" && len(stepResult) > 0 {
 				outputs[step.ID] = make(map[string]any, len(stepResult))
 				maps.Copy(outputs[step.ID], stepResult)
 			}
+
 			return nil
 		}(sigCtx)
 
@@ -119,7 +126,7 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 		}
 	}
 
-	return outputs[task[len(task)-1].ID], firstError
+	return lastStepOutput, firstError
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,
