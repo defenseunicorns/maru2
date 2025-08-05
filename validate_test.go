@@ -340,7 +340,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].uses \"invalid\" is not one of [file, http, https, pkg, oci, builtin]",
+			expectedError: fmt.Sprintf(".task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(uses.SupportedSchemes(), "builtin"), ", ")),
 		},
 		{
 			name: "uses with valid task reference",
@@ -533,6 +533,42 @@ func TestValidate(t *testing.T) {
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo",
+					}},
+				},
+			},
+		},
+		{
+			name: "step with absolute dir path",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo",
+						Dir: "/tmp",
+					}},
+				},
+			},
+			expectedError: ".task[0].dir \"/tmp\" must not be absolute",
+		},
+		{
+			name: "step with invalid timeout",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run:     "echo",
+						Timeout: "5",
+					}},
+				},
+			},
+			expectedError: ".task[0].timeout \"5\" is not a valid time duration",
+		},
+		{
+			name: "step with valid timeout and dir",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run:     "echo",
+						Timeout: "5s",
+						Dir:     "tmp",
 					}},
 				},
 			},
