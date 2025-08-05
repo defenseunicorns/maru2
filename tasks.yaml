@@ -86,3 +86,9 @@ tasks:
           --artifact-type "application/vnd.maru2.release.manifest.v1"
       shell: bash
       dir: dist
+  sleep:
+    - run: sleep 10
+    - run: echo "there"
+      if: always()
+    - run: echo "hello"
+      if: cancelled()

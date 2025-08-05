@@ -1,0 +1,15 @@
+! exec maru2 sleep &long&
+exec sleep 5
+kill -INT long
+cmp stderr stderr.txt
+
+-- tasks.yaml --
+tasks:
+  sleep:
+    - run: sleep 10
+-- stderr.txt --
+$ sleep 10
+
+ERRO task timed out
+ERRO signal: killed
+ERRO at sleep[0] (file:tasks.yaml)

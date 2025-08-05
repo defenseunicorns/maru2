@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"time"
@@ -26,7 +27,7 @@ import (
 //
 // For all `uses` steps, this function will be called recursively.
 // Returns the outputs from the final step in the task.
-func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
+func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
 	}
@@ -36,12 +37,12 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 		return nil, addTrace(fmt.Errorf("task %q not found", taskName), fmt.Sprintf("at (%s)", origin))
 	}
 
-	withDefaults, err := MergeWithAndParams(ctx, outer, wf.Inputs)
+	withDefaults, err := MergeWithAndParams(parent, outer, wf.Inputs)
 	if err != nil {
 		return nil, addTrace(err, fmt.Sprintf("at (%s)", origin))
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(parent)
 	outputs := make(CommandOutputs)
 	var firstError error
 
@@ -50,6 +51,10 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 	defer func() {
 		logger.Debug("ran", "task", taskName, "from", origin, "duration", time.Since(start))
 	}()
+
+	ctx, cancel := signal.NotifyContext(parent, os.Interrupt)
+	defer cancel()
+
 	for i, step := range task {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 		shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
