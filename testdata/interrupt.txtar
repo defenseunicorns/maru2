@@ -8,9 +8,11 @@ cmp stderr stderr.txt
 tasks:
   sleep:
     - run: sleep 10
+    - run: echo "cancelled"
+      if: cancelled()
 -- stderr.txt --
 $ sleep 10
+$ echo "cancelled"
 
-ERRO task was cancelled
 ERRO signal: killed
 ERRO at sleep[0] (file:tasks.yaml)

@@ -78,10 +78,6 @@ func main() {
 			logger.Error("task timed out")
 		}
 
-		if errors.Is(cmd.Context().Err(), context.Canceled) {
-			logger.Error("task was cancelled")
-		}
-
 		var tErr *maru2.TraceError
 		if errors.As(err, &tErr) && len(tErr.Trace) > 0 {
 			trace := tErr.Trace

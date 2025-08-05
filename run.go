@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -55,6 +56,8 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 	sigCtx, cancel := signal.NotifyContext(parent, os.Interrupt)
 	defer cancel()
 
+	var taskCancelledLogOnce sync.Once
+
 	for i, step := range task {
 		err := func(ctx context.Context) error {
 			sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
@@ -69,19 +72,23 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 			}
 
 			if errors.Is(ctx.Err(), context.Canceled) {
-				var cancel context.CancelFunc
-				if step.Timeout != "" {
-					timeout, err := time.ParseDuration(step.Timeout)
-					if err != nil {
-						return err
-					}
-					ctx, cancel = context.WithTimeout(parent, timeout)
-					defer cancel()
-				} else {
-					ctx, cancel = context.WithCancel(parent)
-					defer cancel()
-				}
+				taskCancelledLogOnce.Do(func() {
+					sub.Warn("task cancelled")
+				})
 			}
+
+			// Always create a new context for the current step derived from the overall parent context
+			var cancel context.CancelFunc
+			if step.Timeout != "" {
+				timeout, err := time.ParseDuration(step.Timeout)
+				if err != nil {
+					return err
+				}
+				ctx, cancel = context.WithTimeout(parent, timeout)
+			} else {
+				ctx, cancel = context.WithCancel(parent)
+			}
+			defer cancel()
 
 			var stepResult map[string]any
 
