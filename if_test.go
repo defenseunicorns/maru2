@@ -4,6 +4,7 @@
 package maru2
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestIf(t *testing.T) {
 		with            With
 		previousOutputs CommandOutputs
 		dry             bool
-		hasFailed       bool
+		err             error
 		expected        bool
 		expectedErr     string
 	}{
@@ -26,9 +27,9 @@ func TestIf(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:      "empty after failure",
-			hasFailed: true,
-			expected:  false,
+			name:     "empty after failure",
+			err:      fmt.Errorf("i had a failure"),
+			expected: false,
 		},
 		{
 			name:      "failure",
@@ -38,7 +39,7 @@ func TestIf(t *testing.T) {
 		{
 			name:      "failure after command failure",
 			inputExpr: "failure()",
-			hasFailed: true,
+			err:       fmt.Errorf("the previous command failed"),
 			expected:  true,
 		},
 		{
@@ -49,7 +50,7 @@ func TestIf(t *testing.T) {
 		{
 			name:      "always after failure",
 			inputExpr: "always()",
-			hasFailed: true,
+			err:       fmt.Errorf("the previous command failed"),
 			expected:  true,
 		},
 		{
@@ -189,7 +190,7 @@ func TestIf(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := If(tt.inputExpr).ShouldRun(tt.hasFailed, tt.with, tt.previousOutputs, tt.dry)
+			actual, err := If(tt.inputExpr).ShouldRun(t.Context(), tt.err, tt.with, tt.previousOutputs, tt.dry)
 
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)

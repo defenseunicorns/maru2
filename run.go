@@ -52,10 +52,9 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 	}()
 	for i, step := range task {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
-		hasFailed := firstError != nil
-		shouldRun, err := step.If.ShouldRun(hasFailed, withDefaults, outputs, dry)
+		shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
 		if err != nil {
-			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
+			sub.Error("failed evaluating if expresssion", "err", err)
 			continue
 		}
 		if !shouldRun {
