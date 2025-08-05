@@ -52,48 +52,60 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 		logger.Debug("ran", "task", taskName, "from", origin, "duration", time.Since(start))
 	}()
 
-	ctx, cancel := signal.NotifyContext(parent, os.Interrupt)
+	sigCtx, cancel := signal.NotifyContext(parent, os.Interrupt)
 	defer cancel()
 
 	for i, step := range task {
-		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
-		shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
-		if err != nil {
-			sub.Error("failed evaluating if expresssion", "err", err)
-			continue
-		}
-		if !shouldRun {
-			sub.Debug("completed", "skipped", true)
-			continue
-		}
+		err := func(ctx context.Context) error {
+			sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
+			shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
+			if err != nil {
+				// TODO: if there was a previous error, and "if" expr fails, this error is swallowed
+				return err
+			}
+			if !shouldRun {
+				sub.Debug("completed", "skipped", true)
+				return nil
+			}
 
-		var stepResult map[string]any
+			if errors.Is(ctx.Err(), context.Canceled) {
+				var cancel context.CancelFunc
+				if step.Timeout > 0 {
+					ctx, cancel = context.WithTimeout(parent, step.Timeout)
+					defer cancel()
+				} else {
+					ctx, cancel = context.WithCancel(parent)
+					defer cancel()
+				}
+			}
 
-		if step.Uses != "" {
-			stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
-		} else if step.Run != "" {
-			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
-		}
+			var stepResult map[string]any
+
+			if step.Uses != "" {
+				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
+			} else if step.Run != "" {
+				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
+			}
+
+			if err != nil {
+				return err
+			}
+
+			sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
+
+			if step.ID != "" && len(stepResult) > 0 {
+				outputs[step.ID] = make(map[string]any, len(stepResult))
+				maps.Copy(outputs[step.ID], stepResult)
+			}
+			return nil
+		}(sigCtx)
 
 		if err != nil && firstError == nil {
 			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
-			continue
-		}
-
-		sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
-
-		isLastStep := i == len(task)-1
-		if isLastStep {
-			return stepResult, firstError
-		}
-
-		if step.ID != "" && len(stepResult) > 0 {
-			outputs[step.ID] = make(map[string]any, len(stepResult))
-			maps.Copy(outputs[step.ID], stepResult)
 		}
 	}
 
-	return nil, firstError
+	return outputs[task[len(task)-1].ID], firstError
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,
