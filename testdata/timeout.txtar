@@ -1,13 +1,25 @@
 ! exec maru2 sleep --timeout 2s
 cmp stderr stderr.txt
+! exec maru2 sleep-shorter
+cmp stderr stderr-shorter.txt
 
 -- tasks.yaml --
 tasks:
   sleep:
     - run: sleep 10
+  sleep-shorter:
+    - uses: sleep
+      timeout: 2s
 -- stderr.txt --
 $ sleep 10
 
 ERRO task timed out
 ERRO signal: killed
 ERRO at sleep[0] (file:tasks.yaml)
+-- stderr-shorter.txt --
+$ sleep 10
+
+ERRO signal: killed
+  traceback (most recent call first)=
+  │ at sleep[0] (file:tasks.yaml)
+  │ at sleep-shorter[0] (file:tasks.yaml)

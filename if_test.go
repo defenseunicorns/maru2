@@ -4,12 +4,20 @@
 package maru2
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// cancelledContext returns a context that is already cancelled
+func cancelledContext() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	return ctx
+}
 
 func TestIf(t *testing.T) {
 	tests := []struct {
@@ -19,6 +27,7 @@ func TestIf(t *testing.T) {
 		previousOutputs CommandOutputs
 		dry             bool
 		err             error
+		ctx             context.Context
 		expected        bool
 		expectedErr     string
 	}{
@@ -186,11 +195,36 @@ func TestIf(t *testing.T) {
 			inputExpr: "true",
 			expected:  false,
 		},
+		{
+			name:      "cancelled",
+			inputExpr: "cancelled()",
+			ctx:       cancelledContext(),
+			expected:  true,
+		},
+		{
+			name:      "not cancelled",
+			inputExpr: "cancelled()",
+			ctx:       context.Background(),
+			expected:  false,
+		},
+		{
+			name:      "cancelled with failure",
+			inputExpr: "cancelled() && failure()",
+			ctx:       cancelledContext(),
+			err:       fmt.Errorf("previous command failed"),
+			expected:  true,
+		},
+		{
+			name:      "cancelled with always",
+			inputExpr: "cancelled() && always()",
+			ctx:       cancelledContext(),
+			expected:  true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := If(tt.inputExpr).ShouldRun(t.Context(), tt.err, tt.with, tt.previousOutputs, tt.dry)
+			actual, err := If(tt.inputExpr).ShouldRun(tt.ctx, tt.err, tt.with, tt.previousOutputs, tt.dry)
 
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)
