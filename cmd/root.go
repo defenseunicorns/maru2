@@ -343,7 +343,14 @@ func ParseExitCode(err error) int {
 	var eErr *exec.ExitError
 	if errors.As(err, &eErr) {
 		if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
-			return status.ExitStatus()
+			if status.Exited() {
+				return status.ExitStatus()
+			}
+			if status.Signaled() {
+				if status.Signal() == os.Interrupt {
+					return 130
+				}
+			}
 		}
 	}
 	return 1

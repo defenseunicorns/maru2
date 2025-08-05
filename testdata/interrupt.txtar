@@ -3,16 +3,20 @@ exec sleep 2
 kill -INT long
 wait
 cmp stderr stderr.txt
+cmp stdout stdout.txt
 
 -- tasks.yaml --
 tasks:
   sleep:
-    - run: sleep 10
+    - run: sleep 5
     - run: echo "cancelled"
       if: cancelled()
 -- stderr.txt --
-$ sleep 10
+$ sleep 5
+WARN task cancelled step=sleep[1]
 $ echo "cancelled"
 
 ERRO signal: killed
 ERRO at sleep[0] (file:tasks.yaml)
+-- stdout.txt --
+cancelled
