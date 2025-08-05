@@ -452,7 +452,7 @@
         },
         "timeout": {
           "type": "string",
-          "description": "Set how long to run the command before timing out (e.g., \"30s\", \"1m30s\", \"1h\")\n\nSee https://pkg.go.dev/time#Duration for more information."
+          "description": "Set how long to run the command before timing out (e.g., \"30s\", \"1m30s\", \"1h\")\n\nSee https://pkg.go.dev/time#ParseDuration for more information."
         },
         "with": {
           "type": "object"

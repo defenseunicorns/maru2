@@ -203,7 +203,7 @@ powershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -Literal
 		Type: "string",
 		Description: `Set how long to run the command before timing out (e.g., "30s", "1m30s", "1h")
 
-See https://pkg.go.dev/time#Duration for more information.`,
+See https://pkg.go.dev/time#ParseDuration for more information.`,
 	})
 
 	runProps := jsonschema.NewProperties()
