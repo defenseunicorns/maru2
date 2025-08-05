@@ -70,8 +70,12 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 
 			if errors.Is(ctx.Err(), context.Canceled) {
 				var cancel context.CancelFunc
-				if step.Timeout > 0 {
-					ctx, cancel = context.WithTimeout(parent, step.Timeout)
+				if step.Timeout != "" {
+					timeout, err := time.ParseDuration(step.Timeout)
+					if err != nil {
+						return err
+					}
+					ctx, cancel = context.WithTimeout(parent, timeout)
 					defer cancel()
 				} else {
 					ctx, cancel = context.WithCancel(parent)

@@ -5,7 +5,6 @@ package maru2
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/invopop/jsonschema"
 
@@ -140,7 +139,7 @@ type Step struct {
 	// Set the shell to execute run with (default: sh)
 	Shell string `json:"shell,omitempty"`
 	// Set how long to run the command before timing out
-	Timeout time.Duration `json:"timeout,omitempty"`
+	Timeout string `json:"timeout,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a step
