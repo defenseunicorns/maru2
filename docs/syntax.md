@@ -511,11 +511,11 @@ Maru2 supports conditional execution of steps using `if`. `if` statements are [e
 
 - `failure()`: Run this step only if a previous step has failed
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
-- `cancelled()`: Run this step only if the task was cancelled (e.g., via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the process entirely).
+- `cancelled()`: Run this step only if the task was cancelled (e.g., via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the task entirely).
 - `input("name")`: Access an input value by name. Only one argument is allowed. Returns the value of the input, which may be a string, number, or boolean.
 - `from("step-id", "output-key")`: Access an output from a previous step. Only two arguments are allowed: the step ID and the output key.
 
-Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: the current OS, architecture, or platform
+Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: the current OS, architecture, or platform.
 
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 

@@ -83,8 +83,14 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 					sub.Warn("task cancelled")
 				})
 				// reset to use the parent context, but still respect
-				// SIGTERM and --timeout cancellation
+				// SIGTERM and timeout cancellation
 				ctx = parent
+			}
+
+			if errors.Is(parent.Err(), context.DeadlineExceeded) {
+				// if the parent context timed out, but we still need to run, eg. if: always()
+				// then fully reset the context
+				ctx = context.WithoutCancel(parent)
 			}
 
 			if step.Timeout != "" {
@@ -96,6 +102,9 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 				ctx, cancel = context.WithTimeout(ctx, timeout)
 				defer cancel()
 			}
+
+			sub.Info("parent", "is done", parent.Err())
+			sub.Info("child", "is done", ctx.Err())
 
 			var stepResult map[string]any
 
