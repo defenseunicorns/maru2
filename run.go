@@ -72,13 +72,14 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 				sub.Debug("completed", "skipped", true)
 				return nil
 			}
-			interrupted := errors.Is(ctx.Err(), context.Canceled)
 
-			if interrupted {
+			if errors.Is(ctx.Err(), context.Canceled) {
 				taskCancelledLogOnce.Do(func() {
 					sub.Warn("task cancelled")
 				})
-				ctx = context.WithoutCancel(ctx)
+				// reset to use the parent context, but still respect
+				// SIGTERM and --timeout cancellation
+				ctx = parent
 			}
 
 			if step.Timeout != "" {
@@ -87,11 +88,7 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 					return err
 				}
 				var cancel context.CancelFunc
-				if interrupted {
-					ctx, cancel = context.WithTimeout(parent, timeout)
-				} else {
-					ctx, cancel = context.WithTimeout(ctx, timeout)
-				}
+				ctx, cancel = context.WithTimeout(ctx, timeout)
 				defer cancel()
 			}
 
