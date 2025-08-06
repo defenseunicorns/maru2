@@ -103,9 +103,6 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 				defer cancel()
 			}
 
-			sub.Info("parent", "is done", parent.Err())
-			sub.Info("child", "is done", ctx.Err())
-
 			var stepResult map[string]any
 
 			if step.Uses != "" {
