@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -54,7 +55,7 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 		logger.Debug("ran", "task", taskName, "from", origin, "duration", time.Since(start))
 	}()
 
-	sigCtx, cancel := signal.NotifyContext(parent, os.Interrupt)
+	sigCtx, cancel := signal.NotifyContext(parent, syscall.SIGINT)
 	defer cancel()
 
 	var taskCancelledLogOnce sync.Once

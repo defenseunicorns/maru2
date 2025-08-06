@@ -347,7 +347,7 @@ func ParseExitCode(err error) int {
 				return status.ExitStatus()
 			}
 			if status.Signaled() {
-				if status.Signal() == os.Interrupt {
+				if status.Signal() == syscall.SIGINT {
 					return 130
 				}
 			}
