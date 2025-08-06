@@ -65,7 +65,12 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 			sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 			shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
 			if err != nil {
-				// TODO: if there was a previous error, and "if" expr fails, this error is swallowed
+				if firstError != nil {
+					// if there was an error calculating if we should run during the error path
+					// log the error, but don't return it
+					sub.Error("invalid", "if", step.If, "error", err)
+					return nil
+				}
 				return err
 			}
 			if !shouldRun {
