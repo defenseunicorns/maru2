@@ -33,3 +33,10 @@ tasks:
     - run: echo 3
     - if: always()
       run: echo 3
+
+  sleep:
+    - run: sleep 10
+    - run: echo "there"
+      if: always()
+    - run: echo "hello"
+      if: cancelled()
