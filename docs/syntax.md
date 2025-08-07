@@ -509,9 +509,9 @@ Validation is performed after any default values are applied and before the task
 
 Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to all expr stdlib functions, and five extra helper functions:
 
-- `failure()`: Run this step only if a previous step has failed
+- `failure()`: Run this step only if a previous step has failed (from timeout, script failure, syntax errors, `SIGINT`, etc...)
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
-- `cancelled()`: Run this step only if the task was cancelled (e.g., via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the task entirely).
+- `cancelled()`: Run this step _only_ if the task was cancelled (e.g., via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the task entirely).
 - `input("name")`: Access an input value by name. Only one argument is allowed. Returns the value of the input, which may be a string, number, or boolean.
 - `from("step-id", "output-key")`: Access an output from a previous step. Only two arguments are allowed: the step ID and the output key.
 

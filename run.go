@@ -40,7 +40,7 @@ Run follows the following general pattern:
 
  4. For each step in the task:
 
-    4a. Compile `if` conditiionals and determine if the step should run
+    4a. Compile `if` conditionals and determine if the step should run
 
     4b. Soft reset the context if a previous step was cancelled, timed out, etc...
 
@@ -48,7 +48,7 @@ Run follows the following general pattern:
 
     4d. If `uses` is set, resolve & fetch, then goto Step 1
 
-    4e. If `run` is set, render the script w/ the provided inputs / environment
+    4e. If `run` is set, render the script with the provided inputs / environment
 
     4f. Parse the outputs from the script and store for later step retrieval
 
