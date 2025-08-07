@@ -88,8 +88,8 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 	var taskCancelledLogOnce sync.Once
 
 	for i, step := range task {
+		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 		err := func(ctx context.Context) error {
-			sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 			shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
 			if err != nil {
 				if firstError != nil {
@@ -157,8 +157,12 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 			return nil
 		}(sigCtx)
 
-		if err != nil && firstError == nil {
-			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
+		if err != nil {
+			if firstError == nil {
+				firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
+			} else {
+				sub.Warn("failure during error handling", "err", err)
+			}
 		}
 	}
 
