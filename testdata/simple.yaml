@@ -40,3 +40,5 @@ tasks:
       if: always()
     - run: echo "hello"
       if: cancelled()
+    - run: echo obi
+      if: failure()

@@ -25,10 +25,37 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// Run executes a task in a workflow with the given inputs.
-//
-// For all `uses` steps, this function will be called recursively.
-// Returns the outputs from the final step in the task.
+/*
+Run is the main event loop in maru2
+
+It is implemented as a recursive function instead of a DAG for simplicity (debatable)
+
+Run follows the following general pattern:
+
+ 1. Find the called task in the provided workflow
+
+ 2. Merge the provided inputs w/ the default workflow inputs
+
+ 3. Create a child context to listen for SIGINT
+
+ 4. For each step in the task:
+
+    4a. Compile `if` conditiionals and determine if the step should run
+
+    4b. Soft reset the context if a previous step was cancelled, timed out, etc...
+
+    4c. Wrap the current context in a timeout if `timeout` was set
+
+    4d. If `uses` is set, resolve & fetch, then goto Step 1
+
+    4e. If `run` is set, render the script w/ the provided inputs / environment
+
+    4f. Parse the outputs from the script and store for later step retrieval
+
+    4g. Add tracing if there was an error
+
+ 5. Return the final step's output and the first error encountered
+*/
 func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
