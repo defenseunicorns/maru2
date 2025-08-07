@@ -1,0 +1,23 @@
+! exec maru2 sleep &long&
+exec sleep 2
+kill -INT long
+wait
+cmp stderr stderr.txt
+cmp stdout stdout.txt
+
+-- tasks.yaml --
+tasks:
+  sleep:
+    - run: sleep 5
+    - run: echo "cancelled"
+      if: cancelled()
+    - run: echo "i should not run"
+-- stderr.txt --
+$ sleep 5
+WARN task cancelled step=sleep[1]
+$ echo "cancelled"
+
+ERRO signal: killed
+ERRO at sleep[0] (file:tasks.yaml)
+-- stdout.txt --
+cancelled

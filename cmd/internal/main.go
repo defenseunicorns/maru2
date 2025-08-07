@@ -42,7 +42,7 @@ func main() {
 	// customize as you see fit
 	ctx := context.Background()
 
-	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM)
 	defer cancel()
 
 	var logger = log.NewWithOptions(os.Stderr, log.Options{

@@ -143,6 +143,24 @@ For `run` steps, the command is executed in the specified directory.
 
 For `uses` steps, the referenced task is executed with the working directory set to the specified directory.
 
+## Step Timeout with `timeout`
+
+You can set a maximum duration for a step's execution using the `timeout` field. If the step exceeds this duration, it will be terminated.
+
+```yaml
+tasks:
+  long-running-task:
+    - run: sleep 60 # This command runs for 60 seconds
+      timeout: 30s # This step will time out after 30 seconds
+    - run: echo "This message will not be displayed if the previous step times out"
+```
+
+The `timeout` value should be a string representing a duration, such as "30s" for 30 seconds, "1m" for 1 minute, or "1h30m" for 1 hour and 30 minutes.
+
+See [https://pkg.go.dev/time#Duration](https://pkg.go.dev/time#Duration) for more information on supported duration units.
+
+When a step times out, the task will fail, and any subsequent steps that do not explicitly handle failures (e.g., with `if: always()` or `if: failure()`) will be skipped.
+
 ## Defining input parameters
 
 Maru2 allows you to define input parameters for your tasks. These parameters can be required or optional, and can have default values.
@@ -489,14 +507,15 @@ Validation is performed after any default values are applied and before the task
 
 ## Conditional execution with `if`
 
-Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to all expr stdlib functions, and four extra helper functions:
+Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to all expr stdlib functions, and five extra helper functions:
 
-- `failure()`: Run this step only if a previous step has failed
+- `failure()`: Run this step only if a previous step has failed (from timeout, script failure, syntax errors, `SIGINT`, etc...)
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
+- `cancelled()`: Run this step _only_ if the task was cancelled (e.g., via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the task entirely).
 - `input("name")`: Access an input value by name. Only one argument is allowed. Returns the value of the input, which may be a string, number, or boolean.
 - `from("step-id", "output-key")`: Access an output from a previous step. Only two arguments are allowed: the step ID and the output key.
 
-Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: the current OS, architecture, or platform
+Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: the current OS, architecture, or platform.
 
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 

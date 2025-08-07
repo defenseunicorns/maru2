@@ -4,6 +4,8 @@
 package maru2
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"runtime"
 	"slices"
@@ -20,7 +22,9 @@ func (i If) String() string {
 }
 
 // ShouldRun executes If logic using expr as the engine
-func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) (bool, error) {
+func (i If) ShouldRun(ctx context.Context, err error, with With, from CommandOutputs, dry bool) (bool, error) {
+	hasFailed := err != nil
+
 	if i == "" {
 		return !hasFailed, nil
 	}
@@ -29,6 +33,14 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 		"failure",
 		func(_ ...any) (any, error) {
 			return hasFailed, nil
+		},
+		new(func() bool),
+	)
+
+	cancelled := expr.Function(
+		"cancelled",
+		func(_ ...any) (any, error) {
+			return ctx != nil && errors.Is(ctx.Err(), context.Canceled), nil
 		},
 		new(func() bool),
 	)
@@ -90,7 +102,7 @@ func (i If) ShouldRun(hasFailed bool, with With, from CommandOutputs, dry bool) 
 		Platform string `expr:"platform"`
 	}
 
-	program, err := expr.Compile(i.String(), expr.Env(env{}), expr.AsBool(), failure, always, inputFunc, fromFunc)
+	program, err := expr.Compile(i.String(), expr.Env(env{}), expr.AsBool(), failure, cancelled, always, inputFunc, fromFunc)
 	if err != nil {
 		return false, err
 	}

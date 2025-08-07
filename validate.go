@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/goccy/go-yaml"
 	"github.com/xeipuuv/gojsonschema"
@@ -124,6 +125,13 @@ func Validate(wf Workflow) error {
 			if step.Dir != "" {
 				if filepath.IsAbs(step.Dir) {
 					return fmt.Errorf(".%s[%d].dir %q must not be absolute", name, idx, step.Dir)
+				}
+			}
+
+			if step.Timeout != "" {
+				_, err := time.ParseDuration(step.Timeout)
+				if err != nil {
+					return fmt.Errorf(".%s[%d].timeout %q is not a valid time duration", name, idx, step.Timeout)
 				}
 			}
 		}

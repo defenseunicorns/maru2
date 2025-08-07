@@ -295,7 +295,7 @@ func Main() int {
 
 	ctx := context.Background()
 
-	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM)
 	defer cancel()
 
 	var logger = log.NewWithOptions(os.Stderr, log.Options{
@@ -343,7 +343,14 @@ func ParseExitCode(err error) int {
 	var eErr *exec.ExitError
 	if errors.As(err, &eErr) {
 		if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
-			return status.ExitStatus()
+			if status.Exited() {
+				return status.ExitStatus()
+			}
+			if status.Signaled() {
+				if status.Signal() == syscall.SIGINT {
+					return 130
+				}
+			}
 		}
 	}
 	return 1

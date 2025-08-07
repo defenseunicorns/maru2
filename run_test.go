@@ -35,7 +35,7 @@ func TestRunExtended(t *testing.T) {
 				Tasks: TaskMap{
 					"test": []Step{
 						{
-							Run: "echo hello",
+							Run: "echo hello >/dev/null",
 						},
 					},
 				},
@@ -95,11 +95,11 @@ func TestRunExtended(t *testing.T) {
 				Tasks: TaskMap{
 					"test": []Step{
 						{
-							Run: "echo step1",
+							Run: "echo step1 >/dev/null",
 							ID:  "step1",
 						},
 						{
-							Run: "echo step2",
+							Run: "echo step2 >/dev/null",
 							ID:  "step2",
 							If:  "",
 						},
@@ -141,6 +141,38 @@ func TestRunExtended(t *testing.T) {
 			with:          With{},
 			expectedError: "exit status 1",
 			expectedOut:   map[string]any{"result": "handled"},
+		},
+		{
+			name: "failed to parse duration",
+			workflow: Workflow{
+				Tasks: TaskMap{
+					"sleep": []Step{
+						{
+							Run:     "sleep 3",
+							Timeout: "1",
+						},
+					},
+				},
+			},
+			taskName:      "sleep",
+			with:          With{},
+			expectedError: "time: missing unit in duration \"1\"",
+		},
+		{
+			name: "step timeout",
+			workflow: Workflow{
+				Tasks: TaskMap{
+					"sleep": []Step{
+						{
+							Run:     "sleep 3",
+							Timeout: "1s",
+						},
+					},
+				},
+			},
+			taskName:      "sleep",
+			with:          With{},
+			expectedError: "signal: killed",
 		},
 	}
 

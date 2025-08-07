@@ -12,8 +12,11 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -22,11 +25,38 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// Run executes a task in a workflow with the given inputs.
-//
-// For all `uses` steps, this function will be called recursively.
-// Returns the outputs from the final step in the task.
-func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
+/*
+Run is the main event loop in maru2
+
+It is implemented as a recursive function instead of a DAG for simplicity (debatable)
+
+Run follows the following general pattern:
+
+ 1. Find the called task in the provided workflow
+
+ 2. Merge the provided inputs w/ the default workflow inputs
+
+ 3. Create a child context to listen for SIGINT
+
+ 4. For each step in the task:
+
+    4a. Compile `if` conditionals and determine if the step should run
+
+    4b. Soft reset the context if a previous step was cancelled, timed out, etc...
+
+    4c. Wrap the current context in a timeout if `timeout` was set
+
+    4d. If `uses` is set, resolve & fetch, then goto Step 1
+
+    4e. If `run` is set, render the script with the provided inputs / environment
+
+    4f. Parse the outputs from the script and store for later step retrieval
+
+    4g. Add tracing if there was an error
+
+ 5. Return the final step's output and the first error encountered
+*/
+func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
 	if taskName == "" {
 		taskName = DefaultTaskName
 	}
@@ -36,60 +66,107 @@ func Run(ctx context.Context, svc *uses.FetcherService, wf Workflow, taskName st
 		return nil, addTrace(fmt.Errorf("task %q not found", taskName), fmt.Sprintf("at (%s)", origin))
 	}
 
-	withDefaults, err := MergeWithAndParams(ctx, outer, wf.Inputs)
+	withDefaults, err := MergeWithAndParams(parent, outer, wf.Inputs)
 	if err != nil {
 		return nil, addTrace(err, fmt.Sprintf("at (%s)", origin))
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(parent)
 	outputs := make(CommandOutputs)
 	var firstError error
+	var lastStepOutput map[string]any
 
 	start := time.Now()
 	logger.Debug("run", "task", taskName, "from", origin, "dry-run", dry)
 	defer func() {
 		logger.Debug("ran", "task", taskName, "from", origin, "duration", time.Since(start))
 	}()
+
+	sigCtx, cancel := signal.NotifyContext(parent, syscall.SIGINT)
+	defer cancel()
+
+	var taskCancelledLogOnce sync.Once
+
 	for i, step := range task {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
-		hasFailed := firstError != nil
-		shouldRun, err := step.If.ShouldRun(hasFailed, withDefaults, outputs, dry)
+		err := func(ctx context.Context) error {
+			shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
+			if err != nil {
+				if firstError != nil {
+					// if there was an error calculating if we should run during the error path
+					// log the error, but don't return it
+					sub.Error("invalid", "if", step.If, "error", err)
+					return nil
+				}
+				return err
+			}
+			if !shouldRun {
+				sub.Debug("completed", "skipped", true)
+				return nil
+			}
+
+			if errors.Is(ctx.Err(), context.Canceled) {
+				taskCancelledLogOnce.Do(func() {
+					sub.Warn("task cancelled")
+				})
+				// reset to use the parent context, but still respect
+				// SIGTERM and timeout cancellation
+				ctx = parent
+			}
+
+			if errors.Is(parent.Err(), context.DeadlineExceeded) {
+				// if the parent context timed out, but we still need to run, eg. if: always()
+				// then fully reset the context
+				ctx = context.WithoutCancel(parent)
+			}
+
+			if step.Timeout != "" {
+				timeout, err := time.ParseDuration(step.Timeout)
+				if err != nil {
+					return err
+				}
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithTimeout(ctx, timeout)
+				defer cancel()
+			}
+
+			var stepResult map[string]any
+
+			if step.Uses != "" {
+				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
+			} else if step.Run != "" {
+				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
+			}
+
+			if err != nil {
+				return err
+			}
+
+			sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
+
+			isLastStep := i == len(task)-1
+			if isLastStep {
+				lastStepOutput = stepResult
+			}
+
+			if step.ID != "" && len(stepResult) > 0 {
+				outputs[step.ID] = make(map[string]any, len(stepResult))
+				maps.Copy(outputs[step.ID], stepResult)
+			}
+
+			return nil
+		}(sigCtx)
+
 		if err != nil {
-			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
-			continue
-		}
-		if !shouldRun {
-			sub.Debug("completed", "skipped", true)
-			continue
-		}
-
-		var stepResult map[string]any
-
-		if step.Uses != "" {
-			stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
-		} else if step.Run != "" {
-			stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
-		}
-
-		if err != nil && firstError == nil {
-			firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
-			continue
-		}
-
-		sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
-
-		isLastStep := i == len(task)-1
-		if isLastStep {
-			return stepResult, firstError
-		}
-
-		if step.ID != "" && len(stepResult) > 0 {
-			outputs[step.ID] = make(map[string]any, len(stepResult))
-			maps.Copy(outputs[step.ID], stepResult)
+			if firstError == nil {
+				firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
+			} else {
+				sub.Warn("failure during error handling", "err", err)
+			}
 		}
 	}
 
-	return nil, firstError
+	return lastStepOutput, firstError
 }
 
 func handleRunStep(ctx context.Context, step Step, withDefaults With,

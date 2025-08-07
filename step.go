@@ -138,6 +138,8 @@ type Step struct {
 	Dir string `json:"dir,omitempty"`
 	// Set the shell to execute run with (default: sh)
 	Shell string `json:"shell,omitempty"`
+	// Set how long to run the command before timing out
+	Timeout string `json:"timeout,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a step
@@ -195,6 +197,12 @@ bash -e -u -o pipefail -c {}
 pwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
 powershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`,
 		Enum: []any{"sh", "bash", "pwsh", "powershell"},
+	})
+	props.Set("timeout", &jsonschema.Schema{
+		Type: "string",
+		Description: `Set how long to run the command before timing out (e.g., "30s", "1m30s", "1h")
+
+See https://pkg.go.dev/time#ParseDuration for more information.`,
 	})
 
 	runProps := jsonschema.NewProperties()
