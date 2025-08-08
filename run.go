@@ -91,21 +91,20 @@ func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskN
 	for i, step := range task {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 		err := func(ctx context.Context) error {
-			// TODO: restore me
-			// shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
-			// if err != nil {
-			// 	if firstError != nil {
-			// 		// if there was an error calculating if we should run during the error path
-			// 		// log the error, but don't return it
-			// 		sub.Error("invalid", "if", step.If, "error", err)
-			// 		return nil
-			// 	}
-			// 	return err
-			// }
-			// if !shouldRun {
-			// 	sub.Debug("completed", "skipped", true)
-			// 	return nil
-			// }
+			shouldRun, err := ShouldRun(ctx, step.If, firstError, withDefaults, outputs, dry)
+			if err != nil {
+				if firstError != nil {
+					// if there was an error calculating if we should run during the error path
+					// log the error, but don't return it
+					sub.Error("invalid", "if", step.If, "error", err)
+					return nil
+				}
+				return err
+			}
+			if !shouldRun {
+				sub.Debug("completed", "skipped", true)
+				return nil
+			}
 
 			if errors.Is(ctx.Err(), context.Canceled) {
 				taskCancelledLogOnce.Do(func() {

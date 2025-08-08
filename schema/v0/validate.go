@@ -47,7 +47,7 @@ func Read(r io.Reader) (Workflow, error) {
 		var wf Workflow
 		return wf, yaml.Unmarshal(data, &wf)
 	default:
-		return Workflow{}, fmt.Errorf("unsupported schema version: %q", version)
+		return Workflow{}, fmt.Errorf("unsupported schema version: expected %q, got %q", SchemaVersion, version)
 	}
 }
 

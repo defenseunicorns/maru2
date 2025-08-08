@@ -344,6 +344,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "step with absolute dir path",
 			wf: Workflow{
+				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo",
@@ -356,6 +357,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "step with invalid timeout",
 			wf: Workflow{
+				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run:     "echo",
@@ -368,6 +370,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "step with valid timeout and dir",
 			wf: Workflow{
+				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run:     "echo",
@@ -519,7 +522,7 @@ tasks:
     - run: echo
 `),
 			expected:      Workflow{},
-			expectedError: `unsupported schema version: ""`,
+			expectedError: `unsupported schema version: expected "v0", got ""`,
 		},
 		{
 			name:          "read error from reader",
