@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package maru2
+package v0
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 // helloWorldWorkflow is a simple workflow that prints "Hello World!"
 // do not make changes to this variable within tests
 var helloWorldWorkflow = Workflow{
-	SchemaVersion: SchemaVersionV0,
+	SchemaVersion: SchemaVersion,
 	Tasks: TaskMap{
 		"default": {Step{Run: "echo 'Hello World!'"}},
 		"a-task":  {Step{Run: "echo 'task a'"}},

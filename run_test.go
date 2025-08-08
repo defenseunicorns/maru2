@@ -16,24 +16,25 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestRunExtended(t *testing.T) {
 	tests := []struct {
 		name          string
-		workflow      Workflow
+		workflow      v0.Workflow
 		taskName      string
-		with          With
+		with          v0.With
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
 	}{
 		{
 			name: "simple task execution",
-			workflow: Workflow{
-				Tasks: TaskMap{
-					"test": []Step{
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test": []v0.Step{
 						{
 							Run: "echo hello >/dev/null",
 						},
@@ -41,14 +42,14 @@ func TestRunExtended(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        With{},
+			with:        v0.With{},
 			expectedOut: nil,
 		},
 		{
 			name: "task with output",
-			workflow: Workflow{
-				Tasks: TaskMap{
-					"test": []Step{
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test": []v0.Step{
 						{
 							Run: "echo \"result=success\" >> $MARU2_OUTPUT",
 							ID:  "step1",
@@ -57,27 +58,27 @@ func TestRunExtended(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        With{},
+			with:        v0.With{},
 			expectedOut: map[string]any{"result": "success"},
 		},
 		{
 			name: "task not found",
-			workflow: Workflow{
-				Tasks: TaskMap{},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{},
 			},
 			taskName:      "nonexistent",
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "task \"nonexistent\" not found",
 			expectedOut:   nil,
 		},
 		{
 			name: "uses step",
-			workflow: Workflow{
-				Tasks: TaskMap{
-					"test": []Step{
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test": []v0.Step{
 						{
 							Uses: "builtin:echo",
-							With: With{
+							With: v0.With{
 								"text": "Hello, World!",
 							},
 							ID: "echo-step",
@@ -86,14 +87,14 @@ func TestRunExtended(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        With{},
+			with:        v0.With{},
 			expectedOut: map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "conditional step execution - success path",
-			workflow: Workflow{
-				Tasks: TaskMap{
-					"test": []Step{
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test": []v0.Step{
 						{
 							Run: "echo step1 >/dev/null",
 							ID:  "step1",
@@ -112,14 +113,14 @@ func TestRunExtended(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        With{},
+			with:        v0.With{},
 			expectedOut: nil,
 		},
 		{
 			name: "conditional step execution - failure path",
-			workflow: Workflow{
-				Tasks: TaskMap{
-					"test": []Step{
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test": []v0.Step{
 						{
 							Run: "exit 1",
 							ID:  "step1",
@@ -138,15 +139,15 @@ func TestRunExtended(t *testing.T) {
 				},
 			},
 			taskName:      "test",
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "exit status 1",
 			expectedOut:   map[string]any{"result": "handled"},
 		},
 		{
 			name: "failed to parse duration",
-			workflow: Workflow{
-				Tasks: TaskMap{
-					"sleep": []Step{
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
 						{
 							Run:     "sleep 3",
 							Timeout: "1",
@@ -155,14 +156,14 @@ func TestRunExtended(t *testing.T) {
 				},
 			},
 			taskName:      "sleep",
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "time: missing unit in duration \"1\"",
 		},
 		{
 			name: "step timeout",
-			workflow: Workflow{
-				Tasks: TaskMap{
-					"sleep": []Step{
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
 						{
 							Run:     "sleep 3",
 							Timeout: "1s",
@@ -171,7 +172,7 @@ func TestRunExtended(t *testing.T) {
 				},
 			},
 			taskName:      "sleep",
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "signal: killed",
 		},
 	}
@@ -223,7 +224,7 @@ func TestPrepareEnvironment(t *testing.T) {
 	tempDir := t.TempDir()
 	outFilePath := filepath.Join(tempDir, "output.txt")
 
-	with := With{}
+	with := v0.With{}
 	env := prepareEnvironment(with, outFilePath)
 
 	outputEnv := "MARU2_OUTPUT=" + outFilePath
@@ -231,13 +232,13 @@ func TestPrepareEnvironment(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		with           With
+		with           v0.With
 		expectedEnvVar string
 		expectedValue  string
 	}{
 		{
 			name: "string value",
-			with: With{
+			with: v0.With{
 				"test-input": "test-value",
 			},
 			expectedEnvVar: "INPUT_TEST_INPUT",
@@ -245,7 +246,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "integer value",
-			with: With{
+			with: v0.With{
 				"number": 42,
 			},
 			expectedEnvVar: "INPUT_NUMBER",
@@ -253,7 +254,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "boolean value",
-			with: With{
+			with: v0.With{
 				"flag": true,
 			},
 			expectedEnvVar: "INPUT_FLAG",
@@ -279,8 +280,8 @@ func TestPrepareEnvironment(t *testing.T) {
 func TestHandleRunStep(t *testing.T) {
 	tests := []struct {
 		name          string
-		step          Step
-		withDefaults  With
+		step          v0.Step
+		withDefaults  v0.With
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
@@ -288,74 +289,74 @@ func TestHandleRunStep(t *testing.T) {
 	}{
 		{
 			name: "simple command",
-			step: Step{
+			step: v0.Step{
 				Run: "echo hello",
 			},
-			withDefaults: With{},
+			withDefaults: v0.With{},
 			expectedLog:  "echo hello\n",
 		},
 		{
 			name: "command with output",
-			step: Step{
+			step: v0.Step{
 				Run: "echo \"result=success\" >> $MARU2_OUTPUT",
 				ID:  "step1",
 			},
-			withDefaults: With{},
+			withDefaults: v0.With{},
 			expectedOut:  map[string]any{"result": "success"},
 			expectedLog:  "echo \"result=success\" >> $MARU2_OUTPUT\n",
 		},
 		{
 			name: "command with template",
-			step: Step{
+			step: v0.Step{
 				Run: "echo ${{ input \"text\" }}",
 			},
-			withDefaults: With{"text": "hello world"},
+			withDefaults: v0.With{"text": "hello world"},
 			expectedLog:  "echo hello world\n",
 		},
 		{
 			name: "bash array works",
-			step: Step{
+			step: v0.Step{
 				Run:   `arr=(a b c); echo "${arr[1]}"`,
 				Shell: "bash",
 			},
-			withDefaults: With{},
+			withDefaults: v0.With{},
 			expectedLog:  "arr=(a b c); echo \"${arr[1]}\"\n",
 		},
 		{
 			name: "[[ ... ]] works in bash",
-			step: Step{
+			step: v0.Step{
 				Run:   `if [[ "foo" == "foo" ]]; then echo "match"; fi`,
 				Shell: "bash",
 			},
-			withDefaults: With{},
+			withDefaults: v0.With{},
 			expectedLog:  "if [[ \"foo\" == \"foo\" ]]; then echo \"match\"; fi\n",
 		},
 		{
 			name: "unsupported shell",
-			step: Step{
+			step: v0.Step{
 				Run:   "echo foo",
 				Shell: "fish",
 			},
-			withDefaults:  With{},
+			withDefaults:  v0.With{},
 			expectedLog:   "echo foo\n",
 			expectedError: "unsupported shell: fish",
 		},
 		{
 			name: "dry run",
-			step: Step{
+			step: v0.Step{
 				Run: "echo hello",
 				ID:  "step1",
 			},
-			withDefaults: With{},
+			withDefaults: v0.With{},
 			dry:          true,
 			expectedLog:  "echo hello\n",
 		},
 		{
 			name: "command error",
-			step: Step{
+			step: v0.Step{
 				Run: "exit 1",
 			},
-			withDefaults:  With{},
+			withDefaults:  v0.With{},
 			expectedError: "exit status 1",
 			expectedLog:   "exit 1\n",
 		},
@@ -391,9 +392,9 @@ func TestHandleRunStep(t *testing.T) {
 func TestHandleUsesStep(t *testing.T) {
 	tests := []struct {
 		name          string
-		step          Step
-		workflow      Workflow
-		withDefaults  With
+		step          v0.Step
+		workflow      v0.Workflow
+		withDefaults  v0.With
 		origin        string
 		dry           bool
 		expectedError string
@@ -401,48 +402,48 @@ func TestHandleUsesStep(t *testing.T) {
 	}{
 		{
 			name: "builtin echo",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": "Hello, World!",
 				},
 			},
-			workflow:     Workflow{},
-			withDefaults: With{},
+			workflow:     v0.Workflow{},
+			withDefaults: v0.With{},
 			expectedOut:  map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "dry run builtin",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": "Hello, World!",
 				},
 			},
-			workflow:     Workflow{},
-			withDefaults: With{},
+			workflow:     v0.Workflow{},
+			withDefaults: v0.With{},
 			dry:          true,
 			expectedOut:  nil,
 		},
 		{
 			name: "uses with template",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": "Hello from template",
 				},
 			},
-			workflow:     Workflow{},
-			withDefaults: With{},
+			workflow:     v0.Workflow{},
+			withDefaults: v0.With{},
 			expectedOut:  map[string]any{"stdout": "Hello from template"},
 		},
 		{
 			name: "nonexistent builtin",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:nonexistent",
 			},
-			workflow:      Workflow{},
-			withDefaults:  With{},
+			workflow:      v0.Workflow{},
+			withDefaults:  v0.With{},
 			expectedError: "builtin:nonexistent not found",
 			expectedOut:   nil,
 		},

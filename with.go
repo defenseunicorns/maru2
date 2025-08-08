@@ -18,10 +18,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
-)
 
-// With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
-type With = map[string]any
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
+)
 
 // shortcuts is a concurrent map used to store key-value pairs for the "which" text template function.
 // It allows dynamic registration and lookup of shortcuts that can be expanded in templates via the "which" function.
@@ -33,7 +32,7 @@ func RegisterWhichShortcut(key, value string) {
 }
 
 // TemplateWith templates a With map with the given input and previous outputs
-func TemplateWith(ctx context.Context, input, local With, previousOutputs CommandOutputs, dry bool) (With, error) {
+func TemplateWith(ctx context.Context, input, local v0.With, previousOutputs CommandOutputs, dry bool) (v0.With, error) {
 	logger := log.FromContext(ctx)
 
 	if len(local) == 0 {
@@ -42,7 +41,7 @@ func TemplateWith(ctx context.Context, input, local With, previousOutputs Comman
 
 	logger.Debug("templating", "input", input, "local", local)
 
-	r := make(With, len(local))
+	r := make(v0.With, len(local))
 
 	for k, v := range local {
 		val, ok := v.(string)
@@ -64,7 +63,7 @@ func TemplateWith(ctx context.Context, input, local With, previousOutputs Comman
 }
 
 // TemplateString templates a string with the given input and previous outputs
-func TemplateString(ctx context.Context, input With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
+func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
 	var tmpl *template.Template
 
 	inputKeys := make([]string, 0, len(input))
@@ -168,12 +167,12 @@ func TemplateString(ctx context.Context, input With, previousOutputs CommandOutp
 }
 
 // TemplateWithMap recursively processes a With map and templates all string values
-func TemplateWithMap(ctx context.Context, input With, previousOutputs CommandOutputs, withMap With, dry bool) (With, error) {
+func TemplateWithMap(ctx context.Context, input v0.With, previousOutputs CommandOutputs, withMap v0.With, dry bool) (v0.With, error) {
 	if withMap == nil {
 		return nil, nil
 	}
 
-	result := make(With, len(withMap))
+	result := make(v0.With, len(withMap))
 	for k, v := range withMap {
 		switch val := v.(type) {
 		case string:
@@ -202,7 +201,7 @@ func TemplateWithMap(ctx context.Context, input With, previousOutputs CommandOut
 }
 
 // templateSlice recursively processes a slice and templates all string values
-func templateSlice(ctx context.Context, input With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
+func templateSlice(ctx context.Context, input v0.With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
 	result := make([]any, len(slice))
 	for i, v := range slice {
 		switch val := v.(type) {
@@ -232,7 +231,7 @@ func templateSlice(ctx context.Context, input With, previousOutputs CommandOutpu
 }
 
 // MergeWithAndParams merges a With map into an InputMap, handling defaults, logging warnings on deprections, etc...
-func MergeWithAndParams(ctx context.Context, with With, params InputMap) (With, error) {
+func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (v0.With, error) {
 	logger := log.FromContext(ctx)
 	merged := maps.Clone(with)
 

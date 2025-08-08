@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"slices"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/expr-lang/expr"
 )
 
@@ -22,7 +23,7 @@ func (i If) String() string {
 }
 
 // ShouldRun executes If logic using expr as the engine
-func (i If) ShouldRun(ctx context.Context, err error, with With, from CommandOutputs, dry bool) (bool, error) {
+func (i If) ShouldRun(ctx context.Context, err error, with v0.With, from CommandOutputs, dry bool) (bool, error) {
 	hasFailed := err != nil
 
 	if i == "" {

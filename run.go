@@ -22,6 +22,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -56,9 +57,9 @@ Run follows the following general pattern:
 
  5. Return the final step's output and the first error encountered
 */
-func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName string, outer With, origin *url.URL, dry bool) (map[string]any, error) {
+func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskName string, outer v0.With, origin *url.URL, dry bool) (map[string]any, error) {
 	if taskName == "" {
-		taskName = DefaultTaskName
+		taskName = v0.DefaultTaskName
 	}
 
 	task, ok := wf.Tasks.Find(taskName)
@@ -90,20 +91,21 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 	for i, step := range task {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 		err := func(ctx context.Context) error {
-			shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
-			if err != nil {
-				if firstError != nil {
-					// if there was an error calculating if we should run during the error path
-					// log the error, but don't return it
-					sub.Error("invalid", "if", step.If, "error", err)
-					return nil
-				}
-				return err
-			}
-			if !shouldRun {
-				sub.Debug("completed", "skipped", true)
-				return nil
-			}
+			// TODO: restore me
+			// shouldRun, err := step.If.ShouldRun(ctx, firstError, withDefaults, outputs, dry)
+			// if err != nil {
+			// 	if firstError != nil {
+			// 		// if there was an error calculating if we should run during the error path
+			// 		// log the error, but don't return it
+			// 		sub.Error("invalid", "if", step.If, "error", err)
+			// 		return nil
+			// 	}
+			// 	return err
+			// }
+			// if !shouldRun {
+			// 	sub.Debug("completed", "skipped", true)
+			// 	return nil
+			// }
 
 			if errors.Is(ctx.Err(), context.Canceled) {
 				taskCancelledLogOnce.Do(func() {
@@ -169,7 +171,7 @@ func Run(parent context.Context, svc *uses.FetcherService, wf Workflow, taskName
 	return lastStepOutput, firstError
 }
 
-func handleRunStep(ctx context.Context, step Step, withDefaults With,
+func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 	outputs CommandOutputs, dry bool) (map[string]any, error) {
 
 	logger := log.FromContext(ctx)
@@ -257,7 +259,7 @@ func CWDFromContext(ctx context.Context) string {
 	return "" // empty string is a valid dir for exec.Command, defaults to calling process's current directory
 }
 
-func prepareEnvironment(withDefaults With, outFileName string) []string {
+func prepareEnvironment(withDefaults v0.With, outFileName string) []string {
 	env := os.Environ()
 
 	for k, v := range withDefaults {

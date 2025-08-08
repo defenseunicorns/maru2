@@ -53,7 +53,3 @@ Outputs:
 - `body`: The response body as a string
 
 The `fetch` built-in is useful for integrating with external APIs or services from your workflow.
-
----
-
-> **Note:** All Maru2 workflow files now require a top-level `schema-version: v0` property. Be sure to include this at the top of your workflow YAML files, including those using built-in tasks.

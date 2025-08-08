@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +24,7 @@ func TestIf(t *testing.T) {
 	tests := []struct {
 		name            string
 		inputExpr       string
-		with            With
+		with            v0.With
 		previousOutputs CommandOutputs
 		dry             bool
 		err             error
@@ -70,7 +71,7 @@ func TestIf(t *testing.T) {
 		{
 			name:      "based upon with",
 			inputExpr: `input("foo") == "bar"`,
-			with:      With{"foo": "bar"},
+			with:      v0.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
@@ -81,19 +82,19 @@ func TestIf(t *testing.T) {
 		{
 			name:      "complex boolean expression (true)",
 			inputExpr: `(input("foo") == "bar" && !failure()) || always()`,
-			with:      With{"foo": "bar"},
+			with:      v0.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
 			name:      "complex boolean expression (false)",
 			inputExpr: `input("foo") == "baz" && !failure()`,
-			with:      With{"foo": "bar"},
+			with:      v0.With{"foo": "bar"},
 			expected:  false,
 		},
 		{
 			name:      "access nested map in inputs",
 			inputExpr: `input("nested", "value") == "wrong-value"`,
-			with:      With{"nested": map[string]any{"value": "nested-value"}},
+			with:      v0.With{"nested": map[string]any{"value": "nested-value"}},
 			expectedErr: `too many arguments to call input (1:1)
  | input("nested", "value") == "wrong-value"
  | ^`,
@@ -137,56 +138,56 @@ func TestIf(t *testing.T) {
 		{
 			name:      "numeric comparison (equal)",
 			inputExpr: `input("num") == 42`,
-			with:      With{"num": 42},
+			with:      v0.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (not equal)",
 			inputExpr: `input("num") != 43`,
-			with:      With{"num": 42},
+			with:      v0.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (greater than)",
 			inputExpr: `input("num") > 40`,
-			with:      With{"num": 42},
+			with:      v0.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (less than)",
 			inputExpr: `input("num") < 50`,
-			with:      With{"num": 42},
+			with:      v0.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs",
 			inputExpr: `input("enabled")`,
-			with:      With{"enabled": true},
+			with:      v0.With{"enabled": true},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs (false)",
 			inputExpr: `!input("disabled")`,
-			with:      With{"disabled": false},
+			with:      v0.With{"disabled": false},
 			expected:  true,
 		},
 		{
 			name:      "mathematical operation",
 			inputExpr: `(input("num") + 8) == 50`,
-			with:      With{"num": 42},
+			with:      v0.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:        "syntax error",
 			inputExpr:   `input.foo == `,
-			with:        With{"foo": "bar"},
+			with:        v0.With{"foo": "bar"},
 			expectedErr: "unexpected token EOF (1:13)\n | input.foo == \n | ............^",
 		},
 		{
 			name:        "typo",
 			inputExpr:   `nputs.foo == bar`,
 			dry:         true,
-			with:        With{"foo": "bar"},
+			with:        v0.With{"foo": "bar"},
 			expectedErr: "unknown name nputs (1:1)\n | nputs.foo == bar\n | ^",
 		},
 		{

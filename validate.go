@@ -19,6 +19,8 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/xeipuuv/gojsonschema"
 
+	"github.com/defenseunicorns/maru2/schema"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -32,41 +34,41 @@ var InputNamePattern = TaskNamePattern //regexp.MustCompile("^\\$[A-Z_]+[A-Z0-9_
 var EnvVariablePattern = regexp.MustCompile("^[a-zA-Z_]+[a-zA-Z0-9_]*$")
 
 // Read reads a workflow from a file
-func Read(r io.Reader) (Workflow, error) {
+func Read(r io.Reader) (v0.Workflow, error) {
 	if rs, ok := r.(io.Seeker); ok {
 		_, err := rs.Seek(0, io.SeekStart)
 		if err != nil {
-			return Workflow{}, err
+			return v0.Workflow{}, err
 		}
 	}
 
 	data, err := io.ReadAll(r)
 	if err != nil {
-		return Workflow{}, err
+		return v0.Workflow{}, err
 	}
 
-	var versioned Versioned
+	var versioned schema.Versioned
 	if err := yaml.Unmarshal(data, &versioned); err != nil {
-		return Workflow{}, err
+		return v0.Workflow{}, err
 	}
 
 	switch version := versioned.SchemaVersion; version {
-	case SchemaVersionV0:
-		var wf Workflow
+	case v0.SchemaVersion:
+		var wf v0.Workflow
 		return wf, yaml.Unmarshal(data, &wf)
 	default:
-		return Workflow{}, fmt.Errorf("unsupported schema version: %q", version)
+		return v0.Workflow{}, fmt.Errorf("unsupported schema version: %q", version)
 	}
 }
 
 var schemaOnce = sync.OnceValues(func() (string, error) {
-	s := WorkFlowSchema()
+	s := v0.WorkFlowSchema()
 	b, err := json.Marshal(s)
 	return string(b), err
 })
 
 // Validate validates a workflow
-func Validate(wf Workflow) error {
+func Validate(wf v0.Workflow) error {
 	if len(wf.Tasks) == 0 {
 		return errors.New("no tasks available")
 	}
@@ -176,10 +178,10 @@ func Validate(wf Workflow) error {
 }
 
 // ReadAndValidate reads and validates a workflow
-func ReadAndValidate(r io.Reader) (Workflow, error) {
+func ReadAndValidate(r io.Reader) (v0.Workflow, error) {
 	wf, err := Read(r)
 	if err != nil {
-		return Workflow{}, err
+		return v0.Workflow{}, err
 	}
 	return wf, Validate(wf)
 }

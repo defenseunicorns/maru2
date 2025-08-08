@@ -1,28 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package maru2
+package v0
 
 import (
-	"cmp"
-	"slices"
-
 	"github.com/invopop/jsonschema"
 
 	"github.com/defenseunicorns/maru2/uses"
 )
-
-// DefaultTaskName is the default task name
-const DefaultTaskName = "default"
-
-// SchemaVersionV0 is the current schema version for workflows
-const SchemaVersionV0 = "v0"
-
-// Versioned is a tiny struct used to grab the schema version for a workflow
-type Versioned struct {
-	// SchemaVersion is the workflow schema that this workflow follows
-	SchemaVersion string `json:"schema-version"`
-}
 
 // Workflow is a wrapper struct around the input map and task map
 //
@@ -38,7 +23,7 @@ type Workflow struct {
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
 		schemaVersion.Description = "Workflow schema version"
-		schemaVersion.Enum = []any{SchemaVersionV0}
+		schemaVersion.Enum = []any{SchemaVersion}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
 	}
 
@@ -78,38 +63,6 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-ur
 		}
 		aliases.AdditionalProperties = jsonschema.FalseSchema
 	}
-}
-
-// Task is a list of steps
-type Task []Step
-
-// TaskMap is a map of tasks, where the key is the task name
-type TaskMap map[string]Task
-
-// Find returns a task by name
-func (tm TaskMap) Find(call string) (Task, bool) {
-	task, ok := tm[call]
-	return task, ok
-}
-
-// OrderedTaskNames returns a list of task names in alphabetical order
-//
-// The default task is always first
-func (tm TaskMap) OrderedTaskNames() []string {
-	names := make([]string, 0, len(tm))
-	for k := range tm {
-		names = append(names, k)
-	}
-	slices.SortStableFunc(names, func(a, b string) int {
-		if a == DefaultTaskName {
-			return -1
-		}
-		if b == DefaultTaskName {
-			return 1
-		}
-		return cmp.Compare(a, b)
-	})
-	return names
 }
 
 // WorkFlowSchema returns a JSON schema for a maru2 workflow
