@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package maru2
+package v0
 
 import (
 	"encoding/json"
@@ -20,55 +20,45 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/defenseunicorns/maru2/schema"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// TaskNamePattern is a regular expression for valid task names, it is also used for step IDs
-var TaskNamePattern = regexp.MustCompile("^[_a-zA-Z][a-zA-Z0-9_-]*$")
-
-// InputNamePattern is a regular expression for valid input names
-var InputNamePattern = TaskNamePattern //regexp.MustCompile("^\\$[A-Z_]+[A-Z0-9_]*$")
-
-// EnvVariablePattern is a regular expression for valid environment variable names
-var EnvVariablePattern = regexp.MustCompile("^[a-zA-Z_]+[a-zA-Z0-9_]*$")
-
 // Read reads a workflow from a file
-func Read(r io.Reader) (v0.Workflow, error) {
+func Read(r io.Reader) (Workflow, error) {
 	if rs, ok := r.(io.Seeker); ok {
 		_, err := rs.Seek(0, io.SeekStart)
 		if err != nil {
-			return v0.Workflow{}, err
+			return Workflow{}, err
 		}
 	}
 
 	data, err := io.ReadAll(r)
 	if err != nil {
-		return v0.Workflow{}, err
+		return Workflow{}, err
 	}
 
 	var versioned schema.Versioned
 	if err := yaml.Unmarshal(data, &versioned); err != nil {
-		return v0.Workflow{}, err
+		return Workflow{}, err
 	}
 
 	switch version := versioned.SchemaVersion; version {
-	case v0.SchemaVersion:
-		var wf v0.Workflow
+	case SchemaVersion:
+		var wf Workflow
 		return wf, yaml.Unmarshal(data, &wf)
 	default:
-		return v0.Workflow{}, fmt.Errorf("unsupported schema version: %q", version)
+		return Workflow{}, fmt.Errorf("unsupported schema version: %q", version)
 	}
 }
 
 var schemaOnce = sync.OnceValues(func() (string, error) {
-	s := v0.WorkFlowSchema()
+	s := WorkFlowSchema()
 	b, err := json.Marshal(s)
 	return string(b), err
 })
 
 // Validate validates a workflow
-func Validate(wf v0.Workflow) error {
+func Validate(wf Workflow) error {
 	if len(wf.Tasks) == 0 {
 		return errors.New("no tasks available")
 	}
@@ -178,10 +168,10 @@ func Validate(wf v0.Workflow) error {
 }
 
 // ReadAndValidate reads and validates a workflow
-func ReadAndValidate(r io.Reader) (v0.Workflow, error) {
+func ReadAndValidate(r io.Reader) (Workflow, error) {
 	wf, err := Read(r)
 	if err != nil {
-		return v0.Workflow{}, err
+		return Workflow{}, err
 	}
 	return wf, Validate(wf)
 }

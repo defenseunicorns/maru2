@@ -73,7 +73,7 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (v0.Work
 	}
 	defer rc.Close()
 
-	return ReadAndValidate(rc)
+	return v0.ReadAndValidate(rc)
 }
 
 // FetchAll fetches all workflows from a given URL.
@@ -134,7 +134,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 	}
 	defer rc.Close()
 
-	wf, err := ReadAndValidate(rc)
+	wf, err := v0.ReadAndValidate(rc)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 		}
 		defer rc.Close()
 
-		_, err = ReadAndValidate(rc)
+		_, err = v0.ReadAndValidate(rc)
 		if err != nil {
 			return nil, err
 		}

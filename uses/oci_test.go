@@ -103,7 +103,7 @@ tasks:
 		defer rc.Close()
 
 		tru := true
-		wf, err := maru2.Read(rc)
+		wf, err := v0.Read(rc)
 		require.NoError(t, err)
 		assert.Equal(t, v0.Workflow{
 			SchemaVersion: v0.SchemaVersion,

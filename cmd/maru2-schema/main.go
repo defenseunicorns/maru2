@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/defenseunicorns/maru2"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 func main() {
-	schema := maru2.WorkFlowSchema()
+	schema := v0.WorkFlowSchema()
 
 	b, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
