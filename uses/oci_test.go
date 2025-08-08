@@ -20,6 +20,7 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 
 	"github.com/defenseunicorns/maru2"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -104,14 +105,14 @@ tasks:
 		tru := true
 		wf, err := maru2.Read(rc)
 		require.NoError(t, err)
-		assert.Equal(t, maru2.Workflow{
-			SchemaVersion: maru2.SchemaVersionV0,
-			Inputs: maru2.InputMap{"text": maru2.InputParameter{
+		assert.Equal(t, v0.Workflow{
+			SchemaVersion: v0.SchemaVersion,
+			Inputs: v0.InputMap{"text": v0.InputParameter{
 				Description: "Text to echo",
 				Default:     "Hello, world!",
 				Required:    &tru,
 			}},
-			Tasks: maru2.TaskMap{"echo": maru2.Task{{
+			Tasks: v0.TaskMap{"echo": v0.Task{{
 				Run: `echo "${{ input "text" }}"`,
 			}}},
 		}, wf)

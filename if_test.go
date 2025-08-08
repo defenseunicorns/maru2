@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"testing"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 // cancelledContext returns a context that is already cancelled

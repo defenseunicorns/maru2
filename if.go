@@ -10,8 +10,9 @@ import (
 	"runtime"
 	"slices"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/expr-lang/expr"
+
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 // If controls whether a step is run
