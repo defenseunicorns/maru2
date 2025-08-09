@@ -4,9 +4,11 @@
 package uses
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/invopop/jsonschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,5 +78,21 @@ func TestFetchPolicy(t *testing.T) {
 				require.EqualError(t, err, tc.expectedErr)
 			})
 		}
+	})
+
+	t.Run("JSON schema", func(t *testing.T) {
+		t.Parallel()
+
+		golden := `{"type":"string","enum":["always","if-not-present","never"],"description":"Policy for fetching resources"}`
+
+		reflector := jsonschema.Reflector{DoNotReference: true}
+		fetchPolicySchema := reflector.Reflect(FetchPolicy(""))
+		fetchPolicySchema.Version = ""
+		fetchPolicySchema.ID = ""
+
+		b, err := json.Marshal(fetchPolicySchema)
+		require.NoError(t, err)
+
+		assert.JSONEq(t, golden, string(b))
 	})
 }
