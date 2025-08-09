@@ -18,6 +18,7 @@ import (
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry/remote"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -25,7 +26,7 @@ import (
 const MediaTypeWorkflow = "application/vnd.maru2.workflow.v1+yaml"
 
 // Publish fetches all remote imports in <cwd>/tasks.yaml, stores them in a temp dir, then pushes them to a OCI registry
-func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string, aliases map[string]uses.Alias) error {
+func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string, aliases map[string]v0.Alias) error {
 	logger := log.FromContext(ctx)
 
 	if len(entrypoints) == 0 {

@@ -314,7 +314,7 @@ func TestExecuteUses(t *testing.T) {
 		name        string
 		uses        string
 		origin      string
-		aliases     map[string]uses.Alias
+		aliases     map[string]v0.Alias
 		skipShort   bool
 		expectedErr string
 	}{
@@ -361,7 +361,7 @@ func TestExecuteUses(t *testing.T) {
 			name:   "with map based resolver",
 			uses:   "pkg:custom/noxsios/mar2-test?task=hello-world",
 			origin: dummyOrigin,
-			aliases: map[string]uses.Alias{
+			aliases: map[string]v0.Alias{
 				"custom": {
 					Type: "gitlab",
 				},

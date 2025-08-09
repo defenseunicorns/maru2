@@ -10,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/defenseunicorns/maru2/uses"
 )
 
 type badReadSeeker struct {
@@ -152,7 +150,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: fmt.Sprintf(".task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(uses.SupportedSchemes(), "builtin"), ", ")),
+			expectedError: fmt.Sprintf(".task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(SupportedSchemes(), "builtin"), ", ")),
 		},
 		{
 			name: "uses with valid task reference",
@@ -478,7 +476,7 @@ aliases:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]uses.Alias{
+				Aliases: map[string]Alias{
 					"gh": {
 						Type: "github",
 					},

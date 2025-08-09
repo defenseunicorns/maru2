@@ -5,18 +5,16 @@ package v0
 
 import (
 	"github.com/invopop/jsonschema"
-
-	"github.com/defenseunicorns/maru2/uses"
 )
 
 // Workflow is a wrapper struct around the input map and task map
 //
 // It represents a "tasks.yaml" file
 type Workflow struct {
-	SchemaVersion string                `json:"schema-version"`
-	Inputs        InputMap              `json:"inputs,omitempty"`
-	Tasks         TaskMap               `json:"tasks,omitempty"`
-	Aliases       map[string]uses.Alias `json:"aliases,omitempty"`
+	SchemaVersion string           `json:"schema-version"`
+	Inputs        InputMap         `json:"inputs,omitempty"`
+	Tasks         TaskMap          `json:"tasks,omitempty"`
+	Aliases       map[string]Alias `json:"aliases,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow

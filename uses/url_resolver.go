@@ -10,16 +10,13 @@ import (
 	"slices"
 
 	"github.com/package-url/packageurl-go"
-)
 
-// SupportedSchemes returns a list of supported schemes
-func SupportedSchemes() []string {
-	return []string{"file", "http", "https", "pkg", "oci"}
-}
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
+)
 
 // ResolveRelative resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]Alias) (*url.URL, error) {
+func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]v0.Alias) (*url.URL, error) {
 	uri, err := url.Parse(u)
 	if err != nil {
 		return nil, err
@@ -36,11 +33,11 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]Alias) (*url
 		return uri, nil
 	}
 
-	if !slices.Contains(SupportedSchemes(), uri.Scheme) {
+	if !slices.Contains(v0.SupportedSchemes(), uri.Scheme) {
 		return nil, fmt.Errorf("unsupported scheme: %q in %q", uri.Scheme, uri)
 	}
 
-	if prev != nil && !slices.Contains(SupportedSchemes(), prev.Scheme) {
+	if prev != nil && !slices.Contains(v0.SupportedSchemes(), prev.Scheme) {
 		return nil, fmt.Errorf("unsupported scheme: %q in %q", prev.Scheme, prev)
 	}
 

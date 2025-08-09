@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -31,7 +32,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 `
 
 	cfg := &Config{
-		Aliases: map[string]uses.Alias{
+		Aliases: map[string]v0.Alias{
 			"gl": {
 				Type: packageurl.TypeGitlab,
 				Base: "https://gitlab.example.com",
@@ -162,7 +163,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid config",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				Aliases: map[string]v0.Alias{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -181,7 +182,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid alias type",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				Aliases: map[string]v0.Alias{
 					"invalid": {
 						Type: "invalid-type",
 					},
@@ -194,7 +195,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid token environment variable format",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				Aliases: map[string]v0.Alias{
 					"gh": {
 						Type:         packageurl.TypeGithub,
 						TokenFromEnv: "123-invalid",
@@ -208,7 +209,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid fetch policy",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				Aliases: map[string]v0.Alias{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -221,7 +222,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "multiple validation errors",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				Aliases: map[string]v0.Alias{
 					"invalid": {
 						Type:         "invalid-type",
 						TokenFromEnv: "123-invalid",

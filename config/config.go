@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/xeipuuv/gojsonschema"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -26,8 +27,8 @@ const DefaultFileName = "config.yaml"
 
 // Config is the system configuration file for maru2
 type Config struct {
-	Aliases     map[string]uses.Alias `json:"aliases"`
-	FetchPolicy uses.FetchPolicy      `json:"fetch-policy"`
+	Aliases     map[string]v0.Alias `json:"aliases"`
+	FetchPolicy uses.FetchPolicy    `json:"fetch-policy"`
 }
 
 // FileSystemConfigLoader loads configuration from the file system
@@ -48,7 +49,7 @@ func DefaultDirectory() (string, error) {
 // LoadConfig loads the configuration from the file system
 func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 	config := &Config{
-		Aliases:     map[string]uses.Alias{},
+		Aliases:     map[string]v0.Alias{},
 		FetchPolicy: uses.DefaultFetchPolicy,
 	}
 
