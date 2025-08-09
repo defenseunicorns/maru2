@@ -8,6 +8,15 @@ import "github.com/invopop/jsonschema"
 // InputMap is a map of input parameters for a workflow
 type InputMap map[string]InputParameter
 
+// JSONSchemaExtend extends the JSON schema for an input map
+func (InputMap) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.PatternProperties = map[string]*jsonschema.Schema{
+		InputNamePattern.String(): {
+			Description: "Input parameter for the workflow",
+		},
+	}
+}
+
 // InputParameter represents a single input parameter for a workflow, to be used w/ `with`
 type InputParameter struct {
 	// Description of the input parameter

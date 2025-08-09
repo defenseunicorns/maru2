@@ -125,7 +125,7 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 	}
 
 	var allBuiltinSchemas []*jsonschema.Schema
-	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	reflector := jsonschema.Reflector{ExpandedStruct: true, DoNotReference: true}
 
 	builtinNames := builtins.Names()
 
@@ -147,6 +147,7 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 		})
 
 		withSchema := reflector.Reflect(builtinEmpty)
+		withSchema.Version = ""
 
 		if withSchema != nil {
 			withSchema.Description = fmt.Sprintf("Configuration for builtin:%s", name)

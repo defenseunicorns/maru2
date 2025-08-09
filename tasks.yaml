@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=schema/v0/schema.json
+# yaml-language-server: $schema=maru2.schema.json
 schema-version: v0
 inputs:
   text:
@@ -121,3 +121,7 @@ tasks:
       shell: bash
     - run: rm -f ./maru2 ./maru2-publish
       if: always()
+
+aliases:
+  foo:
+    type: github

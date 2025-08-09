@@ -6,6 +6,8 @@ package v0
 import (
 	"cmp"
 	"slices"
+
+	"github.com/invopop/jsonschema"
 )
 
 // DefaultTaskName is the default task name
@@ -16,6 +18,15 @@ type Task []Step
 
 // TaskMap is a map of tasks, where the key is the task name
 type TaskMap map[string]Task
+
+// JSONSchemaExtend extends the JSON schema for a task map
+func (TaskMap) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.PatternProperties = map[string]*jsonschema.Schema{
+		TaskNamePattern.String(): {
+			Description: "A task definition, aka a collection of steps",
+		},
+	}
+}
 
 // Find returns a task by name
 func (tm TaskMap) Find(call string) (Task, bool) {

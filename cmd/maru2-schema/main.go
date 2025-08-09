@@ -9,11 +9,41 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/invopop/jsonschema"
+
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 func main() {
-	schema := v0.WorkFlowSchema()
+	var schema *jsonschema.Schema
+
+	version := ""
+	if len(os.Args) > 1 {
+		version = os.Args[1]
+	}
+
+	switch version {
+	case v0.SchemaVersion:
+		schema = v0.WorkFlowSchema()
+	default:
+		schema = &jsonschema.Schema{
+			If: &jsonschema.Schema{
+				Properties: jsonschema.NewProperties(),
+			},
+			Then: &jsonschema.Schema{
+				Properties: jsonschema.NewProperties(),
+			},
+			ID:      "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json",
+			Version: jsonschema.Version,
+		}
+
+		schema.If.Properties.Set("schema-version", &jsonschema.Schema{
+			Type: "string",
+			Enum: []any{v0.SchemaVersion},
+		})
+
+		schema.Then = v0.WorkFlowSchema()
+	}
 
 	b, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {

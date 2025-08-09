@@ -9,13 +9,14 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/config"
-	configv0 "github.com/defenseunicorns/maru2/config/v0"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/package-url/packageurl-go"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/config"
+	configv0 "github.com/defenseunicorns/maru2/config/v0"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 func TestDefaultDirectory(t *testing.T) {
