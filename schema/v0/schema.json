@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json",
+  "$id": "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v0/schema.json",
   "$defs": {
     "Alias": {
       "properties": {
@@ -481,7 +481,7 @@
       "enum": [
         "v0"
       ],
-      "description": "Workflow schema version"
+      "description": "Workflow schema version. For v0 breaking changes can be expected without any migration pathway."
     },
     "inputs": {
       "$ref": "#/$defs/InputMap",

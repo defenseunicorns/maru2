@@ -89,7 +89,7 @@ Maru2 is built around these simple concepts:
 This example demonstrates inputs, task references, and output passing:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v0/schema.json
 schema-version: v0
 inputs:
   message:

@@ -23,7 +23,7 @@ type Workflow struct {
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
-		schemaVersion.Description = "Workflow schema version"
+		schemaVersion.Description = "Workflow schema version. For v0 breaking changes can be expected without any migration pathway."
 		schemaVersion.Enum = []any{SchemaVersion}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
 	}
@@ -71,7 +71,7 @@ func WorkFlowSchema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{ExpandedStruct: true}
 	schema := reflector.Reflect(&Workflow{})
 
-	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json"
+	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v0/schema.json"
 
 	return schema
 }
