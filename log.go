@@ -15,11 +15,20 @@ import (
 
 func printScript(logger *log.Logger, lang, script string) {
 	script = strings.TrimSpace(script)
-	prefix := "$"
+
+	color := lipgloss.AdaptiveColor{
+		Light: "#c5c6bC",
+		Dark:  "#3a3943",
+	}
+	gray := lipgloss.NewStyle().Background(color)
+
+	prefix := gray.Render(" ")
 
 	if termenv.EnvNoColor() {
+		prefix = ""
 		for line := range strings.SplitSeq(script, "\n") {
-			logger.Printf("%s %s", prefix, line)
+			// this is essentially the same behavior/rendering as make
+			logger.Printf("%s%s", prefix, line)
 		}
 		return
 	}
