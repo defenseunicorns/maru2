@@ -101,6 +101,14 @@ func TestIf(t *testing.T) {
  | ^`,
 		},
 		{
+			name:      "input dne",
+			inputExpr: `input("dne") == "foo"`,
+			with:      v0.With{"bar": "baz"},
+			expectedErr: `input "dne" does not exist in [bar] (1:1)
+ | input("dne") == "foo"
+ | ^`,
+		},
+		{
 			name:            "access from outputs",
 			inputExpr:       `from("step1", "output") == "step1-output"`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "step1-output"}},

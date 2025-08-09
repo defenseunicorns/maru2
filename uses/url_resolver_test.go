@@ -330,6 +330,24 @@ func TestResolveURL(t *testing.T) {
 			uri:  "file:/",
 			next: "file:/",
 		},
+		{
+			name: "oci -> file",
+			prev: "oci:registry.uds.sh/maru2:latest",
+			uri:  "file:foo.yaml",
+			next: "oci:registry.uds.sh/maru2:latest#foo.yaml",
+		},
+		{
+			name: "oci -> nested",
+			prev: "oci:registry.uds.sh/maru2:latest#foo.yaml",
+			uri:  "file:dir/foo.yaml",
+			next: "oci:registry.uds.sh/maru2:latest#dir/foo.yaml",
+		},
+		{
+			name: "oci -> pkg",
+			prev: "oci:registry.uds.sh/maru2:latest",
+			uri:  "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
+			next: "oci:registry.uds.sh/maru2:latest#pkg:github/owner/repo@v1.0.0%23dir/foo.yaml",
+		},
 	}
 
 	for _, tc := range tests {

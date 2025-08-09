@@ -139,7 +139,7 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]v0.Alias) (*
 		switch uri.Scheme {
 		case "file":
 			// join the paths if they exist
-			path := filepath.Join(filepath.Dir(prev.Fragment), uri.Fragment)
+			path := filepath.Join(filepath.Dir(prev.Fragment), uri.Opaque)
 			if path == "." {
 				path = DefaultFileName
 			}
