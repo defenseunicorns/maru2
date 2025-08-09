@@ -24,11 +24,6 @@
         "description": "Workflow schema version. For v0 breaking changes can be expected without any migration pathway."
       },
       "inputs": {
-        "patternProperties": {
-          "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-            "description": "Input parameter for the workflow"
-          }
-        },
         "additionalProperties": {
           "oneOf": [
             {
@@ -114,17 +109,16 @@
           "dependentRequired": {
             "default": [],
             "default-from-env": []
-          }
+          },
+          "description": "Input parameter for the workflow"
+        },
+        "propertyNames": {
+          "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
         },
         "type": "object",
         "description": "Input parameters for the workflow"
       },
       "tasks": {
-        "patternProperties": {
-          "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-            "description": "A task definition, aka a collection of steps"
-          }
-        },
         "additionalProperties": {
           "items": {
             "oneOf": [
@@ -463,7 +457,11 @@
             "additionalProperties": false,
             "type": "object"
           },
-          "type": "array"
+          "type": "array",
+          "description": "A task definition, aka a collection of steps"
+        },
+        "propertyNames": {
+          "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
         },
         "type": "object",
         "description": "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
@@ -489,16 +487,15 @@
               "description": "Environment variable containing the token for authentication"
             }
           },
-          "patternProperties": {
-            "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-              "description": "An alias to a package URL"
-            }
-          },
           "additionalProperties": false,
           "type": "object",
           "required": [
             "type"
-          ]
+          ],
+          "description": "An alias to a package URL"
+        },
+        "propertyNames": {
+          "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
         },
         "type": "object",
         "description": "Aliases for package URLs to create shorthand references\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases"

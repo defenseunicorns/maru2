@@ -125,7 +125,7 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 	}
 
 	var allBuiltinSchemas []*jsonschema.Schema
-	reflector := jsonschema.Reflector{ExpandedStruct: true, DoNotReference: true}
+	reflector := jsonschema.Reflector{DoNotReference: true}
 
 	builtinNames := builtins.Names()
 

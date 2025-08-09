@@ -16,15 +16,18 @@ const DefaultTaskName = "default"
 // Task is a list of steps
 type Task []Step
 
+// JSONSchemaExtend extends the JSON schema for a task
+func (Task) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Description = "A task definition, aka a collection of steps"
+}
+
 // TaskMap is a map of tasks, where the key is the task name
 type TaskMap map[string]Task
 
 // JSONSchemaExtend extends the JSON schema for a task map
 func (TaskMap) JSONSchemaExtend(schema *jsonschema.Schema) {
-	schema.PatternProperties = map[string]*jsonschema.Schema{
-		TaskNamePattern.String(): {
-			Description: "A task definition, aka a collection of steps",
-		},
+	schema.PropertyNames = &jsonschema.Schema{
+		Pattern: TaskNamePattern.String(),
 	}
 }
 

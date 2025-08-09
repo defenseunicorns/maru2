@@ -10,10 +10,8 @@ type InputMap map[string]InputParameter
 
 // JSONSchemaExtend extends the JSON schema for an input map
 func (InputMap) JSONSchemaExtend(schema *jsonschema.Schema) {
-	schema.PatternProperties = map[string]*jsonschema.Schema{
-		InputNamePattern.String(): {
-			Description: "Input parameter for the workflow",
-		},
+	schema.PropertyNames = &jsonschema.Schema{
+		Pattern: InputNamePattern.String(),
 	}
 }
 
@@ -35,6 +33,8 @@ type InputParameter struct {
 
 // JSONSchemaExtend extends the JSON schema for a step
 func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.Description = "Input parameter for the workflow"
+
 	defaultSchema := &jsonschema.Schema{
 		Description: "Default value for the parameter, can be a string or a primitive type",
 		OneOf: []*jsonschema.Schema{

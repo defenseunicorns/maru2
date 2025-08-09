@@ -26,11 +26,11 @@ func TestAliasSchema(t *testing.T) {
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(data, &schema))
 
-	curr := schema["$defs"].(map[string]any)["Alias"]
+	curr := schema["properties"].(map[string]any)["aliases"].(map[string]any)["additionalProperties"]
 	b, err := json.Marshal(curr)
 	require.NoError(t, err)
 
-	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	reflector := jsonschema.Reflector{DoNotReference: true}
 	aliasSchema := reflector.Reflect(Alias{})
 	aliasSchema.Version = ""
 	aliasSchema.ID = ""

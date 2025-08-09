@@ -28,9 +28,9 @@ const SchemaVersion = "v0"
 
 // Config is the system configuration file for maru2
 type Config struct {
-	SchemaVersion string              `json:"schema-version"`
-	Aliases       map[string]v0.Alias `json:"aliases"`
-	FetchPolicy   uses.FetchPolicy    `json:"fetch-policy"`
+	SchemaVersion string           `json:"schema-version"`
+	Aliases       v0.AliasMap      `json:"aliases"`
+	FetchPolicy   uses.FetchPolicy `json:"fetch-policy"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow
@@ -113,6 +113,6 @@ func Validate(config *Config) error {
 
 // Schema returns the JSON schema for the Config type
 func Schema() *jsonschema.Schema {
-	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	reflector := jsonschema.Reflector{DoNotReference: true}
 	return reflector.Reflect(&Config{})
 }

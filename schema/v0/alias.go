@@ -8,6 +8,17 @@ import (
 	"github.com/package-url/packageurl-go"
 )
 
+// AliasMap is a map of aliases
+type AliasMap map[string]Alias
+
+// JSONSchemaExtend extends the JSON schema for an alias map
+func (AliasMap) JSONSchemaExtend(schema *jsonschema.Schema) {
+	schema.PropertyNames = &jsonschema.Schema{
+		// TODO: figure out if there is a better pattern to use here
+		Pattern: InputNamePattern.String(),
+	}
+}
+
 // Alias defines how an alias should be resolved
 type Alias struct {
 	Type         string `json:"type"`
@@ -17,12 +28,7 @@ type Alias struct {
 
 // JSONSchemaExtend extends the JSON schema for an alias
 func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
-	schema.PatternProperties = map[string]*jsonschema.Schema{
-		// TODO: figure out if there is a better pattern to use here
-		InputNamePattern.String(): {
-			Description: "An alias to a package URL",
-		},
-	}
+	schema.Description = "An alias to a package URL"
 
 	if typ, ok := schema.Properties.Get("type"); ok && typ != nil {
 		typ.Description = "Type of the alias, maps to a package URL type"
