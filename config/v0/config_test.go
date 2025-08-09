@@ -21,7 +21,8 @@ import (
 )
 
 func TestFileSystemConfigLoader(t *testing.T) {
-	configContent := `aliases:
+	configContent := `schema-version: v0
+aliases:
   gl:
     type: gitlab
     base: https://gitlab.example.com
@@ -33,6 +34,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 `
 
 	tcfg := &Config{
+		SchemaVersion: SchemaVersion,
 		Aliases: map[string]v0.Alias{
 			"gl": {
 				Type: packageurl.TypeGitlab,
@@ -98,7 +100,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
 		require.NoError(t, err)
 		_, err = LoadConfig(afero.NewBasePathFs(fsys, "invalid"))
-		require.EqualError(t, err, "failed to parse config file: [1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
+		require.EqualError(t, err, "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
 	})
 
 	t.Run("nonexistent config", func(t *testing.T) {

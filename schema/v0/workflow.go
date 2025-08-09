@@ -7,6 +7,9 @@ import (
 	"github.com/invopop/jsonschema"
 )
 
+// SchemaVersion is the current schema version for workflows
+const SchemaVersion = "v0"
+
 // Workflow is a wrapper struct around the input map and task map
 //
 // It represents a "tasks.yaml" file

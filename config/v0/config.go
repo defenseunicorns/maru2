@@ -18,14 +18,28 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/defenseunicorns/maru2/config"
+	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
+// SchemaVersion is the current schema version for configs
+const SchemaVersion = "v0"
+
 // Config is the system configuration file for maru2
 type Config struct {
-	Aliases     map[string]v0.Alias `json:"aliases"`
-	FetchPolicy uses.FetchPolicy    `json:"fetch-policy"`
+	SchemaVersion string              `json:"schema-version"`
+	Aliases       map[string]v0.Alias `json:"aliases"`
+	FetchPolicy   uses.FetchPolicy    `json:"fetch-policy"`
+}
+
+// JSONSchemaExtend extends the JSON schema for a workflow
+func (*Config) JSONSchemaExtend(schema *jsonschema.Schema) {
+	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
+		schemaVersion.Description = "Config schema version"
+		schemaVersion.Enum = []any{SchemaVersion}
+		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
+	}
 }
 
 // LoadConfig loads the configuration from the file system
@@ -49,15 +63,20 @@ func LoadConfig(fsys afero.Fs) (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
-	}
-
-	if err := Validate(cfg); err != nil {
+	var versioned schema.Versioned
+	if err := yaml.Unmarshal(data, &versioned); err != nil {
 		return nil, err
 	}
 
-	return cfg, nil
+	switch version := versioned.SchemaVersion; version {
+	case SchemaVersion:
+		if err := yaml.Unmarshal(data, cfg); err != nil {
+			return nil, fmt.Errorf("failed to parse config file: %w", err)
+		}
+		return cfg, Validate(cfg)
+	default:
+		return nil, fmt.Errorf("unsupported config schema version: expected %q, got %q", SchemaVersion, version)
+	}
 }
 
 var schemaOnce = sync.OnceValues(func() (string, error) {
