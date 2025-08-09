@@ -34,7 +34,7 @@ type Config struct {
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow
-func (*Config) JSONSchemaExtend(schema *jsonschema.Schema) {
+func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
 		schemaVersion.Description = "Config schema version"
 		schemaVersion.Enum = []any{SchemaVersion}

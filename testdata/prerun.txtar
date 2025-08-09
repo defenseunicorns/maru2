@@ -32,6 +32,7 @@ rm home/.maru2/config.yaml
 -- bad/invalid.yaml --
 invalid yaml
 -- bad/fetch-policy.yaml --
+schema-version: v0
 fetch-policy: foo
 -- bad/alias.yaml --
 schema-version: v0

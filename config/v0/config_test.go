@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/package-url/packageurl-go"
@@ -33,23 +32,6 @@ aliases:
     token-from-env: GITHUB_TOKEN
 `
 
-	tcfg := &Config{
-		SchemaVersion: SchemaVersion,
-		Aliases: map[string]v0.Alias{
-			"gl": {
-				Type: packageurl.TypeGitlab,
-				Base: "https://gitlab.example.com",
-			},
-			"gh": {
-				Type: packageurl.TypeGithub,
-			},
-			"another": {
-				Type:         packageurl.TypeGithub,
-				TokenFromEnv: "GITHUB_TOKEN",
-			},
-		},
-	}
-
 	fsys := afero.NewMemMapFs()
 	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0644)
 	require.NoError(t, err)
@@ -73,27 +55,6 @@ aliases:
 	require.NoError(t, err)
 	assert.NotNil(t, cfg)
 	assert.Empty(t, cfg.Aliases)
-
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
-		t.Setenv("HOME", "")
-		configDir, err := config.DefaultDirectory()
-		assert.Empty(t, configDir)
-		require.EqualError(t, err, "$HOME is not defined")
-
-		tmpDir := t.TempDir()
-		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0755)
-		require.NoError(t, err)
-
-		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", config.DefaultFileName), []byte(configContent), 0644)
-		require.NoError(t, err)
-
-		t.Setenv("HOME", tmpDir)
-		configDir, err = config.DefaultDirectory()
-		require.NoError(t, err)
-		cfg, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
-		require.NoError(t, err)
-		assert.Equal(t, tcfg.Aliases, cfg.Aliases)
-	}
 
 	t.Run("invalid config", func(t *testing.T) {
 		fsys = afero.NewMemMapFs()
@@ -144,6 +105,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid config",
 			config: &Config{
+				SchemaVersion: SchemaVersion,
 				Aliases: map[string]v0.Alias{
 					"gh": {
 						Type: packageurl.TypeGithub,
@@ -163,6 +125,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid alias type",
 			config: &Config{
+				SchemaVersion: SchemaVersion,
 				Aliases: map[string]v0.Alias{
 					"invalid": {
 						Type: "invalid-type",
@@ -176,6 +139,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid token environment variable format",
 			config: &Config{
+				SchemaVersion: SchemaVersion,
 				Aliases: map[string]v0.Alias{
 					"gh": {
 						Type:         packageurl.TypeGithub,
@@ -190,6 +154,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid fetch policy",
 			config: &Config{
+				SchemaVersion: SchemaVersion,
 				Aliases: map[string]v0.Alias{
 					"gh": {
 						Type: packageurl.TypeGithub,
@@ -203,6 +168,7 @@ func TestValidate(t *testing.T) {
 		{
 			name: "multiple validation errors",
 			config: &Config{
+				SchemaVersion: SchemaVersion,
 				Aliases: map[string]v0.Alias{
 					"invalid": {
 						Type:         "invalid-type",
