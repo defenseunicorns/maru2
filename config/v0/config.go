@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-// Package config provides system-level configuration for maru2
-package config
+// Package v0 provides the schema for v0 of the system config file for maru2
+package v0
 
 import (
 	"encoding/json"
@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/goccy/go-yaml"
@@ -18,12 +17,10 @@ import (
 	"github.com/spf13/afero"
 	"github.com/xeipuuv/gojsonschema"
 
+	"github.com/defenseunicorns/maru2/config"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
-
-// DefaultFileName is the default file name for the config file
-const DefaultFileName = "config.yaml"
 
 // Config is the system configuration file for maru2
 type Config struct {
@@ -36,27 +33,17 @@ type FileSystemConfigLoader struct {
 	Fs afero.Fs
 }
 
-// DefaultDirectory returns the default directory for maru2 configuration
-func DefaultDirectory() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(homeDir, ".maru2"), nil
-}
-
 // LoadConfig loads the configuration from the file system
 func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
-	config := &Config{
+	cfg := &Config{
 		Aliases:     map[string]v0.Alias{},
 		FetchPolicy: uses.DefaultFetchPolicy,
 	}
 
-	f, err := l.Fs.Open(DefaultFileName)
+	f, err := l.Fs.Open(config.DefaultFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return config, nil
+			return cfg, nil
 		}
 		return nil, fmt.Errorf("failed to open config file: %w", err)
 	}
@@ -67,15 +54,15 @@ func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	if err := yaml.Unmarshal(data, config); err != nil {
+	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
-	if err := Validate(config); err != nil {
+	if err := Validate(cfg); err != nil {
 		return nil, err
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
 var schemaOnce = sync.OnceValues(func() (string, error) {

@@ -60,7 +60,7 @@ func TestWorkflowSchemaGen(t *testing.T) {
 	b, err := json.Marshal(schema)
 	require.NoError(t, err)
 
-	current, err := os.ReadFile("../../maru2.schema.json")
+	current, err := os.ReadFile("schema.json")
 	require.NoError(t, err)
 
 	assert.JSONEq(t, string(current), string(b))

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=maru2.schema.json
+# yaml-language-server: $schema=schema/v0/schema.json
 schema-version: v0
 inputs:
   text:

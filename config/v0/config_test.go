@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package config
+package v0
 
 import (
 	"fmt"
@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/config"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -31,7 +32,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
     token-from-env: GITHUB_TOKEN
 `
 
-	cfg := &Config{
+	tcfg := &Config{
 		Aliases: map[string]v0.Alias{
 			"gl": {
 				Type: packageurl.TypeGitlab,
@@ -54,17 +55,17 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	loader := &FileSystemConfigLoader{
 		Fs: afero.NewBasePathFs(fsys, "etc/maru2"),
 	}
-	config, err := loader.LoadConfig()
+	cfg, err := loader.LoadConfig()
 	require.NoError(t, err)
 
-	assert.Len(t, config.Aliases, 3)
+	assert.Len(t, cfg.Aliases, 3)
 
-	glAlias, ok := config.Aliases["gl"]
+	glAlias, ok := cfg.Aliases["gl"]
 	assert.True(t, ok)
 	assert.Equal(t, packageurl.TypeGitlab, glAlias.Type)
 	assert.Equal(t, "https://gitlab.example.com", glAlias.Base)
 
-	ghAlias, ok := config.Aliases["gh"]
+	ghAlias, ok := cfg.Aliases["gh"]
 	assert.True(t, ok)
 	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
 	assert.Empty(t, ghAlias.Base)
@@ -72,14 +73,14 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	loader = &FileSystemConfigLoader{
 		Fs: afero.NewBasePathFs(fsys, "nonexistent-dir"),
 	}
-	config, err = loader.LoadConfig()
+	cfg, err = loader.LoadConfig()
 	require.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Empty(t, config.Aliases)
+	assert.NotNil(t, cfg)
+	assert.Empty(t, cfg.Aliases)
 
 	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
 		t.Setenv("HOME", "")
-		configDir, err := DefaultDirectory()
+		configDir, err := config.DefaultDirectory()
 		assert.Empty(t, configDir)
 		require.EqualError(t, err, "$HOME is not defined")
 
@@ -87,18 +88,18 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0755)
 		require.NoError(t, err)
 
-		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", DefaultFileName), []byte(configContent), 0644)
+		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", config.DefaultFileName), []byte(configContent), 0644)
 		require.NoError(t, err)
 
 		t.Setenv("HOME", tmpDir)
-		configDir, err = DefaultDirectory()
+		configDir, err = config.DefaultDirectory()
 		require.NoError(t, err)
 		loader = &FileSystemConfigLoader{
 			Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
 		}
-		config, err = loader.LoadConfig()
+		cfg, err = loader.LoadConfig()
 		require.NoError(t, err)
-		assert.Equal(t, cfg.Aliases, config.Aliases)
+		assert.Equal(t, tcfg.Aliases, cfg.Aliases)
 	}
 
 	t.Run("invalid config", func(t *testing.T) {
@@ -116,16 +117,16 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		loader := &FileSystemConfigLoader{
 			Fs: afero.NewBasePathFs(fsys, "nonexistent"),
 		}
-		config, err := loader.LoadConfig()
+		cfg, err := loader.LoadConfig()
 		require.NoError(t, err)
-		assert.NotNil(t, config)
-		assert.Empty(t, config.Aliases)
+		assert.NotNil(t, cfg)
+		assert.Empty(t, cfg.Aliases)
 	})
 
 	t.Run("read error", func(t *testing.T) {
 		tmpDir := t.TempDir()
 
-		configDir := filepath.Join(tmpDir, DefaultFileName)
+		configDir := filepath.Join(tmpDir, config.DefaultFileName)
 		err = os.Mkdir(configDir, 0755)
 		require.NoError(t, err)
 
@@ -140,7 +141,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	t.Run("open error", func(t *testing.T) {
 		tmpDir := t.TempDir()
 
-		configPath := filepath.Join(tmpDir, DefaultFileName)
+		configPath := filepath.Join(tmpDir, config.DefaultFileName)
 		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0000)
 		require.NoError(t, err)
 
@@ -148,7 +149,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 			Fs: afero.NewBasePathFs(afero.NewOsFs(), tmpDir),
 		}
 		_, err = loader.LoadConfig()
-		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, DefaultFileName)))
+		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, config.DefaultFileName)))
 	})
 }
 

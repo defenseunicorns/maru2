@@ -25,6 +25,7 @@ import (
 
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/config"
+	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -46,7 +47,7 @@ func NewRootCmd() *cobra.Command {
 		gc       bool
 	)
 
-	var cfg *config.Config // cfg is not set via CLI flag
+	var cfg *configv0.Config // cfg is not set via CLI flag
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -70,7 +71,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return err
 			}
 
-			loader := &config.FileSystemConfigLoader{
+			loader := &configv0.FileSystemConfigLoader{
 				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
 			}
 
@@ -110,7 +111,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					return nil, cobra.ShellCompDirectiveError
 				}
 
-				loader := &config.FileSystemConfigLoader{
+				loader := &configv0.FileSystemConfigLoader{
 					Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
 				}
 
