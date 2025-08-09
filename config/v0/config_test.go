@@ -52,10 +52,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0644)
 	require.NoError(t, err)
 
-	loader := &FileSystemConfigLoader{
-		Fs: afero.NewBasePathFs(fsys, "etc/maru2"),
-	}
-	cfg, err := loader.LoadConfig()
+	cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "etc/maru2"))
 	require.NoError(t, err)
 
 	assert.Len(t, cfg.Aliases, 3)
@@ -70,10 +67,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
 	assert.Empty(t, ghAlias.Base)
 
-	loader = &FileSystemConfigLoader{
-		Fs: afero.NewBasePathFs(fsys, "nonexistent-dir"),
-	}
-	cfg, err = loader.LoadConfig()
+	cfg, err = LoadConfig(afero.NewBasePathFs(fsys, "nonexistent-dir"))
 	require.NoError(t, err)
 	assert.NotNil(t, cfg)
 	assert.Empty(t, cfg.Aliases)
@@ -94,10 +88,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		t.Setenv("HOME", tmpDir)
 		configDir, err = config.DefaultDirectory()
 		require.NoError(t, err)
-		loader = &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-		}
-		cfg, err = loader.LoadConfig()
+		cfg, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
 		require.NoError(t, err)
 		assert.Equal(t, tcfg.Aliases, cfg.Aliases)
 	}
@@ -106,18 +97,12 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		fsys = afero.NewMemMapFs()
 		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
 		require.NoError(t, err)
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(fsys, "invalid"),
-		}
-		_, err = loader.LoadConfig()
+		_, err = LoadConfig(afero.NewBasePathFs(fsys, "invalid"))
 		require.EqualError(t, err, "failed to parse config file: [1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
 	})
 
 	t.Run("nonexistent config", func(t *testing.T) {
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(fsys, "nonexistent"),
-		}
-		cfg, err := loader.LoadConfig()
+		cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "nonexistent"))
 		require.NoError(t, err)
 		assert.NotNil(t, cfg)
 		assert.Empty(t, cfg.Aliases)
@@ -130,11 +115,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		err = os.Mkdir(configDir, 0755)
 		require.NoError(t, err)
 
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(afero.NewOsFs(), tmpDir),
-		}
-
-		_, err := loader.LoadConfig()
+		_, err := LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
 		require.EqualError(t, err, fmt.Sprintf("failed to read config file: read %s: is a directory", configDir))
 	})
 
@@ -145,10 +126,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0000)
 		require.NoError(t, err)
 
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(afero.NewOsFs(), tmpDir),
-		}
-		_, err = loader.LoadConfig()
+		_, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
 		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, config.DefaultFileName)))
 	})
 }

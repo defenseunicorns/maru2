@@ -103,11 +103,7 @@ func Main() int {
 				return err
 			}
 
-			loader := &configv0.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-			}
-
-			cfg, err := loader.LoadConfig()
+			cfg, err := configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
 			if err != nil {
 				return err
 			}

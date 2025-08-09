@@ -28,19 +28,14 @@ type Config struct {
 	FetchPolicy uses.FetchPolicy    `json:"fetch-policy"`
 }
 
-// FileSystemConfigLoader loads configuration from the file system
-type FileSystemConfigLoader struct {
-	Fs afero.Fs
-}
-
 // LoadConfig loads the configuration from the file system
-func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
+func LoadConfig(fsys afero.Fs) (*Config, error) {
 	cfg := &Config{
 		Aliases:     map[string]v0.Alias{},
 		FetchPolicy: uses.DefaultFetchPolicy,
 	}
 
-	f, err := l.Fs.Open(config.DefaultFileName)
+	f, err := fsys.Open(config.DefaultFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return cfg, nil

@@ -71,11 +71,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return err
 			}
 
-			loader := &configv0.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-			}
-
-			cfg, err = loader.LoadConfig()
+			cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
 			if err != nil {
 				return err
 			}
@@ -111,11 +107,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					return nil, cobra.ShellCompDirectiveError
 				}
 
-				loader := &configv0.FileSystemConfigLoader{
-					Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-				}
-
-				cfg, err = loader.LoadConfig()
+				cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
 				if err != nil {
 					return nil, cobra.ShellCompDirectiveError
 				}
