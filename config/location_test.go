@@ -34,7 +34,7 @@ aliases:
 
 	tcfg := &configv0.Config{
 		SchemaVersion: v0.SchemaVersion,
-		Aliases: map[string]v0.Alias{
+		Aliases: v0.AliasMap{
 			"gl": {
 				Type: packageurl.TypeGitlab,
 				Base: "https://gitlab.example.com",

@@ -19,7 +19,7 @@ func TestResolveURL(t *testing.T) {
 		name        string
 		prev        string
 		uri         string
-		aliases     map[string]v0.Alias
+		aliases     v0.AliasMap
 		next        string
 		expectedErr string
 	}{
@@ -253,7 +253,7 @@ func TestResolveURL(t *testing.T) {
 			name: "file -> pkg with alias resolution",
 			prev: "file:dir/foo.yaml",
 			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
-			aliases: map[string]v0.Alias{
+			aliases: v0.AliasMap{
 				"github": {
 					Type: "github",
 					Base: "https://github.com/",
@@ -265,7 +265,7 @@ func TestResolveURL(t *testing.T) {
 			name: "pkg -> file with alias resolution",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:bar.yaml",
-			aliases: map[string]v0.Alias{
+			aliases: v0.AliasMap{
 				"github": {
 					Type: "github",
 					Base: "https://github.com",
@@ -277,7 +277,7 @@ func TestResolveURL(t *testing.T) {
 			name: "pkg -> file with task param and alias resolution",
 			prev: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			uri:  "file:bar.yaml?task=baz",
-			aliases: map[string]v0.Alias{
+			aliases: v0.AliasMap{
 				"github": {
 					Type:         "github",
 					Base:         "https://github.com",

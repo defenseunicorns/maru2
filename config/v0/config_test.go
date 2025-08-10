@@ -106,7 +106,7 @@ func TestValidate(t *testing.T) {
 			name: "valid config",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: map[string]v0.Alias{
+				Aliases: v0.AliasMap{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -126,7 +126,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid alias type",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: map[string]v0.Alias{
+				Aliases: v0.AliasMap{
 					"invalid": {
 						Type: "invalid-type",
 					},
@@ -140,7 +140,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid token environment variable format",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: map[string]v0.Alias{
+				Aliases: v0.AliasMap{
 					"gh": {
 						Type:         packageurl.TypeGithub,
 						TokenFromEnv: "123-invalid",
@@ -155,7 +155,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid fetch policy",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: map[string]v0.Alias{
+				Aliases: v0.AliasMap{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -169,7 +169,7 @@ func TestValidate(t *testing.T) {
 			name: "multiple validation errors",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: map[string]v0.Alias{
+				Aliases: v0.AliasMap{
 					"invalid": {
 						Type:         "invalid-type",
 						TokenFromEnv: "123-invalid",

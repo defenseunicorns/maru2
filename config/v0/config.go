@@ -45,7 +45,7 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 // LoadConfig loads the configuration from the file system
 func LoadConfig(fsys afero.Fs) (*Config, error) {
 	cfg := &Config{
-		Aliases:     map[string]v0.Alias{},
+		Aliases:     v0.AliasMap{},
 		FetchPolicy: uses.DefaultFetchPolicy,
 	}
 

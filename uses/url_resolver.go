@@ -16,7 +16,7 @@ import (
 
 // ResolveRelative resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveRelative(prev *url.URL, u string, pkgAliases map[string]v0.Alias) (*url.URL, error) {
+func ResolveRelative(prev *url.URL, u string, pkgAliases v0.AliasMap) (*url.URL, error) {
 	uri, err := url.Parse(u)
 	if err != nil {
 		return nil, err

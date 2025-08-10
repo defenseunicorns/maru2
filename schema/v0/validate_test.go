@@ -476,7 +476,7 @@ aliases:
 						Run: "echo",
 					}},
 				},
-				Aliases: map[string]Alias{
+				Aliases: AliasMap{
 					"gh": {
 						Type: "github",
 					},
