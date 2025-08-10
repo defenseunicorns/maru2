@@ -17,10 +17,8 @@ func printScript(logger *log.Logger, lang, script string) {
 	script = strings.TrimSpace(script)
 
 	if termenv.EnvNoColor() {
-		for line := range strings.SplitSeq(script, "\n") {
-			// this is essentially the same behavior/rendering as make
-			logger.Print(line)
-		}
+		// this is essentially the same behavior/rendering as make
+		logger.Print(script)
 		return
 	}
 
