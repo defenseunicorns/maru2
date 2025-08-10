@@ -52,13 +52,13 @@ func TestPrintScript(t *testing.T) {
 		{
 			name:     "simple shell",
 			script:   "echo hello",
-			expected: "\x1b[48;2;58;56;67m \x1b[0m \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n",
+			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n",
 			color:    true,
 		},
 		{
 			name:     "multiline",
 			script:   "echo hello\necho world\n\necho !",
-			expected: "\x1b[48;2;58;56;67m \x1b[0m \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n\x1b[48;2;58;56;67m \x1b[0m \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m world\x1b[0m\n\x1b[48;2;58;56;67m \x1b[0m \x1b[38;5;189m\x1b[0m\n\x1b[48;2;58;56;67m \x1b[0m \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m !\x1b[0m\n",
+			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m world\x1b[0m\n  \x1b[38;5;189m\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m !\x1b[0m\n",
 			color:    true,
 		},
 		{

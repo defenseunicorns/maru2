@@ -292,7 +292,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run: "echo hello",
 			},
 			withDefaults: With{},
-			expectedLog:  "$ echo hello\n",
+			expectedLog:  "echo hello\n",
 		},
 		{
 			name: "command with output",
@@ -302,7 +302,7 @@ func TestHandleRunStep(t *testing.T) {
 			},
 			withDefaults: With{},
 			expectedOut:  map[string]any{"result": "success"},
-			expectedLog:  "$ echo \"result=success\" >> $MARU2_OUTPUT\n",
+			expectedLog:  "echo \"result=success\" >> $MARU2_OUTPUT\n",
 		},
 		{
 			name: "command with template",
@@ -310,7 +310,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run: "echo ${{ input \"text\" }}",
 			},
 			withDefaults: With{"text": "hello world"},
-			expectedLog:  "$ echo hello world\n",
+			expectedLog:  "echo hello world\n",
 		},
 		{
 			name: "bash array works",
@@ -319,7 +319,7 @@ func TestHandleRunStep(t *testing.T) {
 				Shell: "bash",
 			},
 			withDefaults: With{},
-			expectedLog:  "$ arr=(a b c); echo \"${arr[1]}\"\n",
+			expectedLog:  "arr=(a b c); echo \"${arr[1]}\"\n",
 		},
 		{
 			name: "[[ ... ]] works in bash",
@@ -328,7 +328,7 @@ func TestHandleRunStep(t *testing.T) {
 				Shell: "bash",
 			},
 			withDefaults: With{},
-			expectedLog:  "$ if [[ \"foo\" == \"foo\" ]]; then echo \"match\"; fi\n",
+			expectedLog:  "if [[ \"foo\" == \"foo\" ]]; then echo \"match\"; fi\n",
 		},
 		{
 			name: "unsupported shell",
@@ -337,7 +337,7 @@ func TestHandleRunStep(t *testing.T) {
 				Shell: "fish",
 			},
 			withDefaults:  With{},
-			expectedLog:   "$ echo foo\n",
+			expectedLog:   "echo foo\n",
 			expectedError: "unsupported shell: fish",
 		},
 		{
@@ -348,7 +348,7 @@ func TestHandleRunStep(t *testing.T) {
 			},
 			withDefaults: With{},
 			dry:          true,
-			expectedLog:  "$ echo hello\n",
+			expectedLog:  "echo hello\n",
 		},
 		{
 			name: "command error",
@@ -357,7 +357,7 @@ func TestHandleRunStep(t *testing.T) {
 			},
 			withDefaults:  With{},
 			expectedError: "exit status 1",
-			expectedLog:   "$ exit 1\n",
+			expectedLog:   "exit 1\n",
 		},
 	}
 
