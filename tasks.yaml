@@ -121,7 +121,3 @@ tasks:
       shell: bash
     - run: rm -f ./maru2 ./maru2-publish
       if: always()
-
-aliases:
-  foo:
-    type: github
