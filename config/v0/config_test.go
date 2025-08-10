@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package config
+package v0
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/package-url/packageurl-go"
@@ -15,11 +14,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/config"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestFileSystemConfigLoader(t *testing.T) {
-	configContent := `aliases:
+	configContent := `schema-version: v0
+aliases:
   gl:
     type: gitlab
     base: https://gitlab.example.com
@@ -30,124 +32,65 @@ func TestFileSystemConfigLoader(t *testing.T) {
     token-from-env: GITHUB_TOKEN
 `
 
-	cfg := &Config{
-		Aliases: map[string]uses.Alias{
-			"gl": {
-				Type: packageurl.TypeGitlab,
-				Base: "https://gitlab.example.com",
-			},
-			"gh": {
-				Type: packageurl.TypeGithub,
-			},
-			"another": {
-				Type:         packageurl.TypeGithub,
-				TokenFromEnv: "GITHUB_TOKEN",
-			},
-		},
-	}
-
 	fsys := afero.NewMemMapFs()
 	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0644)
 	require.NoError(t, err)
 
-	loader := &FileSystemConfigLoader{
-		Fs: afero.NewBasePathFs(fsys, "etc/maru2"),
-	}
-	config, err := loader.LoadConfig()
+	cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "etc/maru2"))
 	require.NoError(t, err)
 
-	assert.Len(t, config.Aliases, 3)
+	assert.Len(t, cfg.Aliases, 3)
 
-	glAlias, ok := config.Aliases["gl"]
+	glAlias, ok := cfg.Aliases["gl"]
 	assert.True(t, ok)
 	assert.Equal(t, packageurl.TypeGitlab, glAlias.Type)
 	assert.Equal(t, "https://gitlab.example.com", glAlias.Base)
 
-	ghAlias, ok := config.Aliases["gh"]
+	ghAlias, ok := cfg.Aliases["gh"]
 	assert.True(t, ok)
 	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
 	assert.Empty(t, ghAlias.Base)
 
-	loader = &FileSystemConfigLoader{
-		Fs: afero.NewBasePathFs(fsys, "nonexistent-dir"),
-	}
-	config, err = loader.LoadConfig()
+	cfg, err = LoadConfig(afero.NewBasePathFs(fsys, "nonexistent-dir"))
 	require.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Empty(t, config.Aliases)
-
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
-		t.Setenv("HOME", "")
-		configDir, err := DefaultDirectory()
-		assert.Empty(t, configDir)
-		require.EqualError(t, err, "$HOME is not defined")
-
-		tmpDir := t.TempDir()
-		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0755)
-		require.NoError(t, err)
-
-		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", DefaultFileName), []byte(configContent), 0644)
-		require.NoError(t, err)
-
-		t.Setenv("HOME", tmpDir)
-		configDir, err = DefaultDirectory()
-		require.NoError(t, err)
-		loader = &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-		}
-		config, err = loader.LoadConfig()
-		require.NoError(t, err)
-		assert.Equal(t, cfg.Aliases, config.Aliases)
-	}
+	assert.NotNil(t, cfg)
+	assert.Empty(t, cfg.Aliases)
 
 	t.Run("invalid config", func(t *testing.T) {
 		fsys = afero.NewMemMapFs()
 		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
 		require.NoError(t, err)
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(fsys, "invalid"),
-		}
-		_, err = loader.LoadConfig()
-		require.EqualError(t, err, "failed to parse config file: [1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
+		_, err = LoadConfig(afero.NewBasePathFs(fsys, "invalid"))
+		require.EqualError(t, err, "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
 	})
 
 	t.Run("nonexistent config", func(t *testing.T) {
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(fsys, "nonexistent"),
-		}
-		config, err := loader.LoadConfig()
+		cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "nonexistent"))
 		require.NoError(t, err)
-		assert.NotNil(t, config)
-		assert.Empty(t, config.Aliases)
+		assert.NotNil(t, cfg)
+		assert.Empty(t, cfg.Aliases)
 	})
 
 	t.Run("read error", func(t *testing.T) {
 		tmpDir := t.TempDir()
 
-		configDir := filepath.Join(tmpDir, DefaultFileName)
+		configDir := filepath.Join(tmpDir, config.DefaultFileName)
 		err = os.Mkdir(configDir, 0755)
 		require.NoError(t, err)
 
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(afero.NewOsFs(), tmpDir),
-		}
-
-		_, err := loader.LoadConfig()
+		_, err := LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
 		require.EqualError(t, err, fmt.Sprintf("failed to read config file: read %s: is a directory", configDir))
 	})
 
 	t.Run("open error", func(t *testing.T) {
 		tmpDir := t.TempDir()
 
-		configPath := filepath.Join(tmpDir, DefaultFileName)
+		configPath := filepath.Join(tmpDir, config.DefaultFileName)
 		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0000)
 		require.NoError(t, err)
 
-		loader := &FileSystemConfigLoader{
-			Fs: afero.NewBasePathFs(afero.NewOsFs(), tmpDir),
-		}
-		_, err = loader.LoadConfig()
-		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, DefaultFileName)))
+		_, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
+		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, config.DefaultFileName)))
 	})
 }
 
@@ -162,7 +105,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "valid config",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				SchemaVersion: SchemaVersion,
+				Aliases: v0.AliasMap{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -181,7 +125,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid alias type",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				SchemaVersion: SchemaVersion,
+				Aliases: v0.AliasMap{
 					"invalid": {
 						Type: "invalid-type",
 					},
@@ -194,7 +139,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid token environment variable format",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				SchemaVersion: SchemaVersion,
+				Aliases: v0.AliasMap{
 					"gh": {
 						Type:         packageurl.TypeGithub,
 						TokenFromEnv: "123-invalid",
@@ -208,7 +154,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid fetch policy",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				SchemaVersion: SchemaVersion,
+				Aliases: v0.AliasMap{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -221,7 +168,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "multiple validation errors",
 			config: &Config{
-				Aliases: map[string]uses.Alias{
+				SchemaVersion: SchemaVersion,
+				Aliases: v0.AliasMap{
 					"invalid": {
 						Type:         "invalid-type",
 						TokenFromEnv: "123-invalid",

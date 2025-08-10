@@ -5,10 +5,10 @@ exec maru2 pwd
 cmp stderr stderr.txt
 cmpenv stdout stdout.txt
 
-exec maru2 pwd -f testdata/pwd.txtar
+exec maru2 pwd -f testdata/pwd.yaml
 cmpenv stdout stdout2.txt
 
-exec maru2 pwd -C testdata -f pwd.txtar
+exec maru2 pwd -C testdata -f pwd.yaml
 cmpenv stdout stdout3.txt
 
 -- stdout.txt --
@@ -26,11 +26,13 @@ pwd
 pwd
 pwd
 -- tasks.yaml --
+schema-version: v0
 tasks:
   pwd:
     - run: pwd
-    - uses: file:testdata/pwd.txtar?task=pwd
--- testdata/pwd.txtar --
+    - uses: file:testdata/pwd.yaml?task=pwd
+-- testdata/pwd.yaml --
+schema-version: v0
 tasks:
   pwd:
     - run: pwd

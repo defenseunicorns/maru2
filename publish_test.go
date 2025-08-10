@@ -29,7 +29,9 @@ func TestPublish(t *testing.T) {
 	// not testing context cancellation at this time
 	ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-	remoteWorkflowContent := `tasks:
+	remoteWorkflowContent := `
+schema-version: v0
+tasks:
   remote:
     - run: "echo 'remote'"
 `
@@ -46,7 +48,9 @@ func TestPublish(t *testing.T) {
 	t.Cleanup(remoteServer.Close)
 	remoteDesc := content.NewDescriptorFromBytes(MediaTypeWorkflow, []byte(remoteWorkflowContent))
 	remoteDesc.Annotations = map[string]string{ocispec.AnnotationTitle: remoteServer.URL + "/remote-dep.yaml"}
-	usesRemoteContent := fmt.Sprintf(`tasks:
+	usesRemoteContent := fmt.Sprintf(`
+schema-version: v0
+tasks:
   main:
     - uses: "%s/remote-dep.yaml?task=remote"
 `, remoteServer.URL)
@@ -65,7 +69,9 @@ func TestPublish(t *testing.T) {
 			name:        "simple workflow",
 			entrypoints: []string{"tasks.yaml"},
 			files: map[string]string{
-				"tasks.yaml": `tasks:
+				"tasks.yaml": `
+schema-version: v0
+tasks:
   noop:
     - run: "true"
 `,
@@ -73,8 +79,8 @@ func TestPublish(t *testing.T) {
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:76b5a65b41aab5e570aae6af57e61748954334c587e578cb7eaa5a808265c82f",
-					Size:        33,
+					Digest:      "sha256:bab034b4352bf26f8543ff6499a56210a0cd9acdac02c8cb545f678a58d18a34",
+					Size:        53,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 			},
@@ -83,11 +89,15 @@ func TestPublish(t *testing.T) {
 			name:        "with local dependency",
 			entrypoints: []string{"tasks.yaml"},
 			files: map[string]string{
-				"tasks.yaml": `tasks:
+				"tasks.yaml": `
+schema-version: v0
+tasks:
   main:
     - uses: "file:dep.yaml?task=dep"
 `,
-				"dep.yaml": `tasks:
+				"dep.yaml": `
+schema-version: v0
+tasks:
   dep:
     - run: "true"
 `,
@@ -95,14 +105,14 @@ func TestPublish(t *testing.T) {
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:083dd91056ea12399edb42f99905d563fb55e7b1f4b3672b72efcda67582b660",
-					Size:        52,
+					Digest:      "sha256:ebd11b8920091e2a6e2f2050ee18d456bc8041a8601cf131a84507f6d1ad3b5a",
+					Size:        72,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:ce250b935a88555f72f9e4499353ff8173ab4dc0f476b46d51c566f1906c4a61",
-					Size:        32,
+					Digest:      "sha256:cf8bcd8f445d8611ba14b04f283ba9c4e1fa18a04635b30cf19d048abb60614d",
+					Size:        52,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep.yaml"},
 				},
 			},
@@ -111,15 +121,21 @@ func TestPublish(t *testing.T) {
 			name:        "with nested local dependency",
 			entrypoints: []string{"tasks.yaml"},
 			files: map[string]string{
-				"tasks.yaml": `tasks:
+				"tasks.yaml": `
+schema-version: v0
+tasks:
   main:
     - uses: "file:dep1.yaml?task=dep1"
 `,
-				"dep1.yaml": `tasks:
+				"dep1.yaml": `
+schema-version: v0
+tasks:
   dep1:
     - uses: "file:dep2.yaml?task=dep2"
 `,
-				"dep2.yaml": `tasks:
+				"dep2.yaml": `
+schema-version: v0
+tasks:
   dep2:
     - run: "true"
 `,
@@ -127,20 +143,20 @@ func TestPublish(t *testing.T) {
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:8c98231524bd8db5fd647c6d282e9f42956f72b71a571a5eefe6bf27852dc980",
-					Size:        54,
+					Digest:      "sha256:cfaa905058cee7a842b6a829db1098b5649b27fdc94192234ee8a88b00d84e3a",
+					Size:        74,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:26945f5cee5e3f2ebfdbc4b820bd6ce7abca6a25dd534b516d914f6545ca34a2",
-					Size:        54,
+					Digest:      "sha256:b4de33822540858d402dab6e7e46bc3988cf0bea060d8781b24d0cef3ac5b371",
+					Size:        74,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep1.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:8ff065cf16ba56474165bc2033a2fce530309b6a8a816d1a6f5f14d9c232c278",
-					Size:        33,
+					Digest:      "sha256:066e03e70397ce63a111d086f09a584a6b8ac707c8cbe9ce68680d4aba185820",
+					Size:        53,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep2.yaml"},
 				},
 			},
@@ -149,11 +165,15 @@ func TestPublish(t *testing.T) {
 			name:        "with directory dependency",
 			entrypoints: []string{"tasks.yaml"},
 			files: map[string]string{
-				"tasks.yaml": `tasks:
+				"tasks.yaml": `
+schema-version: v0
+tasks:
   main:
     - uses: "file:./nested/tasks.yaml?task=dep"
 `,
-				"nested/tasks.yaml": `tasks:
+				"nested/tasks.yaml": `
+schema-version: v0
+tasks:
   dep:
     - run: "true"
 `,
@@ -161,14 +181,14 @@ func TestPublish(t *testing.T) {
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:741938f3090969c83104f288b332cd41d5424e6c5ce8d77200e97eb74299b857",
-					Size:        63,
+					Digest:      "sha256:578d9a9ce72c8b11141df11deb355505ca0fac55b8b499c918783be309ae480d",
+					Size:        83,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:ce250b935a88555f72f9e4499353ff8173ab4dc0f476b46d51c566f1906c4a61",
-					Size:        32,
+					Digest:      "sha256:cf8bcd8f445d8611ba14b04f283ba9c4e1fa18a04635b30cf19d048abb60614d",
+					Size:        52,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:./nested/tasks.yaml"},
 				},
 			},
@@ -183,7 +203,9 @@ func TestPublish(t *testing.T) {
 			name:        "non-existent local dependency",
 			entrypoints: []string{"tasks.yaml"},
 			files: map[string]string{
-				"tasks.yaml": `tasks:
+				"tasks.yaml": `
+schema-version: v0
+tasks:
   main:
     - uses: "file:non-existent.yaml?task=dep"
 `,
@@ -206,7 +228,9 @@ func TestPublish(t *testing.T) {
 			name:        "entrypoint with query params",
 			entrypoints: []string{"tasks.yaml?task=main"},
 			files: map[string]string{
-				"tasks.yaml": `tasks:
+				"tasks.yaml": `
+schema-version: v0
+tasks:
   main:
     - run: "true"
 `,
@@ -214,8 +238,8 @@ func TestPublish(t *testing.T) {
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:a6c1eda52d254444e70b6be557e0e5e97726cad9c368b4b48622f8ca6006e2c4",
-					Size:        33,
+					Digest:      "sha256:97e2c0262ec9cc6c5afb8b5c1298f475f1d2422e09db3ce5b511df2b23c49f0e",
+					Size:        53,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 			},
@@ -224,11 +248,15 @@ func TestPublish(t *testing.T) {
 			name:        "multiple entrypoints",
 			entrypoints: []string{"tasks.yaml", "dep.yaml"},
 			files: map[string]string{
-				"tasks.yaml": `tasks:
+				"tasks.yaml": `
+schema-version: v0
+tasks:
   main:
     - run: "true"
 `,
-				"dep.yaml": `tasks:
+				"dep.yaml": `
+schema-version: v0
+tasks:
   dep:
     - run: "true"
 `,
@@ -236,14 +264,14 @@ func TestPublish(t *testing.T) {
 			expectedLayers: []ocispec.Descriptor{
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:a6c1eda52d254444e70b6be557e0e5e97726cad9c368b4b48622f8ca6006e2c4",
-					Size:        33,
+					Digest:      "sha256:97e2c0262ec9cc6c5afb8b5c1298f475f1d2422e09db3ce5b511df2b23c49f0e",
+					Size:        53,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:tasks.yaml"},
 				},
 				{
 					MediaType:   MediaTypeWorkflow,
-					Digest:      "sha256:ce250b935a88555f72f9e4499353ff8173ab4dc0f476b46d51c566f1906c4a61",
-					Size:        32,
+					Digest:      "sha256:cf8bcd8f445d8611ba14b04f283ba9c4e1fa18a04635b30cf19d048abb60614d",
+					Size:        52,
 					Annotations: map[string]string{ocispec.AnnotationTitle: "file:dep.yaml"},
 				},
 			},

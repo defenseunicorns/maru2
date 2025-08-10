@@ -3,6 +3,7 @@ cmp stderr stderr.txt
 cmp stdout stdout.txt
 
 -- tasks.yaml --
+schema-version: v0
 inputs:
   name:
     description: "Name to greet"

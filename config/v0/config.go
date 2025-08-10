@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-// Package config provides system-level configuration for maru2
-package config
+// Package v0 provides the schema for v0 of the system config file for maru2
+package v0
 
 import (
 	"encoding/json"
@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/goccy/go-yaml"
@@ -18,44 +17,42 @@ import (
 	"github.com/spf13/afero"
 	"github.com/xeipuuv/gojsonschema"
 
+	"github.com/defenseunicorns/maru2/config"
+	"github.com/defenseunicorns/maru2/schema"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// DefaultFileName is the default file name for the config file
-const DefaultFileName = "config.yaml"
+// SchemaVersion is the current schema version for configs
+const SchemaVersion = "v0"
 
 // Config is the system configuration file for maru2
 type Config struct {
-	Aliases     map[string]uses.Alias `json:"aliases"`
-	FetchPolicy uses.FetchPolicy      `json:"fetch-policy"`
+	SchemaVersion string           `json:"schema-version"`
+	Aliases       v0.AliasMap      `json:"aliases"`
+	FetchPolicy   uses.FetchPolicy `json:"fetch-policy"`
 }
 
-// FileSystemConfigLoader loads configuration from the file system
-type FileSystemConfigLoader struct {
-	Fs afero.Fs
-}
-
-// DefaultDirectory returns the default directory for maru2 configuration
-func DefaultDirectory() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+// JSONSchemaExtend extends the JSON schema for a workflow
+func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
+	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
+		schemaVersion.Description = "Config schema version"
+		schemaVersion.Enum = []any{SchemaVersion}
+		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
 	}
-
-	return filepath.Join(homeDir, ".maru2"), nil
 }
 
 // LoadConfig loads the configuration from the file system
-func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
-	config := &Config{
-		Aliases:     map[string]uses.Alias{},
+func LoadConfig(fsys afero.Fs) (*Config, error) {
+	cfg := &Config{
+		Aliases:     v0.AliasMap{},
 		FetchPolicy: uses.DefaultFetchPolicy,
 	}
 
-	f, err := l.Fs.Open(DefaultFileName)
+	f, err := fsys.Open(config.DefaultFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return config, nil
+			return cfg, nil
 		}
 		return nil, fmt.Errorf("failed to open config file: %w", err)
 	}
@@ -66,15 +63,20 @@ func (l *FileSystemConfigLoader) LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	if err := yaml.Unmarshal(data, config); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
-	}
-
-	if err := Validate(config); err != nil {
+	var versioned schema.Versioned
+	if err := yaml.Unmarshal(data, &versioned); err != nil {
 		return nil, err
 	}
 
-	return config, nil
+	switch version := versioned.SchemaVersion; version {
+	case SchemaVersion:
+		if err := yaml.Unmarshal(data, cfg); err != nil {
+			return nil, fmt.Errorf("failed to parse config file: %w", err)
+		}
+		return cfg, Validate(cfg)
+	default:
+		return nil, fmt.Errorf("unsupported config schema version: expected %q, got %q", SchemaVersion, version)
+	}
 }
 
 var schemaOnce = sync.OnceValues(func() (string, error) {
@@ -111,6 +113,6 @@ func Validate(config *Config) error {
 
 // Schema returns the JSON schema for the Config type
 func Schema() *jsonschema.Schema {
-	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	reflector := jsonschema.Reflector{DoNotReference: true}
 	return reflector.Reflect(&Config{})
 }

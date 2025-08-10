@@ -5,6 +5,7 @@ stdout ''
 -- stderr.txt --
 echo "default"
 -- tasks.yaml --
+schema-version: v0
 tasks:
   default:
     - run: echo "default"

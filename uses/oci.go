@@ -81,6 +81,11 @@ func (c *OCIClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, err
 	clone.Fragment = ""
 	clone.RawQuery = ""
 
+	path, err := url.QueryUnescape(path)
+	if err != nil {
+		return nil, err
+	}
+
 	repo, err := remote.NewRepository(clone.String())
 	if err != nil {
 		return nil, err

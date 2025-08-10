@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package maru2
+package v0
 
 import (
 	"encoding/json"
@@ -15,6 +15,7 @@ import (
 // helloWorldWorkflow is a simple workflow that prints "Hello World!"
 // do not make changes to this variable within tests
 var helloWorldWorkflow = Workflow{
+	SchemaVersion: SchemaVersion,
 	Tasks: TaskMap{
 		"default": {Step{Run: "echo 'Hello World!'"}},
 		"a-task":  {Step{Run: "echo 'task a'"}},
@@ -59,7 +60,7 @@ func TestWorkflowSchemaGen(t *testing.T) {
 	b, err := json.Marshal(schema)
 	require.NoError(t, err)
 
-	current, err := os.ReadFile("maru2.schema.json")
+	current, err := os.ReadFile("schema.json")
 	require.NoError(t, err)
 
 	assert.JSONEq(t, string(current), string(b))

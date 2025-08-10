@@ -1,514 +1,510 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json",
-  "$defs": {
-    "Alias": {
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "github",
-            "gitlab"
-          ],
-          "description": "Type of the alias, maps to a package URL type"
-        },
-        "base": {
-          "type": "string",
-          "description": "Base URL for the underlying client (e.g. https://mygitlab.com )"
-        },
-        "token-from-env": {
-          "type": "string",
-          "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
-          "description": "Environment variable containing the token for authentication"
-        }
+  "if": {
+    "properties": {
+      "schema-version": {
+        "type": "string",
+        "enum": [
+          "v0"
+        ]
+      }
+    }
+  },
+  "then": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v0/schema.json",
+    "properties": {
+      "schema-version": {
+        "additionalProperties": false,
+        "type": "string",
+        "enum": [
+          "v0"
+        ],
+        "description": "Workflow schema version. For v0 breaking changes can be expected without any migration pathway."
       },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "type"
-      ]
-    },
-    "InputMap": {
-      "additionalProperties": {
-        "$ref": "#/$defs/InputParameter"
-      },
-      "type": "object"
-    },
-    "InputParameter": {
-      "oneOf": [
-        {
-          "not": {
-            "required": [
-              "default-from-env"
-            ]
-          },
-          "required": [
-            "default"
-          ]
-        },
-        {
-          "not": {
-            "required": [
-              "default"
-            ]
-          },
-          "required": [
-            "default-from-env"
-          ]
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
+      "inputs": {
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "not": {
+                "required": [
+                  "default-from-env"
+                ]
+              },
+              "required": [
+                "default"
+              ]
+            },
+            {
+              "not": {
                 "required": [
                   "default"
                 ]
               },
-              {
-                "required": [
-                  "default-from-env"
+              "required": [
+                "default-from-env"
+              ]
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "default"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "default-from-env"
+                    ]
+                  }
                 ]
               }
-            ]
-          }
-        }
-      ],
-      "properties": {
-        "description": {
-          "type": "string",
-          "description": "Description of the parameter"
-        },
-        "deprecated-message": {
-          "type": "string",
-          "description": "Message to display when the parameter is deprecated"
-        },
-        "required": {
-          "type": "boolean",
-          "description": "Whether the parameter is required",
-          "default": true
-        },
-        "default": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
             }
           ],
-          "description": "Default value for the parameter, can be a string or a primitive type"
-        },
-        "default-from-env": {
-          "type": "string",
-          "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
-          "description": "Environment variable to use as default value for the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-values-from-environment-variables"
-        },
-        "validate": {
-          "type": "string",
-          "description": "Regular expression to validate the value of the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#input-validation"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "description"
-      ],
-      "dependentRequired": {
-        "default": [],
-        "default-from-env": []
-      }
-    },
-    "Step": {
-      "oneOf": [
-        {
           "properties": {
-            "run": {
-              "type": "string"
+            "description": {
+              "type": "string",
+              "description": "Description of the parameter"
             },
-            "uses": {
-              "not": true
+            "deprecated-message": {
+              "type": "string",
+              "description": "Message to display when the parameter is deprecated"
+            },
+            "required": {
+              "type": "boolean",
+              "description": "Whether the parameter is required",
+              "default": true
+            },
+            "default": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "description": "Default value for the parameter, can be a string or a primitive type"
+            },
+            "default-from-env": {
+              "type": "string",
+              "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
+              "description": "Environment variable to use as default value for the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-values-from-environment-variables"
+            },
+            "validate": {
+              "type": "string",
+              "description": "Regular expression to validate the value of the parameter\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#input-validation"
             }
           },
+          "additionalProperties": false,
+          "type": "object",
           "required": [
-            "run"
-          ]
+            "description"
+          ],
+          "dependentRequired": {
+            "default": [],
+            "default-from-env": []
+          },
+          "description": "Input parameter for the workflow"
         },
-        {
-          "allOf": [
-            {
-              "if": {
+        "propertyNames": {
+          "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
+        },
+        "type": "object",
+        "description": "Input parameters for the workflow"
+      },
+      "tasks": {
+        "additionalProperties": {
+          "items": {
+            "oneOf": [
+              {
                 "properties": {
+                  "run": {
+                    "type": "string"
+                  },
                   "uses": {
-                    "type": "string",
-                    "pattern": "^builtin:echo(@.*)?$"
-                  }
-                }
-              },
-              "then": {
-                "properties": {
-                  "with": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "properties": {
-                      "text": {
-                        "type": "string",
-                        "description": "Text to echo"
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "text"
-                    ],
-                    "description": "Configuration for builtin:echo"
+                    "not": true
                   }
                 },
                 "required": [
-                  "with"
+                  "run"
                 ]
-              }
-            },
-            {
-              "if": {
-                "properties": {
-                  "uses": {
-                    "type": "string",
-                    "pattern": "^builtin:fetch(@.*)?$"
-                  }
-                }
               },
-              "then": {
-                "properties": {
-                  "with": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "properties": {
-                      "url": {
-                        "type": "string",
-                        "description": "URL to fetch"
-                      },
-                      "method": {
-                        "type": "string",
-                        "description": "HTTP method to use"
-                      },
-                      "timeout": {
-                        "type": "string",
-                        "description": "Timeout for the request"
-                      },
-                      "headers": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object",
-                        "description": "HTTP headers to send"
+              {
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "uses": {
+                          "type": "string",
+                          "pattern": "^builtin:echo(@.*)?$"
+                        }
                       }
                     },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "url"
-                    ],
-                    "description": "Configuration for builtin:fetch"
-                  }
-                },
-                "required": [
-                  "with"
-                ]
-              }
-            },
-            {
-              "if": {
-                "properties": {
-                  "uses": {
-                    "type": "string",
-                    "pattern": "^builtin:wacky-structs(@.*)?$"
-                  }
-                }
-              },
-              "then": {
-                "properties": {
-                  "with": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "properties": {
-                      "Int": {
-                        "oneOf": [
-                          {
-                            "type": "string"
+                    "then": {
+                      "properties": {
+                        "with": {
+                          "properties": {
+                            "text": {
+                              "type": "string",
+                              "description": "Text to echo"
+                            }
                           },
-                          {
-                            "type": "integer"
-                          }
-                        ]
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "text"
+                          ],
+                          "description": "Configuration for builtin:echo"
+                        }
                       },
-                      "Bool": {
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "boolean"
-                          }
-                        ]
-                      },
-                      "String": {
-                        "type": "string"
-                      },
-                      "Map": {
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "Slice": {
-                        "items": {
-                          "oneOf": [
-                            {
-                              "type": "string"
+                      "required": [
+                        "with"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "uses": {
+                          "type": "string",
+                          "pattern": "^builtin:fetch(@.*)?$"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "with": {
+                          "properties": {
+                            "url": {
+                              "type": "string",
+                              "description": "URL to fetch"
                             },
-                            true
-                          ]
-                        },
-                        "type": "array"
-                      },
-                      "Nested": {
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "properties": {
-                              "Field": {
+                            "method": {
+                              "type": "string",
+                              "description": "HTTP method to use"
+                            },
+                            "timeout": {
+                              "type": "string",
+                              "description": "Timeout for the request"
+                            },
+                            "headers": {
+                              "additionalProperties": {
                                 "type": "string"
                               },
-                              "Slice": {
-                                "items": {
-                                  "oneOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    true
-                                  ]
-                                },
-                                "type": "array"
-                              },
-                              "IntSlice": {
-                                "items": {
-                                  "oneOf": [
-                                    {
-                                      "type": "string"
-                                    },
-                                    {
-                                      "type": "integer"
-                                    }
-                                  ]
-                                },
-                                "type": "array"
-                              },
-                              "Map": {
-                                "type": "object"
-                              },
-                              "BoolMap": {
-                                "additionalProperties": {
-                                  "type": "boolean"
-                                },
-                                "type": "object"
-                              }
-                            },
-                            "additionalProperties": false,
-                            "type": "object",
-                            "required": [
-                              "Field",
-                              "Slice",
-                              "IntSlice",
-                              "Map",
-                              "BoolMap"
-                            ]
-                          }
-                        ],
-                        "required": [
-                          "Field",
-                          "Slice",
-                          "IntSlice",
-                          "Map",
-                          "BoolMap"
-                        ]
+                              "type": "object",
+                              "description": "HTTP headers to send"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "url"
+                          ],
+                          "description": "Configuration for builtin:fetch"
+                        }
+                      },
+                      "required": [
+                        "with"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "uses": {
+                          "type": "string",
+                          "pattern": "^builtin:wacky-structs(@.*)?$"
+                        }
                       }
                     },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "Int",
-                      "Bool",
-                      "String",
-                      "Map",
-                      "Slice",
-                      "Nested"
-                    ],
-                    "description": "Configuration for builtin:wacky-structs"
+                    "then": {
+                      "properties": {
+                        "with": {
+                          "properties": {
+                            "Int": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "integer"
+                                }
+                              ]
+                            },
+                            "Bool": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            },
+                            "String": {
+                              "type": "string"
+                            },
+                            "Map": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            "Slice": {
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  true
+                                ]
+                              },
+                              "type": "array"
+                            },
+                            "Nested": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "properties": {
+                                    "Field": {
+                                      "type": "string"
+                                    },
+                                    "Slice": {
+                                      "items": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          true
+                                        ]
+                                      },
+                                      "type": "array"
+                                    },
+                                    "IntSlice": {
+                                      "items": {
+                                        "oneOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "integer"
+                                          }
+                                        ]
+                                      },
+                                      "type": "array"
+                                    },
+                                    "Map": {
+                                      "type": "object"
+                                    },
+                                    "BoolMap": {
+                                      "additionalProperties": {
+                                        "type": "boolean"
+                                      },
+                                      "type": "object"
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "type": "object",
+                                  "required": [
+                                    "Field",
+                                    "Slice",
+                                    "IntSlice",
+                                    "Map",
+                                    "BoolMap"
+                                  ]
+                                }
+                              ],
+                              "required": [
+                                "Field",
+                                "Slice",
+                                "IntSlice",
+                                "Map",
+                                "BoolMap"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "Int",
+                            "Bool",
+                            "String",
+                            "Map",
+                            "Slice",
+                            "Nested"
+                          ],
+                          "description": "Configuration for builtin:wacky-structs"
+                        }
+                      },
+                      "required": [
+                        "with"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "uses": {
+                          "not": {
+                            "pattern": "^builtin:.*$"
+                          },
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "with": {
+                          "patternProperties": {
+                            "^[a-zA-Z_]+[a-zA-Z0-9_]*$": {
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "integer"
+                                }
+                              ]
+                            }
+                          },
+                          "additionalProperties": false,
+                          "type": "object",
+                          "minItems": 1,
+                          "description": "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-inputs"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "run": {
+                    "not": true
+                  },
+                  "uses": {
+                    "type": "string"
                   }
                 },
                 "required": [
-                  "with"
+                  "uses"
                 ]
               }
-            },
-            {
-              "if": {
-                "properties": {
-                  "uses": {
-                    "not": {
-                      "pattern": "^builtin:.*$"
-                    },
-                    "type": "string"
-                  }
-                }
+            ],
+            "properties": {
+              "run": {
+                "type": "string",
+                "description": "Command/script to run"
               },
-              "then": {
-                "properties": {
-                  "with": {
-                    "patternProperties": {
-                      "^[a-zA-Z_]+[a-zA-Z0-9_]*$": {
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "integer"
-                          }
-                        ]
-                      }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "minItems": 1,
-                    "description": "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-inputs"
-                  }
-                }
+              "uses": {
+                "type": "string",
+                "description": "Location of a task to call\n\nCalling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-another-task-as-a-step\nCalling tasks from local files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-local-file\nCalling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-file",
+                "examples": [
+                  "local-task",
+                  "file:testdata/simple.yaml?task=echo",
+                  "builtin:echo",
+                  "pkg:github/defenseunicorns/maru2@main?task=echo",
+                  "https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the step, required to access step outputs\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-outputs"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable name for the step, pure sugar"
+              },
+              "if": {
+                "type": "string",
+                "description": "Expression that controls whether the step is executed\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if"
+              },
+              "dir": {
+                "type": "string",
+                "description": "Relative directory to run the step in"
+              },
+              "shell": {
+                "type": "string",
+                "enum": [
+                  "sh",
+                  "bash",
+                  "pwsh",
+                  "powershell"
+                ],
+                "description": "Set the shell to execute (default: sh)\n\nsh -e -u -c {}\nbash -e -u -o pipefail -c {}\npwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }\npowershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"
+              },
+              "timeout": {
+                "type": "string",
+                "description": "Set how long to run the command before timing out (e.g., \"30s\", \"1m30s\", \"1h\")\n\nSee https://pkg.go.dev/time#ParseDuration for more information."
+              },
+              "with": {
+                "type": "object"
               }
-            }
-          ],
-          "properties": {
-            "run": {
-              "not": true
             },
-            "uses": {
-              "type": "string"
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "type": "array",
+          "description": "A task definition, aka a collection of steps"
+        },
+        "propertyNames": {
+          "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
+        },
+        "type": "object",
+        "description": "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
+      },
+      "aliases": {
+        "additionalProperties": {
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "github",
+                "gitlab"
+              ],
+              "description": "Type of the alias, maps to a package URL type"
+            },
+            "base": {
+              "type": "string",
+              "description": "Base URL for the underlying client (e.g. https://mygitlab.com )"
+            },
+            "token-from-env": {
+              "type": "string",
+              "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
+              "description": "Environment variable containing the token for authentication"
             }
           },
+          "additionalProperties": false,
+          "type": "object",
           "required": [
-            "uses"
-          ]
-        }
-      ],
-      "properties": {
-        "run": {
-          "type": "string",
-          "description": "Command/script to run"
-        },
-        "uses": {
-          "type": "string",
-          "description": "Location of a task to call\n\nCalling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-another-task-as-a-step\nCalling tasks from local files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-local-file\nCalling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-file",
-          "examples": [
-            "local-task",
-            "file:testdata/simple.yaml?task=echo",
-            "builtin:echo",
-            "pkg:github/defenseunicorns/maru2@main?task=echo",
-            "https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo"
-          ]
-        },
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the step, required to access step outputs\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-outputs"
-        },
-        "name": {
-          "type": "string",
-          "description": "Human-readable name for the step, pure sugar"
-        },
-        "if": {
-          "type": "string",
-          "description": "Expression that controls whether the step is executed\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if"
-        },
-        "dir": {
-          "type": "string",
-          "description": "Relative directory to run the step in"
-        },
-        "shell": {
-          "type": "string",
-          "enum": [
-            "sh",
-            "bash",
-            "pwsh",
-            "powershell"
+            "type"
           ],
-          "description": "Set the shell to execute (default: sh)\n\nsh -e -u -c {}\nbash -e -u -o pipefail -c {}\npwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }\npowershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"
-        },
-        "timeout": {
-          "type": "string",
-          "description": "Set how long to run the command before timing out (e.g., \"30s\", \"1m30s\", \"1h\")\n\nSee https://pkg.go.dev/time#ParseDuration for more information."
-        },
-        "with": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object"
-    },
-    "Task": {
-      "items": {
-        "$ref": "#/$defs/Step"
-      },
-      "type": "array"
-    },
-    "TaskMap": {
-      "additionalProperties": {
-        "$ref": "#/$defs/Task"
-      },
-      "type": "object"
-    }
-  },
-  "properties": {
-    "inputs": {
-      "$ref": "#/$defs/InputMap",
-      "patternProperties": {
-        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-          "$ref": "#/$defs/InputParameter",
-          "description": "Input parameter for the workflow"
-        }
-      },
-      "additionalProperties": false,
-      "description": "Input parameters for the workflow"
-    },
-    "tasks": {
-      "$ref": "#/$defs/TaskMap",
-      "patternProperties": {
-        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-          "$ref": "#/$defs/Task",
-          "description": "A task definition, aka a collection of steps"
-        }
-      },
-      "additionalProperties": false,
-      "description": "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
-    },
-    "aliases": {
-      "patternProperties": {
-        "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-          "$ref": "#/$defs/Alias",
           "description": "An alias to a package URL"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "Aliases for package URLs to create shorthand references\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases"
-    }
-  },
-  "additionalProperties": false,
-  "type": "object"
+        },
+        "propertyNames": {
+          "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
+        },
+        "type": "object",
+        "description": "Aliases for package URLs to create shorthand references\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases"
+      }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+      "schema-version"
+    ]
+  }
 }

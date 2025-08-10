@@ -6,6 +6,7 @@ cmp stderr stderr.txt
 cmp stdout stdout.txt
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   sleep:
     - run: sleep 5

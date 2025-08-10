@@ -6,6 +6,7 @@ cmp stdout stdout.txt
 stderr 'ERRO exit status 1'
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   fails:
     - run: exit 1

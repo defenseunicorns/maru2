@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package maru2
+package v0
 
 import (
 	"encoding/json"
@@ -19,17 +19,8 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/xeipuuv/gojsonschema"
 
-	"github.com/defenseunicorns/maru2/uses"
+	"github.com/defenseunicorns/maru2/schema"
 )
-
-// TaskNamePattern is a regular expression for valid task names, it is also used for step IDs
-var TaskNamePattern = regexp.MustCompile("^[_a-zA-Z][a-zA-Z0-9_-]*$")
-
-// InputNamePattern is a regular expression for valid input names
-var InputNamePattern = TaskNamePattern //regexp.MustCompile("^\\$[A-Z_]+[A-Z0-9_]*$")
-
-// EnvVariablePattern is a regular expression for valid environment variable names
-var EnvVariablePattern = regexp.MustCompile("^[a-zA-Z_]+[a-zA-Z0-9_]*$")
 
 // Read reads a workflow from a file
 func Read(r io.Reader) (Workflow, error) {
@@ -40,22 +31,23 @@ func Read(r io.Reader) (Workflow, error) {
 		}
 	}
 
-	wf := Workflow{
-		Inputs:  make(InputMap),
-		Tasks:   make(TaskMap),
-		Aliases: make(map[string]uses.Alias),
-	}
-
-	d := yaml.NewDecoder(r)
-
-	if err := d.Decode(&wf); err != nil {
-		if err == io.EOF {
-			return wf, nil
-		}
+	data, err := io.ReadAll(r)
+	if err != nil {
 		return Workflow{}, err
 	}
 
-	return wf, nil
+	var versioned schema.Versioned
+	if err := yaml.Unmarshal(data, &versioned); err != nil {
+		return Workflow{}, err
+	}
+
+	switch version := versioned.SchemaVersion; version {
+	case SchemaVersion:
+		var wf Workflow
+		return wf, yaml.Unmarshal(data, &wf)
+	default:
+		return Workflow{}, fmt.Errorf("unsupported schema version: expected %q, got %q", SchemaVersion, version)
+	}
 }
 
 var schemaOnce = sync.OnceValues(func() (string, error) {
@@ -114,7 +106,7 @@ func Validate(wf Workflow) error {
 						return fmt.Errorf(".%s[%d].uses %q not found", name, idx, step.Uses)
 					}
 				} else {
-					schemes := append(uses.SupportedSchemes(), "builtin")
+					schemes := append(SupportedSchemes(), "builtin")
 
 					if !slices.Contains(schemes, u.Scheme) {
 						return fmt.Errorf(".%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))

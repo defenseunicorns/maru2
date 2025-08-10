@@ -11,21 +11,15 @@ import (
 	"slices"
 
 	"github.com/expr-lang/expr"
+
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
-// If controls whether a step is run
-type If string
-
-// String implements fmt.Stringer
-func (i If) String() string {
-	return string(i)
-}
-
 // ShouldRun executes If logic using expr as the engine
-func (i If) ShouldRun(ctx context.Context, err error, with With, from CommandOutputs, dry bool) (bool, error) {
+func ShouldRun(ctx context.Context, expression string, err error, with v0.With, from CommandOutputs, dry bool) (bool, error) {
 	hasFailed := err != nil
 
-	if i == "" {
+	if expression == "" {
 		return !hasFailed, nil
 	}
 
@@ -102,7 +96,7 @@ func (i If) ShouldRun(ctx context.Context, err error, with With, from CommandOut
 		Platform string `expr:"platform"`
 	}
 
-	program, err := expr.Compile(i.String(), expr.Env(env{}), expr.AsBool(), failure, cancelled, always, inputFunc, fromFunc)
+	program, err := expr.Compile(expression, expr.Env(env{}), expr.AsBool(), failure, cancelled, always, inputFunc, fromFunc)
 	if err != nil {
 		return false, err
 	}

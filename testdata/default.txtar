@@ -16,6 +16,7 @@ stdout default
 stderr 'echo "default"'
 
 -- maru2-other.yaml --
+schema-version: v0
 tasks:
   default:
     - run: echo "default"

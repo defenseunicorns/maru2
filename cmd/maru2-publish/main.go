@@ -25,6 +25,7 @@ import (
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/cmd"
 	"github.com/defenseunicorns/maru2/config"
+	configv0 "github.com/defenseunicorns/maru2/config/v0"
 )
 
 func main() {
@@ -102,11 +103,7 @@ func Main() int {
 				return err
 			}
 
-			loader := &config.FileSystemConfigLoader{
-				Fs: afero.NewBasePathFs(afero.NewOsFs(), configDir),
-			}
-
-			cfg, err := loader.LoadConfig()
+			cfg, err := configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
 			if err != nil {
 				return err
 			}

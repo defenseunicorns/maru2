@@ -2,6 +2,7 @@ exec maru2-publish $REGISTRY/test-workflow:latest --plain-http --entrypoint task
 stderr 'INFO published digest=sha256:.* to=latest'
 
 -- tasks.yaml --
+schema-version: v0
 inputs:
   text:
     description: Text to echo

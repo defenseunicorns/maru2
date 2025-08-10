@@ -31,6 +31,7 @@ To create a new configuration:
 ## Default Configuration
 
 ```yaml
+schema-version: v0
 fetch-policy: "if-not-present"
 aliases: {}
 ```

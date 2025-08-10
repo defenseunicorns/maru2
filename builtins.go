@@ -12,10 +12,11 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/defenseunicorns/maru2/builtins"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 // ExecuteBuiltin determines which builtin to run based upon the uses string, converts the With map to the expected struct, then calls the builtin's Execute method
-func ExecuteBuiltin(ctx context.Context, step Step, with With, previous CommandOutputs, dry bool) (map[string]any, error) {
+func ExecuteBuiltin(ctx context.Context, step v0.Step, with v0.With, previous CommandOutputs, dry bool) (map[string]any, error) {
 	name := strings.TrimPrefix(step.Uses, "builtin:")
 	logger := log.FromContext(ctx)
 
@@ -24,7 +25,7 @@ func ExecuteBuiltin(ctx context.Context, step Step, with With, previous CommandO
 		return nil, fmt.Errorf("%s not found", step.Uses)
 	}
 
-	var rendered With
+	var rendered v0.With
 	if with != nil {
 		var err error
 		rendered, err = TemplateWithMap(ctx, with, previous, step.With, dry)

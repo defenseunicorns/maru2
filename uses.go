@@ -14,10 +14,11 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf Workflow, withDefaults With,
+func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step v0.Step, wf v0.Workflow, withDefaults v0.With,
 	outputs CommandOutputs, origin *url.URL, dry bool) (map[string]any, error) {
 
 	ctx = WithCWDContext(ctx, filepath.Join(CWDFromContext(ctx), step.Dir))
@@ -51,12 +52,12 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step Step, wf
 }
 
 // Fetch fetches a workflow from a given URL.
-func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflow, error) {
+func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (v0.Workflow, error) {
 	logger := log.FromContext(ctx)
 
 	fetcher, err := svc.GetFetcher(uri)
 	if err != nil {
-		return Workflow{}, err
+		return v0.Workflow{}, err
 	}
 
 	fetcherType := fmt.Sprintf("%T", fetcher)
@@ -68,15 +69,15 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (Workflo
 
 	rc, err := fetcher.Fetch(ctx, uri)
 	if err != nil {
-		return Workflow{}, err
+		return v0.Workflow{}, err
 	}
 	defer rc.Close()
 
-	return ReadAndValidate(rc)
+	return v0.ReadAndValidate(rc)
 }
 
 // FetchAll fetches all workflows from a given URL.
-func FetchAll(ctx context.Context, svc *uses.FetcherService, wf Workflow, src *url.URL) error {
+func FetchAll(ctx context.Context, svc *uses.FetcherService, wf v0.Workflow, src *url.URL) error {
 	refs := []string{}
 
 	for _, task := range wf.Tasks {
@@ -133,7 +134,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 	}
 	defer rc.Close()
 
-	wf, err := ReadAndValidate(rc)
+	wf, err := v0.ReadAndValidate(rc)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +175,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 		}
 		defer rc.Close()
 
-		_, err = ReadAndValidate(rc)
+		_, err = v0.ReadAndValidate(rc)
 		if err != nil {
 			return nil, err
 		}

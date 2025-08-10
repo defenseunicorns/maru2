@@ -3,6 +3,7 @@ cmp stderr stderr.txt
 stdout 'The selected color is green'
 
 -- tasks.yaml --
+schema-version: v0
 tasks:
   print:
     - run: echo "out=${{ input "text" }}" >> $MARU2_OUTPUT

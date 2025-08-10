@@ -10,13 +10,15 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 func TestExecuteBuiltin(t *testing.T) {
 	testCases := []struct {
 		name          string
-		step          Step
-		with          With
+		step          v0.Step
+		with          v0.With
 		dry           bool
 		expectedError string
 		expectedLog   string
@@ -24,89 +26,89 @@ func TestExecuteBuiltin(t *testing.T) {
 	}{
 		{
 			name: "echo builtin",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": "Hello, World!",
 				},
 			},
-			with:        With{},
+			with:        v0.With{},
 			expectedLog: "Hello, World!\n",
 			expected:    map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "echo builtin dry run",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": "Hello, World!",
 				},
 			},
-			with:        With{},
+			with:        v0.With{},
 			dry:         true,
 			expectedLog: "dry run",
 		},
 		{
 			name: "fetch builtin",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:fetch",
-				With: With{
+				With: v0.With{
 					"url":    "http://example.com",
 					"method": "GET",
 				},
 			},
-			with:        With{},
+			with:        v0.With{},
 			dry:         true, // Use dry run to avoid actual HTTP requests
 			expectedLog: "dry run",
 		},
 		{
 			name: "non-existent builtin",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:nonexistent",
 			},
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "builtin:nonexistent not found",
 		},
 		{
 			name: "echo builtin with invalid with",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": make(chan int),
 				},
 			},
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type 'chan int'",
 		},
 		{
 			name: "fetch builtin with invalid with",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:fetch",
 			},
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "builtin:fetch: error executing request: Get \"\": unsupported protocol scheme \"\"",
 		},
 		{
 			name: "echo builtin with templated with",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": "${{ input \"greeting\" }}",
 				},
 			},
-			with:        With{"greeting": "Hello from template"},
+			with:        v0.With{"greeting": "Hello from template"},
 			expectedLog: "Hello from template\n",
 			expected:    map[string]any{"stdout": "Hello from template"},
 		},
 		{
 			name: "echo builtin with broken structure",
-			step: Step{
+			step: v0.Step{
 				Uses: "builtin:echo",
-				With: With{
+				With: v0.With{
 					"text": []string{"not", "a", "string"}, // Text should be a string, not an array
 				},
 			},
-			with:          With{},
+			with:          v0.With{},
 			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type '[]string'",
 		},
 	}
