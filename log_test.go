@@ -95,7 +95,7 @@ func TestPrintScript(t *testing.T) {
 
 	var buf strings.Builder
 	printScript(log.New(&buf), "", "echo hello")
-	assert.Equal(t, "\x1b[48;2;58;56;67m \x1b[0m echo hello\n", buf.String())
+	assert.Equal(t, "  echo hello\n", buf.String())
 }
 
 func TestPrintBuiltin(t *testing.T) {

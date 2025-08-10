@@ -16,19 +16,10 @@ import (
 func printScript(logger *log.Logger, lang, script string) {
 	script = strings.TrimSpace(script)
 
-	color := lipgloss.AdaptiveColor{
-		Light: "#c5c6bC",
-		Dark:  "#3a3943",
-	}
-	gray := lipgloss.NewStyle().Background(color)
-
-	prefix := gray.Render(" ")
-
 	if termenv.EnvNoColor() {
-		prefix = ""
 		for line := range strings.SplitSeq(script, "\n") {
 			// this is essentially the same behavior/rendering as make
-			logger.Printf("%s%s", prefix, line)
+			logger.Print(line)
 		}
 		return
 	}
@@ -45,10 +36,18 @@ func printScript(logger *log.Logger, lang, script string) {
 	if err := quick.Highlight(&buf, script, lang, "terminal256", style); err != nil {
 		logger.Debugf("failed to highlight: %v", err)
 		for line := range strings.SplitSeq(script, "\n") {
-			logger.Printf("%s %s", prefix, line)
+			logger.Printf("  %s", line)
 		}
 		return
 	}
+
+	color := lipgloss.AdaptiveColor{
+		Light: "#c5c6bC",
+		Dark:  "#3a3943",
+	}
+	gray := lipgloss.NewStyle().Background(color)
+
+	prefix := gray.Render(" ")
 
 	for line := range strings.SplitSeq(buf.String(), "\n") {
 		logger.Printf("%s %s", prefix, line)
