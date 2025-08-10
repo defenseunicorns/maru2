@@ -12,8 +12,8 @@ tasks:
     - uses: general-kenobi
 
 -- stderr.txt --
-$ echo "Hello There!"
-$ echo "General Kenobi"
+echo "Hello There!"
+echo "General Kenobi"
 -- stdout.txt --
 Hello There!
 General Kenobi

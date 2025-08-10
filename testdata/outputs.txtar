@@ -17,7 +17,7 @@ tasks:
       id: output
     - run: echo "The output was ${{ from "output" "out" }}"
 -- stderr.txt --
-$ echo "selected-color=green" >> $MARU2_OUTPUT
-$ echo "The selected color is green"
-$ echo "out=Hello World!" >> $MARU2_OUTPUT
-$ echo "The output was Hello World!"
+echo "selected-color=green" >> $MARU2_OUTPUT
+echo "The selected color is green"
+echo "out=Hello World!" >> $MARU2_OUTPUT
+echo "The output was Hello World!"

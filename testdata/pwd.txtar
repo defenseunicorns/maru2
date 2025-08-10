@@ -22,9 +22,9 @@ $WORK/foo
 $WORK/testdata
 $WORK/testdata/foo
 -- stderr.txt --
-$ pwd
-$ pwd
-$ pwd
+pwd
+pwd
+pwd
 -- tasks.yaml --
 tasks:
   pwd:

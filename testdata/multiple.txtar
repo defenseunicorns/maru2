@@ -19,9 +19,9 @@ tasks:
   echo:
     - run: echo "Hello, ${{ input "name" }}, today is $INPUT_DATE"
 -- stderr.txt --
-$ echo "Hello, World!"
-$ echo "default"
-$ echo "Hello, Jeff, today is $INPUT_DATE"
+echo "Hello, World!"
+echo "default"
+echo "Hello, Jeff, today is $INPUT_DATE"
 -- stdout.txt --
 Hello, World!
 default
