@@ -395,8 +395,8 @@ tasks:
 ```sh
 maru2 color
 
-$ echo "selected-color=green" >> $MARU2_OUTPUT
-$ echo "The selected color is green"
+echo "selected-color=green" >> $MARU2_OUTPUT
+echo "The selected color is green"
 The selected color is green
 ```
 
@@ -434,13 +434,13 @@ tasks:
 # Uses the USER environment variable as the default value
 maru2 hello
 
-$ echo "Hello, razzle"
+echo "Hello, razzle"
 Hello, razzle
 
 # Provided input overrides the environment variable
 maru2 hello --with name="Jeff"
 
-$ echo "Hello, Jeff"
+echo "Hello, Jeff"
 Hello, Jeff
 ```
 
@@ -499,7 +499,7 @@ ERRO at (file:tasks.yaml)
 # succeeds!
 maru2 hello --with name="Jeff"
 
-$ echo "Hello, Jeff"
+echo "Hello, Jeff"
 Hello, Jeff
 ```
 
@@ -541,10 +541,10 @@ tasks:
 ```sh
 maru2 example >/dev/null
 
-$ echo "This step always runs first"
-$ exit 1
-$ echo "This step runs because a previous step failed"
-$ echo "This step always runs, regardless of previous failures"
+echo "This step always runs first"
+exit 1
+echo "This step runs because a previous step failed"
+echo "This step always runs, regardless of previous failures"
 
 ERRO exit status 1
 ERRO at example[1] (file:tasks.yaml)
