@@ -41,6 +41,6 @@ func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 
 	if tokenFromEnv, ok := schema.Properties.Get("token-from-env"); ok && tokenFromEnv != nil {
 		tokenFromEnv.Description = "Environment variable containing the token for authentication"
-		tokenFromEnv.Pattern = "^[a-zA-Z_]+[a-zA-Z0-9_]*$" // EnvVariablePattern.String(), a little bit of copying never hurt anyone
+		tokenFromEnv.Pattern = EnvVariablePattern.String()
 	}
 }

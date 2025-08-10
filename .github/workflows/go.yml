@@ -39,8 +39,8 @@ jobs:
       - run: |
           go tool cover -func=coverage.out | sort -k3 -n
       - run: |
-          go test -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
-          go test -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
+          go test ./schema/v0 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
+          go test ./schema/v0 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
 
   golangci:
     name: lint
