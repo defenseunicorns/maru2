@@ -82,7 +82,7 @@ func TestPrintScript(t *testing.T) {
 			}
 			var buf strings.Builder
 			printScript(log.New(&buf), "", tc.script)
-			assert.Equal(t, tc.expected, buf.String())
+			assert.Equal(t, tc.expected, buf.String(), "this test fails when run w/ `go test`, run w/ `make test` instead as that will use maru2, which uses a true shell env")
 		})
 	}
 
