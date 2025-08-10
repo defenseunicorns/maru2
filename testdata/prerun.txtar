@@ -9,7 +9,7 @@ stderr 'ERRO invalid argument "invalid" for "-p, --fetch-policy" flag: invalid f
 
 exec maru2 --store . --fetch-all --gc echo
 stdout 'Hello World!'
-stderr '\$ echo "Hello World!"'
+stderr 'echo "Hello World!"'
 
 ! exec maru2 -f ssh:foo
 stderr 'ERRO failed to resolve "ssh:foo": unsupported scheme: "ssh" in "ssh:foo"'

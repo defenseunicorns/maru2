@@ -52,25 +52,25 @@ func TestPrintScript(t *testing.T) {
 		{
 			name:     "simple shell",
 			script:   "echo hello",
-			expected: "$ \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n",
+			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n",
 			color:    true,
 		},
 		{
 			name:     "multiline",
 			script:   "echo hello\necho world\n\necho !",
-			expected: "$ \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n$ \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m world\x1b[0m\n$ \x1b[38;5;189m\x1b[0m\n$ \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m !\x1b[0m\n",
+			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m world\x1b[0m\n  \x1b[38;5;189m\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m !\x1b[0m\n",
 			color:    true,
 		},
 		{
 			name:     "simple shell",
 			script:   "echo hello",
-			expected: "$ echo hello\n",
+			expected: "echo hello\n",
 			color:    false,
 		},
 		{
 			name:     "multiline",
 			script:   "echo hello\necho world\n\necho !",
-			expected: "$ echo hello\n$ echo world\n$ \n$ echo !\n",
+			expected: "echo hello\necho world\n\necho !\n",
 			color:    false,
 		},
 	}
@@ -82,7 +82,7 @@ func TestPrintScript(t *testing.T) {
 			}
 			var buf strings.Builder
 			printScript(log.New(&buf), "", tc.script)
-			assert.Equal(t, tc.expected, buf.String())
+			assert.Equal(t, tc.expected, buf.String(), "this test fails when run w/ `go test`, run w/ `make test` instead as that will use maru2, which uses a true shell env")
 		})
 	}
 
@@ -95,7 +95,7 @@ func TestPrintScript(t *testing.T) {
 
 	var buf strings.Builder
 	printScript(log.New(&buf), "", "echo hello")
-	assert.Equal(t, "$ echo hello\n", buf.String())
+	assert.Equal(t, "  echo hello\n", buf.String())
 }
 
 func TestPrintBuiltin(t *testing.T) {
