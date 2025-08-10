@@ -79,7 +79,7 @@ tasks:
       shell: bash
     - run: |
         cp LICENSE dist
-        cp schema/v0/schema.json dist/maru2.schema.json
+        cp maru2.schema.json dist
     - run: |
         go tool oras push \
           ${{ input "uds-registry" }}/ops/maru2-nightly:$(../bin/maru2 --version) \
