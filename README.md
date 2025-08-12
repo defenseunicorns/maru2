@@ -30,6 +30,7 @@ or if you like to live dangerously:
 GOPRIVATE=github.com/defenseunicorns/maru2 \
 go install github.com/defenseunicorns/maru2/cmd/maru2@main
 ```
+
 ## Documentation
 
 - [CLI](docs/cli.md)
