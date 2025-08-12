@@ -4,7 +4,8 @@ Maru2 is a simple, powerful task runner designed to make workflow automation eas
 
 ## Quick Start
 
-> [!NOTE] Use `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables to pull task files from remote GitHub and GitLab destinations using the [package-url spec](https://github.com/package-url/purl-spec).
+> [!NOTE]
+> Use `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables to pull task files from remote GitHub and GitLab destinations using the [package-url spec](https://github.com/package-url/purl-spec).
 >
 > Example: `GITHUB_TOKEN=ghxxxxxxxxxx
 > maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"`
