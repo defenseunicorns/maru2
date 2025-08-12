@@ -30,16 +30,6 @@ or if you like to live dangerously:
 GOPRIVATE=github.com/defenseunicorns/maru2 \
 go install github.com/defenseunicorns/maru2/cmd/maru2@main
 ```
-
-## Authentication to GitHub and GitLab remote task files
-
-Use `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables to pull task files from remote GitHub and GitLab destinations using the [package-url spec](https://github.com/package-url/purl-spec).
-
-```sh
-GITHUB_TOKEN=ghxxxxxxxxxx \
-maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w message="hello world"
-```
-
 ## Documentation
 
 - [CLI](docs/cli.md)
