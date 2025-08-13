@@ -16,6 +16,10 @@
 
 4. Run the tests, linters, and formatters.
 
+   > run `make test ARGS="-w short=true` if you want to skip tests that require external network connections with authentication (GitHub/Gitlab/etc...)
+
+   See [E2E testing README](../testdata/README.md) for more info on how the E2E tests run.
+
    ```bash
    make all lint test
    ```

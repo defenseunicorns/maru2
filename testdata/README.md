@@ -14,3 +14,11 @@ go test ./cmd/ -run TestE2E/version -v # <- add -v if you want extra verbosity /
 ```
 
 E2E tests _should_ primarily concern themselves w/ flag parsing, exit codes, logging and general CLI UX.
+
+To update the "golden files" embedded in the tests automatically, uncomment:
+
+```go
+// UpdateScripts:      true,
+```
+
+in `cmd/root_test.go` and run the above `go test` command, then commit the changes.

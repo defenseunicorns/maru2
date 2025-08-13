@@ -39,6 +39,10 @@ go install github.com/defenseunicorns/maru2/cmd/maru2@main
 
 If you are looking to embed maru2 into another Cobra CLI, take a look at the example in [`cmd/internal`](./cmd/internal/main.go).
 
+## Contributing
+
+Thanks for taking time out of your day to contribute! Read the [contributing guide](./.github/CONTRIBUTING.md) for more information.
+
 ## Schema Validation
 
 Enabling schema validation in VSCode:
