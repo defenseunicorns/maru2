@@ -615,7 +615,7 @@ https://example.com/workflow h1:187897ce0afcf20b50ba2b37dca84a951b7046f29ed5ab94
 	require.NoError(t, err)
 }
 
-func TestLocalStore_List(t *testing.T) {
+func TestLocalStoreList(t *testing.T) {
 	t.Run("empty store", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
 		store, err := NewLocalStore(fs)
