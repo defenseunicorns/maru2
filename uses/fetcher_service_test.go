@@ -200,6 +200,46 @@ func TestFetcherService(t *testing.T) {
 				assert.Equal(t, FetchPolicyIfNotPresent, storeFetcher.Policy)
 			},
 		},
+		{
+			name:         "get oci fetcher basic",
+			uri:          "oci://registry.example.com/namespace/image:tag",
+			expectedType: &OCIClient{},
+		},
+		{
+			name:         "get oci fetcher with insecure skip tls verify",
+			uri:          "oci://registry.example.com/namespace/image:tag?insecure-skip-tls-verify=true",
+			expectedType: &OCIClient{},
+		},
+		{
+			name:         "get oci fetcher with plain http",
+			uri:          "oci://registry.example.com/namespace/image:tag?plain-http=true",
+			expectedType: &OCIClient{},
+		},
+		{
+			name:         "get oci fetcher with both query params",
+			uri:          "oci://registry.example.com/namespace/image:tag?insecure-skip-tls-verify=true&plain-http=true",
+			expectedType: &OCIClient{},
+		},
+		{
+			name:         "get github fetcher with base url qualifier",
+			uri:          "pkg:github/defenseunicorns/maru2?base=https://github.example.com",
+			expectedType: &GitHubClient{},
+		},
+		{
+			name:         "get gitlab fetcher with token qualifier",
+			uri:          "pkg:gitlab/noxsios/vai?token-from-env=GITLAB_TOKEN",
+			expectedType: &GitLabClient{},
+		},
+		{
+			name:         "get github fetcher with both qualifiers",
+			uri:          "pkg:github/defenseunicorns/maru2?base=https://github.example.com&token-from-env=GITHUB_TOKEN",
+			expectedType: &GitHubClient{},
+		},
+		{
+			name:        "invalid package url",
+			uri:         "pkg:invalid-format",
+			expectedErr: "purl is missing type or name",
+		},
 	}
 
 	for _, tc := range testCases {
