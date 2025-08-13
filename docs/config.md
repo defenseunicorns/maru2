@@ -6,7 +6,7 @@ This document describes how to configure Maru2 using the global configuration fi
 
 By default, Maru2 looks for the configuration file at:
 
-```
+```text
 ~/.maru2/config.yaml
 ```
 

@@ -73,8 +73,8 @@ If a `default` task is defined, it's listed first. Otherwise, tasks are displaye
 You can also list tasks from a specific file or remote workflow:
 
 ```sh
-$ maru2 --from custom-tasks.yaml --list
-$ maru2 --from "pkg:github/defenseunicorns/maru2@main#examples/web-app.yaml" --list
+maru2 --from custom-tasks.yaml --list
+maru2 --from "pkg:github/defenseunicorns/maru2@main#examples/web-app.yaml" --list
 ```
 
 ## Passing Inputs to Tasks
@@ -82,7 +82,7 @@ $ maru2 --from "pkg:github/defenseunicorns/maru2@main#examples/web-app.yaml" --l
 Use the `--with` flag to pass input values to tasks:
 
 ```sh
-$ maru2 deploy --with environment=production --with version=1.2.3
+maru2 deploy --with environment=production --with version=1.2.3
 ```
 
 Inside your task definition, access these values using the `${{ input "key" }}` syntax:
@@ -116,7 +116,7 @@ The `--dry-run` flag lets you preview what commands would execute without actual
 ```sh
 $ maru2 build --dry-run
 
-$ go build -o bin/app ./cmd/app
+go build -o bin/app ./cmd/app
 ```
 
 When you use `--dry-run`, Maru2:
@@ -142,7 +142,7 @@ When a template depends on output from previous steps (which aren't actually run
 ```sh
 $ maru2 template-example --dry-run
 
-$ echo "The value is ❯ from step-id output-key ❮"
+echo "The value is ❯ from step-id output-key ❮"
 ```
 
 This visual indicator helps you identify dynamic parts of your workflow that depend on previous step outputs.
@@ -166,7 +166,7 @@ Creating a `default` task in your workflow provides a convenient entry point for
 To run a specific task from your workflow:
 
 ```sh
-$ maru2 hello-world
+maru2 hello-world
 ```
 
 ### Running Multiple Tasks
@@ -174,7 +174,7 @@ $ maru2 hello-world
 Like `make`, you can run multiple tasks in sequence:
 
 ```sh
-$ maru2 clean build test deploy
+maru2 clean build test deploy
 ```
 
 Tasks are executed in the order specified on the command line, which is useful for creating simple pipelines.
@@ -186,8 +186,8 @@ Tasks are executed in the order specified on the command line, which is useful f
 By default, Maru2 looks for a file named `tasks.yaml` in the current directory. To use a different file:
 
 ```sh
-$ maru2 --from path/to/other.yaml
-$ maru2 -f custom-workflow.yaml build
+maru2 --from path/to/other.yaml
+maru2 -f custom-workflow.yaml build
 ```
 
 ### Remote Workflow Files
@@ -196,10 +196,10 @@ Maru2 can execute tasks directly from remote repositories:
 
 ```sh
 # Run a task from a GitHub repository
-$ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
+maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
 
 # With custom input
-$ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo --with message="Hello from remote!"
+maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo --with message="Hello from remote!"
 ```
 
 > **Note**: When referencing remote workflows, you must use quotes since the package-URL spec uses special shell characters like `#` and `@`.
@@ -211,7 +211,7 @@ $ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
 Control how Maru2 retrieves remote workflows with the `--fetch-policy` flag:
 
 ```sh
-$ maru2 --fetch-policy always my-task
+maru2 --fetch-policy always my-task
 ```
 
 Available policies:
@@ -227,7 +227,7 @@ Available policies:
 To update all remote references without executing any tasks:
 
 ```sh
-$ maru2 --dry-run --log-level error --fetch-policy always
+maru2 --dry-run --log-level error --fetch-policy always
 ```
 
 This combination refreshes your cache without running any code.
@@ -237,7 +237,7 @@ This combination refreshes your cache without running any code.
 Use `--fetch-all` to download all remote dependencies (even ones not in the hot path) before execution:
 
 ```sh
-$ maru2 --fetch-all deploy
+maru2 --fetch-all deploy
 ```
 
 This ensures all dependencies are available, which is useful before going offline or in environments with unreliable connectivity.
@@ -282,10 +282,10 @@ maru2 completion powershell > $PROFILE.CurrentUserAllHosts
 
 ```sh
 # For tab completion in fish shell
-$ maru2 --from "'pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml'" [tab][tab]
+maru2 --from "'pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml'" [tab][tab]
 
 # Alternative: use --list to discover available tasks
-$ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
+maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
 ```
 
 ## Additional Options
@@ -295,7 +295,7 @@ $ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --li
 Control how long Maru2 will run before timing out:
 
 ```sh
-$ maru2 long-task --timeout 2h30m
+maru2 long-task --timeout 2h30m
 ```
 
 The default timeout is 1 hour. Use standard Go duration format for specifying timeouts.
@@ -305,7 +305,7 @@ The default timeout is 1 hour. Use standard Go duration format for specifying ti
 Adjust the amount of information displayed during execution:
 
 ```sh
-$ maru2 build --log-level debug
+maru2 build --log-level debug
 ```
 
 Available log levels:
@@ -322,7 +322,7 @@ Available log levels:
 Change to a specific directory before executing any tasks:
 
 ```sh
-$ maru2 --directory /path/to/project build
+maru2 --directory /path/to/project build
 ```
 
 This is equivalent to `cd /path/to/project && maru2 build; cd -`.
@@ -334,7 +334,7 @@ This is equivalent to `cd /path/to/project && maru2 build; cd -`.
 Set a custom location for cached workflows:
 
 ```sh
-$ maru2 --store /path/to/custom/store build
+maru2 --store /path/to/custom/store build
 ```
 
 By default, Maru2 uses:
@@ -347,7 +347,7 @@ By default, Maru2 uses:
 Remove unused workflows from the cache:
 
 ```sh
-$ maru2 --gc
+maru2 --gc
 ```
 
 This frees up disk space by removing cached workflows that are no longer referenced.
