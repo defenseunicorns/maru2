@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"maps"
 	"net/url"
 	"os"
 	"strings"
@@ -612,4 +613,74 @@ https://example.com/workflow h1:187897ce0afcf20b50ba2b37dca84a951b7046f29ed5ab94
 
 	_, err = fs.Stat(wf2)
 	require.NoError(t, err)
+}
+
+func TestLocalStore_List(t *testing.T) {
+	t.Run("empty store", func(t *testing.T) {
+		fs := afero.NewMemMapFs()
+		store, err := NewLocalStore(fs)
+		require.NoError(t, err)
+
+		var items []string
+		for k := range store.List() {
+			items = append(items, k)
+		}
+
+		assert.Empty(t, items)
+	})
+
+	indexContent := `https://example.com/workflow1 h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10
+https://example.com/workflow2 h1:fe32608c9ef5b6cf7e3f946480253ff76f24f4ec0678f3d0f07f9844cbff9601 11
+https://github.com/owner/repo h1:187897ce0afcf20b50ba2b37dca84a951b7046f29ed5ab94f010619f69d6e189 12`
+
+	t.Run("store with multiple entries", func(t *testing.T) {
+		fs := afero.NewMemMapFs()
+
+		err := afero.WriteFile(fs, IndexFileName, []byte(indexContent), 0644)
+		require.NoError(t, err)
+
+		store, err := NewLocalStore(fs)
+		require.NoError(t, err)
+
+		items := maps.Collect(store.List())
+
+		assert.Equal(t, map[string]Descriptor{
+			"https://example.com/workflow1": {
+				Hex:  "7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9",
+				Size: 10,
+			},
+			"https://example.com/workflow2": {
+				Hex:  "fe32608c9ef5b6cf7e3f946480253ff76f24f4ec0678f3d0f07f9844cbff9601",
+				Size: 11,
+			},
+			"https://github.com/owner/repo": {
+				Hex:  "187897ce0afcf20b50ba2b37dca84a951b7046f29ed5ab94f010619f69d6e189",
+				Size: 12,
+			},
+		}, items)
+	})
+
+	t.Run("early termination when yield returns false", func(t *testing.T) {
+		fs := afero.NewMemMapFs()
+
+		err := afero.WriteFile(fs, IndexFileName, []byte(indexContent), 0644)
+		require.NoError(t, err)
+
+		store, err := NewLocalStore(fs)
+		require.NoError(t, err)
+
+		var items []string
+		count := 0
+		for k := range store.List() {
+			items = append(items, k)
+			count++
+			if count >= 2 {
+				break // This should test the early return path
+			}
+		}
+
+		// Should have stopped after 2 items even though there are 3 in the store
+		assert.Len(t, items, 2)
+		assert.True(t, count <= 2)
+	})
 }
