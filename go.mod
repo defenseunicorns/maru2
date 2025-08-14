@@ -24,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	gitlab.com/gitlab-org/api/client-go v0.139.0
+	gitlab.com/gitlab-org/api/client-go v0.139.2
 	oras.land/oras-go/v2 v2.6.0
 )
 
