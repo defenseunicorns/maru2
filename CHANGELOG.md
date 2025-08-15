@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1 (2025-08-15)
+
+## What's Changed
+* chore: release improvements by @Noxsios in https://github.com/defenseunicorns/maru2/pull/75
+* docs: update readme by @Noxsios in https://github.com/defenseunicorns/maru2/pull/77
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.1.0...v0.1.1
+
 ## 0.1.0 (2025-08-15)
 
 ## What's Changed
