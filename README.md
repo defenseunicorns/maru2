@@ -28,7 +28,10 @@ or checkout the latest [release artifacts](https://github.com/defenseunicorns/ma
 
 - [CLI](docs/cli.md)
 - [Workflow Syntax](docs/syntax.md)
+- [Publishing Workflows](docs/publish.md)
 - [Built-in Tasks](docs/builtins.md)
+
+View CLI usage w/ `maru2 --help`
 
 If you are looking to embed maru2 into another Cobra CLI, take a look at the example in [`cmd/internal`](./cmd/internal/main.go).
 
