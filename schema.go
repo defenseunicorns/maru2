@@ -4,8 +4,9 @@
 package maru2
 
 import (
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/invopop/jsonschema"
+
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 // WorkflowSchema generates the schema for either a given version, or all versions in one meta schema

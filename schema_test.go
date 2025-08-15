@@ -8,9 +8,10 @@ import (
 	"os"
 	"testing"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 func TestWorkflowSchema(t *testing.T) {
