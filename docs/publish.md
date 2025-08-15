@@ -17,10 +17,7 @@ The `maru2-publish` command packs your workflow file(s) and any `uses:` referenc
 
 ### Installation
 
-Follow the same auth and setup instructions as [`maru2`](../README.md#installation).
-
 ```sh
-GOPRIVATE=github.com/defenseunicorns/maru2 \
 go install github.com/defenseunicorns/maru2/cmd/maru2-publish@main
 ```
 

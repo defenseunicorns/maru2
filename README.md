@@ -7,27 +7,13 @@ A simple task runner.
 
 ## Installation
 
-> [!IMPORTANT]
-> While this repo is still private, you will have to setup auth via `.netrc`
->
-> ```bash
-> cat > ~/.netrc <<EOF
-> machine github.com
-> login x-oauth-basic
-> password $(gh auth token)
-> EOF
-> chmod 600 ~/.netrc
-> ```
-
 ```sh
-GOPRIVATE=github.com/defenseunicorns/maru2 \
 go install github.com/defenseunicorns/maru2/cmd/maru2@latest
 ```
 
 or if you like to live dangerously:
 
 ```sh
-GOPRIVATE=github.com/defenseunicorns/maru2 \
 go install github.com/defenseunicorns/maru2/cmd/maru2@main
 ```
 
