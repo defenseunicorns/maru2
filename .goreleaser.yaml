@@ -54,11 +54,7 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 changelog:
-  sort: asc
+  disable: true
 
 release:
-  footer: >-
-
-    ---
-
-    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+  mode: keep-existing
