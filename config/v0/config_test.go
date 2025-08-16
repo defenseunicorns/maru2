@@ -33,7 +33,7 @@ aliases:
 `
 
 	fsys := afero.NewMemMapFs()
-	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0644)
+	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0o644)
 	require.NoError(t, err)
 
 	cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "etc/maru2"))
@@ -58,7 +58,7 @@ aliases:
 
 	t.Run("invalid config", func(t *testing.T) {
 		fsys = afero.NewMemMapFs()
-		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0644)
+		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0o644)
 		require.NoError(t, err)
 		_, err = LoadConfig(afero.NewBasePathFs(fsys, "invalid"))
 		require.EqualError(t, err, "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
@@ -75,7 +75,7 @@ aliases:
 		tmpDir := t.TempDir()
 
 		configDir := filepath.Join(tmpDir, config.DefaultFileName)
-		err = os.Mkdir(configDir, 0755)
+		err = os.Mkdir(configDir, 0o755)
 		require.NoError(t, err)
 
 		_, err := LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
@@ -86,7 +86,7 @@ aliases:
 		tmpDir := t.TempDir()
 
 		configPath := filepath.Join(tmpDir, config.DefaultFileName)
-		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0000)
+		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0o000)
 		require.NoError(t, err)
 
 		_, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))

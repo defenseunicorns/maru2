@@ -40,7 +40,7 @@ func TestNewLocalStore(t *testing.T) {
 		{
 			name: "new store with existing valid index",
 			setup: func(fs afero.Fs) error {
-				return afero.WriteFile(fs, IndexFileName, []byte(`https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10`), 0644)
+				return afero.WriteFile(fs, IndexFileName, []byte(`https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10`), 0o644)
 			},
 			validate: func(t *testing.T, s *LocalStore) {
 				assert.NotNil(t, s.index)
@@ -53,7 +53,7 @@ func TestNewLocalStore(t *testing.T) {
 		{
 			name: "new store with existing invalid index",
 			setup: func(fs afero.Fs) error {
-				return afero.WriteFile(fs, IndexFileName, []byte(`invalid txt`), 0644)
+				return afero.WriteFile(fs, IndexFileName, []byte(`invalid txt`), 0o644)
 			},
 			expectedErr: "invalid line format",
 		},
@@ -165,7 +165,7 @@ func TestLocalStoreFetch(t *testing.T) {
 			}
 
 			for name, content := range tc.files {
-				err := afero.WriteFile(fs, name, content, 0644)
+				err := afero.WriteFile(fs, name, content, 0o644)
 				require.NoError(t, err)
 			}
 
@@ -261,7 +261,7 @@ func TestLocalStoreStore(t *testing.T) {
 				fs:    fs,
 			}
 
-			err := afero.WriteFile(fs, IndexFileName, []byte("{}"), 0644)
+			err := afero.WriteFile(fs, IndexFileName, []byte("{}"), 0o644)
 			require.NoError(t, err)
 
 			uri, err := url.Parse(tc.uri)
@@ -384,7 +384,7 @@ func TestLocalStoreExists(t *testing.T) {
 			}
 
 			for name, content := range tc.files {
-				err := afero.WriteFile(fs, name, []byte(content), 0644)
+				err := afero.WriteFile(fs, name, []byte(content), 0o644)
 				require.NoError(t, err)
 			}
 
@@ -541,7 +541,7 @@ func TestLocalStoreGC(t *testing.T) {
 	assert.Equal(t, indexContent, indexContentAfterGC)
 
 	unusedFile := "unused123"
-	err = afero.WriteFile(fs, unusedFile, []byte("unused content"), 0644)
+	err = afero.WriteFile(fs, unusedFile, []byte("unused content"), 0o644)
 	require.NoError(t, err)
 
 	_, err = fs.Stat(unusedFile)
@@ -563,7 +563,7 @@ func TestLocalStoreGC(t *testing.T) {
 	_, err = fs.Stat(IndexFileName)
 	require.NoError(t, err)
 
-	err = fs.Mkdir("testdir", 0755)
+	err = fs.Mkdir("testdir", 0o755)
 	require.NoError(t, err)
 
 	err = store.GC()
@@ -636,7 +636,7 @@ https://github.com/owner/repo h1:187897ce0afcf20b50ba2b37dca84a951b7046f29ed5ab9
 	t.Run("store with multiple entries", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
 
-		err := afero.WriteFile(fs, IndexFileName, []byte(indexContent), 0644)
+		err := afero.WriteFile(fs, IndexFileName, []byte(indexContent), 0o644)
 		require.NoError(t, err)
 
 		store, err := NewLocalStore(fs)
@@ -663,7 +663,7 @@ https://github.com/owner/repo h1:187897ce0afcf20b50ba2b37dca84a951b7046f29ed5ab9
 	t.Run("early termination when yield returns false", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
 
-		err := afero.WriteFile(fs, IndexFileName, []byte(indexContent), 0644)
+		err := afero.WriteFile(fs, IndexFileName, []byte(indexContent), 0o644)
 		require.NoError(t, err)
 
 		store, err := NewLocalStore(fs)

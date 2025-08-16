@@ -71,7 +71,6 @@ func (g *GitHubClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 	rc, resp, err := g.client.Repositories.DownloadContents(ctx, pURL.Namespace, pURL.Name, pURL.Subpath, &github.RepositoryContentGetOptions{
 		Ref: pURL.Version,
 	})
-
 	if err != nil {
 		return nil, err
 	}

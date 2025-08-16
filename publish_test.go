@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -21,8 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"oras.land/oras-go/v2/content"
 	"oras.land/oras-go/v2/registry/remote"
-
-	"net/http"
 )
 
 func TestPublish(t *testing.T) {
@@ -305,9 +304,9 @@ tasks:
 			tmpDir := t.TempDir()
 			for path, content := range tc.files {
 				fullPath := filepath.Join(tmpDir, path)
-				err := os.MkdirAll(filepath.Dir(fullPath), 0755)
+				err := os.MkdirAll(filepath.Dir(fullPath), 0o755)
 				require.NoError(t, err)
-				err = os.WriteFile(fullPath, []byte(content), 0644)
+				err = os.WriteFile(fullPath, []byte(content), 0o644)
 				require.NoError(t, err)
 			}
 			t.Chdir(tmpDir)

@@ -9,7 +9,7 @@ import "regexp"
 var TaskNamePattern = regexp.MustCompile("^[_a-zA-Z][a-zA-Z0-9_-]*$")
 
 // InputNamePattern is a regular expression for valid input names
-var InputNamePattern = TaskNamePattern //regexp.MustCompile("^\\$[A-Z_]+[A-Z0-9_]*$")
+var InputNamePattern = TaskNamePattern // regexp.MustCompile("^\\$[A-Z_]+[A-Z0-9_]*$")
 
 // EnvVariablePattern is a regular expression for valid environment variable names
 var EnvVariablePattern = regexp.MustCompile("^[a-zA-Z_]+[a-zA-Z0-9_]*$")

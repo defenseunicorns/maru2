@@ -56,10 +56,10 @@ aliases:
 		require.EqualError(t, err, "$HOME is not defined")
 
 		tmpDir := t.TempDir()
-		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0755)
+		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0o755)
 		require.NoError(t, err)
 
-		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", config.DefaultFileName), []byte(configContent), 0644)
+		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", config.DefaultFileName), []byte(configContent), 0o644)
 		require.NoError(t, err)
 
 		t.Setenv("HOME", tmpDir)
