@@ -119,16 +119,12 @@ make test ARGS='-w short=true'      # Skip network tests (short=true)
 go test ./cmd/ -run TestE2E/<TestName> -v
 ```
 
-**Important**: The `test` task in `tasks.yaml` provides an alternative testing interface that:
+**Test Configuration**:
 
-- Sets `CGO_ENABLED=1` (required for race detection)
-- Uses the `short` input parameter to control `-short` flag
-- Generates coverage reports and uses race detection by default
-- Can be customized via maru2's input system
-
-**Test timing**: Full test suite takes ~3 minutes. Use `-short` flag to skip network-dependent tests.
-
-**E2E Testing**: Uses `testscript` framework in `/testdata/` for CLI integration tests. Each `.txtar` file defines a complete test scenario with expected outputs.
+- **Full test suite**: Takes ~3 minutes, includes race detection and coverage reporting
+- **Short tests**: Use `-short` flag to skip network-dependent tests
+- **E2E Testing**: Uses `testscript` framework in `/testdata/` - each `.txtar` file defines a complete test scenario
+- **Alternative interface**: The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, and can be customized via maru2's input system
 
 ### Linting
 
@@ -158,7 +154,8 @@ Always validate changes with this sequence:
 - **golangci-lint not found**: Install separately with `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
 - **Schema out of sync**: Run `make` to regenerate, then commit changes
 - **Timeout issues**: Use longer timeout for full test suite (`-timeout 5m`)
-- **Remote task authentication**: Set `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables for accessing private repositories
+
+**Note**: For accessing private repositories or avoiding API rate limits, set `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables.
 
 ## Project Layout
 
@@ -190,7 +187,7 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 **Remote Uses System**: The `uses/` package implements pluggable fetchers for different protocols (GitHub, GitLab, OCI, HTTP, local files). Each fetcher implements the `Fetcher` interface and is registered via URL scheme detection.
 
-**Testscript E2E Pattern**: E2E tests use `.txtar` archive format in `/testdata/`. Each test defines a complete filesystem state and expected command outputs. Use `go test ./cmd/ -run TestE2E/<TestName> -v` to run individual tests.
+**Testscript E2E Pattern**: E2E tests use `.txtar` archive format in `/testdata/` with `go test ./cmd/ -run TestE2E/<TestName> -v` for individual test execution.
 
 ### Key Workflow Concepts
 
@@ -302,8 +299,6 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 3. **No new dependencies** - The current dependency set is intentionally minimal and covers all required functionality. Adding new dependencies requires exceptional justification and maintainer approval.
 
-4. **Prefer standard library solutions** - Use Go's built-in libraries wherever possible to avoid unnecessary complexity and external dependencies.
-
 **Rationale**: Maintaining a minimal dependency surface reduces security risks, improves build reliability, ensures long-term maintainability, and keeps the binary size small for the static binary distribution model.
 
 ### Go Development Best Practices
@@ -361,7 +356,6 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - **Remote fetching**: Supports HTTP, GitHub, GitLab, and OCI artifact sources
 - **Schema validation**: JSON Schema validation for YAML workflows
 - **Template engine**: Built-in expression evaluation for dynamic values
-- **Authentication for Remote Tasks**: Set/leverage `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables for accessing private repositories and avoiding rate limits when using package URLs.
 
 ### Key Source Files
 
@@ -398,8 +392,8 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 ## Final Instructions
 
-**Trust these instructions** and only search for additional information if something is incomplete or incorrect. The build and test commands documented here have been validated to work correctly.
-
 **Always start with `make`** when working on this codebase to ensure binaries and schemas are properly generated and synchronized.
 
-For schema changes, **always commit the generated files** after running `make` as they are part of the project's interface.
+**Schema changes**: Always commit the generated files after running `make` as they are part of the project's interface.
+
+**Trust these instructions** and only search for additional information if something is incomplete or incorrect. The build and test commands documented here have been validated to work correctly.
