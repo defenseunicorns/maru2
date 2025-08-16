@@ -186,6 +186,18 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 **Testscript E2E Pattern**: E2E tests use `.txtar` archive format in `/testdata/`. Each test defines a complete filesystem state and expected command outputs. Use `go test ./cmd/ -run TestE2E/<TestName> -v` to run individual tests.
 
+### Key Workflow Concepts
+
+**Step Outputs**: Steps can produce outputs by writing `key=value` pairs to the `$MARU2_OUTPUT` environment variable file. Access outputs from previous steps using `${{ from "step-id" "output-key" }}` syntax. (see `output.go` and `output_test.go`)
+
+**Shell Selection**: Steps support different shells via the `shell` property: `sh`, `bash`, `powershell`, `pwsh`. Default behavior varies by command content.
+
+**Conditional Execution**: Use `if` property with expr expressions. Built-in functions include `failure()`, `always()`, `cancelled()`, `input("name")`, and `from("step-id", "key")`.
+
+**Package URLs**: Remote tasks use package-url (purl) spec format like `pkg:github/owner/repo@version#path/to/tasks.yaml` which supports aliases for shorthand references. `oci`, `file`, `http` and `https` are also supported. No matter what, a `uses` field _must_ be a proper URL with a protocol scheme.
+
+**Input Validation**: Inputs support regex validation via the `validate` property to enforce format constraints before task execution.
+
 ### Key Configuration Files
 
 - **`.golangci.yaml`**: Linting configuration with custom rules
@@ -251,6 +263,8 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `github.com/google/go-github/v62` - GitHub API client for fetching remote tasks
 - `gitlab.com/gitlab-org/api/client-go` - GitLab API client for GitLab integration
 - `oras.land/oras-go/v2` - OCI registry support for artifact-based task distribution
+- `github.com/package-url/packageurl-go` - Package URL (purl) parsing for remote task references
+- `file:` - **Relative pathing** local file support for task references
 
 **UI/Logging**:
 
@@ -279,12 +293,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 3. **No new dependencies** - The current dependency set is intentionally minimal and covers all required functionality. Adding new dependencies requires exceptional justification and maintainer approval.
 
-4. **Prefer standard library solutions**:
-   - Use `net/http` for HTTP requests instead of third-party clients
-   - Use `encoding/json` for JSON processing
-   - Use `os/exec` for command execution
-   - Use `path/filepath` for path manipulation
-   - Use `strings`, `strconv`, `fmt` for text processing
+4. **Prefer standard library solutions** - Use Go's built-in libraries wherever possible to avoid unnecessary complexity and external dependencies.
 
 **Rationale**: Maintaining a minimal dependency surface reduces security risks, improves build reliability, ensures long-term maintainability, and keeps the binary size small for the static binary distribution model.
 
@@ -310,8 +319,6 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 2. **Leverage Go's built-in tooling**:
    - `go doc -all <package>` - Show all exported symbols
    - `go doc -src <symbol>` - Show source code
-   - `gofmt -d .` - Preview formatting changes
-   - `go vet ./...` - Static analysis for common mistakes
 
 **Code Quality & Review Strategies**:
 
@@ -323,14 +330,14 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
    - Keep functions small and focused on single responsibility
 
 2. **Error handling best practices**:
-   - Always check errors: `if err != nil { return err }`
-   - Wrap errors with context: `fmt.Errorf("failed to process %s: %w", name, err)`
-   - Use sentinel errors for expected conditions: `var ErrNotFound = errors.New("not found")`
+   - Errors should be checked the vast majority of the time, exceptions do exist: `if err != nil { return err }`
+   - Wrap errors with context only if the underlying error does not provide enough information: `fmt.Errorf("failed to process %s: %w", name, err)`
+   - Use sentinel errors for expected conditions, but sparingly: `var ErrNotFound = errors.New("not found")`
 
 3. **Testing strategies**:
    - Write table-driven tests for multiple scenarios
-   - Use `testify/require` for assertions that should stop test execution
-   - Use `testify/assert` for assertions that should continue test execution
+   - Use `testify/require` for assertions that deal with error handling
+   - Use `testify/assert` for all other assertions
    - Mock external dependencies using interfaces
    - Test both happy path and error conditions
 
@@ -340,17 +347,12 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
    - Be mindful of goroutine leaks, always provide context cancellation
    - Use `sync.Pool` for frequently allocated objects
 
-5. **Code organization**:
-   - Group related functionality in packages
-   - Keep main packages minimal, delegate to internal packages
-   - Use internal packages for implementation details
-   - Export only what needs to be public
-
 ### Architecture Notes
 
-- **Remote fetching**: Supports GitHub, GitLab, and OCI artifact sources
+- **Remote fetching**: Supports HTTP, GitHub, GitLab, and OCI artifact sources
 - **Schema validation**: JSON Schema validation for YAML workflows
 - **Template engine**: Built-in expression evaluation for dynamic values
+- **Authentication for Remote Tasks**: Set/leverage `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables for accessing private repositories and avoiding rate limits when using package URLs.
 
 ### Key Source Files
 
@@ -381,6 +383,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `syntax.md` - Workflow syntax guide
 - `builtins.md` - Built-in task documentation
 - `publish.md` - Workflow publishing guide
+- `config.md` - Global configuration file documentation
 
 **Contributing**: `.github/CONTRIBUTING.md` - Development workflow and requirements
 
