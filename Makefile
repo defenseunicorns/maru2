@@ -36,5 +36,8 @@ help: ## Show this help message
 	@echo ''
 	@echo 'Available targets:'
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ''
+	@echo 'Special targets:'
+	@echo '  <task-name>     Run any maru2 task via: make <task-name> [ARGS="--flag"]'
 
 .PHONY: all maru2 maru2-publish lint lint-fix clean hello-world
