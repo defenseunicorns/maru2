@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 (2025-08-16)
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.1.1...v0.1.2
+
 ## 0.1.1 (2025-08-15)
 
 ## What's Changed
