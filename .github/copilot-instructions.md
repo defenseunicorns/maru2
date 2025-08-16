@@ -152,9 +152,66 @@ The CI runs these checks:
 4. `golangci-lint run`
 5. Fuzz testing on schema patterns
 
-### Dependencies & Architecture Notes
+## Dependencies & Dependency Management
 
-- **External deps**: Uses `github.com/spf13/cobra` for CLI, `github.com/goccy/go-yaml` for YAML parsing
+### Core Dependencies Overview
+
+Maru2 maintains a **minimal dependency footprint** with carefully selected, well-maintained libraries:
+
+**CLI Framework**:
+- `github.com/spf13/cobra` - Industry-standard CLI framework with subcommands and flag parsing
+- `github.com/spf13/pflag` - POSIX-compliant command-line flag parsing
+
+**YAML Processing**:
+- `github.com/goccy/go-yaml` - High-performance YAML parser with better error reporting than gopkg.in/yaml
+
+**Schema & Validation**:
+- `github.com/invopop/jsonschema` - JSON Schema generation from Go structs
+- `github.com/xeipuuv/gojsonschema` - JSON Schema validation for YAML workflows
+
+**Template/Expression Engine**:
+- `github.com/expr-lang/expr` - Fast expression evaluation for dynamic template values (`${{ input "name" }}`)
+
+**Remote Integrations**:
+- `github.com/google/go-github/v62` - GitHub API client for fetching remote tasks
+- `gitlab.com/gitlab-org/api/client-go` - GitLab API client for GitLab integration
+- `oras.land/oras-go/v2` - OCI registry support for artifact-based task distribution
+
+**UI/Logging**:
+- `github.com/charmbracelet/lipgloss` - Terminal styling and color output
+- `github.com/charmbracelet/log` - Structured, leveled logging with styling
+- `github.com/alecthomas/chroma/v2` - Syntax highlighting for code output
+
+**Utilities**:
+- `github.com/spf13/afero` - Filesystem abstraction for testability
+- `github.com/go-viper/mapstructure/v2` - Clean struct mapping and configuration binding
+- `github.com/spf13/cast` - Safe type conversion utilities
+
+**Testing**:
+- `github.com/stretchr/testify` - Assertion and testing utilities
+- `github.com/rogpeppe/go-internal` - Internal Go tooling support (used for testscript E2E testing)
+
+### Dependency Philosophy & Rules
+
+**CRITICAL RULES**:
+
+1. **Never modify `go.mod` or `go.sum`** - Dependabot automatically handles dependency updates. Agents must not add, remove, or update dependencies.
+
+2. **Leverage Go standard library first** - Before considering external dependencies, always check if functionality exists in the standard library (`net/http`, `encoding/json`, `os`, `path/filepath`, etc.).
+
+3. **No new dependencies** - The current dependency set is intentionally minimal and covers all required functionality. Adding new dependencies requires exceptional justification and maintainer approval.
+
+4. **Prefer standard library solutions**:
+   - Use `net/http` for HTTP requests instead of third-party clients
+   - Use `encoding/json` for JSON processing
+   - Use `os/exec` for command execution
+   - Use `path/filepath` for path manipulation
+   - Use `strings`, `strconv`, `fmt` for text processing
+
+**Rationale**: Maintaining a minimal dependency surface reduces security risks, improves build reliability, ensures long-term maintainability, and keeps the binary size small for the static binary distribution model.
+
+### Architecture Notes
+
 - **Remote fetching**: Supports GitHub, GitLab, and OCI artifact sources
 - **Schema validation**: JSON Schema validation for YAML workflows
 - **Template engine**: Built-in expression evaluation for dynamic values
