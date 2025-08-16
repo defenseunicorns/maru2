@@ -1,0 +1,76 @@
+name: ❓ Question
+description: Ask a question about using maru2
+title: "[Question]: "
+labels: ["question", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question! Please search existing issues and check the documentation first.
+
+        **Documentation Links:**
+        - [CLI Documentation](https://github.com/defenseunicorns/maru2/blob/main/docs/cli.md)
+        - [Workflow Syntax](https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md)
+        - [Built-in Tasks](https://github.com/defenseunicorns/maru2/blob/main/docs/builtins.md)
+        - [Publishing](https://github.com/defenseunicorns/maru2/blob/main/docs/publish.md)
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What type of question is this?
+      options:
+        - How to use a feature
+        - Best practices
+        - Troubleshooting
+        - Integration with other tools
+        - Performance
+        - Configuration
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: How do I...?
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-tried
+    attributes:
+      label: What have you tried?
+      description: Describe what you've already attempted.
+      placeholder: I tried... but...
+    validations:
+      required: false
+
+  - type: textarea
+    id: task-file
+    attributes:
+      label: Relevant task file (if applicable)
+      description: If your question is about a specific task file, please share it.
+      render: yaml
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: maru2 Version
+      description: What version of maru2 are you using?
+      placeholder: "v0.1.2"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context that might help answer your question.
+    validations:
+      required: false

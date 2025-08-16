@@ -65,7 +65,7 @@ inputs:
 
 tasks:
   echo:
-    - run: echo "${{ input "text" }}"`), 0700)
+    - run: echo "${{ input "text" }}"`), 0o700)
 		require.NoError(t, err)
 
 		serverURL, err := url.Parse(server.URL)

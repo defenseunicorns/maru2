@@ -164,7 +164,7 @@ func (s *LocalStore) Store(rc io.Reader, uri *url.URL) error {
 
 	encoded := hex.EncodeToString(hasher.Sum(nil))
 
-	if err := afero.WriteFile(s.fs, encoded, buf.Bytes(), 0644); err != nil {
+	if err := afero.WriteFile(s.fs, encoded, buf.Bytes(), 0o644); err != nil {
 		return err
 	}
 
@@ -185,7 +185,7 @@ func (s *LocalStore) Store(rc io.Reader, uri *url.URL) error {
 		b = fmt.Appendf(b, "%s h1:%s %d\n", key, desc.Hex, desc.Size)
 	}
 
-	return afero.WriteFile(s.fs, IndexFileName, b, 0644)
+	return afero.WriteFile(s.fs, IndexFileName, b, 0o644)
 }
 
 // Exists checks if a workflow exists in the store.

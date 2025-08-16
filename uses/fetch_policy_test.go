@@ -34,7 +34,7 @@ func TestFetchPolicy(t *testing.T) {
 	t.Run("pflag value interface", func(t *testing.T) {
 		t.Parallel()
 		// Test String() method
-		var policy = FetchPolicyAlways
+		policy := FetchPolicyAlways
 		assert.Equal(t, "always", policy.String())
 
 		// Test Type() method

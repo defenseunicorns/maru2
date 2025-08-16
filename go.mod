@@ -4,6 +4,8 @@ go 1.24.3
 
 tool oras.land/oras/cmd/oras
 
+retract v0.0.1 // tag no longer exists
+
 require (
 	github.com/alecthomas/chroma/v2 v2.20.0
 	github.com/charmbracelet/lipgloss v1.1.0

@@ -52,6 +52,14 @@ func NewRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
+		Long: `
+ ███╗   ███╗ █████╗ ██████╗ ██╗   ██╗██████╗ 
+ ████╗ ████║██╔══██╗██╔══██╗██║   ██║╚════██╗
+ ██╔████╔██║███████║██████╔╝██║   ██║ █████╔╝
+ ██║╚██╔╝██║██╔══██║██╔══██╗██║   ██║██╔═══╝ 
+ ██║ ╚═╝ ██║██║  ██║██║  ██║╚██████╔╝███████╗
+ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+`,
 		Example: `
 maru2 build
 
@@ -292,7 +300,7 @@ func Main() int {
 	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM)
 	defer cancel()
 
-	var logger = log.NewWithOptions(os.Stderr, log.Options{
+	logger := log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
 	})
 

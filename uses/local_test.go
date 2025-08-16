@@ -55,10 +55,10 @@ func TestLocalFetcher(t *testing.T) {
 
 	fs := afero.NewMemMapFs()
 
-	err := afero.WriteFile(fs, "foo.yaml", []byte("hello, world"), 0644)
+	err := afero.WriteFile(fs, "foo.yaml", []byte("hello, world"), 0o644)
 	require.NoError(t, err)
 
-	err = fs.Mkdir("bar", 0755)
+	err = fs.Mkdir("bar", 0o755)
 	require.NoError(t, err)
 
 	f, err := fs.Create("zab.yaml")

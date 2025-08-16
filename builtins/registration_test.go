@@ -78,7 +78,6 @@ func TestRegister(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-
 			if tc.existingName {
 				err := Register(tc.builtinName, func() Builtin {
 					return mockBuiltin{

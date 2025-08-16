@@ -158,7 +158,7 @@ func Main() int {
 	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	var logger = log.NewWithOptions(os.Stderr, log.Options{
+	logger := log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
 	})
 
