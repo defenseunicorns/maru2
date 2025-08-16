@@ -168,7 +168,8 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
   /internal/    - Example of embedding maru2 in other CLIs
 /schema/        - YAML schema definitions (versioned)
   /v0/          - Current schema version
-/config/        - Configuration file handling
+/config/        - Configuration file handling (versioned)
+  /v0/          - Current config schema version
 /uses/          - Remote task fetching (GitHub, GitLab, OCI)
 /builtins/      - Built-in tasks (echo, fetch)
 /testdata/      - E2E test scenarios using testscript
@@ -179,7 +180,7 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 **Builtin System**: Built-in tasks are registered in `builtins/registration.go` with a factory pattern. Each builtin implements the `Builtin` interface with an `Execute(ctx context.Context) (map[string]any, error)` method. Use `builtins.Get("name")` to retrieve instances.
 
-**Schema-Driven Validation**: The entire workflow syntax is defined via Go structs in `schema/v0/` that auto-generate JSON schemas. The `WorkflowSchema()` function creates the main schema, while individual structs use `JSONSchemaExtend()` methods for documentation.
+**Schema-Driven Validation**: The entire workflow syntax is defined via Go structs in `schema/v0/` that auto-generate JSON schemas. The `WorkFlowSchema()` function creates the main schema, while individual structs use `JSONSchemaExtend()` methods for documentation or behavior that is too complex to represent within the struct tags. Configuration files are also versioned using the same pattern in `config/v0/`.
 
 **Remote Uses System**: The `uses/` package implements pluggable fetchers for different protocols (GitHub, GitLab, OCI, HTTP, local files). Each fetcher implements the `Fetcher` interface and is registered via URL scheme detection.
 
