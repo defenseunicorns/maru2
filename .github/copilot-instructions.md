@@ -53,7 +53,7 @@ These foundational rules guide all performance and algorithmic decisions:
 
 ### High-Level Repository Information
 
-- **Size**: Medium-sized Go project (~80 files including tests and documentation)
+- **Size**: Medium-sized Go project (~106 files including tests and documentation)
 - **Language**: Go 1.24.3 (primary), YAML, Markdown, Shell scripts
 - **Framework**: Cobra CLI framework with Go modules dependency management
 - **Target**: Cross-platform static binaries (Linux, macOS, supports amd64/arm64) with `CGO_ENABLED=0`
@@ -80,7 +80,12 @@ make maru2-publish  # Build publish binary only
 make clean          # Remove build artifacts
 ```
 
-**Critical**: The `make` command generates `maru2.schema.json` and `schema/v0/schema.json`. These files MUST be committed if changed during development.
+**Critical**: The `make` command generates two schema files:
+
+- `maru2.schema.json` (root-level, for public consumption and IDE integration)
+- `schema/v0/schema.json` (version-specific, for internal validation)
+
+These files MUST be committed if changed during development.
 
 ### Makefile Task Execution
 
@@ -149,10 +154,11 @@ Always validate changes with this sequence:
 
 ### Common Build Issues & Workarounds
 
-- **Test failures without `-short`**: Network tests require `GITHUB_TOKEN` environment variable
+- **Test failures without `-short`**: Network tests require `GITHUB_TOKEN` environment variable to avoid rate limits
 - **golangci-lint not found**: Install separately with `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
 - **Schema out of sync**: Run `make` to regenerate, then commit changes
 - **Timeout issues**: Use longer timeout for full test suite (`-timeout 5m`)
+- **Remote task authentication**: Set `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables for accessing private repositories
 
 ## Project Layout
 
@@ -214,6 +220,7 @@ Located in `.github/workflows/`:
 - **`go.yaml`**: Main CI pipeline (build, test, lint) on push/PR to main
 - **`release.yaml`**: Automated releases
 - **`nightly-build.yaml`**: Nightly builds
+- **`commitlint.yaml`**: Commit message linting
 
 **CI Requirements**:
 
@@ -264,7 +271,8 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `gitlab.com/gitlab-org/api/client-go` - GitLab API client for GitLab integration
 - `oras.land/oras-go/v2` - OCI registry support for artifact-based task distribution
 - `github.com/package-url/packageurl-go` - Package URL (purl) parsing for remote task references
-- `file:` - **Relative pathing** local file support for task references
+- `github.com/olareg/olareg` - OCI local registry implementation for testing
+- `github.com/opencontainers/image-spec` - OCI image specification support for artifact handling
 
 **UI/Logging**:
 
@@ -277,6 +285,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `github.com/spf13/afero` - Filesystem abstraction for testability
 - `github.com/go-viper/mapstructure/v2` - Clean struct mapping and configuration binding
 - `github.com/spf13/cast` - Safe type conversion utilities
+- `github.com/muesli/termenv` - Terminal environment detection and feature support
 
 **Testing**:
 
