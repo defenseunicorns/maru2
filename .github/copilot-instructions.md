@@ -27,27 +27,32 @@ These foundational rules guide all performance and algorithmic decisions:
 ### Maru2-Specific Design Principles
 
 **Simplicity First**: "Simple things should be simple, complex things should be possible" ~ Alan Kay
+
 - Prioritize straightforward, readable implementations over clever optimizations
 - Make common use cases trivial to accomplish
 - Ensure advanced features don't complicate basic workflows
 
 **Excellent Shell Script Experience**: The last mile in every effort is paved with `bash`, `sh`, and tears. As such maru2 must make the experience of using embedded scripts excellent.
+
 - Shell script integration should be seamless and intuitive
 - Error handling and debugging for shell scripts must be superior
 - Output formatting and logging should enhance script readability
 
 **Low Latency Over Complexity**: If choosing between creating an operation with low latency, simple logic that must be chained together, or a singular powerful, yet costly, operation, choose the simple low latency option.
+
 - Prefer multiple fast operations over single slow operations
 - Design for composability and pipeline-friendly patterns
 - Optimize for startup time and immediate feedback
 
 **Documentation vs Implementation Consistency**: The documentation states how the system _should_ operate. The implementation drives how it _does_. In a conflict between the two, evaluate which behavior is more consistent with the overall system and update the other to reflect that change.
+
 - Neither documentation nor implementation is automatically "correct"
 - Evaluate conflicts based on system-wide consistency
 - Update the inconsistent component to match the more logical behavior
 - Maintain clear, accurate documentation that reflects actual behavior
 
 ### High-Level Repository Information
+
 - **Size**: Medium-sized Go project (~80 files including tests and documentation)
 - **Language**: Go 1.24.3 (primary), YAML, Markdown, Shell scripts
 - **Framework**: Cobra CLI framework with Go modules dependency management
@@ -58,6 +63,7 @@ These foundational rules guide all performance and algorithmic decisions:
 ## Build Instructions
 
 ### Bootstrap & Dependencies
+
 Dependencies are managed via Go modules and downloaded automatically. No manual dependency installation required except for optional linting.
 
 ### Build Commands
@@ -109,6 +115,7 @@ go test ./cmd/ -run TestE2E/<TestName> -v
 ```
 
 **Important**: The `test` task in `tasks.yaml` provides an alternative testing interface that:
+
 - Sets `CGO_ENABLED=1` (required for race detection)
 - Uses the `short` input parameter to control `-short` flag
 - Generates coverage reports and uses race detection by default
@@ -134,6 +141,7 @@ make lint-fix       # Run linters with auto-fix
 ### Validation Commands
 
 Always validate changes with this sequence:
+
 1. `make` (rebuild + regenerate schemas)
 2. `go test -short ./...` or `make test ARGS='-w short=true'` (run core tests)
 3. `make lint` (if golangci-lint installed)
@@ -189,11 +197,13 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 ### GitHub Workflows & CI
 
 Located in `.github/workflows/`:
+
 - **`go.yaml`**: Main CI pipeline (build, test, lint) on push/PR to main
 - **`release.yaml`**: Automated releases
 - **`nightly-build.yaml`**: Nightly builds
 
 **CI Requirements**:
+
 - All schema files must remain in sync
 - Tests must pass on both Linux and macOS
 - Linting must pass
@@ -203,6 +213,7 @@ Located in `.github/workflows/`:
 ### Validation Pipeline
 
 The CI runs these checks:
+
 1. `make` (build + schema generation)
 2. Schema sync validation (`git diff --exit-code`)
 3. `go test -race -cover` with coverage reporting
@@ -216,36 +227,44 @@ The CI runs these checks:
 Maru2 maintains a **minimal dependency footprint** with carefully selected, well-maintained libraries:
 
 **CLI Framework**:
+
 - `github.com/spf13/cobra` - Industry-standard CLI framework with subcommands and flag parsing
 - `github.com/spf13/pflag` - POSIX-compliant command-line flag parsing
 
 **YAML Processing**:
+
 - `github.com/goccy/go-yaml` - High-performance YAML parser with better error reporting than gopkg.in/yaml
 
 **Schema & Validation**:
+
 - `github.com/invopop/jsonschema` - JSON Schema generation from Go structs
 - `github.com/xeipuuv/gojsonschema` - JSON Schema validation for YAML workflows
 
 **Template/Expression Engine**:
+
 - `text/template` - Go's standard template engine for script interpolation (`${{ input "name" }}` syntax)
 - `github.com/expr-lang/expr` - Fast expression evaluation for conditional `if` statements
 
 **Remote Integrations**:
+
 - `github.com/google/go-github/v62` - GitHub API client for fetching remote tasks
 - `gitlab.com/gitlab-org/api/client-go` - GitLab API client for GitLab integration
 - `oras.land/oras-go/v2` - OCI registry support for artifact-based task distribution
 
 **UI/Logging**:
+
 - `github.com/charmbracelet/lipgloss` - Terminal styling and color output
 - `github.com/charmbracelet/log` - Structured, leveled logging with styling
 - `github.com/alecthomas/chroma/v2` - Syntax highlighting for code output
 
 **Utilities**:
+
 - `github.com/spf13/afero` - Filesystem abstraction for testability
 - `github.com/go-viper/mapstructure/v2` - Clean struct mapping and configuration binding
 - `github.com/spf13/cast` - Safe type conversion utilities
 
 **Testing**:
+
 - `github.com/stretchr/testify` - Assertion and testing utilities
 - `github.com/rogpeppe/go-internal` - Internal Go tooling support (used for testscript E2E testing)
 
@@ -347,6 +366,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 ### File Structure Priority
 
 **Root level files**:
+
 - `README.md` - Installation and basic usage
 - `Makefile` - Build commands and orchestration
 - `go.mod` - Dependencies (Go 1.24.3)
@@ -354,6 +374,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `maru2.schema.json` - Auto-generated schema
 
 **Documentation** (in `docs/`):
+
 - `README.md` - Comprehensive documentation overview
 - `cli.md` - Command-line interface reference
 - `syntax.md` - Workflow syntax guide
