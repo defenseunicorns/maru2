@@ -2,7 +2,6 @@
 
 ![GitHub Tag](https://img.shields.io/github/v/tag/defenseunicorns/maru2)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/defenseunicorns/maru2)
-[![Go Report Card](https://goreportcard.com/badge/github.com/defenseunicorns/maru2)](https://goreportcard.com/report/github.com/defenseunicorns/maru2)
 ![GitHub License](https://img.shields.io/github/license/defenseunicorns/maru2)
 
 A simple task runner.
