@@ -57,7 +57,7 @@ changelog:
   disable: true
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 release:
   mode: keep-existing
