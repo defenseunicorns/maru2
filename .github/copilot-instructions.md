@@ -210,6 +210,64 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 **Rationale**: Maintaining a minimal dependency surface reduces security risks, improves build reliability, ensures long-term maintainability, and keeps the binary size small for the static binary distribution model.
 
+### Go Development Best Practices
+
+**Code Discovery & Documentation**:
+
+1. **Always use `go doc` for precision** - Before writing new functionality, use `go doc <package>.<Type>` or `go doc <package>.<Function>` to understand:
+   - Function signatures and return types
+   - Interface definitions and requirements
+   - Struct fields and methods
+   - Usage examples and behavior
+   - Package-level documentation
+
+   ```bash
+   # Examples
+   go doc fmt.Printf           # Function documentation
+   go doc http.Handler         # Interface definition
+   go doc context.Context      # Type and methods
+   go doc encoding/json        # Package overview
+   ```
+
+2. **Leverage Go's built-in tooling**:
+   - `go doc -all <package>` - Show all exported symbols
+   - `go doc -src <symbol>` - Show source code
+   - `gofmt -d .` - Preview formatting changes
+   - `go vet ./...` - Static analysis for common mistakes
+
+**Code Quality & Review Strategies**:
+
+1. **Follow Go idioms and conventions**:
+   - Use receiver names that are short and consistent (e.g., `c *Client`, not `client *Client`)
+   - Prefer composition over inheritance
+   - Handle errors explicitly, don't ignore them
+   - Use meaningful variable names, avoid abbreviations
+   - Keep functions small and focused on single responsibility
+
+2. **Error handling best practices**:
+   - Always check errors: `if err != nil { return err }`
+   - Wrap errors with context: `fmt.Errorf("failed to process %s: %w", name, err)`
+   - Use sentinel errors for expected conditions: `var ErrNotFound = errors.New("not found")`
+
+3. **Testing strategies**:
+   - Write table-driven tests for multiple scenarios
+   - Use `testify/require` for assertions that should stop test execution
+   - Use `testify/assert` for assertions that should continue test execution
+   - Mock external dependencies using interfaces
+   - Test both happy path and error conditions
+
+4. **Memory and performance considerations**:
+   - Use `strings.Builder` for string concatenation in loops
+   - Prefer `bytes.Buffer` for binary data manipulation
+   - Be mindful of goroutine leaks, always provide context cancellation
+   - Use `sync.Pool` for frequently allocated objects
+
+5. **Code organization**:
+   - Group related functionality in packages
+   - Keep main packages minimal, delegate to internal packages
+   - Use internal packages for implementation details
+   - Export only what needs to be public
+
 ### Architecture Notes
 
 - **Remote fetching**: Supports GitHub, GitLab, and OCI artifact sources
