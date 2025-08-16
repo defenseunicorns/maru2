@@ -51,8 +51,9 @@ These foundational rules guide all performance and algorithmic decisions:
 - **Size**: Medium-sized Go project (~80 files including tests and documentation)
 - **Language**: Go 1.24.3 (primary), YAML, Markdown, Shell scripts
 - **Framework**: Cobra CLI framework with Go modules dependency management
-- **Target**: Cross-platform static binaries (Linux, macOS) with `CGO_ENABLED=0`
+- **Target**: Cross-platform static binaries (Linux, macOS, supports amd64/arm64) with `CGO_ENABLED=0`
 - **Status**: Early development - expect breaking changes
+- **Testing**: Comprehensive test suite using `testscript` for E2E testing and standard Go tests
 
 ## Build Instructions
 
@@ -103,7 +104,7 @@ go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m ./...  # F
 make test                           # Full test suite (short=false)
 make test ARGS='-w short=true'      # Skip network tests (short=true)
 
-# Run specific E2E tests
+# Run specific E2E tests (testscript-based)
 go test ./cmd/ -run TestE2E/<TestName> -v
 ```
 
@@ -114,6 +115,8 @@ go test ./cmd/ -run TestE2E/<TestName> -v
 - Can be customized via maru2's input system
 
 **Test timing**: Full test suite takes ~3 minutes. Use `-short` flag to skip network-dependent tests.
+
+**E2E Testing**: Uses `testscript` framework in `/testdata/` for CLI integration tests. Each `.txtar` file defines a complete test scenario with expected outputs.
 
 ### Linting
 
@@ -164,6 +167,16 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 /docs/          - Comprehensive documentation
 ```
 
+### Core Architecture Patterns
+
+**Builtin System**: Built-in tasks are registered in `builtins/registration.go` with a factory pattern. Each builtin implements the `Builtin` interface with an `Execute(ctx context.Context) (map[string]any, error)` method. Use `builtins.Get("name")` to retrieve instances.
+
+**Schema-Driven Validation**: The entire workflow syntax is defined via Go structs in `schema/v0/` that auto-generate JSON schemas. The `WorkflowSchema()` function creates the main schema, while individual structs use `JSONSchemaExtend()` methods for documentation.
+
+**Remote Uses System**: The `uses/` package implements pluggable fetchers for different protocols (GitHub, GitLab, OCI, HTTP, local files). Each fetcher implements the `Fetcher` interface and is registered via URL scheme detection.
+
+**Testscript E2E Pattern**: E2E tests use `.txtar` archive format in `/testdata/`. Each test defines a complete filesystem state and expected command outputs. Use `go test ./cmd/ -run TestE2E/<TestName> -v` to run individual tests.
+
 ### Key Configuration Files
 
 - **`.golangci.yaml`**: Linting configuration with custom rules
@@ -185,6 +198,7 @@ Located in `.github/workflows/`:
 - Tests must pass on both Linux and macOS
 - Linting must pass
 - Coverage reporting included
+- Fuzz testing on schema patterns included
 
 ### Validation Pipeline
 
@@ -213,7 +227,8 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `github.com/xeipuuv/gojsonschema` - JSON Schema validation for YAML workflows
 
 **Template/Expression Engine**:
-- `github.com/expr-lang/expr` - Fast expression evaluation for dynamic template values (`${{ input "name" }}`)
+- `text/template` - Go's standard template engine for script interpolation (`${{ input "name" }}` syntax)
+- `github.com/expr-lang/expr` - Fast expression evaluation for conditional `if` statements
 
 **Remote Integrations**:
 - `github.com/google/go-github/v62` - GitHub API client for fetching remote tasks
