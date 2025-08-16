@@ -32,20 +32,43 @@ make clean          # Remove build artifacts
 
 **Critical**: The `make` command generates `maru2.schema.json` and `schema/v0/schema.json`. These files MUST be committed if changed during development.
 
-### Testing
+### Makefile Task Execution
 
-**Run tests in short mode to avoid network dependencies**:
+**The Makefile includes a `%:` catch-all rule** that allows running any maru2 task defined in `tasks.yaml`:
 
 ```bash
-# Recommended: Run without network tests
-go test -short -v -timeout 3m ./...
+# Run any maru2 task via make
+make <task-name>              # Executes: ./bin/maru2 <task-name>
+make <task-name> ARGS="..."   # Executes: ./bin/maru2 <task-name> <ARGS>
 
-# Full test suite (requires GITHUB_TOKEN environment variable)
-go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m ./...
+# Examples
+make hello-world              # Runs the hello-world task
+make echo                     # Runs the echo task with default input
+make echo ARGS='-w text="Custom message"'  # Runs echo with custom text
+```
+
+### Testing
+
+**Multiple testing approaches available**:
+
+```bash
+# Option 1: Direct Go testing (recommended for development)
+go test -short -v -timeout 3m ./...  # Skip network-dependent tests
+go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m ./...  # Full suite
+
+# Option 2: Via maru2 task system (uses tasks.yaml)
+make test                           # Full test suite (short=false)
+make test ARGS='-w short=true'      # Skip network tests (short=true)
 
 # Run specific E2E tests
 go test ./cmd/ -run TestE2E/<TestName> -v
 ```
+
+**Important**: The `test` task in `tasks.yaml` provides an alternative testing interface that:
+- Sets `CGO_ENABLED=1` (required for race detection)
+- Uses the `short` input parameter to control `-short` flag
+- Generates coverage reports and uses race detection by default
+- Can be customized via maru2's input system
 
 **Test timing**: Full test suite takes ~3 minutes. Use `-short` flag to skip network-dependent tests.
 
@@ -66,7 +89,7 @@ make lint-fix       # Run linters with auto-fix
 
 Always validate changes with this sequence:
 1. `make` (rebuild + regenerate schemas)
-2. `go test -short ./...` (run core tests)
+2. `go test -short ./...` or `make test ARGS='-w short=true'` (run core tests)
 3. `make lint` (if golangci-lint installed)
 4. Check schema files are committed if changed
 
@@ -102,8 +125,8 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 - **`.golangci.yaml`**: Linting configuration with custom rules
 - **`go.mod`**: Go module definition and dependencies
-- **`Makefile`**: Primary build orchestration
-- **`tasks.yaml`**: Example workflow showing maru2 syntax
+- **`Makefile`**: Primary build orchestration with `%:` catch-all rule for task execution
+- **`tasks.yaml`**: Example workflow showing maru2 syntax and defining available tasks
 - **`maru2.schema.json`**: Auto-generated JSON schema for YAML validation
 - **`.goreleaser.yaml`**: Release automation configuration
 
