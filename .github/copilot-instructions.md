@@ -4,6 +4,49 @@
 
 **Maru2** is a simple, powerful task runner written in Go that makes workflow automation easy and intuitive. Inspired by the simplicity of Makefiles but with modern features like GitHub Actions, it helps users define, organize, and execute tasks with minimal configuration.
 
+## Core Design Principles & Philosophy
+
+Maru2 development is guided by fundamental principles that prioritize simplicity, performance, and user experience. **All code changes must align with these core principles.**
+
+### Rob Pike's 5 Rules of Programming
+
+These foundational rules guide all performance and algorithmic decisions:
+
+**Rule 1**: You can't tell where a program is going to spend its time. Bottlenecks occur in surprising places, so don't try to second guess and put in a speed hack until you've proven that's where the bottleneck is.
+
+**Rule 2**: Measure. Don't tune for speed until you've measured, and even then don't unless one part of the code overwhelms the rest.
+
+**Rule 3**: Fancy algorithms are slow when n is small, and n is usually small. Fancy algorithms have big constants. Until you know that n is frequently going to be big, don't get fancy. (Even if n does get big, use Rule 2 first.)
+
+**Rule 4**: Fancy algorithms are buggier than simple ones, and they're much harder to implement. Use simple algorithms as well as simple data structures.
+
+**Rule 5**: Data dominates. If you've chosen the right data structures and organized things well, the algorithms will almost always be self-evident. Data structures, not algorithms, are central to programming.
+
+**Key Takeaways**: Pike's rules 1 and 2 restate Tony Hoare's famous maxim "Premature optimization is the root of all evil." Ken Thompson rephrased Pike's rules 3 and 4 as "When in doubt, use brute force." Rules 3 and 4 are instances of the design philosophy KISS. Rule 5 was previously stated by Fred Brooks in The Mythical Man-Month. Rule 5 is often shortened to "write stupid code that uses smart objects."
+
+### Maru2-Specific Design Principles
+
+**Simplicity First**: "Simple things should be simple, complex things should be possible" ~ Alan Kay
+- Prioritize straightforward, readable implementations over clever optimizations
+- Make common use cases trivial to accomplish
+- Ensure advanced features don't complicate basic workflows
+
+**Excellent Shell Script Experience**: The last mile in every effort is paved with `bash`, `sh`, and tears. As such maru2 must make the experience of using embedded scripts excellent.
+- Shell script integration should be seamless and intuitive
+- Error handling and debugging for shell scripts must be superior
+- Output formatting and logging should enhance script readability
+
+**Low Latency Over Complexity**: If choosing between creating an operation with low latency, simple logic that must be chained together, or a singular powerful, yet costly, operation, choose the simple low latency option.
+- Prefer multiple fast operations over single slow operations
+- Design for composability and pipeline-friendly patterns
+- Optimize for startup time and immediate feedback
+
+**Documentation vs Implementation Consistency**: The documentation states how the system _should_ operate. The implementation drives how it _does_. In a conflict between the two, evaluate which behavior is more consistent with the overall system and update the other to reflect that change.
+- Neither documentation nor implementation is automatically "correct"
+- Evaluate conflicts based on system-wide consistency
+- Update the inconsistent component to match the more logical behavior
+- Maintain clear, accurate documentation that reflects actual behavior
+
 ### High-Level Repository Information
 - **Size**: Medium-sized Go project (~80 files including tests and documentation)
 - **Language**: Go 1.24.3 (primary), YAML, Markdown, Shell scripts
