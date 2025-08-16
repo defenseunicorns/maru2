@@ -199,6 +199,8 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 **Package URLs**: Remote tasks use package-url (purl) spec format like `pkg:github/owner/repo@version#path/to/tasks.yaml` which supports aliases for shorthand references. `oci`, `file`, `http` and `https` are also supported. No matter what, a `uses` field _must_ be a proper URL with a protocol scheme.
 
+**OCI Artifact Support**: Maru2 supports distributing and consuming workflows as OCI artifacts in container registries. This enables workflows to be versioned, cached, and distributed through existing container infrastructure. See the `maru2-publish` CLI and the `uses/oci.go` files for more information.
+
 **Input Validation**: Inputs support regex validation via the `validate` property to enforce format constraints before task execution.
 
 ### Key Configuration Files
