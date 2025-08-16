@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3 (2025-08-16)
+
+## What's Changed
+* chore: repo hygiene by @Noxsios in https://github.com/defenseunicorns/maru2/pull/79
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.1.2...v0.1.3
+
 ## 0.1.2 (2025-08-16)
 
 **Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.1.1...v0.1.2
