@@ -5,21 +5,24 @@
 
 export CGO_ENABLED=0
 
-all: maru2 maru2-publish
+all: maru2 maru2-publish ## Build all binaries
 
-maru2:
+maru2: ## Build maru2 binary and generate schemas
 	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2
 	go run cmd/maru2-schema/main.go v0 > schema/v0/schema.json
 	go run cmd/maru2-schema/main.go > maru2.schema.json
 
-maru2-publish:
+maru2-publish: ## Build maru2-publish binary
 	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2-publish
 
-lint:
+lint: ## Run linters
 	golangci-lint run ./...
 
-clean:
-	rm -rf bin/
+lint-fix: ## Run linters with auto-fix
+	golangci-lint run --fix ./...
+
+clean: ## Remove build artifacts
+	rm -rf bin/ dist/
 
 hello-world:
 	echo "Hello, World!"
@@ -28,4 +31,10 @@ ARGS ?=
 %:
 	./bin/maru2 $* $(ARGS)
 
-.PHONY: all maru2 maru2-publish lint clean hello-world
+help: ## Show this help message
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Available targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.PHONY: all maru2 maru2-publish lint lint-fix clean hello-world
