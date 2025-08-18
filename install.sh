@@ -8,7 +8,7 @@ fi
 # derived from:
 # https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh
 
-APP_NAME="maru2"
+BINARIES=("maru2" "maru2-publish")
 REPO_URL="https://github.com/defenseunicorns/maru2"
 
 : ${USE_SUDO:="true"}
@@ -63,7 +63,7 @@ verifySupported() {
 # checkMaru2InstalledVersion checks which version of maru2 is installed and
 # if it needs to be changed.
 checkMaru2InstalledVersion() {
-  if [[ -f "${MARU2_INSTALL_DIR}/${APP_NAME}" ]]; then
+  if [[ -f "${MARU2_INSTALL_DIR}/${BINARIES[0]}" ]]; then
     local version
     version=$(maru2 --version)
     if [[ "$version" == "$TAG" ]]; then
@@ -106,6 +106,7 @@ downloadTarball() {
   DOWNLOAD_URL="$REPO_URL/releases/download/$TAG/$MARU2_DIST"
   MARU2_TMP_ROOT="$(mktemp -dt maru2-binary-XXXXXX)"
   MARU2_TMP_FILE="$MARU2_TMP_ROOT/$MARU2_DIST"
+  echo "Fetching $DOWNLOAD_URL"
   if type "curl" > /dev/null; then
     scurl -sL "$DOWNLOAD_URL" -o "$MARU2_TMP_FILE"
   elif type "wget" > /dev/null; then
@@ -115,8 +116,6 @@ downloadTarball() {
 
 # installBinaries extracts and installs the binaries
 installBinaries() {
-  echo "Preparing to install $APP_NAME $TAG into ${MARU2_INSTALL_DIR}"
-
   if [[ ! -d "$MARU2_INSTALL_DIR" ]]; then
     echo "Error: Install directory '$MARU2_INSTALL_DIR' does not exist. Please create it first."
     exit 1
@@ -126,13 +125,11 @@ installBinaries() {
   mkdir -p "$MARU2_EXTRACT_DIR"
   tar -xzf "$MARU2_TMP_FILE" -C "$MARU2_EXTRACT_DIR"
 
-  runAsRoot cp "$MARU2_EXTRACT_DIR/maru2" "$MARU2_INSTALL_DIR/"
-  runAsRoot chmod +x "$MARU2_INSTALL_DIR/maru2"
-  
-  runAsRoot cp "$MARU2_EXTRACT_DIR/maru2-publish" "$MARU2_INSTALL_DIR/"
-  runAsRoot chmod +x "$MARU2_INSTALL_DIR/maru2-publish"
-  
-  echo "$APP_NAME installed into $MARU2_INSTALL_DIR"
+  for binary in "${BINARIES[@]}"; do
+    runAsRoot cp "$MARU2_EXTRACT_DIR/$binary" "$MARU2_INSTALL_DIR/"
+    runAsRoot chmod +x "$MARU2_INSTALL_DIR/$binary"
+    echo "$binary $TAG installed into $MARU2_INSTALL_DIR"
+  done
 }
 
 # fail_trap is executed if an error occurs.
@@ -140,12 +137,12 @@ fail_trap() {
   result=$?
   if [ "$result" != "0" ]; then
     if [[ -n "$INPUT_ARGUMENTS" ]]; then
-      echo "Failed to install $APP_NAME with the arguments provided: $INPUT_ARGUMENTS"
+      echo "Failed to install with the arguments provided: $INPUT_ARGUMENTS"
       help
     else
-      echo "Failed to install $APP_NAME"
+      echo "Failed to install"
     fi
-    echo -e "\tFor support, go to $REPO_URL."
+    echo -e "\tFor support, go to $REPO_URL"
   fi
   cleanup
   exit $result
@@ -153,11 +150,12 @@ fail_trap() {
 
 # testVersion tests the installed client to make sure it is working.
 testVersion() {
-  if ! command -v $APP_NAME &> /dev/null; then
-    echo "$APP_NAME not found. Is $MARU2_INSTALL_DIR on your "'$PATH?'
-    exit 1
-  fi
-  echo "Run '$APP_NAME --help' to see what you can do with it."
+  for binary in "${BINARIES[@]}"; do
+    if ! command -v "$binary" &> /dev/null; then
+      echo "$binary not found. Is $MARU2_INSTALL_DIR on your "'$PATH?'
+      exit 1
+    fi
+  done
 }
 
 # help provides possible cli installation arguments
