@@ -11,10 +11,16 @@ A simple task runner.
 
 ## Installation
 
-via convenience script:
+via curl:
 
 ```sh
 curl -s https://raw.githubusercontent.com/defenseunicorns/maru2/main/install.sh | bash
+```
+
+via wget:
+
+```sh
+wget -q -O - https://raw.githubusercontent.com/defenseunicorns/maru2/main/install.sh | bash
 ```
 
 via go install:
