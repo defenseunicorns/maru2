@@ -3,6 +3,8 @@
 ![GitHub Tag](https://img.shields.io/github/v/tag/defenseunicorns/maru2)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/defenseunicorns/maru2)
 ![GitHub License](https://img.shields.io/github/license/defenseunicorns/maru2)
+![CodeQL](https://github.com/defenseunicorns/maru2/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)
+[![Go Report Card](https://goreportcard.com/badge/github.com/noxsios/vai)](https://goreportcard.com/report/github.com/noxsios/vai)
 
 A simple task runner.
 
