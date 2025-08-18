@@ -28,7 +28,8 @@ or checkout the latest [release artifacts](https://github.com/defenseunicorns/ma
 
 ## Documentation
 
-- [CLI](docs/cli.md)
+- [Getting Started](docs/README.md)
+- [CLI Reference](docs/cli.md)
 - [Workflow Syntax](docs/syntax.md)
 - [Publishing Workflows](docs/publish.md)
 - [Built-in Tasks](docs/builtins.md)
