@@ -27,36 +27,43 @@ These foundational rules guide all performance and algorithmic decisions:
 ### Maru2-Specific Design Principles
 
 **Simplicity First**: "Simple things should be simple, complex things should be possible" ~ Alan Kay
+
 - Prioritize straightforward, readable implementations over clever optimizations
 - Make common use cases trivial to accomplish
 - Ensure advanced features don't complicate basic workflows
 
 **Excellent Shell Script Experience**: The last mile in every effort is paved with `bash`, `sh`, and tears. As such maru2 must make the experience of using embedded scripts excellent.
+
 - Shell script integration should be seamless and intuitive
 - Error handling and debugging for shell scripts must be superior
 - Output formatting and logging should enhance script readability
 
 **Low Latency Over Complexity**: If choosing between creating an operation with low latency, simple logic that must be chained together, or a singular powerful, yet costly, operation, choose the simple low latency option.
+
 - Prefer multiple fast operations over single slow operations
 - Design for composability and pipeline-friendly patterns
 - Optimize for startup time and immediate feedback
 
 **Documentation vs Implementation Consistency**: The documentation states how the system _should_ operate. The implementation drives how it _does_. In a conflict between the two, evaluate which behavior is more consistent with the overall system and update the other to reflect that change.
+
 - Neither documentation nor implementation is automatically "correct"
 - Evaluate conflicts based on system-wide consistency
 - Update the inconsistent component to match the more logical behavior
 - Maintain clear, accurate documentation that reflects actual behavior
 
 ### High-Level Repository Information
-- **Size**: Medium-sized Go project (~80 files including tests and documentation)
+
+- **Size**: Medium-sized Go project (~106 files including tests and documentation)
 - **Language**: Go 1.24.3 (primary), YAML, Markdown, Shell scripts
 - **Framework**: Cobra CLI framework with Go modules dependency management
-- **Target**: Cross-platform static binaries (Linux, macOS) with `CGO_ENABLED=0`
+- **Target**: Cross-platform static binaries (Linux, macOS, supports amd64/arm64) with `CGO_ENABLED=0`
 - **Status**: Early development - expect breaking changes
+- **Testing**: Comprehensive test suite using `testscript` for E2E testing and standard Go tests
 
 ## Build Instructions
 
 ### Bootstrap & Dependencies
+
 Dependencies are managed via Go modules and downloaded automatically. No manual dependency installation required except for optional linting.
 
 ### Build Commands
@@ -73,7 +80,12 @@ make maru2-publish  # Build publish binary only
 make clean          # Remove build artifacts
 ```
 
-**Critical**: The `make` command generates `maru2.schema.json` and `schema/v0/schema.json`. These files MUST be committed if changed during development.
+**Critical**: The `make` command generates two schema files:
+
+- `maru2.schema.json` (root-level, for public consumption and IDE integration)
+- `schema/v0/schema.json` (version-specific, for internal validation)
+
+These files MUST be committed if changed during development.
 
 ### Makefile Task Execution
 
@@ -103,17 +115,16 @@ go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m ./...  # F
 make test                           # Full test suite (short=false)
 make test ARGS='-w short=true'      # Skip network tests (short=true)
 
-# Run specific E2E tests
+# Run specific E2E tests (testscript-based)
 go test ./cmd/ -run TestE2E/<TestName> -v
 ```
 
-**Important**: The `test` task in `tasks.yaml` provides an alternative testing interface that:
-- Sets `CGO_ENABLED=1` (required for race detection)
-- Uses the `short` input parameter to control `-short` flag
-- Generates coverage reports and uses race detection by default
-- Can be customized via maru2's input system
+**Test Configuration**:
 
-**Test timing**: Full test suite takes ~3 minutes. Use `-short` flag to skip network-dependent tests.
+- **Full test suite**: Takes ~3 minutes, includes race detection and coverage reporting
+- **Short tests**: Use `-short` flag to skip network-dependent tests
+- **E2E Testing**: Uses `testscript` framework in `/testdata/` - each `.txtar` file defines a complete test scenario
+- **Alternative interface**: The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, and can be customized via maru2's input system
 
 ### Linting
 
@@ -131,6 +142,7 @@ make lint-fix       # Run linters with auto-fix
 ### Validation Commands
 
 Always validate changes with this sequence:
+
 1. `make` (rebuild + regenerate schemas)
 2. `go test -short ./...` or `make test ARGS='-w short=true'` (run core tests)
 3. `make lint` (if golangci-lint installed)
@@ -138,10 +150,12 @@ Always validate changes with this sequence:
 
 ### Common Build Issues & Workarounds
 
-- **Test failures without `-short`**: Network tests require `GITHUB_TOKEN` environment variable
+- **Test failures without `-short`**: Network tests require `GITHUB_TOKEN` environment variable to avoid rate limits
 - **golangci-lint not found**: Install separately with `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
 - **Schema out of sync**: Run `make` to regenerate, then commit changes
 - **Timeout issues**: Use longer timeout for full test suite (`-timeout 5m`)
+
+**Note**: For accessing private repositories or avoiding API rate limits, set `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables.
 
 ## Project Layout
 
@@ -157,12 +171,37 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
   /internal/    - Example of embedding maru2 in other CLIs
 /schema/        - YAML schema definitions (versioned)
   /v0/          - Current schema version
-/config/        - Configuration file handling
+/config/        - Configuration file handling (versioned)
+  /v0/          - Current config schema version
 /uses/          - Remote task fetching (GitHub, GitLab, OCI)
 /builtins/      - Built-in tasks (echo, fetch)
 /testdata/      - E2E test scenarios using testscript
 /docs/          - Comprehensive documentation
 ```
+
+### Core Architecture Patterns
+
+**Builtin System**: Built-in tasks are registered in `builtins/registration.go` with a factory pattern. Each builtin implements the `Builtin` interface with an `Execute(ctx context.Context) (map[string]any, error)` method. Use `builtins.Get("name")` to retrieve instances.
+
+**Schema-Driven Validation**: The entire workflow syntax is defined via Go structs in `schema/v0/` that auto-generate JSON schemas. The `WorkFlowSchema()` function creates the main schema, while individual structs use `JSONSchemaExtend()` methods for documentation or behavior that is too complex to represent within the struct tags. Configuration files are also versioned using the same pattern in `config/v0/`.
+
+**Remote Uses System**: The `uses/` package implements pluggable fetchers for different protocols (GitHub, GitLab, OCI, HTTP, local files). Each fetcher implements the `Fetcher` interface and is registered via URL scheme detection.
+
+**Testscript E2E Pattern**: E2E tests use `.txtar` archive format in `/testdata/` with `go test ./cmd/ -run TestE2E/<TestName> -v` for individual test execution.
+
+### Key Workflow Concepts
+
+**Step Outputs**: Steps can produce outputs by writing `key=value` pairs to the `$MARU2_OUTPUT` environment variable file. Access outputs from previous steps using `${{ from "step-id" "output-key" }}` syntax. (see `output.go` and `output_test.go`)
+
+**Shell Selection**: Steps support different shells via the `shell` property: `sh`, `bash`, `powershell`, `pwsh`. Default behavior varies by command content.
+
+**Conditional Execution**: Use `if` property with expr expressions. Built-in functions include `failure()`, `always()`, `cancelled()`, `input("name")`, and `from("step-id", "key")`.
+
+**Package URLs**: Remote tasks use package-url (purl) spec format like `pkg:github/owner/repo@version#path/to/tasks.yaml` which supports aliases for shorthand references. `oci`, `file`, `http` and `https` are also supported. No matter what, a `uses` field _must_ be a proper URL with a protocol scheme.
+
+**OCI Artifact Support**: Maru2 supports distributing and consuming workflows as OCI artifacts in container registries. This enables workflows to be versioned, cached, and distributed through existing container infrastructure. See the `maru2-publish` CLI and the `uses/oci.go` files for more information.
+
+**Input Validation**: Inputs support regex validation via the `validate` property to enforce format constraints before task execution.
 
 ### Key Configuration Files
 
@@ -176,19 +215,24 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 ### GitHub Workflows & CI
 
 Located in `.github/workflows/`:
+
 - **`go.yaml`**: Main CI pipeline (build, test, lint) on push/PR to main
 - **`release.yaml`**: Automated releases
 - **`nightly-build.yaml`**: Nightly builds
+- **`commitlint.yaml`**: Commit message linting
 
 **CI Requirements**:
+
 - All schema files must remain in sync
 - Tests must pass on both Linux and macOS
 - Linting must pass
 - Coverage reporting included
+- Fuzz testing on schema patterns included
 
 ### Validation Pipeline
 
 The CI runs these checks:
+
 1. `make` (build + schema generation)
 2. Schema sync validation (`git diff --exit-code`)
 3. `go test -race -cover` with coverage reporting
@@ -202,35 +246,48 @@ The CI runs these checks:
 Maru2 maintains a **minimal dependency footprint** with carefully selected, well-maintained libraries:
 
 **CLI Framework**:
+
 - `github.com/spf13/cobra` - Industry-standard CLI framework with subcommands and flag parsing
 - `github.com/spf13/pflag` - POSIX-compliant command-line flag parsing
 
 **YAML Processing**:
+
 - `github.com/goccy/go-yaml` - High-performance YAML parser with better error reporting than gopkg.in/yaml
 
 **Schema & Validation**:
+
 - `github.com/invopop/jsonschema` - JSON Schema generation from Go structs
 - `github.com/xeipuuv/gojsonschema` - JSON Schema validation for YAML workflows
 
 **Template/Expression Engine**:
-- `github.com/expr-lang/expr` - Fast expression evaluation for dynamic template values (`${{ input "name" }}`)
+
+- `text/template` - Go's standard template engine for script interpolation (`${{ input "name" }}` syntax)
+- `github.com/expr-lang/expr` - Fast expression evaluation for conditional `if` statements
 
 **Remote Integrations**:
+
 - `github.com/google/go-github/v62` - GitHub API client for fetching remote tasks
 - `gitlab.com/gitlab-org/api/client-go` - GitLab API client for GitLab integration
 - `oras.land/oras-go/v2` - OCI registry support for artifact-based task distribution
+- `github.com/package-url/packageurl-go` - Package URL (purl) parsing for remote task references
+- `github.com/olareg/olareg` - OCI local registry implementation for testing
+- `github.com/opencontainers/image-spec` - OCI image specification support for artifact handling
 
 **UI/Logging**:
+
 - `github.com/charmbracelet/lipgloss` - Terminal styling and color output
 - `github.com/charmbracelet/log` - Structured, leveled logging with styling
 - `github.com/alecthomas/chroma/v2` - Syntax highlighting for code output
 
 **Utilities**:
+
 - `github.com/spf13/afero` - Filesystem abstraction for testability
 - `github.com/go-viper/mapstructure/v2` - Clean struct mapping and configuration binding
 - `github.com/spf13/cast` - Safe type conversion utilities
+- `github.com/muesli/termenv` - Terminal environment detection and feature support
 
 **Testing**:
+
 - `github.com/stretchr/testify` - Assertion and testing utilities
 - `github.com/rogpeppe/go-internal` - Internal Go tooling support (used for testscript E2E testing)
 
@@ -243,13 +300,6 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 2. **Leverage Go standard library first** - Before considering external dependencies, always check if functionality exists in the standard library (`net/http`, `encoding/json`, `os`, `path/filepath`, etc.).
 
 3. **No new dependencies** - The current dependency set is intentionally minimal and covers all required functionality. Adding new dependencies requires exceptional justification and maintainer approval.
-
-4. **Prefer standard library solutions**:
-   - Use `net/http` for HTTP requests instead of third-party clients
-   - Use `encoding/json` for JSON processing
-   - Use `os/exec` for command execution
-   - Use `path/filepath` for path manipulation
-   - Use `strings`, `strconv`, `fmt` for text processing
 
 **Rationale**: Maintaining a minimal dependency surface reduces security risks, improves build reliability, ensures long-term maintainability, and keeps the binary size small for the static binary distribution model.
 
@@ -275,8 +325,6 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 2. **Leverage Go's built-in tooling**:
    - `go doc -all <package>` - Show all exported symbols
    - `go doc -src <symbol>` - Show source code
-   - `gofmt -d .` - Preview formatting changes
-   - `go vet ./...` - Static analysis for common mistakes
 
 **Code Quality & Review Strategies**:
 
@@ -288,14 +336,14 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
    - Keep functions small and focused on single responsibility
 
 2. **Error handling best practices**:
-   - Always check errors: `if err != nil { return err }`
-   - Wrap errors with context: `fmt.Errorf("failed to process %s: %w", name, err)`
-   - Use sentinel errors for expected conditions: `var ErrNotFound = errors.New("not found")`
+   - Errors should be checked the vast majority of the time, exceptions do exist: `if err != nil { return err }`
+   - Wrap errors with context only if the underlying error does not provide enough information: `fmt.Errorf("failed to process %s: %w", name, err)`
+   - Use sentinel errors for expected conditions, but sparingly: `var ErrNotFound = errors.New("not found")`
 
 3. **Testing strategies**:
    - Write table-driven tests for multiple scenarios
-   - Use `testify/require` for assertions that should stop test execution
-   - Use `testify/assert` for assertions that should continue test execution
+   - Use `testify/require` for assertions that deal with error handling
+   - Use `testify/assert` for all other assertions
    - Mock external dependencies using interfaces
    - Test both happy path and error conditions
 
@@ -305,15 +353,9 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
    - Be mindful of goroutine leaks, always provide context cancellation
    - Use `sync.Pool` for frequently allocated objects
 
-5. **Code organization**:
-   - Group related functionality in packages
-   - Keep main packages minimal, delegate to internal packages
-   - Use internal packages for implementation details
-   - Export only what needs to be public
-
 ### Architecture Notes
 
-- **Remote fetching**: Supports GitHub, GitLab, and OCI artifact sources
+- **Remote fetching**: Supports HTTP, GitHub, GitLab, and OCI artifact sources
 - **Schema validation**: JSON Schema validation for YAML workflows
 - **Template engine**: Built-in expression evaluation for dynamic values
 
@@ -332,6 +374,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 ### File Structure Priority
 
 **Root level files**:
+
 - `README.md` - Installation and basic usage
 - `Makefile` - Build commands and orchestration
 - `go.mod` - Dependencies (Go 1.24.3)
@@ -339,18 +382,20 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `maru2.schema.json` - Auto-generated schema
 
 **Documentation** (in `docs/`):
+
 - `README.md` - Comprehensive documentation overview
 - `cli.md` - Command-line interface reference
 - `syntax.md` - Workflow syntax guide
 - `builtins.md` - Built-in task documentation
 - `publish.md` - Workflow publishing guide
+- `config.md` - Global configuration file documentation
 
 **Contributing**: `.github/CONTRIBUTING.md` - Development workflow and requirements
 
 ## Final Instructions
 
-**Trust these instructions** and only search for additional information if something is incomplete or incorrect. The build and test commands documented here have been validated to work correctly.
-
 **Always start with `make`** when working on this codebase to ensure binaries and schemas are properly generated and synchronized.
 
-For schema changes, **always commit the generated files** after running `make` as they are part of the project's interface.
+**Schema changes**: Always commit the generated files after running `make` as they are part of the project's interface.
+
+**Trust these instructions** and only search for additional information if something is incomplete or incorrect. The build and test commands documented here have been validated to work correctly.
