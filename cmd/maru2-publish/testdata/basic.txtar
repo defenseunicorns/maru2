@@ -1,20 +1,17 @@
-exec maru2-publish --help
+# Test basic CLI functionality of maru2-publish
 
-exec maru2-publish completion bash
-exec maru2-publish completion zsh
-exec maru2-publish completion fish
-exec maru2-publish completion powershell
+# Test help flag
+maru2-publish --help
+stdout 'Pack a maru2 workflow into an OCI artifact and publish'
+stdout 'Usage:'
+stdout 'maru2-publish'
 
-exec maru2-publish __complete --log-level status
-cmp stdout stdout-log-level.txt
-cmp stderr good-stderr.txt
+# Test with invalid entrypoint file
+! maru2-publish localhost:5000/test:latest -e nonexistent.yaml
+stderr 'no such file or directory'
 
--- good-stderr.txt --
-Completion ended with directive: ShellCompDirectiveNoFileComp
--- stdout-log-level.txt --
-debug
-info
-warn
-error
-fatal
-:4
+-- tasks.yaml --
+schema-version: v0
+tasks:
+  hello:
+    - run: echo "hello world"

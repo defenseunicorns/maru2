@@ -1,0 +1,27 @@
+# Test with no arguments and no version flag - should show usage
+! maru2-publish
+stderr 'accepts 1 arg\(s\), received 0'
+
+# Test with invalid log level
+! maru2-publish --log-level invalid-level localhost:5000/test:latest
+stderr 'invalid level: "invalid-level"'
+
+# Test with non-existent directory flag
+! maru2-publish -C /non/existent/dir localhost:5000/test:latest
+stderr 'no such file or directory'
+
+# Test with invalid reference (no tag)
+! maru2-publish localhost:5000/test
+stderr 'reference is not a tag'
+
+# Test with no entrypoints in current directory
+! maru2-publish localhost:5000/test:latest
+stderr 'need at least one entrypoint'
+
+# Test version flag with no args
+maru2-publish --version
+stdout '.*'
+
+# Test version short flag with no args  
+maru2-publish -V
+stdout '.*'
