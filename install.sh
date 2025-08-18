@@ -115,10 +115,23 @@ downloadFile() {
 # installs it.
 installFile() {
   echo "Preparing to install $APP_NAME into ${MARU2_INSTALL_DIR}"
-  tar -xzf "$MARU2_TMP_FILE" -C "$MARU2_INSTALL_DIR"
-  runAsRoot chmod +x "$MARU2_TMP_FILE"
-  runAsRoot cp "$MARU2_TMP_FILE" "$MARU2_INSTALL_DIR/$APP_NAME"
-  echo "$APP_NAME installed into $MARU2_INSTALL_DIR/$APP_NAME"
+
+  if [[ ! -d "$MARU2_INSTALL_DIR" ]]; then
+    echo "Error: Install directory '$MARU2_INSTALL_DIR' does not exist. Please create it first."
+    exit 1
+  fi
+
+  MARU2_EXTRACT_DIR="$MARU2_TMP_ROOT/extract"
+  mkdir -p "$MARU2_EXTRACT_DIR"
+  tar -xzf "$MARU2_TMP_FILE" -C "$MARU2_EXTRACT_DIR"
+
+  runAsRoot cp "$MARU2_EXTRACT_DIR/maru2" "$MARU2_INSTALL_DIR/"
+  runAsRoot chmod +x "$MARU2_INSTALL_DIR/maru2"
+  echo "maru2 installed into $MARU2_INSTALL_DIR/maru2"
+
+  runAsRoot cp "$MARU2_EXTRACT_DIR/maru2-publish" "$MARU2_INSTALL_DIR/"
+  runAsRoot chmod +x "$MARU2_INSTALL_DIR/maru2-publish"
+  echo "maru2-publish installed into $MARU2_INSTALL_DIR/maru2-publish"
 }
 
 # fail_trap is executed if an error occurs.
@@ -167,7 +180,7 @@ trap "fail_trap" EXIT
 set -e
 
 # Parsing input arguments (if any)
-export INPUT_ARGUMENTS="${@}"
+export INPUT_ARGUMENTS="${*}"
 set -u
 while [[ $# -gt 0 ]]; do
   case $1 in
