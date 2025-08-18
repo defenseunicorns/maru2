@@ -147,7 +147,7 @@ fail_trap() {
 testVersion() {
   for binary in "${BINARIES[@]}"; do
     if ! command -v "$binary" &> /dev/null; then
-      echo "$binary not found. Is $MARU2_INSTALL_DIR on your "'$PATH?'
+      echo "$binary not found. Is $MARU2_INSTALL_DIR on your \$PATH?"
       exit 1
     fi
   done
