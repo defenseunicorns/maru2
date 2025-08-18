@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.0 (2025-08-18)
+
+## What's Changed
+* chore: repo hygiene by @Noxsios in https://github.com/defenseunicorns/maru2/pull/79
+* chore: add copilot instructions by @Copilot in https://github.com/defenseunicorns/maru2/pull/81
+* chore: improve instructions by @Noxsios in https://github.com/defenseunicorns/maru2/pull/83
+* feat: convenience script by @Noxsios in https://github.com/defenseunicorns/maru2/pull/82
+* chore: coverage improvements by @Noxsios in https://github.com/defenseunicorns/maru2/pull/84
+* chore: readme badges and codecov by @Noxsios in https://github.com/defenseunicorns/maru2/pull/85
+
+## New Contributors
+* @Copilot made their first contribution in https://github.com/defenseunicorns/maru2/pull/81
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.1.2...v0.2.0
+
 ## 0.1.2 (2025-08-16)
 
 **Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.1.1...v0.1.2
