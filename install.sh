@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
-APP_NAME="k3d"
-REPO_URL="https://github.com/k3d-io/k3d"
+# derived from:
+# https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh
+
+APP_NAME="maru2"
+REPO_URL="https://github.com/defenseunicorns/maru2"
 
 : ${USE_SUDO:="true"}
-: ${K3D_INSTALL_DIR:="/usr/local/bin"}
+: ${MARU2_INSTALL_DIR:="/usr/local/bin"}
 
 # initArch discovers the architecture for this system.
 initArch() {
@@ -23,20 +26,7 @@ initArch() {
 
 # initOS discovers the operating system for this system.
 initOS() {
-  OS=$(uname|tr '[:upper:]' '[:lower:]')
-
-  case "$OS" in
-    # Minimalist GNU for Windows
-    mingw*) 
-      OS="windows"
-      USE_SUDO="false"
-      if [[ ! -d "$K3D_INSTALL_DIR" ]]; then
-        # mingw bash that ships with Git for Windows doesn't have /usr/local/bin but ~/bin is first entry in the path
-        mkdir -p ~/bin
-        K3D_INSTALL_DIR=~/bin
-      fi
-      ;;
-  esac
+  OS=$(uname)
 }
 
 # runs the given command as root (detects if we are root already)
@@ -68,9 +58,9 @@ scurl() {
 # verifySupported checks that the os/arch combination is supported for
 # binary builds.
 verifySupported() {
-  local supported="darwin-386\ndarwin-amd64\ndarwin-arm64\nlinux-386\nlinux-amd64\nlinux-arm\nlinux-arm64\nwindows-386\nwindows-amd64"
-  if ! echo "${supported}" | grep -q "${OS}-${ARCH}"; then
-    echo "No prebuilt binary for ${OS}-${ARCH}."
+  local supported="Darwin_arm64\nDarwin_x86_64\nLinux_arm64\nLinux_x86_64"
+  if ! echo "${supported}" | grep -q "${OS}_${ARCH}"; then
+    echo "No prebuilt binary for ${OS}_${ARCH}."
     echo "To build from source, go to $REPO_URL"
     exit 1
   fi
@@ -81,16 +71,17 @@ verifySupported() {
   fi
 }
 
-# checkK3dInstalledVersion checks which version of k3d is installed and
+# checkMaru2InstalledVersion checks which version of maru2 is installed and
 # if it needs to be changed.
-checkK3dInstalledVersion() {
-  if [[ -f "${K3D_INSTALL_DIR}/${APP_NAME}" ]]; then
-    local version=$(k3d version | grep 'k3d version' | cut -d " " -f3)
+checkMaru2InstalledVersion() {
+  if [[ -f "${MARU2_INSTALL_DIR}/${APP_NAME}" ]]; then
+    local version
+    version=$(maru2 --version)
     if [[ "$version" == "$TAG" ]]; then
-      echo "k3d ${version} is already ${DESIRED_VERSION:-latest}"
+      echo "maru2 ${version} is already ${DESIRED_VERSION:-latest}"
       return 0
     else
-      echo "k3d ${TAG} is available. Changing from version ${version}."
+      echo "maru2 ${TAG} is available. Changing from version ${version}."
       return 1
     fi
   else
@@ -123,27 +114,24 @@ checkLatestVersion() {
 # downloadFile downloads the latest binary package and also the checksum
 # for that binary.
 downloadFile() {
-  K3D_DIST="k3d-$OS-$ARCH"
-  DOWNLOAD_URL="$REPO_URL/releases/download/$TAG/$K3D_DIST"
-  if [[ "$OS" == "windows" ]]; then
-    DOWNLOAD_URL=${DOWNLOAD_URL}.exe
-  fi
-  K3D_TMP_ROOT="$(mktemp -dt k3d-binary-XXXXXX)"
-  K3D_TMP_FILE="$K3D_TMP_ROOT/$K3D_DIST"
+  MARU2_DIST="maru2-{$OS}_$ARCH"
+  DOWNLOAD_URL="$REPO_URL/releases/download/$TAG/$MARU2_DIST"
+  MARU2_TMP_ROOT="$(mktemp -dt maru2-binary-XXXXXX)"
+  MARU2_TMP_FILE="$MARU2_TMP_ROOT/$MARU2_DIST"
   if type "curl" > /dev/null; then
-    scurl -sL "$DOWNLOAD_URL" -o "$K3D_TMP_FILE"
+    scurl -sL "$DOWNLOAD_URL" -o "$MARU2_TMP_FILE"
   elif type "wget" > /dev/null; then
-    wget -q -O "$K3D_TMP_FILE" "$DOWNLOAD_URL"
+    wget -q -O "$MARU2_TMP_FILE" "$DOWNLOAD_URL"
   fi
 }
 
 # installFile verifies the SHA256 for the file, then unpacks and
 # installs it.
 installFile() {
-  echo "Preparing to install $APP_NAME into ${K3D_INSTALL_DIR}"
-  runAsRoot chmod +x "$K3D_TMP_FILE"
-  runAsRoot cp "$K3D_TMP_FILE" "$K3D_INSTALL_DIR/$APP_NAME"
-  echo "$APP_NAME installed into $K3D_INSTALL_DIR/$APP_NAME"
+  echo "Preparing to install $APP_NAME into ${MARU2_INSTALL_DIR}"
+  runAsRoot chmod +x "$MARU2_TMP_FILE"
+  runAsRoot cp "$MARU2_TMP_FILE" "$MARU2_INSTALL_DIR/$APP_NAME"
+  echo "$APP_NAME installed into $MARU2_INSTALL_DIR/$APP_NAME"
 }
 
 # fail_trap is executed if an error occurs.
@@ -165,7 +153,7 @@ fail_trap() {
 # testVersion tests the installed client to make sure it is working.
 testVersion() {
   if ! command -v $APP_NAME &> /dev/null; then
-    echo "$APP_NAME not found. Is $K3D_INSTALL_DIR on your "'$PATH?'
+    echo "$APP_NAME not found. Is $MARU2_INSTALL_DIR on your "'$PATH?'
     exit 1
   fi
   echo "Run '$APP_NAME --help' to see what you can do with it."
@@ -180,8 +168,8 @@ help () {
 
 # cleanup temporary files
 cleanup() {
-  if [[ -d "${K3D_TMP_ROOT:-}" ]]; then
-    rm -rf "$K3D_TMP_ROOT"
+  if [[ -d "${MARU2_TMP_ROOT:-}" ]]; then
+    rm -rf "$MARU2_TMP_ROOT"
   fi
 }
 
@@ -214,7 +202,7 @@ initArch
 initOS
 verifySupported
 checkTagProvided || checkLatestVersion
-if ! checkK3dInstalledVersion; then
+if ! checkMaru2InstalledVersion; then
   downloadFile
   installFile
 fi
