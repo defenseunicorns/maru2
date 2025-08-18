@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"os/exec"
 	"regexp"
 	"runtime"
 	"slices"
@@ -77,7 +78,7 @@ func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandO
 	which := func(key string) (string, error) {
 		value, ok := shortcuts.Load(key)
 		if !ok {
-			return "", fmt.Errorf("shortcut %q not found", key)
+			return exec.LookPath(key)
 		}
 		full, ok := value.(string)
 		if !ok {
