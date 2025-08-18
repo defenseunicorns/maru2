@@ -268,8 +268,8 @@ func TestListAllLocal(t *testing.T) {
 		expectErr    string
 	}{
 		{
-			name: "non-file scheme returns empty",
-			srcURL: "https://example.com/workflow.yaml",
+			name:         "non-file scheme returns empty",
+			srcURL:       "https://example.com/workflow.yaml",
 			expectedRefs: nil,
 		},
 		{
@@ -282,7 +282,7 @@ tasks:
     - run: "echo hello"
 `,
 			},
-			srcURL: "file:tasks.yaml",
+			srcURL:       "file:tasks.yaml",
 			expectedRefs: []string{"file:tasks.yaml"},
 		},
 		{
@@ -301,7 +301,7 @@ tasks:
     - run: "echo dep"
 `,
 			},
-			srcURL: "file:tasks.yaml",
+			srcURL:       "file:tasks.yaml",
 			expectedRefs: []string{"file:tasks.yaml", "file:dep.yaml"},
 		},
 		{
@@ -326,7 +326,7 @@ tasks:
     - run: "echo dep2"
 `,
 			},
-			srcURL: "file:tasks.yaml",
+			srcURL:       "file:tasks.yaml",
 			expectedRefs: []string{"file:tasks.yaml", "file:dep1.yaml", "file:dep2.yaml"},
 		},
 		{
@@ -346,7 +346,7 @@ tasks:
     - run: "echo local"
 `,
 			},
-			srcURL: "file:tasks.yaml",
+			srcURL:       "file:tasks.yaml",
 			expectedRefs: []string{"file:tasks.yaml", "file:local.yaml"},
 		},
 		{
@@ -368,7 +368,7 @@ tasks:
     - run: "echo dep2"
 `,
 			},
-			srcURL: "file:tasks.yaml",
+			srcURL:       "file:tasks.yaml",
 			expectedRefs: []string{"file:tasks.yaml", "file:dep.yaml"},
 		},
 		{
@@ -381,13 +381,13 @@ tasks:
     - uses: "::invalid-url"
 `,
 			},
-			srcURL: "file:tasks.yaml",
+			srcURL:    "file:tasks.yaml",
 			expectErr: "missing protocol scheme",
 		},
 		{
-			name: "non-existent file",
-			files: map[string]string{},
-			srcURL: "file:nonexistent.yaml",
+			name:      "non-existent file",
+			files:     map[string]string{},
+			srcURL:    "file:nonexistent.yaml",
 			expectErr: "file does not exist",
 		},
 		{
@@ -395,7 +395,7 @@ tasks:
 			files: map[string]string{
 				"invalid.yaml": "not: a: valid: workflow",
 			},
-			srcURL: "file:invalid.yaml",
+			srcURL:    "file:invalid.yaml",
 			expectErr: "mapping value is not allowed in this context",
 		},
 		{
@@ -408,7 +408,7 @@ tasks:
     - uses: "file:nonexistent.yaml?task=task"
 `,
 			},
-			srcURL: "file:tasks.yaml",
+			srcURL:    "file:tasks.yaml",
 			expectErr: "file does not exist",
 		},
 	}
@@ -416,7 +416,7 @@ tasks:
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			fs := afero.NewMemMapFs()
-			
+
 			for path, content := range tc.files {
 				err := afero.WriteFile(fs, path, []byte(content), 0644)
 				require.NoError(t, err)
