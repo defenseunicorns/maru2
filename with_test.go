@@ -89,7 +89,6 @@ func TestTemplateString(t *testing.T) {
 			str:           "Hello ${{ input",
 			expectedError: "unclosed action",
 		},
-		// "which" function tests
 		{
 			name:     "with which shortcut",
 			str:      "shortcut: ${{ which \"foo\" }}",
@@ -99,7 +98,7 @@ func TestTemplateString(t *testing.T) {
 		{
 			name:          "with missing which shortcut",
 			str:           "shortcut: ${{ which \"missing\" }}",
-			expectedError: "shortcut \"missing\" not found",
+			expectedError: "exec: \"missing\": executable file not found in $PATH",
 			dryRun:        false,
 		},
 		{
@@ -111,10 +110,9 @@ func TestTemplateString(t *testing.T) {
 		{
 			name:          "dry run - with missing which shortcut",
 			str:           "shortcut: ${{ which \"missing\" }}",
-			expectedError: "shortcut \"missing\" not found",
+			expectedError: "exec: \"missing\": executable file not found in $PATH",
 			dryRun:        true,
 		},
-		// Dry run tests
 		{
 			name:     "dry run - no template",
 			str:      "hello world",

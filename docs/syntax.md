@@ -223,9 +223,14 @@ On top of the builtin behavior, Maru2 provides a few additional helpers:
 - `${{ input "<name>" }}`: calling an input
   - If the task is top-level (called via CLI), `with` values are received from the `--with` flag.
   - If the task is called from another task, `with` values are passed from the calling step.
-- `${{ which "<key>" }}`: expands `key` to a registered executable (registrations are configured via Maru2 wrappers)
-  - There are no `which` shortcuts configured for Maru2, these are left up to wrapper implementations.
+- `${{ which "<key>" }}`: expands `key` to a registered executable or falls back to $PATH lookup
+  - First checks for registered shortcuts (configured via Maru2 wrappers)
+  - If no shortcut is found, falls back to searching for the executable in $PATH using `exec.LookPath()`
+  - If the executable is not found in either the registration system or $PATH, returns an error that will cause the step to fail
+  - There are no `which` shortcuts configured for Maru2 by default, these are left up to wrapper implementations.
   - ex: `${{ which "uds" }} --version` when Maru2 is run as: `uds run foo ...` renders as `/absolute/path/to/uds --version`
+  - ex: `${{ which "git" }} status` when no `git` shortcut is registered will find `git` in $PATH and render as `/usr/bin/git status`
+  - ex: `${{ which "nonexistent" }} --help` will fail with error `exec: "nonexistent": executable file not found in $PATH`
 - `OS`, `ARCH`, `PLATFORM`: the current OS, architecture, or platform
 
 ```yaml
