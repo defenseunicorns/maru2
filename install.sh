@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 # derived from:
 # https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh
 
@@ -9,25 +11,9 @@ REPO_URL="https://github.com/defenseunicorns/maru2"
 : ${USE_SUDO:="true"}
 : ${MARU2_INSTALL_DIR:="/usr/local/bin"}
 
-# initArch discovers the architecture for this system.
-initArch() {
-  ARCH=$(uname -m)
-  case $ARCH in
-    armv5*) ARCH="armv5";;
-    armv6*) ARCH="armv6";;
-    armv7*) ARCH="arm";;
-    aarch64) ARCH="arm64";;
-    x86) ARCH="386";;
-    x86_64) ARCH="amd64";;
-    i686) ARCH="386";;
-    i386) ARCH="386";;
-  esac
-}
-
-# initOS discovers the operating system for this system.
-initOS() {
-  OS=$(uname)
-}
+# relies upon .goreleaser.yaml following uname conventions
+ARCH=$(uname -m)
+OS=$(uname)
 
 # runs the given command as root (detects if we are root already)
 runAsRoot() {
@@ -114,7 +100,7 @@ checkLatestVersion() {
 # downloadFile downloads the latest binary package and also the checksum
 # for that binary.
 downloadFile() {
-  MARU2_DIST="maru2-{$OS}_$ARCH"
+  MARU2_DIST="maru2_${OS}_$ARCH.tar.gz"
   DOWNLOAD_URL="$REPO_URL/releases/download/$TAG/$MARU2_DIST"
   MARU2_TMP_ROOT="$(mktemp -dt maru2-binary-XXXXXX)"
   MARU2_TMP_FILE="$MARU2_TMP_ROOT/$MARU2_DIST"
@@ -129,6 +115,7 @@ downloadFile() {
 # installs it.
 installFile() {
   echo "Preparing to install $APP_NAME into ${MARU2_INSTALL_DIR}"
+  tar -xzf "$MARU2_TMP_FILE" -C "$MARU2_INSTALL_DIR"
   runAsRoot chmod +x "$MARU2_TMP_FILE"
   runAsRoot cp "$MARU2_TMP_FILE" "$MARU2_INSTALL_DIR/$APP_NAME"
   echo "$APP_NAME installed into $MARU2_INSTALL_DIR/$APP_NAME"
@@ -198,8 +185,6 @@ while [[ $# -gt 0 ]]; do
 done
 set +u
 
-initArch
-initOS
 verifySupported
 checkTagProvided || checkLatestVersion
 if ! checkMaru2InstalledVersion; then
