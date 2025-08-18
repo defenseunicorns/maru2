@@ -14,6 +14,8 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/goccy/go-yaml"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
@@ -251,6 +253,188 @@ func TestFetchAll(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestListAllLocal(t *testing.T) {
+	ctx := log.WithContext(t.Context(), log.New(io.Discard))
+
+	tests := []struct {
+		name         string
+		files        map[string]string
+		srcURL       string
+		expectedRefs []string
+		expectErr    string
+	}{
+		{
+			name: "non-file scheme returns empty",
+			srcURL: "https://example.com/workflow.yaml",
+			expectedRefs: nil,
+		},
+		{
+			name: "workflow with no local references",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - run: "echo hello"
+`,
+			},
+			srcURL: "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml"},
+		},
+		{
+			name: "workflow with single local reference",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - uses: "file:dep.yaml?task=dep"
+`,
+				"dep.yaml": `
+schema-version: v0
+tasks:
+  dep:
+    - run: "echo dep"
+`,
+			},
+			srcURL: "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml", "file:dep.yaml"},
+		},
+		{
+			name: "workflow with nested local references",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - uses: "file:dep1.yaml?task=dep1"
+`,
+				"dep1.yaml": `
+schema-version: v0
+tasks:
+  dep1:
+    - uses: "file:dep2.yaml?task=dep2"
+`,
+				"dep2.yaml": `
+schema-version: v0
+tasks:
+  dep2:
+    - run: "echo dep2"
+`,
+			},
+			srcURL: "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml", "file:dep1.yaml", "file:dep2.yaml"},
+		},
+		{
+			name: "workflow with mixed remote and local references",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - uses: "https://example.com/remote.yaml"
+    - uses: "file:local.yaml?task=local"
+`,
+				"local.yaml": `
+schema-version: v0
+tasks:
+  local:
+    - run: "echo local"
+`,
+			},
+			srcURL: "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml", "file:local.yaml"},
+		},
+		{
+			name: "workflow with duplicate local references",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - uses: "file:dep.yaml?task=dep1"
+    - uses: "file:dep.yaml?task=dep2"
+`,
+				"dep.yaml": `
+schema-version: v0
+tasks:
+  dep1:
+    - run: "echo dep1"
+  dep2:
+    - run: "echo dep2"
+`,
+			},
+			srcURL: "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml", "file:dep.yaml"},
+		},
+		{
+			name: "workflow with invalid URL in uses",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - uses: "::invalid-url"
+`,
+			},
+			srcURL: "file:tasks.yaml",
+			expectErr: "missing protocol scheme",
+		},
+		{
+			name: "non-existent file",
+			files: map[string]string{},
+			srcURL: "file:nonexistent.yaml",
+			expectErr: "file does not exist",
+		},
+		{
+			name: "invalid workflow syntax",
+			files: map[string]string{
+				"invalid.yaml": "not: a: valid: workflow",
+			},
+			srcURL: "file:invalid.yaml",
+			expectErr: "mapping value is not allowed in this context",
+		},
+		{
+			name: "non-existent local dependency",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - uses: "file:nonexistent.yaml?task=task"
+`,
+			},
+			srcURL: "file:tasks.yaml",
+			expectErr: "file does not exist",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fs := afero.NewMemMapFs()
+			
+			for path, content := range tc.files {
+				err := afero.WriteFile(fs, path, []byte(content), 0644)
+				require.NoError(t, err)
+			}
+
+			srcURL, err := url.Parse(tc.srcURL)
+			require.NoError(t, err)
+
+			refs, err := ListAllLocal(ctx, srcURL, fs)
+
+			if tc.expectErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.ElementsMatch(t, tc.expectedRefs, refs)
 		})
 	}
 }

@@ -1021,6 +1021,83 @@ func TestTemplateSlice(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "slice with nil values",
+			slice: []any{
+				nil,
+				"test",
+				nil,
+			},
+			expected: []any{
+				nil,
+				"test",
+				nil,
+			},
+		},
+		{
+			name: "slice with unsupported type (function) - should pass through",
+			slice: []any{
+				42,
+				true,
+			},
+			expected: []any{
+				42,
+				true,
+			},
+		},
+		{
+			name: "slice with nested slices containing maps",
+			input: v0.With{
+				"name": "test",
+			},
+			slice: []any{
+				[]any{
+					map[string]any{
+						"key": "${{ input \"name\" }}",
+					},
+				},
+			},
+			expected: []any{
+				[]any{
+					v0.With{
+						"key": "test",
+					},
+				},
+			},
+		},
+		{
+			name: "slice with deeply nested structure",
+			input: v0.With{
+				"value": "nested",
+			},
+			slice: []any{
+				map[string]any{
+					"level1": map[string]any{
+						"level2": []any{
+							"${{ input \"value\" }}",
+						},
+					},
+				},
+			},
+			expected: []any{
+				v0.With{
+					"level1": v0.With{
+						"level2": []any{
+							"nested",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "slice with template error in nested element",
+			slice: []any{
+				map[string]any{
+					"key": "${{ invalid template syntax",
+				},
+			},
+			expectedError: "function \"invalid\" not defined",
+		},
 	}
 
 	for _, tc := range tests {

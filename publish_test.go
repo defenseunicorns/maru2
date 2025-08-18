@@ -286,6 +286,34 @@ tasks:
 				remoteDesc,
 			},
 		},
+		{
+			name:        "entrypoint with invalid workflow syntax",
+			entrypoints: []string{"tasks.yaml"},
+			files: map[string]string{
+				"tasks.yaml": "invalid: yaml: syntax",
+			},
+			expectErr: "mapping value is not allowed in this context",
+		},
+		{
+			name:        "entrypoint with local dependency that has invalid syntax",
+			entrypoints: []string{"tasks.yaml"},
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v0
+tasks:
+  main:
+    - uses: "file:invalid.yaml?task=task"
+`,
+				"invalid.yaml": "not: valid: workflow: syntax",
+			},
+			expectErr: "mapping value is not allowed in this context",
+		},
+		{
+			name:        "no entrypoints",
+			entrypoints: []string{},
+			files:       map[string]string{},
+			expectErr:   "need at least one entrypoint",
+		},
 	}
 
 	for _, tc := range tt {
