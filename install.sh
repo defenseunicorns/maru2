@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# Enable debug mode if DEBUG=true environment variable is set
-if [[ "${DEBUG:-}" == "true" ]]; then
-  set -x
-fi
-
 # derived from:
 # https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh
 
@@ -87,7 +82,7 @@ checkTagProvided() {
 checkLatestVersion() {
   local latest_release_url="$REPO_URL/releases/latest"
   if type "curl" > /dev/null; then
-    TAG=$(scurl -Ls -o /dev/null -w %{url_effective} $latest_release_url | grep -oE "[^/]+$" )
+    TAG=$(scurl -Ls -o /dev/null -w "%{url_effective}" $latest_release_url | grep -oE "[^/]+$" )
   elif type "wget" > /dev/null; then
     TAG=$(wget $latest_release_url --server-response -O /dev/null 2>&1 | awk '/^\s*Location: /{DEST=$2} END{ print DEST}' | grep -oE "[^/]+$")
   fi
