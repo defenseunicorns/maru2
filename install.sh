@@ -55,17 +55,17 @@ verifySupported() {
 	fi
 }
 
-# checkMaru2InstalledVersion checks which version of maru2 is installed and
+# checkMaru2InstalledVersion checks which version is installed and
 # if it needs to be changed.
 checkMaru2InstalledVersion() {
 	if [[ -f "${MARU2_INSTALL_DIR}/${BINARIES[0]}" ]]; then
 		local version
-		version=$(maru2 --version)
+		version=$("${MARU2_INSTALL_DIR}/${BINARIES[0]}" --version)
 		if [[ "$version" == "$TAG" ]]; then
-			echo "maru2 ${version} is already ${DESIRED_VERSION:-latest}"
+			echo "${BINARIES[0]} ${version} is already ${DESIRED_VERSION:-latest}"
 			return 0
 		else
-			echo "maru2 ${TAG} is available. Changing from version ${version}."
+			echo "${BINARIES[0]} ${TAG} is available. Changing from version ${version}."
 			return 1
 		fi
 	else
@@ -99,7 +99,7 @@ checkLatestVersion() {
 downloadTarball() {
 	MARU2_DIST="maru2_${OS}_$ARCH.tar.gz"
 	DOWNLOAD_URL="$REPO_URL/releases/download/$TAG/$MARU2_DIST"
-	MARU2_TMP_ROOT="$(mktemp -dt maru2-binary-XXXXXX)"
+	MARU2_TMP_ROOT="$(mktemp -dt maru2-tar-XXXXXX)"
 	MARU2_TMP_FILE="$MARU2_TMP_ROOT/$MARU2_DIST"
 	echo "Fetching $DOWNLOAD_URL"
 	if type "curl" >/dev/null; then
