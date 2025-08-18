@@ -6,8 +6,8 @@
 BINARIES=("maru2" "maru2-publish")
 REPO_URL="https://github.com/defenseunicorns/maru2"
 
-: ${USE_SUDO:="true"}
-: ${MARU2_INSTALL_DIR:="/usr/local/bin"}
+: "${USE_SUDO:="true"}"
+: "${MARU2_INSTALL_DIR:="/usr/local/bin"}"
 
 # relies upon .goreleaser.yaml following uname conventions
 ARCH=$(uname -m)
@@ -17,7 +17,7 @@ OS=$(uname)
 runAsRoot() {
 	local CMD="$*"
 
-	if [ $EUID -ne 0 -a $USE_SUDO = "true" ]; then
+	if [ $EUID -ne 0 ] && [ "$USE_SUDO" = "true" ]; then
 		CMD="sudo $CMD"
 	fi
 
