@@ -47,6 +47,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           go tool cover -func=coverage.out | sort -k3 -n
+      - uses: codecov/codecov-action@39a2af19d997be74586469d4062e173ecae614f6
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       - run: |
           go test ./schema/v0 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
           go test ./schema/v0 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
