@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-set -x
+# Enable debug mode if DEBUG=true environment variable is set
+if [[ "${DEBUG:-}" == "true" ]]; then
+  set -x
+fi
 
 # derived from:
 # https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh
@@ -97,9 +100,8 @@ checkLatestVersion() {
   fi
 }
 
-# downloadFile downloads the latest binary package and also the checksum
-# for that binary.
-downloadFile() {
+# downloadTarball downloads the requested release tarball
+downloadTarball() {
   MARU2_DIST="maru2_${OS}_$ARCH.tar.gz"
   DOWNLOAD_URL="$REPO_URL/releases/download/$TAG/$MARU2_DIST"
   MARU2_TMP_ROOT="$(mktemp -dt maru2-binary-XXXXXX)"
@@ -111,10 +113,9 @@ downloadFile() {
   fi
 }
 
-# installFile verifies the SHA256 for the file, then unpacks and
-# installs it.
-installFile() {
-  echo "Preparing to install $APP_NAME into ${MARU2_INSTALL_DIR}"
+# installBinaries extracts and installs the binaries
+installBinaries() {
+  echo "Preparing to install $APP_NAME $TAG into ${MARU2_INSTALL_DIR}"
 
   if [[ ! -d "$MARU2_INSTALL_DIR" ]]; then
     echo "Error: Install directory '$MARU2_INSTALL_DIR' does not exist. Please create it first."
@@ -127,11 +128,11 @@ installFile() {
 
   runAsRoot cp "$MARU2_EXTRACT_DIR/maru2" "$MARU2_INSTALL_DIR/"
   runAsRoot chmod +x "$MARU2_INSTALL_DIR/maru2"
-  echo "maru2 installed into $MARU2_INSTALL_DIR/maru2"
-
+  
   runAsRoot cp "$MARU2_EXTRACT_DIR/maru2-publish" "$MARU2_INSTALL_DIR/"
   runAsRoot chmod +x "$MARU2_INSTALL_DIR/maru2-publish"
-  echo "maru2-publish installed into $MARU2_INSTALL_DIR/maru2-publish"
+  
+  echo "$APP_NAME installed into $MARU2_INSTALL_DIR"
 }
 
 # fail_trap is executed if an error occurs.
@@ -201,8 +202,8 @@ set +u
 verifySupported
 checkTagProvided || checkLatestVersion
 if ! checkMaru2InstalledVersion; then
-  downloadFile
-  installFile
+  downloadTarball
+  installBinaries
 fi
 testVersion
 cleanup
