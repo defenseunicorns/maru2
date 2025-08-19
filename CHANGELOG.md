@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.1 (2025-08-19)
+
+## What's Changed
+* ci(deps): bump goreleaser/goreleaser-action from 6.3.0 to 6.4.0 in the github-actions group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/86
+* refactor: which fallback by @Noxsios in https://github.com/defenseunicorns/maru2/pull/87
+* chore(ci): add dependency review action by @Noxsios in https://github.com/defenseunicorns/maru2/pull/89
+* chore(ci): fix dependency review action to only run on prs by @Noxsios in https://github.com/defenseunicorns/maru2/pull/90
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.2.0...v0.2.1
+
 ## 0.2.0 (2025-08-18)
 
 ## What's Changed
