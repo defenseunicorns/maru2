@@ -50,6 +50,8 @@ func main() {
 	})
 
 	logger.SetStyles(maru2cmd.DefaultStyles())
+
+	ctx = log.WithContext(ctx, logger)
 	// end context and logger setup
 
 	// register uds, zarf, kubectl and other shortcuts
