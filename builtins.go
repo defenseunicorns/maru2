@@ -54,7 +54,7 @@ func ExecuteBuiltin(ctx context.Context, step v0.Step, with v0.With, previous Co
 		}
 	}
 
-	logger.Print(">", "builtin", name, "with", builtin)
+	logger.Debug(">", "builtin", name, "with", builtin)
 
 	result, err := builtin.Execute(ctx)
 	if err != nil {
