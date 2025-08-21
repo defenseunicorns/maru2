@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.2 (2025-08-21)
+
+## What's Changed
+* ci(deps): bump googleapis/release-please-action from 4.2.0 to 4.3.0 in the github-actions group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/94
+* build(deps): bump gitlab.com/gitlab-org/api/client-go from 0.139.2 to 0.141.1 in the go group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/91
+* docs: fix broken expr link by @mjnagel in https://github.com/defenseunicorns/maru2/pull/95
+* refactor: send builtin printout to debug by @Noxsios in https://github.com/defenseunicorns/maru2/pull/96
+
+## New Contributors
+* @mjnagel made their first contribution in https://github.com/defenseunicorns/maru2/pull/95
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.2.1...v0.2.2
+
 ## 0.2.1 (2025-08-19)
 
 ## What's Changed
