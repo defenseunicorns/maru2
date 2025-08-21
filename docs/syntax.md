@@ -546,7 +546,7 @@ Validation is performed after any default values are applied and before the task
 
 ## Conditional execution with `if`
 
-Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](github.com/expr-lang/expr) expressions. They have access to all expr stdlib functions, and five extra helper functions:
+Maru2 supports conditional execution of steps using `if`. `if` statements are [expr](https://github.com/expr-lang/expr) expressions. They have access to all expr stdlib functions, and five extra helper functions:
 
 - `failure()`: Run this step only if a previous step has failed (from timeout, script failure, syntax errors, `SIGINT`, etc...)
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
