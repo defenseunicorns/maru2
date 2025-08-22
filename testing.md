@@ -92,7 +92,7 @@ If a function, class struct, etc... is too confusing / complex to test the follo
 - failure
 - empty (default)
 
-the code is prob too convoluted or has too many layers of abstraction.
+the code is probably too convoluted or has too many layers of abstraction.
 
 AI is actually a pretty good canary for this.
 
@@ -106,13 +106,13 @@ Tests are the first time in a codebase you can act as a consumer of your own SDK
 
 At a glance, you should be able to figure out what a function does and its boundaries just by looking at the tests.
 
-If you can't use your own code, no one else will.
+If you can't use your own code, no one else can.
 
 <!-- pause -->
 
 If you are having to create test setup / teardown that makes you uncomfortable, look to refactor.
 
-Code is very stylistic, and it benefits to be consistent in both writing and testing code. If two functions perform similar, but unrelated operations, their tests should probably look similar as well.
+Code is very stylistic, but not matter what it benefits to be consistent in both writing and testing code. If two functions perform similar, but unrelated operations, their tests should probably look similar as well.
 
 <!-- end_slide -->
 
