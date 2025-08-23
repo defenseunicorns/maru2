@@ -59,6 +59,9 @@ func TestGitHubFetcher(t *testing.T) {
   - [](uses/http_test.go)
   - [](uses/oci_test.go)
 <!-- pause -->
+- **fuzzing** for pattern validation and input generation
+  - [](schema/v0/pattern_test.go)
+<!-- pause -->
 - **simple tests** for operations even too simple for a table test, or so hard to test I only want a vibe check
   - [](schema_test.go)
 <!-- pause -->
