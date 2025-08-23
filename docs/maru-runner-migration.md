@@ -11,7 +11,9 @@ This guide will help you migrate your existing `maru-runner` tasks to the new `m
 
 Migrating from `maru-runner` to `maru2` is no small task, and one that should be taken with care and consideration.
 
-Additionally, the migration gives workflow authors a chance to redefine the patterns they have been using, and complete sweeping / breaking changes to their comfort, a migration tool stymies that creativity.
+Additionally, the migration gives workflow authors a chance to redefine the patterns they have been using, and complete sweeping / breaking changes to their comfort level, a migration tool stymies that creativity.
+
+Lastly, this will be the last such time that a pure migration guide will be provided. Since `maru2` has versioned schemas, there will be schema migrations that happen automatically during runtime, as well as schema migrations that can be accomplished via a future migration CLI (probably something like `go run github.com/maru2/cmd/maru2-migrate@main --from v0 --to v1 tasks.yaml`).
 
 ## Using AI to migrate
 
