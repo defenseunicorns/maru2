@@ -13,7 +13,7 @@ Migrating from `maru-runner` to `maru2` is no small task, and one that should be
 
 Additionally, the migration gives workflow authors a chance to redefine the patterns they have been using, and complete sweeping / breaking changes to their comfort level, a migration tool stymies that creativity.
 
-Lastly, this will be the last such time that a pure migration guide will be provided. Since `maru2` has versioned schemas, there will be schema migrations that happen automatically during runtime, as well as schema migrations that can be accomplished via a future migration CLI (probably something like `go run github.com/maru2/cmd/maru2-migrate@main --from v0 --to v1 tasks.yaml`).
+Lastly, this will be the last such time that a pure migration guide will be provided. Since `maru2` has versioned schemas, there will be schema migrations that happen automatically during runtime, as well as schema migrations that can be accomplished via a future migration CLI (probably something like `go run github.com/maru2/cmd/maru2-migrate@main tasks.yaml`).
 
 ## Using AI to migrate
 
@@ -21,24 +21,24 @@ The following setup and prompt _should_ get the ball rolling on migrating a give
 
 1. Download relevant context (or add as remote context via the raw content URLs):
 
-  ```sh
-  curl -sS -o maru-readme.md https://raw.githubusercontent.com/defenseunicorns/maru-runner/main/README.md
-  curl -sS -o maru-runner.schema.json https://raw.githubusercontent.com/defenseunicorns/maru-runner/main/tasks.schema.json
-  curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/docs/syntax.md
-  curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/docs/cli.md
-  curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/docs/maru-runner-migration.md
-  curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json
-  ```
+```sh
+curl -sS -o maru-readme.md https://raw.githubusercontent.com/defenseunicorns/maru-runner/main/README.md
+curl -sS -o maru-runner.schema.json https://raw.githubusercontent.com/defenseunicorns/maru-runner/main/tasks.schema.json
+curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/docs/syntax.md
+curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/docs/cli.md
+curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/docs/maru-runner-migration.md
+curl -sSO https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json
+```
 
 2. Prompt:
 
-  ```text
-  context: read maru-readme.md and maru-runner.schema.json for context on how the old task runner schema and system worked,
-  now read maru2.schema.json, sytax.md and cli.md for context on how the new task runner schema and system works,
-  now read maru-runner-migration.md on tips and tricks on how to migrate between maru-runner and maru2
+```text
+context: read maru-readme.md and maru-runner.schema.json for context on how the old task runner schema and system worked,
+now read maru2.schema.json, sytax.md and cli.md for context on how the new task runner schema and system works,
+now read maru-runner-migration.md on tips and tricks on how to migrate between maru-runner and maru2
 
-  task: migrate tasks.yaml from the old (maru-runner) to the new (maru2), if a property cannot be cleanly migrated, or you are unsure, comment out that property / step as is so the user can make the determination.
-  ```
+task: migrate tasks.yaml from the old (maru-runner) to the new (maru2), if a property cannot be cleanly migrated, or you are unsure, comment out that property / step as is so the user can make the determination.
+```
 
 ## Table of Contents
 
