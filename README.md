@@ -51,6 +51,8 @@ or checkout the latest [release artifacts](https://github.com/defenseunicorns/ma
 
 View CLI usage w/ `maru2 --help`
 
+If you are coming from `maru-runner` / `uds run` and looking to transition, checkout the [migration guide](./docs/maru-runner-migration.md).
+
 If you are looking to embed maru2 into another Cobra CLI, take a look at the example in [`cmd/internal`](./cmd/internal/main.go).
 
 ## Contributing
