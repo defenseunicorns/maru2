@@ -372,10 +372,10 @@ func TestHandleRunStep(t *testing.T) {
 		},
 	}
 
+	t.Setenv("NO_COLOR", "true")
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("NO_COLOR", "true")
-
 			var buf bytes.Buffer
 
 			ctx := log.WithContext(t.Context(), log.NewWithOptions(&buf, log.Options{
