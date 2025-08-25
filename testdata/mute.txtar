@@ -1,0 +1,27 @@
+exec maru2 test-mute
+cmp stderr stderr.txt
+cmp stdout stdout.txt
+
+-- tasks.yaml --
+schema-version: v0
+tasks:
+  test-mute:
+    - run: echo "This output should be visible"
+      id: visible-step
+    - run: |
+        echo "This output should be muted"
+        echo "captured=success" >> $MARU2_OUTPUT
+      id: muted-step
+      mute: true
+    - run: echo "Muted step executed successfully"
+    - run: echo "captured=${{ from "muted-step" "captured" }}"
+-- stderr.txt --
+echo "This output should be visible"
+echo "This output should be muted"
+echo "captured=success" >> $MARU2_OUTPUT
+echo "Muted step executed successfully"
+echo "captured=success"
+-- stdout.txt --
+This output should be visible
+Muted step executed successfully
+captured=success

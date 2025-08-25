@@ -360,12 +360,31 @@ func TestHandleRunStep(t *testing.T) {
 			expectedError: "exit status 1",
 			expectedLog:   "exit 1\n",
 		},
+		{
+			name: "muted command",
+			step: v0.Step{
+				Run:  "echo 'This should not appear in output'",
+				Mute: true,
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo 'This should not appear in output'\n",
+		},
+		{
+			name: "muted command still can send outputs",
+			step: v0.Step{
+				Run:  "echo 'foo=bar' >> $MARU2_OUTPUT",
+				Mute: true,
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo 'foo=bar' >> $MARU2_OUTPUT\n",
+			expectedOut:  map[string]any{"foo": "bar"},
+		},
 	}
+
+	t.Setenv("NO_COLOR", "true")
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("NO_COLOR", "true")
-
 			var buf bytes.Buffer
 
 			ctx := log.WithContext(t.Context(), log.NewWithOptions(&buf, log.Options{
@@ -380,9 +399,7 @@ func TestHandleRunStep(t *testing.T) {
 				require.EqualError(t, err, tc.expectedError)
 			}
 
-			if tc.expectedOut != nil {
-				assert.Equal(t, tc.expectedOut, result)
-			}
+			assert.Equal(t, tc.expectedOut, result)
 
 			assert.Equal(t, tc.expectedLog, buf.String())
 		})

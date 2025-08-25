@@ -39,6 +39,10 @@ type Step struct {
 	Shell string `json:"shell,omitempty"`
 	// Set how long to run the command before timing out
 	Timeout string `json:"timeout,omitempty"`
+	// Mute controls whether the rendered script, STDOUT and STDERR are printed
+	//
+	// it is similar to set +x and 2>&1 >/dev/null
+	Mute bool `json:"mute,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a step
@@ -102,6 +106,10 @@ powershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -Literal
 		Description: `Set how long to run the command before timing out (e.g., "30s", "1m30s", "1h")
 
 See https://pkg.go.dev/time#ParseDuration for more information.`,
+	})
+	props.Set("mute", &jsonschema.Schema{
+		Type:        "boolean",
+		Description: "Mute STDOUT and STDERR for the current script. Has no effect on uses.",
 	})
 
 	runProps := jsonschema.NewProperties()

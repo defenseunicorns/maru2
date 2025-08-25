@@ -222,6 +222,11 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
+	if step.Mute {
+		cmd.Stdout = nil
+		cmd.Stderr = nil
+	}
+
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
