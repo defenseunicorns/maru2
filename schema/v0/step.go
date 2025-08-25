@@ -23,6 +23,8 @@ type With = map[string]any
 type Step struct {
 	// Run is the command/script to run
 	Run string `json:"run,omitempty"`
+	// Env is a map of environment variables
+	Env map[string]any `json:"env,omitempty"`
 	// Uses is a reference to another task
 	Uses string `json:"uses,omitempty"`
 	// With is a map of additional parameters for the step/task call
@@ -56,6 +58,26 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Type:        "string",
 		Description: "Command/script to run",
 	})
+	if env, ok := props.Get("env"); ok && env != nil {
+		env.Description = "Extra environment variables for this step"
+		env.Type = "object"
+		env.PropertyNames = &jsonschema.Schema{
+			Pattern: EnvVariablePattern.String(),
+		}
+		env.AdditionalProperties = &jsonschema.Schema{
+			OneOf: []*jsonschema.Schema{
+				{
+					Type: "string",
+				},
+				{
+					Type: "boolean",
+				},
+				{
+					Type: "integer",
+				},
+			},
+		}
+	}
 	props.Set("uses", &jsonschema.Schema{
 		Type: "string",
 		Description: `Location of a task to call
