@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -370,6 +369,16 @@ func TestHandleRunStep(t *testing.T) {
 			withDefaults: v0.With{},
 			expectedLog:  "echo 'This should not appear in output'\n",
 		},
+		{
+			name: "muted command still can send outputs",
+			step: v0.Step{
+				Run:  "echo 'foo=bar' >> $MARU2_OUTPUT",
+				Mute: true,
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo 'foo=bar' >> $MARU2_OUTPUT\n",
+			expectedOut:  map[string]any{"foo": "bar"},
+		},
 	}
 
 	t.Setenv("NO_COLOR", "true")
@@ -390,9 +399,7 @@ func TestHandleRunStep(t *testing.T) {
 				require.EqualError(t, err, tc.expectedError)
 			}
 
-			if tc.expectedOut != nil {
-				assert.Equal(t, tc.expectedOut, result)
-			}
+			assert.Equal(t, tc.expectedOut, result)
 
 			assert.Equal(t, tc.expectedLog, buf.String())
 		})
@@ -568,62 +575,4 @@ func TestTraceError(t *testing.T) {
 			})
 		}
 	})
-}
-
-func TestMutedStepOutput(t *testing.T) {
-	outputFile := filepath.Join(t.TempDir(), "test_output.txt")
-
-	tests := []struct {
-		name    string
-		step    v0.Step
-		outputs map[string]any
-	}{
-		{
-			name: "normal command - output visible",
-			step: v0.Step{
-				Run: fmt.Sprintf("echo 'test output' > %s", outputFile),
-			},
-		},
-		{
-			name: "muted command - execution happens but output hidden",
-			step: v0.Step{
-				Run:  fmt.Sprintf("echo 'test output' > %s", outputFile),
-				Mute: true,
-			},
-		},
-		{
-			name: "muted command with output capture",
-			step: v0.Step{
-				Run:  fmt.Sprintf("echo 'test output' > %s && echo 'captured=true' >> $MARU2_OUTPUT", outputFile),
-				Mute: true,
-				ID:   "muted-step",
-			},
-			outputs: map[string]any{"captured": "true"},
-		},
-	}
-
-	t.Setenv("NO_COLOR", "true")
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			err := os.WriteFile(outputFile, []byte{}, 0644)
-			require.NoError(t, err)
-
-			var logBuffer bytes.Buffer
-			logger := log.NewWithOptions(&logBuffer, log.Options{
-				Level: log.InfoLevel,
-			})
-			ctx := log.WithContext(t.Context(), logger)
-
-			result, err := handleRunStep(ctx, tc.step, v0.With{}, nil, false)
-			require.NoError(t, err)
-
-			fileContent, err := os.ReadFile(outputFile)
-			require.NoError(t, err)
-			assert.Equal(t, "test output\n", string(fileContent), "Command should have executed and written to file")
-
-			assert.Equal(t, tc.outputs, result, "Step outputs should be captured correctly")
-
-			assert.Contains(t, logBuffer.String(), "echo 'test output'", "Command should be logged regardless of mute setting")
-		})
-	}
 }
