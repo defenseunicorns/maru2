@@ -396,6 +396,26 @@
               "type": "string",
               "description": "Command/script to run"
             },
+            "env": {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$"
+              },
+              "type": "object",
+              "description": "Extra environment variables for this step"
+            },
             "uses": {
               "type": "string",
               "description": "Location of a task to call\n\nCalling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-another-task-as-a-step\nCalling tasks from local files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-local-file\nCalling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-file",

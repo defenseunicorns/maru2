@@ -58,13 +58,13 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Type:        "string",
 		Description: "Command/script to run",
 	})
-	if env, ok := props.Get("env"); ok && env != nil {
-		env.Description = "Extra environment variables for this step"
-		env.Type = "object"
-		env.PropertyNames = &jsonschema.Schema{
+	props.Set("env", &jsonschema.Schema{
+		Description: "Extra environment variables for this step",
+		Type:        "object",
+		PropertyNames: &jsonschema.Schema{
 			Pattern: EnvVariablePattern.String(),
-		}
-		env.AdditionalProperties = &jsonschema.Schema{
+		},
+		AdditionalProperties: &jsonschema.Schema{
 			OneOf: []*jsonschema.Schema{
 				{
 					Type: "string",
@@ -76,8 +76,8 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 					Type: "integer",
 				},
 			},
-		}
-	}
+		},
+	})
 	props.Set("uses", &jsonschema.Schema{
 		Type: "string",
 		Description: `Location of a task to call
