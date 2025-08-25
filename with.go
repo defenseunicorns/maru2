@@ -32,15 +32,11 @@ func RegisterWhichShortcut(key, value string) {
 	shortcuts.Store(key, value)
 }
 
-// TemplateWith templates a With map with the given input and previous outputs
-func TemplateWith(ctx context.Context, input, local v0.With, previousOutputs CommandOutputs, dry bool) (v0.With, error) {
-	logger := log.FromContext(ctx)
-
+// TemplateFlatMap templates a flat map with the given input and previous outputs
+func TemplateFlatMap(ctx context.Context, input, local v0.With, previousOutputs CommandOutputs, dry bool) (v0.With, error) {
 	if len(local) == 0 {
 		return input, nil
 	}
-
-	logger.Debug("templating", "input", input, "local", local)
 
 	r := make(v0.With, len(local))
 
@@ -57,8 +53,6 @@ func TemplateWith(ctx context.Context, input, local v0.With, previousOutputs Com
 		}
 		r[k] = result
 	}
-
-	logger.Debug("templated", "result", r)
 
 	return r, nil
 }

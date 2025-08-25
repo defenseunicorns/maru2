@@ -27,10 +27,16 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step v0.Step,
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
 	}
 
-	templatedWith, err := TemplateWith(ctx, withDefaults, step.With, outputs, dry)
+	logger := log.FromContext(ctx)
+
+	logger.Debug("templating", "input", withDefaults, "local", step.With)
+
+	templatedWith, err := TemplateFlatMap(ctx, withDefaults, step.With, outputs, dry)
 	if err != nil {
 		return nil, err
 	}
+
+	logger.Debug("templated", "result", templatedWith)
 
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
 		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
