@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -360,6 +361,15 @@ func TestHandleRunStep(t *testing.T) {
 			expectedError: "exit status 1",
 			expectedLog:   "exit 1\n",
 		},
+		{
+			name: "muted command",
+			step: v0.Step{
+				Run:  "echo 'This should not appear in output'",
+				Mute: true,
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo 'This should not appear in output'\n",
+		},
 	}
 
 	for _, tc := range tests {
@@ -558,4 +568,62 @@ func TestTraceError(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestMutedStepOutput(t *testing.T) {
+	outputFile := filepath.Join(t.TempDir(), "test_output.txt")
+
+	tests := []struct {
+		name    string
+		step    v0.Step
+		outputs map[string]any
+	}{
+		{
+			name: "normal command - output visible",
+			step: v0.Step{
+				Run: fmt.Sprintf("echo 'test output' > %s", outputFile),
+			},
+		},
+		{
+			name: "muted command - execution happens but output hidden",
+			step: v0.Step{
+				Run:  fmt.Sprintf("echo 'test output' > %s", outputFile),
+				Mute: true,
+			},
+		},
+		{
+			name: "muted command with output capture",
+			step: v0.Step{
+				Run:  fmt.Sprintf("echo 'test output' > %s && echo 'captured=true' >> $MARU2_OUTPUT", outputFile),
+				Mute: true,
+				ID:   "muted-step",
+			},
+			outputs: map[string]any{"captured": "true"},
+		},
+	}
+
+	t.Setenv("NO_COLOR", "true")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := os.WriteFile(outputFile, []byte{}, 0644)
+			require.NoError(t, err)
+
+			var logBuffer bytes.Buffer
+			logger := log.NewWithOptions(&logBuffer, log.Options{
+				Level: log.InfoLevel,
+			})
+			ctx := log.WithContext(t.Context(), logger)
+
+			result, err := handleRunStep(ctx, tc.step, v0.With{}, nil, false)
+			require.NoError(t, err)
+
+			fileContent, err := os.ReadFile(outputFile)
+			require.NoError(t, err)
+			assert.Equal(t, "test output\n", string(fileContent), "Command should have executed and written to file")
+
+			assert.Equal(t, tc.outputs, result, "Step outputs should be captured correctly")
+
+			assert.Contains(t, logBuffer.String(), "echo 'test output'", "Command should be logged regardless of mute setting")
+		})
+	}
 }
