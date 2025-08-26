@@ -889,6 +889,26 @@ func TestTemplateWithMap(t *testing.T) {
 				"greeting": "Hello test",
 			},
 		},
+		{
+			name:  "nested map with template error",
+			input: v0.With{},
+			withMap: map[string]any{
+				"config": map[string]any{
+					"greeting": "Hello ${{ input \"missing\" }}",
+				},
+			},
+			expectedError: "input \"missing\" does not exist in []",
+		},
+		{
+			name:  "slice with template error",
+			input: v0.With{},
+			withMap: map[string]any{
+				"items": []any{
+					"Hello ${{ input \"missing\" }}",
+				},
+			},
+			expectedError: "input \"missing\" does not exist in []",
+		},
 	}
 
 	for _, tc := range tests {

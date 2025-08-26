@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/charmbracelet/log"
@@ -454,6 +455,39 @@ func TestPrepareEnvironment(t *testing.T) {
 				"STEP_VAR=step-value",
 			},
 		},
+		{
+			name:         "nil withDefaults with empty outFileName (uses.go pattern)",
+			startingEnv:  []string{"PATH=/usr/bin"},
+			withDefaults: nil,
+			stepEnv: v0.Env{
+				"CUSTOM_VAR": "value",
+			},
+			expectedEnvVars: []string{
+				"PATH=/usr/bin",
+				"CUSTOM_VAR=value",
+			},
+		},
+		{
+			name:         "nil withDefaults and nil stepEnv with empty outFileName",
+			startingEnv:  []string{"HOME=/home/user"},
+			withDefaults: nil,
+			stepEnv:      nil,
+			expectedEnvVars: []string{
+				"HOME=/home/user",
+			},
+		},
+		{
+			name:         "empty withDefaults with empty outFileName",
+			startingEnv:  []string{"USER=testuser"},
+			withDefaults: v0.With{},
+			stepEnv: v0.Env{
+				"STEP_VAR": "step-value",
+			},
+			expectedEnvVars: []string{
+				"USER=testuser",
+				"STEP_VAR=step-value",
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -463,7 +497,13 @@ func TestPrepareEnvironment(t *testing.T) {
 			tempDir := t.TempDir()
 			outFilePath := filepath.Join(tempDir, "output.txt")
 
-			env, err := prepareEnvironment(tc.startingEnv, tc.withDefaults, outFilePath, tc.stepEnv)
+			// Use empty outFileName for specific test cases that match uses.go usage pattern
+			actualOutFileName := outFilePath
+			if strings.Contains(tc.name, "empty outFileName") {
+				actualOutFileName = ""
+			}
+
+			env, err := prepareEnvironment(tc.startingEnv, tc.withDefaults, actualOutFileName, tc.stepEnv)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
@@ -472,8 +512,15 @@ func TestPrepareEnvironment(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			outputEnv := "MARU2_OUTPUT=" + outFilePath
-			assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
+
+			if actualOutFileName != "" {
+				outputEnv := "MARU2_OUTPUT=" + actualOutFileName
+				assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
+			} else {
+				for _, envVar := range env {
+					assert.NotContains(t, envVar, "MARU2_OUTPUT=", "MARU2_OUTPUT should not be set when outFileName is empty")
+				}
+			}
 
 			for _, expectedEnv := range tc.expectedEnvVars {
 				assert.Contains(t, env, expectedEnv, "Expected environment variable not found: %s", expectedEnv)
