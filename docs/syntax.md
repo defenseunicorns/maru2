@@ -250,6 +250,53 @@ tasks:
 maru2 echo --with name=$(whoami) --with date=$(date)
 ```
 
+## Defining environment variables
+
+You can set custom environment variables for individual steps using the `env` field. Variable names follow the same rules as task names. Variable values leverage the same input templating engine as `run`.
+
+```yaml
+schema-version: v0
+inputs:
+  api-key:
+    description: "API key for external service"
+    default-from-env: API_KEY
+
+tasks:
+  build:
+    - name: "Set build environment"
+      run: |
+        echo "Building with NODE_ENV=$NODE_ENV"
+        echo "API endpoint: $API_ENDPOINT"
+        echo "Debug mode: $DEBUG"
+      env:
+        NODE_ENV: "production"
+        API_ENDPOINT: "https://api.example.com"
+        DEBUG: false
+
+    - name: "Use templated environment variables"
+      run: |
+        echo "Using API key: $SECRET_KEY"
+        echo "Build number: $BUILD_NUM"
+      env:
+        SECRET_KEY: ${{ input "api-key" }}
+        BUILD_NUM: ${{ from "version-step" "build-number" }}
+```
+
+### Restrictions and Behavior
+
+**PWD Restriction**: You cannot set the `PWD` environment variable through the `env` field. Use the [`dir` field]() instead to control the working directory:
+
+```yaml
+tasks:
+  example:
+    - run: pwd
+      dir: subdirectory # Use dir field, not env: { PWD: "..." }
+```
+
+**Variable Precedence**: Step-level environment variables can override existing environment variables from the system or parent process.
+
+**Scope**: Environment variables set in the `env` field only apply to that specific step. They do not persist to subsequent steps unless explicitly passed through outputs or inputs.
+
 ## Run another task as a step
 
 Calling another task within the same workflow is as simple as using the task name, similar to Makefile targets.
