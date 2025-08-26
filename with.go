@@ -213,6 +213,9 @@ func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (
 			if required && merged[name] == nil && param.Default == nil && param.DefaultFromEnv == "" {
 				return nil, fmt.Errorf("missing required input: %q", name)
 			}
+			if merged == nil {
+				merged = make(v0.With)
+			}
 			// param.Default and param.DefaultFromEnv are mutually exclusive
 			// enforced by JSON schema
 			if merged[name] == nil && param.Default != nil {
