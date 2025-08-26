@@ -3,6 +3,7 @@ exec maru2 test-env-with-uses
 cmp stderr stderr.txt
 stdout 'Parent env: parent-value'
 stdout 'Message input: from parent'
+stdout 'Step level var: step-level-value'
 stdout 'Subtask env: subtask-local'
 
 -- tasks.yaml --
@@ -17,10 +18,9 @@ tasks:
       with:
         message: "from parent"
         parent_input: ${{ input "parent_input" }}
-      # NOTE: Step-level env vars are NOT passed to uses steps
-      # This is current behavior - only process env and with params are passed
+      # Step-level env vars are now passed to uses steps
       env:
-        STEP_LEVEL_VAR: "this-will-not-be-passed"
+        STEP_LEVEL_VAR: "step-level-value"
 
 -- subtasks.yaml --
 schema-version: v0
@@ -37,6 +37,7 @@ tasks:
         echo "Parent env: $PARENT_ENV"
         echo "Message input: $INPUT_MESSAGE"
         echo "Parent input: $INPUT_PARENT_INPUT"
+        echo "Step level var: $STEP_LEVEL_VAR"
         echo "Subtask env: $SUBTASK_ENV"
       env:
         SUBTASK_ENV: "subtask-local"
@@ -45,4 +46,5 @@ tasks:
 echo "Parent env: $PARENT_ENV"
 echo "Message input: $INPUT_MESSAGE"
 echo "Parent input: $INPUT_PARENT_INPUT"
+echo "Step level var: $STEP_LEVEL_VAR"
 echo "Subtask env: $SUBTASK_ENV"

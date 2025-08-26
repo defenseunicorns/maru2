@@ -47,7 +47,12 @@ func handleUsesStep(
 
 	logger.Debug("templated", "result", templatedWith)
 
-	env, err := prepareEnvironment(environVars, nil, "", step.Env)
+	templatedEnv, err := TemplateWithMap(ctx, withDefaults, outputs, step.Env, dry)
+	if err != nil {
+		return nil, err
+	}
+
+	env, err := prepareEnvironment(environVars, nil, "", templatedEnv)
 	if err != nil {
 		return nil, err
 	}
