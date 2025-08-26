@@ -53,10 +53,10 @@ func NewRootCmd() *cobra.Command {
 		Use:   "maru2",
 		Short: "A simple task runner",
 		Long: `
- ███╗   ███╗ █████╗ ██████╗ ██╗   ██╗██████╗ 
+ ███╗   ███╗ █████╗ ██████╗ ██╗   ██╗██████╗
  ████╗ ████║██╔══██╗██╔══██╗██║   ██║╚════██╗
  ██╔████╔██║███████║██████╔╝██║   ██║ █████╔╝
- ██║╚██╔╝██║██╔══██║██╔══██╗██║   ██║██╔═══╝ 
+ ██║╚██╔╝██║██╔══██║██╔══██╗██║   ██║██╔═══╝
  ██║ ╚═╝ ██║██║  ██║██║  ██║╚██████╔╝███████╗
  ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
 `,
@@ -251,7 +251,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			for _, call := range args {
-				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, dry)
+				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, "", dry)
 				if err != nil {
 					return err
 				}

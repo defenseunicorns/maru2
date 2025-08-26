@@ -186,7 +186,7 @@ func TestRunExtended(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, tc.dry)
+			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, "", tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -552,7 +552,7 @@ func TestHandleRunStep(t *testing.T) {
 				Level: log.InfoLevel,
 			}))
 
-			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, tc.dry)
+			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, "", tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -639,7 +639,7 @@ func TestHandleUsesStep(t *testing.T) {
 			origin, err := url.Parse(tc.origin)
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, tc.dry)
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, "", tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

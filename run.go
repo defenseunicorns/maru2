@@ -57,7 +57,7 @@ Run follows the following general pattern:
 
  5. Return the final step's output and the first error encountered
 */
-func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskName string, outer v0.With, origin *url.URL, dry bool) (map[string]any, error) {
+func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskName string, outer v0.With, origin *url.URL, cwd string, dry bool) (map[string]any, error) {
 	if taskName == "" {
 		taskName = v0.DefaultTaskName
 	}
@@ -134,9 +134,9 @@ func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskN
 			var stepResult map[string]any
 
 			if step.Uses != "" {
-				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
+				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, cwd, dry)
 			} else if step.Run != "" {
-				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
+				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, cwd, dry)
 			}
 
 			if err != nil {
@@ -170,8 +170,14 @@ func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskN
 	return lastStepOutput, firstError
 }
 
-func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
-	outputs CommandOutputs, dry bool) (map[string]any, error) {
+func handleRunStep(
+	ctx context.Context,
+	step v0.Step,
+	withDefaults v0.With,
+	outputs CommandOutputs,
+	cwd string,
+	dry bool,
+) (map[string]any, error) {
 
 	logger := log.FromContext(ctx)
 
@@ -225,7 +231,7 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 
 	cmd := exec.CommandContext(ctx, shell, args...)
 	cmd.Env = env
-	cmd.Dir = filepath.Join(CWDFromContext(ctx), step.Dir)
+	cmd.Dir = filepath.Join(cwd, step.Dir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -250,25 +256,6 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 	}
 
 	return result, nil
-}
-
-type contextKey struct{ string }
-
-// ContextKeyDir is the key used to store the current working directory in context.
-var ContextKeyDir = contextKey{"dir"}
-
-// WithCWDContext returns a new context with the given current working directory.
-func WithCWDContext(ctx context.Context, dir string) context.Context {
-	return context.WithValue(ctx, ContextKeyDir, dir)
-}
-
-// CWDFromContext returns the current working directory from the context.
-// If no current working directory is set, it returns an empty string.
-func CWDFromContext(ctx context.Context) string {
-	if dir, ok := ctx.Value(ContextKeyDir).(string); ok {
-		return dir
-	}
-	return "" // empty string is a valid dir for exec.Command, defaults to calling process's current directory
 }
 
 func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv v0.Env) ([]string, error) {

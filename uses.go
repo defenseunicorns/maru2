@@ -18,10 +18,18 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step v0.Step, wf v0.Workflow, withDefaults v0.With,
-	outputs CommandOutputs, origin *url.URL, dry bool) (map[string]any, error) {
-
-	ctx = WithCWDContext(ctx, filepath.Join(CWDFromContext(ctx), step.Dir))
+func handleUsesStep(
+	ctx context.Context,
+	svc *uses.FetcherService,
+	step v0.Step,
+	wf v0.Workflow,
+	withDefaults v0.With,
+	outputs CommandOutputs,
+	origin *url.URL,
+	cwd string,
+	dry bool,
+) (map[string]any, error) {
+	cwd = filepath.Join(cwd, step.Dir)
 
 	if strings.HasPrefix(step.Uses, "builtin:") {
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
@@ -39,7 +47,7 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step v0.Step,
 	logger.Debug("templated", "result", templatedWith)
 
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, dry)
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, cwd, dry)
 	}
 
 	next, err := uses.ResolveRelative(origin, step.Uses, wf.Aliases)
@@ -54,7 +62,7 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step v0.Step,
 
 	taskName := next.Query().Get(uses.QualifierTask)
 
-	return Run(ctx, svc, nextWf, taskName, templatedWith, next, dry)
+	return Run(ctx, svc, nextWf, taskName, templatedWith, next, cwd, dry)
 }
 
 // Fetch fetches a workflow from a given URL.
