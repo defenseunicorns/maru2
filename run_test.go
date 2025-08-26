@@ -676,6 +676,51 @@ func TestHandleRunStep(t *testing.T) {
 			withDefaults: v0.With{},
 			expectedLog:  "echo \"Empty env map test completed\"\n",
 		},
+		{
+			name: "step with run templating error in dry mode",
+			step: v0.Step{
+				Run: "echo ${{ invalid syntax }}",
+			},
+			withDefaults:  v0.With{},
+			dry:           true,
+			expectedError: `template: dry-run expression evaluator:1: function "invalid" not defined`,
+			expectedLog:   "\n",
+		},
+		{
+			name: "step with PWD in env should fail",
+			step: v0.Step{
+				Run: "echo test",
+				Env: v0.Env{
+					"PWD": "/some/path",
+				},
+			},
+			withDefaults:  v0.With{},
+			expectedError: "setting PWD environment variable is not allowed",
+			expectedLog:   "echo test\n",
+		},
+		{
+			name: "step with invalid input type should fail",
+			step: v0.Step{
+				Run: "echo test",
+			},
+			withDefaults: v0.With{
+				"bad-input": complex(1, 2), // complex numbers can't be converted to string
+			},
+			expectedError: "failed to convert input \"bad-input\" to string: unable to cast (1+2i) of type complex128 to string",
+			expectedLog:   "echo test\n",
+		},
+		{
+			name: "step with invalid env var type should fail",
+			step: v0.Step{
+				Run: "echo test",
+				Env: v0.Env{
+					"BAD_VAR": complex(1, 2), // complex numbers can't be converted to string
+				},
+			},
+			withDefaults:  v0.With{},
+			expectedError: "failed to convert env var \"BAD_VAR\" to string: unable to cast (1+2i) of type complex128 to string",
+			expectedLog:   "echo test\n",
+		},
 	}
 
 	t.Setenv("NO_COLOR", "true")
@@ -759,6 +804,138 @@ func TestHandleUsesStep(t *testing.T) {
 			workflow:      v0.Workflow{},
 			withDefaults:  v0.With{},
 			expectedError: "builtin:nonexistent not found",
+			expectedOut:   nil,
+		},
+		{
+			name: "template error in step.With",
+			step: v0.Step{
+				Uses: "builtin:echo",
+				With: v0.With{
+					"text": "${{ input \"nonexistent\" }}",
+				},
+			},
+			workflow:      v0.Workflow{},
+			withDefaults:  v0.With{},
+			expectedError: `builtin:echo: template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
+			expectedOut:   nil,
+		},
+		{
+			name: "template error in local task step.With",
+			step: v0.Step{
+				Uses: "test-task",
+				With: v0.With{
+					"input": "${{ input \"nonexistent\" }}",
+				},
+			},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test-task": v0.Task{
+						{
+							Run: "echo ${{ input \"input\" }}",
+						},
+					},
+				},
+			},
+			withDefaults:  v0.With{},
+			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
+			expectedOut:   nil,
+		},
+		{
+			name: "template error in local task step.Env",
+			step: v0.Step{
+				Uses: "test-task",
+				With: v0.With{
+					"input": "hello",
+				},
+				Env: v0.Env{
+					"TEST_VAR": "${{ input \"nonexistent\" }}",
+				},
+			},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test-task": v0.Task{
+						{
+							Run: "echo ${{ input \"input\" }}",
+						},
+					},
+				},
+			},
+			withDefaults:  v0.With{},
+			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
+			expectedOut:   nil,
+		},
+		{
+			name: "PWD in local task step.Env should fail",
+			step: v0.Step{
+				Uses: "test-task",
+				With: v0.With{
+					"input": "hello",
+				},
+				Env: v0.Env{
+					"PWD": "/some/path",
+				},
+			},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test-task": v0.Task{
+						{
+							Run: "echo ${{ input \"input\" }}",
+						},
+					},
+				},
+			},
+			withDefaults:  v0.With{},
+			expectedError: "setting PWD environment variable is not allowed",
+			expectedOut:   nil,
+		},
+		{
+			name: "invalid type in local task step.Env should fail",
+			step: v0.Step{
+				Uses: "test-task",
+				With: v0.With{
+					"input": "hello",
+				},
+				Env: v0.Env{
+					"BAD_VAR": complex(1, 2),
+				},
+			},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test-task": v0.Task{
+						{
+							Run: "echo ${{ input \"input\" }}",
+						},
+					},
+				},
+			},
+			withDefaults:  v0.With{},
+			expectedError: "failed to convert env var \"BAD_VAR\" to string: unable to cast (1+2i) of type complex128 to string",
+			expectedOut:   nil,
+		},
+		{
+			name: "template error only in local task step.Env (valid step.With)",
+			step: v0.Step{
+				Uses: "test-task",
+				With: v0.With{
+					"input": "valid-input",
+				},
+				Env: v0.Env{
+					"TEST_VAR": "${{ input \"nonexistent_env_var\" }}",
+				},
+			},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test-task": v0.Task{
+						{
+							Run: "echo ${{ input \"input\" }}",
+						},
+					},
+				},
+			},
+			withDefaults: v0.With{
+				"input": "provided-input",
+			},
+			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent_env_var">: error calling input: input "nonexistent_env_var" does not exist in [input]`,
 			expectedOut:   nil,
 		},
 	}
