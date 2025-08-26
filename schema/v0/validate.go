@@ -126,6 +126,12 @@ func Validate(wf Workflow) error {
 					return fmt.Errorf(".%s[%d].timeout %q is not a valid time duration", name, idx, step.Timeout)
 				}
 			}
+
+			for key := range step.Env {
+				if ok := EnvVariablePattern.MatchString(key); !ok {
+					return fmt.Errorf(".%s[%d].env %q does not satisfy %q", name, idx, key, EnvVariablePattern.String())
+				}
+			}
 		}
 	}
 

@@ -439,6 +439,21 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "invalid env variable name violates schema",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"1INVALID": "value", // starts with number - violates schema
+						},
+					}},
+				},
+			},
+			expectedError: ".task[0].env \"1INVALID\" does not satisfy \"^[a-zA-Z_]+[a-zA-Z0-9_]*$\"",
+		},
 	}
 
 	for _, tc := range testCases {
