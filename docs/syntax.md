@@ -257,29 +257,28 @@ You can set custom environment variables for individual steps using the `env` fi
 ```yaml
 schema-version: v0
 inputs:
-  api-key:
-    description: "API key for external service"
-    default-from-env: API_KEY
+  deployment-env:
+    description: "Deployment environment"
+    default: "development"
 
-tasks:
-  build:
-    - name: "Set build environment"
-      run: |
-        echo "Building with NODE_ENV=$NODE_ENV"
-        echo "API endpoint: $API_ENDPOINT"
-        echo "Debug mode: $DEBUG"
-      env:
-        NODE_ENV: "production"
-        API_ENDPOINT: "https://api.example.com"
-        DEBUG: false
+deploy:
+  - id: "build-app"
+    name: "Build application with environment config"
+    run: |
+      npm run build
+      echo "build_version=$(git rev-parse --short HEAD)" >> $MARU2_OUTPUT
+    env:
+      NODE_ENV: ${{ input "deployment-env" }}
 
-    - name: "Use templated environment variables"
-      run: |
-        echo "Using API key: $SECRET_KEY"
-        echo "Build number: $BUILD_NUM"
-      env:
-        SECRET_KEY: ${{ input "api-key" }}
-        BUILD_NUM: ${{ from "version-step" "build-number" }}
+  - name: "Deploy application"
+    run: |
+      echo "Deploying version $BUILD_VERSION to $DEPLOY_TARGET"
+      ${{ which "zarf" }} dev deploy .
+    env:
+      BUILD_VERSION: ${{ from "build-app" "build_version" }}
+      DEPLOY_TARGET: ${{ input "deployment-env" }}
+      ZARF_NO_PROGRESS: true
+      KUBECONFIG: /etc/kubernetes/${{ input "deployment-env" }}-config
 ```
 
 ### Restrictions and Behavior
