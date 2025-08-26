@@ -595,10 +595,10 @@ func TestExecuteUses(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.expectedErr == "" {
-				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", false)
+				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", nil, false)
 				require.NoError(t, err)
 			} else {
-				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", false)
+				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", nil, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})

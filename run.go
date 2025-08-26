@@ -57,7 +57,17 @@ Run follows the following general pattern:
 
  5. Return the final step's output and the first error encountered
 */
-func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskName string, outer v0.With, origin *url.URL, cwd string, dry bool) (map[string]any, error) {
+func Run(
+	parent context.Context,
+	svc *uses.FetcherService,
+	wf v0.Workflow,
+	taskName string,
+	outer v0.With,
+	origin *url.URL,
+	cwd string,
+	environVars []string,
+	dry bool,
+) (map[string]any, error) {
 	if taskName == "" {
 		taskName = v0.DefaultTaskName
 	}
@@ -134,9 +144,9 @@ func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskN
 			var stepResult map[string]any
 
 			if step.Uses != "" {
-				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, cwd, dry)
+				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, cwd, environVars, dry)
 			} else if step.Run != "" {
-				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, cwd, dry)
+				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, cwd, environVars, dry)
 			}
 
 			if err != nil {
@@ -176,6 +186,7 @@ func handleRunStep(
 	withDefaults v0.With,
 	outputs CommandOutputs,
 	cwd string,
+	environVars []string,
 	dry bool,
 ) (map[string]any, error) {
 
@@ -208,7 +219,7 @@ func handleRunStep(
 		return nil, err
 	}
 
-	env, err := prepareEnvironment(withDefaults, outFile.Name(), templatedEnv)
+	env, err := prepareEnvironment(environVars, withDefaults, outFile.Name(), templatedEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -258,8 +269,9 @@ func handleRunStep(
 	return result, nil
 }
 
-func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv v0.Env) ([]string, error) {
-	env := os.Environ()
+func prepareEnvironment(envVars []string, withDefaults v0.With, outFileName string, stepEnv v0.Env) ([]string, error) {
+	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
+	copy(env, envVars)
 
 	for k, v := range withDefaults {
 		val, err := cast.ToStringE(v)
@@ -271,7 +283,7 @@ func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv v0.Env
 
 	for k, v := range stepEnv {
 		// Prevent setting PWD as it should be controlled by exec.Command's Dir field
-		if k == "PWD" {
+		if strings.EqualFold(k, "PWD") {
 			return nil, fmt.Errorf("setting PWD environment variable is not allowed")
 		}
 

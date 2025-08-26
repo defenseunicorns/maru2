@@ -27,6 +27,7 @@ func handleUsesStep(
 	outputs CommandOutputs,
 	origin *url.URL,
 	cwd string,
+	environVars []string,
 	dry bool,
 ) (map[string]any, error) {
 	cwd = filepath.Join(cwd, step.Dir)
@@ -47,7 +48,7 @@ func handleUsesStep(
 	logger.Debug("templated", "result", templatedWith)
 
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, cwd, dry)
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, cwd, environVars, dry)
 	}
 
 	next, err := uses.ResolveRelative(origin, step.Uses, wf.Aliases)
@@ -62,7 +63,7 @@ func handleUsesStep(
 
 	taskName := next.Query().Get(uses.QualifierTask)
 
-	return Run(ctx, svc, nextWf, taskName, templatedWith, next, cwd, dry)
+	return Run(ctx, svc, nextWf, taskName, templatedWith, next, cwd, environVars, dry)
 }
 
 // Fetch fetches a workflow from a given URL.

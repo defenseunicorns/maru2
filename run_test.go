@@ -186,7 +186,7 @@ func TestRunExtended(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, "", tc.dry)
+			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, "", nil, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -223,6 +223,7 @@ func TestToEnvVar(t *testing.T) {
 func TestPrepareEnvironment(t *testing.T) {
 	tests := []struct {
 		name            string
+		startingEnv     []string
 		withDefaults    v0.With
 		stepEnv         v0.Env
 		expectedEnvVars []string
@@ -365,6 +366,94 @@ func TestPrepareEnvironment(t *testing.T) {
 			},
 			expectedError: "failed to convert env var \"BAD_VAR\" to string",
 		},
+		{
+			name: "starting env with basic variables",
+			startingEnv: []string{
+				"PATH=/usr/bin:/bin",
+				"HOME=/home/user",
+				"USER=testuser",
+			},
+			withDefaults: v0.With{},
+			stepEnv:      v0.Env{},
+			expectedEnvVars: []string{
+				"PATH=/usr/bin:/bin",
+				"HOME=/home/user",
+				"USER=testuser",
+			},
+		},
+		{
+			name: "starting env with inputs added",
+			startingEnv: []string{
+				"PATH=/usr/bin:/bin",
+				"HOME=/home/user",
+			},
+			withDefaults: v0.With{
+				"test-input": "test-value",
+			},
+			stepEnv: v0.Env{},
+			expectedEnvVars: []string{
+				"PATH=/usr/bin:/bin",
+				"HOME=/home/user",
+				"INPUT_TEST_INPUT=test-value",
+			},
+		},
+		{
+			name: "starting env with step env override",
+			startingEnv: []string{
+				"PATH=/usr/bin:/bin",
+				"HOME=/home/user",
+				"EXISTING_VAR=original",
+			},
+			withDefaults: v0.With{},
+			stepEnv: v0.Env{
+				"EXISTING_VAR": "overridden",
+				"NEW_VAR":      "new-value",
+			},
+			expectedEnvVars: []string{
+				"PATH=/usr/bin:/bin",
+				"HOME=/home/user",
+				"EXISTING_VAR=original",   // starting env is preserved as-is
+				"EXISTING_VAR=overridden", // step env appends new variables
+				"NEW_VAR=new-value",
+			},
+		},
+		{
+			name: "starting env with inputs and step env",
+			startingEnv: []string{
+				"PATH=/usr/bin:/bin",
+				"SHELL=/bin/bash",
+			},
+			withDefaults: v0.With{
+				"name":    "test",
+				"version": 123,
+			},
+			stepEnv: v0.Env{
+				"CUSTOM_VAR": "custom",
+				"DEBUG":      true,
+			},
+			expectedEnvVars: []string{
+				"PATH=/usr/bin:/bin",
+				"SHELL=/bin/bash",
+				"INPUT_NAME=test",
+				"INPUT_VERSION=123",
+				"CUSTOM_VAR=custom",
+				"DEBUG=true",
+			},
+		},
+		{
+			name:        "empty starting env vs nil starting env",
+			startingEnv: []string{},
+			withDefaults: v0.With{
+				"test": "value",
+			},
+			stepEnv: v0.Env{
+				"STEP_VAR": "step-value",
+			},
+			expectedEnvVars: []string{
+				"INPUT_TEST=value",
+				"STEP_VAR=step-value",
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -374,7 +463,7 @@ func TestPrepareEnvironment(t *testing.T) {
 			tempDir := t.TempDir()
 			outFilePath := filepath.Join(tempDir, "output.txt")
 
-			env, err := prepareEnvironment(tc.withDefaults, outFilePath, tc.stepEnv)
+			env, err := prepareEnvironment(tc.startingEnv, tc.withDefaults, outFilePath, tc.stepEnv)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
@@ -552,7 +641,7 @@ func TestHandleRunStep(t *testing.T) {
 				Level: log.InfoLevel,
 			}))
 
-			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, "", tc.dry)
+			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, "", nil, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -639,7 +728,7 @@ func TestHandleUsesStep(t *testing.T) {
 			origin, err := url.Parse(tc.origin)
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, "", tc.dry)
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, "", nil, tc.dry)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
