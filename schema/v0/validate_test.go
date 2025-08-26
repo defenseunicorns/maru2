@@ -78,7 +78,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: fmt.Sprintf(".echo[0].id \"&1337\" does not satisfy %q", TaskNamePattern.String()),
+			expectedError: fmt.Sprintf(".tasks.echo[0].id \"&1337\" does not satisfy %q", TaskNamePattern.String()),
 		},
 		{
 			name: "duplicate step ids",
@@ -96,7 +96,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ".echo[0] and .echo[1] have the same ID \"same-id\"",
+			expectedError: ".tasks.echo[0] and .tasks.echo[1] have the same ID \"same-id\"",
 		},
 		{
 			name: "both run and uses set",
@@ -108,7 +108,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0] has both run and uses fields set",
+			expectedError: ".tasks.task[0] has both run and uses fields set",
 		},
 		{
 			name: "neither run nor uses set",
@@ -117,7 +117,7 @@ func TestValidate(t *testing.T) {
 					"task": Task{Step{}},
 				},
 			},
-			expectedError: ".task[0] must have one of [run, uses] fields set",
+			expectedError: ".tasks.task[0] must have one of [run, uses] fields set",
 		},
 		{
 			name: "uses with invalid URL",
@@ -128,7 +128,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].uses parse \":\\\\invalid\": missing protocol scheme",
+			expectedError: ".tasks.task[0].uses parse \":\\\\invalid\": missing protocol scheme",
 		},
 		{
 			name: "uses with non-existent task",
@@ -139,7 +139,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].uses \"non-existent-task\" not found",
+			expectedError: ".tasks.task[0].uses \"non-existent-task\" not found",
 		},
 		{
 			name: "uses with invalid scheme",
@@ -150,7 +150,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: fmt.Sprintf(".task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(SupportedSchemes(), "builtin"), ", ")),
+			expectedError: fmt.Sprintf(".tasks.task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(SupportedSchemes(), "builtin"), ", ")),
 		},
 		{
 			name: "uses with valid task reference",
@@ -259,7 +259,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0] has both run and uses fields set",
+			expectedError: ".tasks.task[0] has both run and uses fields set",
 		},
 		{
 			name: "task with neither run nor uses",
@@ -271,7 +271,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0] must have one of [run, uses] fields set",
+			expectedError: ".tasks.task[0] must have one of [run, uses] fields set",
 		},
 		{
 			name: "task with multiple validation errors",
@@ -289,7 +289,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ".task[0] has both run and uses fields set",
+			expectedError: ".tasks.task[0] has both run and uses fields set",
 		},
 		{
 			name: "invalid input schema validation",
@@ -350,7 +350,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].dir \"/tmp\" must not be absolute",
+			expectedError: ".tasks.task[0].dir \"/tmp\" must not be absolute",
 		},
 		{
 			name: "step with invalid timeout",
@@ -363,7 +363,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].timeout \"5\" is not a valid time duration",
+			expectedError: ".tasks.task[0].timeout \"5\" is not a valid time duration",
 		},
 		{
 			name: "step with valid timeout and dir",
@@ -452,7 +452,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].env \"1INVALID\" does not satisfy \"^[a-zA-Z_]+[a-zA-Z0-9_]*$\"",
+			expectedError: ".tasks.task[0].env \"1INVALID\" does not satisfy \"^[a-zA-Z_]+[a-zA-Z0-9_]*$\"",
 		},
 	}
 
