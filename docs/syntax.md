@@ -261,24 +261,25 @@ inputs:
     description: "Deployment environment"
     default: "development"
 
-deploy:
-  - id: "build-app"
-    name: "Build application with environment config"
-    run: |
-      npm run build
-      echo "build_version=$(git rev-parse --short HEAD)" >> $MARU2_OUTPUT
-    env:
-      NODE_ENV: ${{ input "deployment-env" }}
+tasks:
+  deploy:
+    - id: "build-app"
+      name: "Build application with environment config"
+      run: |
+        npm run build
+        echo "build_version=$(git rev-parse --short HEAD)" >> $MARU2_OUTPUT
+      env:
+        NODE_ENV: ${{ input "deployment-env" }}
 
-  - name: "Deploy application"
-    run: |
-      echo "Deploying version $BUILD_VERSION to $DEPLOY_TARGET"
-      ${{ which "zarf" }} dev deploy .
-    env:
-      BUILD_VERSION: ${{ from "build-app" "build_version" }}
-      DEPLOY_TARGET: ${{ input "deployment-env" }}
-      ZARF_NO_PROGRESS: true
-      KUBECONFIG: /etc/kubernetes/${{ input "deployment-env" }}-config
+    - name: "Deploy application"
+      run: |
+        echo "Deploying version $BUILD_VERSION to $DEPLOY_TARGET"
+        ${{ which "zarf" }} dev deploy .
+      env:
+        BUILD_VERSION: ${{ from "build-app" "build_version" }}
+        DEPLOY_TARGET: ${{ input "deployment-env" }}
+        ZARF_NO_PROGRESS: true
+        KUBECONFIG: /etc/kubernetes/${{ input "deployment-env" }}-config
 ```
 
 ### Restrictions and Behavior
