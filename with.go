@@ -32,31 +32,6 @@ func RegisterWhichShortcut(key, value string) {
 	shortcuts.Store(key, value)
 }
 
-// TemplateFlatMap templates a flat map with the given input and previous outputs
-func TemplateFlatMap(ctx context.Context, input, local v0.With, previousOutputs CommandOutputs, dry bool) (v0.With, error) {
-	if len(local) == 0 {
-		return input, nil
-	}
-
-	r := make(v0.With, len(local))
-
-	for k, v := range local {
-		val, ok := v.(string)
-		// if the val is not a string we can skip templating
-		if !ok {
-			r[k] = v
-			continue
-		}
-		result, err := TemplateString(ctx, input, previousOutputs, val, dry)
-		if err != nil {
-			return nil, err
-		}
-		r[k] = result
-	}
-
-	return r, nil
-}
-
 // TemplateString templates a string with the given input and previous outputs
 func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
 	var tmpl *template.Template

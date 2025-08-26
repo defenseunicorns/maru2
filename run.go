@@ -197,7 +197,7 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 		os.Remove(outFile.Name())
 	}()
 
-	templatedEnv, err := TemplateFlatMap(ctx, withDefaults, step.Env, outputs, dry)
+	templatedEnv, err := TemplateWithMap(ctx, withDefaults, outputs, step.Env, dry)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func CWDFromContext(ctx context.Context) string {
 	return "" // empty string is a valid dir for exec.Command, defaults to calling process's current directory
 }
 
-func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv map[string]any) []string {
+func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv v0.Env) []string {
 	env := os.Environ()
 
 	for k, v := range withDefaults {
@@ -276,7 +276,6 @@ func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv map[st
 		env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
 	}
 
-	// Add step-specific environment variables
 	for k, v := range stepEnv {
 		val := cast.ToString(v)
 		env = append(env, fmt.Sprintf("%s=%s", k, val))

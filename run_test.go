@@ -224,7 +224,7 @@ func TestPrepareEnvironment(t *testing.T) {
 	tests := []struct {
 		name            string
 		withDefaults    v0.With
-		stepEnv         map[string]any
+		stepEnv         v0.Env
 		expectedEnvVars []string
 	}{
 		{
@@ -276,7 +276,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:         "step env with string",
 			withDefaults: v0.With{},
-			stepEnv: map[string]any{
+			stepEnv: v0.Env{
 				"CUSTOM_VAR": "custom-value",
 			},
 			expectedEnvVars: []string{
@@ -286,7 +286,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:         "step env with different types",
 			withDefaults: v0.With{},
-			stepEnv: map[string]any{
+			stepEnv: v0.Env{
 				"STRING_VAR": "hello",
 				"INT_VAR":    42,
 				"BOOL_VAR":   true,
@@ -302,7 +302,7 @@ func TestPrepareEnvironment(t *testing.T) {
 			withDefaults: v0.With{
 				"input-var": "input-value",
 			},
-			stepEnv: map[string]any{
+			stepEnv: v0.Env{
 				"CUSTOM_VAR": "custom-value",
 			},
 			expectedEnvVars: []string{
@@ -313,13 +313,13 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:            "empty step env map",
 			withDefaults:    v0.With{},
-			stepEnv:         map[string]any{},
+			stepEnv:         v0.Env{},
 			expectedEnvVars: []string{},
 		},
 		{
 			name:         "step env overrides existing env",
 			withDefaults: v0.With{},
-			stepEnv: map[string]any{
+			stepEnv: v0.Env{
 				"PATH": "/custom/path",
 			},
 			expectedEnvVars: []string{
@@ -329,7 +329,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:         "complex values in step env",
 			withDefaults: v0.With{},
-			stepEnv: map[string]any{
+			stepEnv: v0.Env{
 				"JSON_VAR":   `{"key": "value", "number": 42}`,
 				"SPACES_VAR": "value with spaces",
 				"EMPTY_VAR":  "",
@@ -467,7 +467,7 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with environment variables",
 			step: v0.Step{
 				Run: "echo \"MY_VAR=$MY_VAR\" && echo \"TEMPLATED_VAR=$TEMPLATED_VAR\"",
-				Env: map[string]any{
+				Env: v0.Env{
 					"MY_VAR":        "static-value",
 					"TEMPLATED_VAR": "${{ input \"name\" }}",
 				},
@@ -479,7 +479,7 @@ func TestHandleRunStep(t *testing.T) {
 			name: "dry run with environment variables",
 			step: v0.Step{
 				Run: "echo \"TEST_VAR=$TEST_VAR\"",
-				Env: map[string]any{
+				Env: v0.Env{
 					"TEST_VAR": "${{ input \"value\" }}",
 				},
 			},
@@ -491,7 +491,7 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with env templating error",
 			step: v0.Step{
 				Run: "echo test",
-				Env: map[string]any{
+				Env: v0.Env{
 					"BAD_VAR": "${{ input \"nonexistent\" }}",
 				},
 			},
@@ -503,7 +503,7 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with empty env map",
 			step: v0.Step{
 				Run: "echo \"Empty env map test completed\"",
-				Env: map[string]any{},
+				Env: v0.Env{},
 			},
 			withDefaults: v0.With{},
 			expectedLog:  "echo \"Empty env map test completed\"\n",

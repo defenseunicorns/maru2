@@ -1215,7 +1215,7 @@ func TestPerformLookups(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			templated, err := TemplateFlatMap(ctx, tc.input, tc.local, tc.previous, false)
+			templated, err := TemplateWithMap(ctx, tc.input, tc.previous, tc.local, false)
 			if tc.expectedError == "" {
 				require.NoError(t, err)
 			} else {

@@ -31,7 +31,7 @@ func handleUsesStep(ctx context.Context, svc *uses.FetcherService, step v0.Step,
 
 	logger.Debug("templating", "input", withDefaults, "local", step.With)
 
-	templatedWith, err := TemplateFlatMap(ctx, withDefaults, step.With, outputs, dry)
+	templatedWith, err := TemplateWithMap(ctx, withDefaults, outputs, step.With, dry)
 	if err != nil {
 		return nil, err
 	}

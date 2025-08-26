@@ -14,6 +14,9 @@ import (
 // With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
 type With = map[string]any
 
+// Env is a map of environment variable names to values
+type Env = map[string]any
+
 // Step is a single step in a task
 //
 // While a step can have any combination of `run`, and `uses` fields, only one of them should be set
@@ -24,7 +27,7 @@ type Step struct {
 	// Run is the command/script to run
 	Run string `json:"run,omitempty"`
 	// Env is a map of environment variables
-	Env map[string]any `json:"env,omitempty"`
+	Env Env `json:"env,omitempty"`
 	// Uses is a reference to another task
 	Uses string `json:"uses,omitempty"`
 	// With is a map of additional parameters for the step/task call
