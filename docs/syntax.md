@@ -295,7 +295,23 @@ tasks:
 
 **Variable Precedence**: Step-level environment variables can override existing environment variables from the system or parent process.
 
-**Scope**: Environment variables set in the `env` field only apply to that specific step. They do not persist to subsequent steps unless explicitly passed through outputs or inputs.
+**Scope**: Environment variables set in the `env` field apply to that specific step. For `run` steps, they only apply to that single step. For `uses` steps, they are passed down to ALL steps in the called task.
+
+**Uses Step Propagation**: When using the `env` field on a `uses` step, those environment variables are templated and passed to all steps within the called task:
+
+```yaml
+schema-version: v0
+tasks:
+  parent-task:
+    - uses: file:subtask.yaml?task=child-task
+      with:
+        message: "Hello from parent"
+      env:
+        PARENT_VAR: "value-from-parent"
+        TEMPLATED_VAR: ${{ input "some-input" }}
+
+  # In subtask.yaml, both steps will have access to PARENT_VAR and TEMPLATED_VAR
+```
 
 ## Run another task as a step
 
@@ -313,11 +329,15 @@ tasks:
     - uses: general-kenobi
       with:
         response: Your move
+      env:
+        GREETING_TYPE: "formal"
 ```
 
 ```sh
 maru2 hello
 ```
+
+Environment variables can be passed to called tasks using the `env` field. These variables will be available to all steps in the called task, in addition to any `with` parameters (which become `INPUT_*` variables).
 
 ## Run a task from a local file
 
