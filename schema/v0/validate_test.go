@@ -378,6 +378,67 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "valid env with string values",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"VAR1":  "value1",
+							"VAR_2": "value2",
+							"_VAR3": "value3",
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "valid env with different types",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"STRING_VAR": "hello",
+							"INT_VAR":    42,
+							"BOOL_VAR":   true,
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "valid env with underscore variations",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"_VAR":    "value1",
+							"VAR_":    "value2",
+							"VAR_1_2": "value3",
+							"__VAR__": "value4",
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "empty env object should be valid",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{},
+					}},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
