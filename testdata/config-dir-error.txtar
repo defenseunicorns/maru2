@@ -1,0 +1,13 @@
+env HOME=
+! exec maru2 --list
+cmp stderr stderr.txt
+
+-- tasks.yaml --
+schema-version: v0
+tasks:
+  default:
+    - run: echo "should not reach here"
+
+-- stderr.txt --
+
+ERRO $HOME is not defined
