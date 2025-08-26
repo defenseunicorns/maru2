@@ -202,7 +202,10 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 		return nil, err
 	}
 
-	env := prepareEnvironment(withDefaults, outFile.Name(), templatedEnv)
+	env, err := prepareEnvironment(withDefaults, outFile.Name(), templatedEnv)
+	if err != nil {
+		return nil, err
+	}
 
 	shell := step.Shell
 	var args []string
@@ -268,21 +271,32 @@ func CWDFromContext(ctx context.Context) string {
 	return "" // empty string is a valid dir for exec.Command, defaults to calling process's current directory
 }
 
-func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv v0.Env) []string {
+func prepareEnvironment(withDefaults v0.With, outFileName string, stepEnv v0.Env) ([]string, error) {
 	env := os.Environ()
 
 	for k, v := range withDefaults {
-		val := cast.ToString(v)
+		val, err := cast.ToStringE(v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert input %q to string: %w", k, err)
+		}
 		env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
 	}
 
 	for k, v := range stepEnv {
-		val := cast.ToString(v)
+		// Prevent setting PWD as it should be controlled by exec.Command's Dir field
+		if k == "PWD" {
+			return nil, fmt.Errorf("setting PWD environment variable is not allowed")
+		}
+
+		val, err := cast.ToStringE(v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert env var %q to string: %w", k, err)
+		}
 		env = append(env, fmt.Sprintf("%s=%s", k, val))
 	}
 
 	env = append(env, fmt.Sprintf("MARU2_OUTPUT=%s", outFileName))
-	return env
+	return env, nil
 }
 
 func toEnvVar(s string) string {

@@ -226,6 +226,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		withDefaults    v0.With
 		stepEnv         v0.Env
 		expectedEnvVars []string
+		expectedError   string
 	}{
 		{
 			name:            "empty inputs and step env",
@@ -340,6 +341,30 @@ func TestPrepareEnvironment(t *testing.T) {
 				"EMPTY_VAR=",
 			},
 		},
+		{
+			name:         "PWD variable should be rejected",
+			withDefaults: v0.With{},
+			stepEnv: v0.Env{
+				"PWD": "/some/path",
+			},
+			expectedError: "setting PWD environment variable is not allowed",
+		},
+		{
+			name: "invalid input type conversion",
+			withDefaults: v0.With{
+				"bad-input": make(chan int), // channels can't be converted to string
+			},
+			stepEnv:       v0.Env{},
+			expectedError: "failed to convert input \"bad-input\" to string",
+		},
+		{
+			name:         "invalid env var type conversion",
+			withDefaults: v0.With{},
+			stepEnv: v0.Env{
+				"BAD_VAR": make(chan int), // channels can't be converted to string
+			},
+			expectedError: "failed to convert env var \"BAD_VAR\" to string",
+		},
 	}
 
 	for _, tc := range tests {
@@ -349,8 +374,15 @@ func TestPrepareEnvironment(t *testing.T) {
 			tempDir := t.TempDir()
 			outFilePath := filepath.Join(tempDir, "output.txt")
 
-			env := prepareEnvironment(tc.withDefaults, outFilePath, tc.stepEnv)
+			env, err := prepareEnvironment(tc.withDefaults, outFilePath, tc.stepEnv)
 
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
 			outputEnv := "MARU2_OUTPUT=" + outFilePath
 			assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
 
