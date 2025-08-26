@@ -142,6 +142,17 @@ func TestValidate(t *testing.T) {
 			expectedError: ".tasks.task[0].uses \"non-existent-task\" not found",
 		},
 		{
+			name: "uses cannot reference itself",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"self-task": Task{Step{
+						Uses: "self-task",
+					}},
+				},
+			},
+			expectedError: ".tasks.self-task[0].uses cannot reference itself",
+		},
+		{
 			name: "uses with invalid scheme",
 			wf: Workflow{
 				Tasks: TaskMap{
@@ -453,6 +464,22 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			expectedError: ".tasks.task[0].env \"1INVALID\" does not satisfy \"^[a-zA-Z_]+[a-zA-Z0-9_]*$\"",
+		},
+		{
+			name: "invalid input name",
+			wf: Workflow{
+				Inputs: InputMap{
+					"2-invalid": InputParameter{
+						Description: "Invalid input name",
+					},
+				},
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo",
+					}},
+				},
+			},
+			expectedError: fmt.Sprintf("input name \"2-invalid\" does not satisfy %q", InputNamePattern.String()),
 		},
 	}
 
