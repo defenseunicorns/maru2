@@ -221,69 +221,48 @@ func TestToEnvVar(t *testing.T) {
 }
 
 func TestPrepareEnvironment(t *testing.T) {
-	tempDir := t.TempDir()
-	outFilePath := filepath.Join(tempDir, "output.txt")
-
-	with := v0.With{}
-	env := prepareEnvironment(with, outFilePath, nil)
-
-	outputEnv := "MARU2_OUTPUT=" + outFilePath
-	assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
-
-	tests := []struct {
-		name           string
-		with           v0.With
-		expectedEnvVar string
-		expectedValue  string
-	}{
-		{
-			name: "string value",
-			with: v0.With{
-				"test-input": "test-value",
-			},
-			expectedEnvVar: "INPUT_TEST_INPUT",
-			expectedValue:  "test-value",
-		},
-		{
-			name: "integer value",
-			with: v0.With{
-				"number": 42,
-			},
-			expectedEnvVar: "INPUT_NUMBER",
-			expectedValue:  "42",
-		},
-		{
-			name: "boolean value",
-			with: v0.With{
-				"flag": true,
-			},
-			expectedEnvVar: "INPUT_FLAG",
-			expectedValue:  "true",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			tempDir := t.TempDir()
-			outFilePath := filepath.Join(tempDir, "output.txt")
-
-			env := prepareEnvironment(tc.with, outFilePath, nil)
-
-			expectedEnv := tc.expectedEnvVar + "=" + tc.expectedValue
-			assert.Contains(t, env, expectedEnv, "Expected environment variable not found")
-		})
-	}
-}
-
-func TestPrepareEnvironmentWithStepEnv(t *testing.T) {
 	tests := []struct {
 		name            string
 		withDefaults    v0.With
 		stepEnv         map[string]any
 		expectedEnvVars []string
 	}{
+		{
+			name:            "empty inputs and step env",
+			withDefaults:    v0.With{},
+			stepEnv:         nil,
+			expectedEnvVars: []string{},
+		},
+		{
+			name: "string input value",
+			withDefaults: v0.With{
+				"test-input": "test-value",
+			},
+			stepEnv: nil,
+			expectedEnvVars: []string{
+				"INPUT_TEST_INPUT=test-value",
+			},
+		},
+		{
+			name: "integer input value",
+			withDefaults: v0.With{
+				"number": 42,
+			},
+			stepEnv: nil,
+			expectedEnvVars: []string{
+				"INPUT_NUMBER=42",
+			},
+		},
+		{
+			name: "boolean input value",
+			withDefaults: v0.With{
+				"flag": true,
+			},
+			stepEnv: nil,
+			expectedEnvVars: []string{
+				"INPUT_FLAG=true",
+			},
+		},
 		{
 			name: "no step env",
 			withDefaults: v0.With{
@@ -331,39 +310,8 @@ func TestPrepareEnvironmentWithStepEnv(t *testing.T) {
 				"CUSTOM_VAR=custom-value",
 			},
 		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			tempDir := t.TempDir()
-			outFilePath := filepath.Join(tempDir, "output.txt")
-
-			env := prepareEnvironment(tc.withDefaults, outFilePath, tc.stepEnv)
-
-			// Check that MARU2_OUTPUT is always present
-			outputEnv := "MARU2_OUTPUT=" + outFilePath
-			assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
-
-			// Check expected environment variables
-			for _, expectedEnv := range tc.expectedEnvVars {
-				assert.Contains(t, env, expectedEnv, "Expected environment variable not found: %s", expectedEnv)
-			}
-		})
-	}
-}
-
-func TestPrepareEnvironmentEdgeCases(t *testing.T) {
-	tests := []struct {
-		name            string
-		withDefaults    v0.With
-		stepEnv         map[string]any
-		expectedEnvVars []string
-		shouldContain   []string
-	}{
 		{
-			name:            "empty step env",
+			name:            "empty step env map",
 			withDefaults:    v0.With{},
 			stepEnv:         map[string]any{},
 			expectedEnvVars: []string{},
@@ -403,11 +351,9 @@ func TestPrepareEnvironmentEdgeCases(t *testing.T) {
 
 			env := prepareEnvironment(tc.withDefaults, outFilePath, tc.stepEnv)
 
-			// Check that MARU2_OUTPUT is always present
 			outputEnv := "MARU2_OUTPUT=" + outFilePath
 			assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
 
-			// Check expected environment variables
 			for _, expectedEnv := range tc.expectedEnvVars {
 				assert.Contains(t, env, expectedEnv, "Expected environment variable not found: %s", expectedEnv)
 			}
