@@ -704,7 +704,7 @@ func TestTemplateWithMap(t *testing.T) {
 		{
 			name:     "empty map",
 			withMap:  map[string]any{},
-			expected: v0.With{},
+			expected: nil,
 		},
 		{
 			name: "simple string value",
