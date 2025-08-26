@@ -47,8 +47,13 @@ func handleUsesStep(
 
 	logger.Debug("templated", "result", templatedWith)
 
+	env, err := prepareEnvironment(environVars, nil, "", step.Env)
+	if err != nil {
+		return nil, err
+	}
+
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, cwd, environVars, dry)
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, cwd, env, dry)
 	}
 
 	next, err := uses.ResolveRelative(origin, step.Uses, wf.Aliases)
@@ -63,7 +68,7 @@ func handleUsesStep(
 
 	taskName := next.Query().Get(uses.QualifierTask)
 
-	return Run(ctx, svc, nextWf, taskName, templatedWith, next, cwd, environVars, dry)
+	return Run(ctx, svc, nextWf, taskName, templatedWith, next, cwd, env, dry)
 }
 
 // Fetch fetches a workflow from a given URL.

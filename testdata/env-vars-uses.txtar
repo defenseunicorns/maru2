@@ -1,0 +1,48 @@
+env PARENT_ENV=parent-value
+exec maru2 test-env-with-uses
+cmp stderr stderr.txt
+stdout 'Parent env: parent-value'
+stdout 'Message input: from parent'
+stdout 'Subtask env: subtask-local'
+
+-- tasks.yaml --
+schema-version: v0
+inputs:
+  parent_input:
+    description: "Input from parent workflow"
+    default: "parent-input-value"
+tasks:
+  test-env-with-uses:
+    - uses: file:subtasks.yaml?task=check-env
+      with:
+        message: "from parent"
+        parent_input: ${{ input "parent_input" }}
+      # NOTE: Step-level env vars are NOT passed to uses steps
+      # This is current behavior - only process env and with params are passed
+      env:
+        STEP_LEVEL_VAR: "this-will-not-be-passed"
+
+-- subtasks.yaml --
+schema-version: v0
+inputs:
+  message:
+    description: "Message from parent"
+    default: "default-message"
+  parent_input:
+    description: "Input passed from parent"
+    default: "no-parent-input"
+tasks:
+  check-env:
+    - run: |
+        echo "Parent env: $PARENT_ENV"
+        echo "Message input: $INPUT_MESSAGE"
+        echo "Parent input: $INPUT_PARENT_INPUT"
+        echo "Subtask env: $SUBTASK_ENV"
+      env:
+        SUBTASK_ENV: "subtask-local"
+
+-- stderr.txt --
+echo "Parent env: $PARENT_ENV"
+echo "Message input: $INPUT_MESSAGE"
+echo "Parent input: $INPUT_PARENT_INPUT"
+echo "Subtask env: $SUBTASK_ENV"

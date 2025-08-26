@@ -294,7 +294,10 @@ func prepareEnvironment(envVars []string, withDefaults v0.With, outFileName stri
 		env = append(env, fmt.Sprintf("%s=%s", k, val))
 	}
 
-	env = append(env, fmt.Sprintf("MARU2_OUTPUT=%s", outFileName))
+	if outFileName != "" {
+		env = append(env, fmt.Sprintf("MARU2_OUTPUT=%s", outFileName))
+	}
+
 	return env, nil
 }
 
