@@ -163,7 +163,7 @@ func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandO
 
 // TemplateWithMap recursively processes a With map and templates all string values
 func TemplateWithMap(ctx context.Context, input v0.With, previousOutputs CommandOutputs, withMap v0.With, dry bool) (v0.With, error) {
-	if withMap == nil {
+	if len(withMap) == 0 {
 		return nil, nil
 	}
 

@@ -1,0 +1,56 @@
+exec maru2 test-env-comprehensive
+cmp stderr stderr.txt
+stdout 'Static: hello'
+stdout 'Input: test-input'
+stdout 'From step: first-result'
+stdout 'Integer: 42'
+stdout 'Boolean: true'
+stdout 'JSON: {"key":"value"}'
+stdout 'Empty:'
+stdout 'Spaces: value with spaces'
+
+-- tasks.yaml --
+schema-version: v0
+inputs:
+  test-input:
+    description: "Test input for templating"
+    default: "test-input"
+  number:
+    description: "Number input"
+    default: 42
+  flag:
+    description: "Boolean flag"
+    default: true
+tasks:
+  test-env-comprehensive:
+    - run: |
+        echo "result=first-result" >> $MARU2_OUTPUT
+      id: setup
+    - run: |
+        echo "Static: $STATIC_VAR"
+        echo "Input: $INPUT_VAR"
+        echo "From step: $FROM_STEP_VAR"
+        echo "Integer: $INT_VAR"
+        echo "Boolean: $BOOL_VAR"
+        echo "JSON: $JSON_VAR"
+        echo "Empty: $EMPTY_VAR"
+        echo "Spaces: $SPACES_VAR"
+      env:
+        STATIC_VAR: "hello"
+        INPUT_VAR: ${{ input "test-input" }}
+        FROM_STEP_VAR: ${{ from "setup" "result" }}
+        INT_VAR: ${{ input "number" }}
+        BOOL_VAR: ${{ input "flag" }}
+        JSON_VAR: '{"key":"value"}'
+        EMPTY_VAR: ""
+        SPACES_VAR: "value with spaces"
+-- stderr.txt --
+echo "result=first-result" >> $MARU2_OUTPUT
+echo "Static: $STATIC_VAR"
+echo "Input: $INPUT_VAR"
+echo "From step: $FROM_STEP_VAR"
+echo "Integer: $INT_VAR"
+echo "Boolean: $BOOL_VAR"
+echo "JSON: $JSON_VAR"
+echo "Empty: $EMPTY_VAR"
+echo "Spaces: $SPACES_VAR"

@@ -225,7 +225,7 @@ func TestPrepareEnvironment(t *testing.T) {
 	outFilePath := filepath.Join(tempDir, "output.txt")
 
 	with := v0.With{}
-	env := prepareEnvironment(with, outFilePath)
+	env := prepareEnvironment(with, outFilePath, nil)
 
 	outputEnv := "MARU2_OUTPUT=" + outFilePath
 	assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
@@ -269,10 +269,148 @@ func TestPrepareEnvironment(t *testing.T) {
 			tempDir := t.TempDir()
 			outFilePath := filepath.Join(tempDir, "output.txt")
 
-			env := prepareEnvironment(tc.with, outFilePath)
+			env := prepareEnvironment(tc.with, outFilePath, nil)
 
 			expectedEnv := tc.expectedEnvVar + "=" + tc.expectedValue
 			assert.Contains(t, env, expectedEnv, "Expected environment variable not found")
+		})
+	}
+}
+
+func TestPrepareEnvironmentWithStepEnv(t *testing.T) {
+	tests := []struct {
+		name            string
+		withDefaults    v0.With
+		stepEnv         map[string]any
+		expectedEnvVars []string
+	}{
+		{
+			name: "no step env",
+			withDefaults: v0.With{
+				"test-input": "test-value",
+			},
+			stepEnv: nil,
+			expectedEnvVars: []string{
+				"INPUT_TEST_INPUT=test-value",
+			},
+		},
+		{
+			name:         "step env with string",
+			withDefaults: v0.With{},
+			stepEnv: map[string]any{
+				"CUSTOM_VAR": "custom-value",
+			},
+			expectedEnvVars: []string{
+				"CUSTOM_VAR=custom-value",
+			},
+		},
+		{
+			name:         "step env with different types",
+			withDefaults: v0.With{},
+			stepEnv: map[string]any{
+				"STRING_VAR": "hello",
+				"INT_VAR":    42,
+				"BOOL_VAR":   true,
+			},
+			expectedEnvVars: []string{
+				"STRING_VAR=hello",
+				"INT_VAR=42",
+				"BOOL_VAR=true",
+			},
+		},
+		{
+			name: "both input and step env",
+			withDefaults: v0.With{
+				"input-var": "input-value",
+			},
+			stepEnv: map[string]any{
+				"CUSTOM_VAR": "custom-value",
+			},
+			expectedEnvVars: []string{
+				"INPUT_INPUT_VAR=input-value",
+				"CUSTOM_VAR=custom-value",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+			outFilePath := filepath.Join(tempDir, "output.txt")
+
+			env := prepareEnvironment(tc.withDefaults, outFilePath, tc.stepEnv)
+
+			// Check that MARU2_OUTPUT is always present
+			outputEnv := "MARU2_OUTPUT=" + outFilePath
+			assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
+
+			// Check expected environment variables
+			for _, expectedEnv := range tc.expectedEnvVars {
+				assert.Contains(t, env, expectedEnv, "Expected environment variable not found: %s", expectedEnv)
+			}
+		})
+	}
+}
+
+func TestPrepareEnvironmentEdgeCases(t *testing.T) {
+	tests := []struct {
+		name            string
+		withDefaults    v0.With
+		stepEnv         map[string]any
+		expectedEnvVars []string
+		shouldContain   []string
+	}{
+		{
+			name:            "empty step env",
+			withDefaults:    v0.With{},
+			stepEnv:         map[string]any{},
+			expectedEnvVars: []string{},
+		},
+		{
+			name:         "step env overrides existing env",
+			withDefaults: v0.With{},
+			stepEnv: map[string]any{
+				"PATH": "/custom/path",
+			},
+			expectedEnvVars: []string{
+				"PATH=/custom/path",
+			},
+		},
+		{
+			name:         "complex values in step env",
+			withDefaults: v0.With{},
+			stepEnv: map[string]any{
+				"JSON_VAR":   `{"key": "value", "number": 42}`,
+				"SPACES_VAR": "value with spaces",
+				"EMPTY_VAR":  "",
+			},
+			expectedEnvVars: []string{
+				`JSON_VAR={"key": "value", "number": 42}`,
+				"SPACES_VAR=value with spaces",
+				"EMPTY_VAR=",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			tempDir := t.TempDir()
+			outFilePath := filepath.Join(tempDir, "output.txt")
+
+			env := prepareEnvironment(tc.withDefaults, outFilePath, tc.stepEnv)
+
+			// Check that MARU2_OUTPUT is always present
+			outputEnv := "MARU2_OUTPUT=" + outFilePath
+			assert.Contains(t, env, outputEnv, "MARU2_OUTPUT environment variable not set correctly")
+
+			// Check expected environment variables
+			for _, expectedEnv := range tc.expectedEnvVars {
+				assert.Contains(t, env, expectedEnv, "Expected environment variable not found: %s", expectedEnv)
+			}
 		})
 	}
 }
@@ -378,6 +516,51 @@ func TestHandleRunStep(t *testing.T) {
 			withDefaults: v0.With{},
 			expectedLog:  "echo 'foo=bar' >> $MARU2_OUTPUT\n",
 			expectedOut:  map[string]any{"foo": "bar"},
+		},
+		{
+			name: "step with environment variables",
+			step: v0.Step{
+				Run: "echo \"MY_VAR=$MY_VAR\" && echo \"TEMPLATED_VAR=$TEMPLATED_VAR\"",
+				Env: map[string]any{
+					"MY_VAR":        "static-value",
+					"TEMPLATED_VAR": "${{ input \"name\" }}",
+				},
+			},
+			withDefaults: v0.With{"name": "world"},
+			expectedLog:  "echo \"MY_VAR=$MY_VAR\" && echo \"TEMPLATED_VAR=$TEMPLATED_VAR\"\n",
+		},
+		{
+			name: "dry run with environment variables",
+			step: v0.Step{
+				Run: "echo \"TEST_VAR=$TEST_VAR\"",
+				Env: map[string]any{
+					"TEST_VAR": "${{ input \"value\" }}",
+				},
+			},
+			withDefaults: v0.With{"value": "dry-run-test"},
+			dry:          true,
+			expectedLog:  "echo \"TEST_VAR=$TEST_VAR\"\n",
+		},
+		{
+			name: "step with env templating error",
+			step: v0.Step{
+				Run: "echo test",
+				Env: map[string]any{
+					"BAD_VAR": "${{ input \"nonexistent\" }}",
+				},
+			},
+			withDefaults:  v0.With{},
+			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
+			expectedLog:   "echo test\n",
+		},
+		{
+			name: "step with empty env map",
+			step: v0.Step{
+				Run: "echo \"Empty env map test completed\"",
+				Env: map[string]any{},
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo \"Empty env map test completed\"\n",
 		},
 	}
 
