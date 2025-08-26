@@ -165,3 +165,16 @@ func TestPrintBuiltin(t *testing.T) {
 
 `, buf.String())
 }
+
+func TestPrintBuiltinMarshalError(t *testing.T) {
+	var buf strings.Builder
+	logger := log.New(&buf)
+	logger.SetLevel(log.DebugLevel)
+
+	builtin := v0.With{"func": func() {}}
+
+	printBuiltin(logger, builtin)
+
+	output := buf.String()
+	assert.Contains(t, output, "failed to marshal builtin")
+}

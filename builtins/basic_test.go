@@ -91,6 +91,10 @@ func TestBuiltinFetch(t *testing.T) {
 				}
 			}
 			w.WriteHeader(http.StatusOK)
+		case "/invalid-json":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"invalid": json}`)) // Invalid JSON
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -113,6 +117,13 @@ func TestBuiltinFetch(t *testing.T) {
 			name: "fetch text",
 			fetch: fetch{
 				URL:    server.URL + "/text",
+				Method: "GET",
+			},
+		},
+		{
+			name: "fetch invalid json",
+			fetch: fetch{
+				URL:    server.URL + "/invalid-json",
 				Method: "GET",
 			},
 		},
