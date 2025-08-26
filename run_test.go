@@ -938,6 +938,50 @@ func TestHandleUsesStep(t *testing.T) {
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent_env_var">: error calling input: input "nonexistent_env_var" does not exist in [input]`,
 			expectedOut:   nil,
 		},
+		{
+			name: "successful local task execution",
+			step: v0.Step{
+				Uses: "test-task",
+				With: v0.With{
+					"input": "hello world",
+				},
+				Env: v0.Env{
+					"TEST_VAR": "test-value",
+				},
+			},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"test-task": v0.Task{
+						{
+							Run: "echo ${{ input \"input\" }}",
+						},
+					},
+				},
+			},
+			withDefaults: v0.With{},
+			dry:          true, // Use dry run to avoid actual command execution
+			expectedOut:  nil,  // Dry run returns nil
+		},
+		{
+			name: "successful local task execution with output",
+			step: v0.Step{
+				Uses: "output-task",
+				With: v0.With{
+					"message": "test output",
+				},
+			},
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"output-task": v0.Task{
+						{
+							Run: "echo \"result=${{ input \"message\" }}\" >> $MARU2_OUTPUT",
+						},
+					},
+				},
+			},
+			withDefaults: v0.With{},
+			expectedOut:  map[string]any{"result": "test output"},
+		},
 	}
 
 	for _, tc := range tests {
