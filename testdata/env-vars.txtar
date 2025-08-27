@@ -5,9 +5,9 @@ stdout 'Input: test-input'
 stdout 'From step: first-result'
 stdout 'Integer: 42'
 stdout 'Boolean: true'
-stdout 'JSON: {"key":"value"}'
+stdout 'JSON: "{\\"key\\":\\"value\\"}"'
 stdout 'Empty:'
-stdout 'Spaces: value with spaces'
+stdout 'Spaces: "value with spaces"'
 
 -- tasks.yaml --
 schema-version: v0

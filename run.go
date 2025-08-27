@@ -18,6 +18,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unicode"
 
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
@@ -273,12 +274,27 @@ func prepareEnvironment(envVars []string, withDefaults v0.With, outFileName stri
 	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
 	copy(env, envVars)
 
+	// keeping this local until i figure out if i want to break it out individually
+	needsQuoting := func(s string) bool {
+		// Check for spaces or other problematic characters
+		for _, r := range s {
+			if unicode.IsSpace(r) || r == '=' || r == '"' || r == '\n' {
+				return true
+			}
+		}
+		return false
+	}
+
 	for k, v := range withDefaults {
 		val, err := cast.ToStringE(v)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert input %q to string: %w", k, err)
 		}
-		env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
+		if needsQuoting(val) {
+			env = append(env, fmt.Sprintf("INPUT_%s=%q", toEnvVar(k), val))
+		} else {
+			env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
+		}
 	}
 
 	for k, v := range stepEnv {
@@ -291,7 +307,11 @@ func prepareEnvironment(envVars []string, withDefaults v0.With, outFileName stri
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert env var %q to string: %w", k, err)
 		}
-		env = append(env, fmt.Sprintf("%s=%s", k, val))
+		if needsQuoting(val) {
+			env = append(env, fmt.Sprintf("%s=%q", k, val))
+		} else {
+			env = append(env, fmt.Sprintf("%s=%s", k, val))
+		}
 	}
 
 	if outFileName != "" {

@@ -338,8 +338,8 @@ func TestPrepareEnvironment(t *testing.T) {
 				"EMPTY_VAR":  "",
 			},
 			expectedEnvVars: []string{
-				`JSON_VAR={"key": "value", "number": 42}`,
-				"SPACES_VAR=value with spaces",
+				`JSON_VAR="{\"key\": \"value\", \"number\": 42}"`,
+				`SPACES_VAR="value with spaces"`,
 				"EMPTY_VAR=",
 			},
 		},

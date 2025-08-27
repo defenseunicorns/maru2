@@ -282,22 +282,9 @@ tasks:
         KUBECONFIG: /etc/kubernetes/${{ input "deployment-env" }}-config
 ```
 
-### Restrictions and Behavior
+ Environment variables set in the `env` field apply to that specific step. For `run` steps, they only apply to that single step. For `uses` steps, they are passed down to ALL steps in the called task.
 
-**PWD Restriction**: You cannot set the `PWD` environment variable through the `env` field. Use the [`dir` field]() instead to control the working directory:
-
-```yaml
-tasks:
-  example:
-    - run: pwd
-      dir: subdirectory # Use dir field, not env: { PWD: "..." }
-```
-
-**Variable Precedence**: Step-level environment variables can override existing environment variables from the system or parent process.
-
-**Scope**: Environment variables set in the `env` field apply to that specific step. For `run` steps, they only apply to that single step. For `uses` steps, they are passed down to ALL steps in the called task.
-
-**Uses Step Propagation**: When using the `env` field on a `uses` step, those environment variables are templated and passed to all steps within the called task:
+When using the `env` field on a `uses` step, those environment variables are templated and passed to all steps within the called task:
 
 ```yaml
 schema-version: v0
@@ -311,6 +298,17 @@ tasks:
         TEMPLATED_VAR: ${{ input "some-input" }}
 
   # In subtask.yaml, both steps will have access to PARENT_VAR and TEMPLATED_VAR
+```
+
+### `env` Restrictions
+
+You cannot set the `PWD` environment variable through the `env` field. Use the [`dir` field](#working-directory-with-dir) instead to control the working directory:
+
+```yaml
+tasks:
+  example:
+    - run: pwd
+      dir: subdirectory # Use dir field, not env: { PWD: "..." }
 ```
 
 ## Run another task as a step
@@ -336,8 +334,6 @@ tasks:
 ```sh
 maru2 hello
 ```
-
-Environment variables can be passed to called tasks using the `env` field. These variables will be available to all steps in the called task, in addition to any `with` parameters (which become `INPUT_*` variables).
 
 ## Run a task from a local file
 
