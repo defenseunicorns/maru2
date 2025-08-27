@@ -746,6 +746,77 @@ func TestMergeWithAndParams(t *testing.T) {
 				"name": "fallback-value",
 			},
 		},
+		{
+			name: "nil with parameter creates new map",
+			with: nil,
+			params: v0.InputMap{
+				"name": v0.InputParameter{
+					Default: "default-value",
+				},
+			},
+			expected: v0.With{
+				"name": "default-value",
+			},
+		},
+		{
+			name: "nil with parameter with required input missing",
+			with: nil,
+			params: v0.InputMap{
+				"name": v0.InputParameter{
+					Required: &requiredTrue,
+				},
+			},
+			expectedError: "missing required input: \"name\"",
+		},
+		{
+			name: "nil with parameter with env var",
+			with: nil,
+			params: v0.InputMap{
+				"name": v0.InputParameter{
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expected: v0.With{
+				"name": "env-value",
+			},
+		},
+		{
+			name: "validation with non-string value that cannot be cast to string",
+			with: v0.With{
+				"data": complex(1, 2), // complex numbers cannot be cast to string
+			},
+			params: v0.InputMap{
+				"data": v0.InputParameter{
+					Validate: "^test",
+				},
+			},
+			expectedError: "unable to cast (1+2i) of type complex128 to string",
+		},
+		{
+			name: "string casting error in type matching section",
+			with: v0.With{
+				"data": complex(1, 2), // complex numbers cannot be cast to string
+			},
+			params: v0.InputMap{
+				"data": v0.InputParameter{
+					Default: "string-default", // This will trigger string casting
+				},
+			},
+			expectedError: "unable to cast (1+2i) of type complex128 to string",
+		},
+		{
+			name: "nil with parameter requiring default assignment triggers map creation",
+			with: nil, // This ensures merged starts as nil
+			params: v0.InputMap{
+				"name": v0.InputParameter{
+					Default:  "test-value",
+					Required: &requiredFalse, // Ensure it's not required
+				},
+			},
+			expected: v0.With{
+				"name": "test-value",
+			},
+		},
 	}
 
 	for _, tc := range tests {
