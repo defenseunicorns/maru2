@@ -675,7 +675,7 @@ func TestMergeWithAndParams(t *testing.T) {
 					DefaultFromEnv: "NON_EXISTENT_ENV_VAR",
 				},
 			},
-			expectedError: "environment variable \"NON_EXISTENT_ENV_VAR\" not set and no input provided for \"missing\"",
+			expected: v0.With{},
 		},
 		{
 			name: "with provided value overriding default-from-env",
@@ -719,7 +719,7 @@ func TestMergeWithAndParams(t *testing.T) {
 			expectedError: "failed to validate: input=name, value=env-value, regexp=^invalid",
 		},
 		{
-			name: "test mutual exclusivity between default and default-from-env",
+			name: "test priority order: default-from-env over default",
 			with: v0.With{},
 			params: v0.InputMap{
 				"name": v0.InputParameter{
@@ -729,7 +729,21 @@ func TestMergeWithAndParams(t *testing.T) {
 				},
 			},
 			expected: v0.With{
-				"name": "default-value",
+				"name": "env-value",
+			},
+		},
+		{
+			name: "test fallback from missing env var to default",
+			with: v0.With{},
+			params: v0.InputMap{
+				"name": v0.InputParameter{
+					Description:    "Name with both default and missing default-from-env",
+					Default:        "fallback-value",
+					DefaultFromEnv: "NON_EXISTENT_ENV_VAR",
+				},
+			},
+			expected: v0.With{
+				"name": "fallback-value",
 			},
 		},
 	}
