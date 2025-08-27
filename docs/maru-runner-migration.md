@@ -216,8 +216,10 @@ schema-version: v0
 tasks:
   example:
     - run: echo "Hello"
-      id: say-hello # Required for referencing outputs
       dir: ./some-dir
+      env:
+        FOO: bar
+      mute: true
 ```
 
 Key differences:
@@ -225,7 +227,7 @@ Key differences:
 - `cmd` becomes [`run`](./syntax.md#run-vs-uses)
 - `maru2` provides [`id`](./syntax.md#step-identification-with-id-and-name) for step references (required for output access)
 - Output capture is done differently (see below)
-- `env`, `envPath`, `mute` properties are not currently implemented, if this is a requirement, please open an issue
+- `envPath` property is not currently implemented, if this is a requirement, please open an issue
 
 ## Capturing and Using Outputs
 
