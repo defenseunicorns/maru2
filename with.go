@@ -209,6 +209,7 @@ func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (
 		// the default behavior is that an input is required, this is reflected in the json schema "default" value field
 		required := param.Required == nil || (param.Required != nil && *param.Required)
 
+		// provided > default from env > default > dne
 		if _, ok := merged[name]; !ok {
 			if required && merged[name] == nil && param.Default == nil && param.DefaultFromEnv == "" {
 				return nil, fmt.Errorf("missing required input: %q", name)
@@ -216,17 +217,13 @@ func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (
 			if merged == nil {
 				merged = make(v0.With)
 			}
-			// param.Default and param.DefaultFromEnv are mutually exclusive
-			// enforced by JSON schema
+			if merged[name] == nil && param.DefaultFromEnv != "" {
+				if val, ok := os.LookupEnv(param.DefaultFromEnv); ok {
+					merged[name] = val
+				}
+			}
 			if merged[name] == nil && param.Default != nil {
 				merged[name] = param.Default
-			}
-			if merged[name] == nil && param.DefaultFromEnv != "" {
-				val, ok := os.LookupEnv(param.DefaultFromEnv)
-				if !ok {
-					return nil, fmt.Errorf("environment variable %q not set and no input provided for %q", param.DefaultFromEnv, name)
-				}
-				merged[name] = val
 			}
 		}
 		// If the input is deprecated AND provided, log a warning

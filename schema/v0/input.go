@@ -35,29 +35,6 @@ type InputParameter struct {
 func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Description = "Input parameter for the workflow"
 
-	defaultSchema := &jsonschema.Schema{
-		Description: "Default value for the parameter, can be a string or a primitive type",
-		OneOf: []*jsonschema.Schema{
-			{
-				Type: "string",
-			},
-			{
-				Type: "boolean",
-			},
-			{
-				Type: "integer",
-			},
-		},
-	}
-
-	defaultFromEnvSchema := &jsonschema.Schema{
-		Type: "string",
-		Description: `Environment variable to use as default value for the parameter
-
-See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-values-from-environment-variables`,
-		Pattern: EnvVariablePattern.String(),
-	}
-
 	schema.Properties.Set("description", &jsonschema.Schema{
 		Type:        "string",
 		Description: "Description of the parameter",
@@ -81,39 +58,25 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-va
 See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#input-validation`,
 	})
 
-	schema.Properties.Set("default", defaultSchema)
-	schema.Properties.Set("default-from-env", defaultFromEnvSchema)
+	schema.Properties.Set("default", &jsonschema.Schema{
+		Description: "Default value for the parameter, can be a string or a primitive type",
+		OneOf: []*jsonschema.Schema{
+			{
+				Type: "string",
+			},
+			{
+				Type: "boolean",
+			},
+			{
+				Type: "integer",
+			},
+		},
+	})
+	schema.Properties.Set("default-from-env", &jsonschema.Schema{
+		Type: "string",
+		Description: `Environment variable to use as default value for the parameter
 
-	// Add a constraint to ensure they are mutually exclusive
-	schema.DependentRequired = map[string][]string{
-		"default":          {},
-		"default-from-env": {},
-	}
-
-	schema.OneOf = []*jsonschema.Schema{
-		{
-			Required: []string{"default"},
-			Not: &jsonschema.Schema{
-				Required: []string{"default-from-env"},
-			},
-		},
-		{
-			Required: []string{"default-from-env"},
-			Not: &jsonschema.Schema{
-				Required: []string{"default"},
-			},
-		},
-		{
-			Not: &jsonschema.Schema{
-				AnyOf: []*jsonschema.Schema{
-					{
-						Required: []string{"default"},
-					},
-					{
-						Required: []string{"default-from-env"},
-					},
-				},
-			},
-		},
-	}
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#default-values-from-environment-variables`,
+		Pattern: EnvVariablePattern.String(),
+	})
 }

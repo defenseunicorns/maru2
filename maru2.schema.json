@@ -25,44 +25,6 @@
       },
       "inputs": {
         "additionalProperties": {
-          "oneOf": [
-            {
-              "not": {
-                "required": [
-                  "default-from-env"
-                ]
-              },
-              "required": [
-                "default"
-              ]
-            },
-            {
-              "not": {
-                "required": [
-                  "default"
-                ]
-              },
-              "required": [
-                "default-from-env"
-              ]
-            },
-            {
-              "not": {
-                "anyOf": [
-                  {
-                    "required": [
-                      "default"
-                    ]
-                  },
-                  {
-                    "required": [
-                      "default-from-env"
-                    ]
-                  }
-                ]
-              }
-            }
-          ],
           "properties": {
             "description": {
               "type": "string",
@@ -106,10 +68,6 @@
           "required": [
             "description"
           ],
-          "dependentRequired": {
-            "default": [],
-            "default-from-env": []
-          },
           "description": "Input parameter for the workflow"
         },
         "propertyNames": {
