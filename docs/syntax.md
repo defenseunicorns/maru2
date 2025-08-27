@@ -545,17 +545,27 @@ echo "Hello, Jeff"
 Hello, Jeff
 ```
 
-If the specified environment variable is not set, an error will be returned:
+### Priority Order for Default Values
 
-```sh
-# With NON_EXISTENT_ENV_VAR not set
-maru2 hello
+You can specify both `default` and `default-from-env` for the same input parameter. Maru2 uses the following priority order:
 
-ERRO environment variable "NON_EXISTENT_ENV_VAR" not set and no input provided for "name"
-ERRO at (file:tasks.yaml)
+1. **Provided input** (via `--with` flag or `with:` property) - highest priority
+2. **Environment variable** (via `default-from-env`) - if the environment variable exists
+3. **Static default** (via `default`) - fallback if environment variable doesn't exist
+4. **No value** - if none of the above are available and the input is required, an error occurs
+
+```yaml
+schema-version: v0
+inputs:
+  ci:
+    description: "Am I running in CI?"
+    default-from-env: CI
+    default: false
+
+tasks:
+  hello:
+    - run: echo "CI is ${{ input "ci" }}"
 ```
-
-Note that `default` and `default-from-env` are mutually exclusive - you can only specify one of them for a given input parameter.
 
 ## Input validation
 
