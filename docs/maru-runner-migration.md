@@ -5,7 +5,9 @@ This guide will help you migrate your existing `maru-runner` tasks to the new `m
 > [!NOTE]
 > This migration guide is only for migrating from `maru-runner` to `maru2`'s `v0` schema.
 >
-> This guide is current as of `maru2` v0.2.2
+> This guide is a living document and _may_ not be 100% accurate in all situation.
+>
+> Contributions are most welcome!
 
 ## Why no migration tool?
 
