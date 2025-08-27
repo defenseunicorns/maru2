@@ -178,6 +178,10 @@ See [https://pkg.go.dev/time#Duration](https://pkg.go.dev/time#Duration) for mor
 
 When a step times out, the task will fail, and any subsequent steps that do not explicitly handle failures (e.g., with `if: always()` or `if: failure()`) will be skipped.
 
+## Muting terminal output with `mute`
+
+You can suppress a step's output using the `mute` field. When `mute` is set to `true`, the step's stdout and stderr will not be displayed, though the step will still execute and can still set outputs.
+
 ## Defining input parameters
 
 Maru2 allows you to define input parameters for your tasks. These parameters can be required or optional, and can have default values.
