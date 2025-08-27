@@ -54,7 +54,7 @@ These foundational rules guide all performance and algorithmic decisions:
 ### High-Level Repository Information
 
 - **Size**: Medium-sized Go project (~106 files including tests and documentation)
-- **Language**: Go 1.24.3 (primary), YAML, Markdown, Shell scripts
+- **Language**: Go (current version in `go.mod`) (primary), YAML, Markdown, Shell scripts
 - **Framework**: Cobra CLI framework with Go modules dependency management
 - **Target**: Cross-platform static binaries (Linux, macOS, supports amd64/arm64) with `CGO_ENABLED=0`
 - **Status**: Early development - expect breaking changes
@@ -381,7 +381,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 - `README.md` - Installation and basic usage
 - `Makefile` - Build commands and orchestration
-- `go.mod` - Dependencies (Go 1.24.3)
+- `go.mod` - Go dependencies and language version
 - `tasks.yaml` - Example workflow file
 - `maru2.schema.json` - Auto-generated schema
 
