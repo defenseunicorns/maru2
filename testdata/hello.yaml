@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../schema/v0/schema.json
+schema-version: v0
+inputs:
+  ci:
+    description: Am I running in CI?
+    default-from-env: CI
+    default: false
+
+tasks:
+  foo:
+    - run: echo "I'm running in CI"
+      if: input("ci") == true
+    - run: echo "CI is ${{ input "ci" }}"

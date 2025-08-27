@@ -85,35 +85,35 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#input-vali
 	schema.Properties.Set("default-from-env", defaultFromEnvSchema)
 
 	// Add a constraint to ensure they are mutually exclusive
-	schema.DependentRequired = map[string][]string{
-		"default":          {},
-		"default-from-env": {},
-	}
+	// schema.DependentRequired = map[string][]string{
+	// 	"default":          {},
+	// 	"default-from-env": {},
+	// }
 
-	schema.OneOf = []*jsonschema.Schema{
-		{
-			Required: []string{"default"},
-			Not: &jsonschema.Schema{
-				Required: []string{"default-from-env"},
-			},
-		},
-		{
-			Required: []string{"default-from-env"},
-			Not: &jsonschema.Schema{
-				Required: []string{"default"},
-			},
-		},
-		{
-			Not: &jsonschema.Schema{
-				AnyOf: []*jsonschema.Schema{
-					{
-						Required: []string{"default"},
-					},
-					{
-						Required: []string{"default-from-env"},
-					},
-				},
-			},
-		},
-	}
+	// schema.OneOf = []*jsonschema.Schema{
+	// 	{
+	// 		Required: []string{"default"},
+	// 		Not: &jsonschema.Schema{
+	// 			Required: []string{"default-from-env"},
+	// 		},
+	// 	},
+	// 	{
+	// 		Required: []string{"default-from-env"},
+	// 		Not: &jsonschema.Schema{
+	// 			Required: []string{"default"},
+	// 		},
+	// 	},
+	// 	{
+	// 		Not: &jsonschema.Schema{
+	// 			AnyOf: []*jsonschema.Schema{
+	// 				{
+	// 					Required: []string{"default"},
+	// 				},
+	// 				{
+	// 					Required: []string{"default-from-env"},
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// }
 }
