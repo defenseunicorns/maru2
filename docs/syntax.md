@@ -214,7 +214,7 @@ Input parameters have the following properties:
 - `validate`: A regular expression to validate the parameter value
 - `deprecated-message`: A warning message to display when the parameter is used (for deprecated parameters)
 
-Note that `default` and `default-from-env` are mutually exclusive - you can only specify one of them for a given input parameter.
+See [priority order for default values](#priority-order-for-default-values).
 
 ## Passing inputs
 
