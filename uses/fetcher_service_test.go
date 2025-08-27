@@ -242,6 +242,12 @@ func TestFetcherService(t *testing.T) {
 		},
 	}
 
+	service, err := NewFetcherService()
+	require.NoError(t, err)
+	fetcher, err := service.GetFetcher(nil)
+	require.EqualError(t, err, "uri cannot be nil")
+	require.Nil(t, fetcher)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			service, err := NewFetcherService(tc.opts...)
