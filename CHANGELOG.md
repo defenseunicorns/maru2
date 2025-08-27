@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0 (2025-08-27)
+
+## What's Changed
+* feat: mute property by @Noxsios in https://github.com/defenseunicorns/maru2/pull/102
+* feat: env property by @Noxsios in https://github.com/defenseunicorns/maru2/pull/104
+* refactor: allow default and default-from-env by @Noxsios in https://github.com/defenseunicorns/maru2/pull/105
+* build(deps): bump the go group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/103
+* chore: update go to v1.25.0 by @Noxsios in https://github.com/defenseunicorns/maru2/pull/107
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.2.2...v0.3.0
+
 ## 0.2.2 (2025-08-21)
 
 ## What's Changed
