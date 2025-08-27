@@ -75,7 +75,7 @@ body:
     attributes:
       label: Go Version
       description: What version of Go are you using? (if building from source)
-      placeholder: "go version go1.24.3 linux/amd64"
+      placeholder: "go version go1.25.0 linux/amd64"
     validations:
       required: false
 
