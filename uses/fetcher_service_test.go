@@ -127,6 +127,12 @@ func TestFetcherService(t *testing.T) {
 			expectedErr: "store is not initialized",
 		},
 		{
+			name:        "with invalid fetch policy",
+			opts:        []FetcherServiceOption{WithFetchPolicy(FetchPolicy("invalid-policy"))},
+			uri:         "https://example.com",
+			expectedErr: "invalid fetch policy: invalid-policy",
+		},
+		{
 			name: "with FetchPolicyNever with storage",
 			opts: []FetcherServiceOption{
 				WithFetchPolicy(FetchPolicyNever),
