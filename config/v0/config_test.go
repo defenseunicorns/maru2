@@ -92,6 +92,34 @@ aliases:
 		_, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
 		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, config.DefaultFileName)))
 	})
+
+	t.Run("unsupported schema version", func(t *testing.T) {
+		configContent := `schema-version: v999
+aliases:
+  gh:
+    type: github
+`
+		fsys := afero.NewMemMapFs()
+		err := afero.WriteFile(fsys, config.DefaultFileName, []byte(configContent), 0o644)
+		require.NoError(t, err)
+
+		_, err = LoadConfig(fsys)
+		require.EqualError(t, err, `unsupported config schema version: expected "v0", got "v999"`)
+	})
+
+	t.Run("failed to parse config file", func(t *testing.T) {
+		configContent := `schema-version: v0
+aliases: "invalid-type-should-be-map"
+fetch-policy: if-not-present
+`
+		fsys := afero.NewMemMapFs()
+		err := afero.WriteFile(fsys, config.DefaultFileName, []byte(configContent), 0o644)
+		require.NoError(t, err)
+
+		_, err = LoadConfig(fsys)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to parse config file:")
+	})
 }
 
 func TestValidate(t *testing.T) {

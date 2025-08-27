@@ -127,6 +127,12 @@ func TestFetcherService(t *testing.T) {
 			expectedErr: "store is not initialized",
 		},
 		{
+			name:        "with invalid fetch policy",
+			opts:        []FetcherServiceOption{WithFetchPolicy(FetchPolicy("invalid-policy"))},
+			uri:         "https://example.com",
+			expectedErr: "invalid fetch policy: invalid-policy",
+		},
+		{
 			name: "with FetchPolicyNever with storage",
 			opts: []FetcherServiceOption{
 				WithFetchPolicy(FetchPolicyNever),
@@ -241,6 +247,12 @@ func TestFetcherService(t *testing.T) {
 			expectedErr: "purl is missing type or name",
 		},
 	}
+
+	service, err := NewFetcherService()
+	require.NoError(t, err)
+	fetcher, err := service.GetFetcher(nil)
+	require.EqualError(t, err, "uri cannot be nil")
+	require.Nil(t, fetcher)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

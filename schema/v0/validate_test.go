@@ -78,7 +78,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: fmt.Sprintf(".echo[0].id \"&1337\" does not satisfy %q", TaskNamePattern.String()),
+			expectedError: fmt.Sprintf(".tasks.echo[0].id \"&1337\" does not satisfy %q", TaskNamePattern.String()),
 		},
 		{
 			name: "duplicate step ids",
@@ -96,7 +96,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ".echo[0] and .echo[1] have the same ID \"same-id\"",
+			expectedError: ".tasks.echo[0] and .tasks.echo[1] have the same ID \"same-id\"",
 		},
 		{
 			name: "both run and uses set",
@@ -108,7 +108,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0] has both run and uses fields set",
+			expectedError: ".tasks.task[0] has both run and uses fields set",
 		},
 		{
 			name: "neither run nor uses set",
@@ -117,7 +117,7 @@ func TestValidate(t *testing.T) {
 					"task": Task{Step{}},
 				},
 			},
-			expectedError: ".task[0] must have one of [run, uses] fields set",
+			expectedError: ".tasks.task[0] must have one of [run, uses] fields set",
 		},
 		{
 			name: "uses with invalid URL",
@@ -128,7 +128,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].uses parse \":\\\\invalid\": missing protocol scheme",
+			expectedError: ".tasks.task[0].uses parse \":\\\\invalid\": missing protocol scheme",
 		},
 		{
 			name: "uses with non-existent task",
@@ -139,7 +139,18 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].uses \"non-existent-task\" not found",
+			expectedError: ".tasks.task[0].uses \"non-existent-task\" not found",
+		},
+		{
+			name: "uses cannot reference itself",
+			wf: Workflow{
+				Tasks: TaskMap{
+					"self-task": Task{Step{
+						Uses: "self-task",
+					}},
+				},
+			},
+			expectedError: ".tasks.self-task[0].uses cannot reference itself",
 		},
 		{
 			name: "uses with invalid scheme",
@@ -150,7 +161,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: fmt.Sprintf(".task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(SupportedSchemes(), "builtin"), ", ")),
+			expectedError: fmt.Sprintf(".tasks.task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(SupportedSchemes(), "builtin"), ", ")),
 		},
 		{
 			name: "uses with valid task reference",
@@ -259,7 +270,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0] has both run and uses fields set",
+			expectedError: ".tasks.task[0] has both run and uses fields set",
 		},
 		{
 			name: "task with neither run nor uses",
@@ -271,7 +282,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0] must have one of [run, uses] fields set",
+			expectedError: ".tasks.task[0] must have one of [run, uses] fields set",
 		},
 		{
 			name: "task with multiple validation errors",
@@ -289,7 +300,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: ".task[0] has both run and uses fields set",
+			expectedError: ".tasks.task[0] has both run and uses fields set",
 		},
 		{
 			name: "invalid input schema validation",
@@ -350,7 +361,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].dir \"/tmp\" must not be absolute",
+			expectedError: ".tasks.task[0].dir \"/tmp\" must not be absolute",
 		},
 		{
 			name: "step with invalid timeout",
@@ -363,7 +374,7 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
-			expectedError: ".task[0].timeout \"5\" is not a valid time duration",
+			expectedError: ".tasks.task[0].timeout \"5\" is not a valid time duration",
 		},
 		{
 			name: "step with valid timeout and dir",
@@ -377,6 +388,98 @@ func TestValidate(t *testing.T) {
 					}},
 				},
 			},
+		},
+		{
+			name: "valid env with string values",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"VAR1":  "value1",
+							"VAR_2": "value2",
+							"_VAR3": "value3",
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "valid env with different types",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"STRING_VAR": "hello",
+							"INT_VAR":    42,
+							"BOOL_VAR":   true,
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "valid env with underscore variations",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"_VAR":    "value1",
+							"VAR_":    "value2",
+							"VAR_1_2": "value3",
+							"__VAR__": "value4",
+						},
+					}},
+				},
+			},
+		},
+		{
+			name: "empty env object should be valid",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{},
+					}},
+				},
+			},
+		},
+		{
+			name: "invalid env variable name violates schema",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo test",
+						Env: Env{
+							"1INVALID": "value", // starts with number - violates schema
+						},
+					}},
+				},
+			},
+			expectedError: ".tasks.task[0].env \"1INVALID\" does not satisfy \"^[a-zA-Z_]+[a-zA-Z0-9_]*$\"",
+		},
+		{
+			name: "invalid input name",
+			wf: Workflow{
+				Inputs: InputMap{
+					"2-invalid": InputParameter{
+						Description: "Invalid input name",
+					},
+				},
+				Tasks: TaskMap{
+					"task": Task{Step{
+						Run: "echo",
+					}},
+				},
+			},
+			expectedError: fmt.Sprintf("input name \"2-invalid\" does not satisfy %q", InputNamePattern.String()),
 		},
 	}
 

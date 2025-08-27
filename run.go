@@ -18,6 +18,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unicode"
 
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
@@ -57,7 +58,17 @@ Run follows the following general pattern:
 
  5. Return the final step's output and the first error encountered
 */
-func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskName string, outer v0.With, origin *url.URL, dry bool) (map[string]any, error) {
+func Run(
+	parent context.Context,
+	svc *uses.FetcherService,
+	wf v0.Workflow,
+	taskName string,
+	outer v0.With,
+	origin *url.URL,
+	cwd string,
+	environVars []string,
+	dry bool,
+) (map[string]any, error) {
 	if taskName == "" {
 		taskName = v0.DefaultTaskName
 	}
@@ -134,9 +145,9 @@ func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskN
 			var stepResult map[string]any
 
 			if step.Uses != "" {
-				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, dry)
+				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, cwd, environVars, dry)
 			} else if step.Run != "" {
-				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, dry)
+				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, cwd, environVars, dry)
 			}
 
 			if err != nil {
@@ -170,8 +181,15 @@ func Run(parent context.Context, svc *uses.FetcherService, wf v0.Workflow, taskN
 	return lastStepOutput, firstError
 }
 
-func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
-	outputs CommandOutputs, dry bool) (map[string]any, error) {
+func handleRunStep(
+	ctx context.Context,
+	step v0.Step,
+	withDefaults v0.With,
+	outputs CommandOutputs,
+	cwd string,
+	environVars []string,
+	dry bool,
+) (map[string]any, error) {
 
 	logger := log.FromContext(ctx)
 
@@ -197,7 +215,15 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 		os.Remove(outFile.Name())
 	}()
 
-	env := prepareEnvironment(withDefaults, outFile.Name())
+	templatedEnv, err := TemplateWithMap(ctx, withDefaults, outputs, step.Env, dry)
+	if err != nil {
+		return nil, err
+	}
+
+	env, err := prepareEnvironment(environVars, withDefaults, outFile.Name(), templatedEnv)
+	if err != nil {
+		return nil, err
+	}
 
 	shell := step.Shell
 	var args []string
@@ -217,7 +243,7 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 
 	cmd := exec.CommandContext(ctx, shell, args...)
 	cmd.Env = env
-	cmd.Dir = filepath.Join(CWDFromContext(ctx), step.Dir)
+	cmd.Dir = filepath.Join(cwd, step.Dir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -244,35 +270,55 @@ func handleRunStep(ctx context.Context, step v0.Step, withDefaults v0.With,
 	return result, nil
 }
 
-type contextKey struct{ string }
+func prepareEnvironment(envVars []string, withDefaults v0.With, outFileName string, stepEnv v0.Env) ([]string, error) {
+	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
+	copy(env, envVars)
 
-// ContextKeyDir is the key used to store the current working directory in context.
-var ContextKeyDir = contextKey{"dir"}
-
-// WithCWDContext returns a new context with the given current working directory.
-func WithCWDContext(ctx context.Context, dir string) context.Context {
-	return context.WithValue(ctx, ContextKeyDir, dir)
-}
-
-// CWDFromContext returns the current working directory from the context.
-// If no current working directory is set, it returns an empty string.
-func CWDFromContext(ctx context.Context) string {
-	if dir, ok := ctx.Value(ContextKeyDir).(string); ok {
-		return dir
+	// keeping this local until i figure out if i want to break it out individually
+	needsQuoting := func(s string) bool {
+		// Check for spaces or other problematic characters
+		for _, r := range s {
+			if unicode.IsSpace(r) || r == '=' || r == '"' || r == '\n' {
+				return true
+			}
+		}
+		return false
 	}
-	return "" // empty string is a valid dir for exec.Command, defaults to calling process's current directory
-}
-
-func prepareEnvironment(withDefaults v0.With, outFileName string) []string {
-	env := os.Environ()
 
 	for k, v := range withDefaults {
-		val := cast.ToString(v)
-		env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
+		val, err := cast.ToStringE(v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert input %q to string: %w", k, err)
+		}
+		if needsQuoting(val) {
+			env = append(env, fmt.Sprintf("INPUT_%s=%q", toEnvVar(k), val))
+		} else {
+			env = append(env, fmt.Sprintf("INPUT_%s=%s", toEnvVar(k), val))
+		}
 	}
 
-	env = append(env, fmt.Sprintf("MARU2_OUTPUT=%s", outFileName))
-	return env
+	for k, v := range stepEnv {
+		// Prevent setting PWD as it should be controlled by exec.Command's Dir field
+		if strings.EqualFold(k, "PWD") {
+			return nil, fmt.Errorf("setting PWD environment variable is not allowed")
+		}
+
+		val, err := cast.ToStringE(v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert env var %q to string: %w", k, err)
+		}
+		if needsQuoting(val) {
+			env = append(env, fmt.Sprintf("%s=%q", k, val))
+		} else {
+			env = append(env, fmt.Sprintf("%s=%s", k, val))
+		}
+	}
+
+	if outFileName != "" {
+		env = append(env, fmt.Sprintf("MARU2_OUTPUT=%s", outFileName))
+	}
+
+	return env, nil
 }
 
 func toEnvVar(s string) string {

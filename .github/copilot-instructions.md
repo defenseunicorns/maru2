@@ -107,13 +107,13 @@ make echo ARGS='-w text="Custom message"'  # Runs echo with custom text
 **Multiple testing approaches available**:
 
 ```bash
-# Option 1: Direct Go testing (recommended for development)
-go test -short -v -timeout 3m ./...  # Skip network-dependent tests
-go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m ./...  # Full suite
-
-# Option 2: Via maru2 task system (uses tasks.yaml)
+# Option 1: Via maru2 task system (uses tasks.yaml) (recommended for development)
 make test                           # Full test suite (short=false)
 make test ARGS='-w short=true'      # Skip network tests (short=true)
+
+# Option 2: Direct Go testing
+go test -short -v -timeout 3m ./...  # Skip network-dependent tests
+go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m ./...  # Full suite
 
 # Run specific E2E tests (testscript-based)
 go test ./cmd/ -run TestE2E/<TestName> -v
@@ -121,10 +121,10 @@ go test ./cmd/ -run TestE2E/<TestName> -v
 
 **Test Configuration**:
 
-- **Full test suite**: Takes ~3 minutes, includes race detection and coverage reporting
-- **Short tests**: Use `-short` flag to skip network-dependent tests
-- **E2E Testing**: Uses `testscript` framework in `/testdata/` - each `.txtar` file defines a complete test scenario
-- **Alternative interface**: The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, and can be customized via maru2's input system
+- Use `-short` flag to skip network-dependent tests
+- E2E testing uses `testscript` framework in `/testdata/` - each `.txtar` file defines a complete test scenario
+- The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, and can be customized via maru2's input system
+- Prompt the user after finishing a feature for confirmation to run the entire test suite, do not auto run it.
 
 ### Linting
 
@@ -144,7 +144,7 @@ make lint-fix       # Run linters with auto-fix
 Always validate changes with this sequence:
 
 1. `make` (rebuild + regenerate schemas)
-2. `go test -short ./...` or `make test ARGS='-w short=true'` (run core tests)
+2. `make test ARGS='-w short=true'` (run core tests)
 3. `make lint` (if golangci-lint installed)
 4. Check schema files are committed if changed
 
@@ -352,6 +352,10 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
    - Prefer `bytes.Buffer` for binary data manipulation
    - Be mindful of goroutine leaks, always provide context cancellation
    - Use `sync.Pool` for frequently allocated objects
+
+5. **Communication**:
+   - Be brutally honest in your feedback, avoiding fluff wording and words of encouragement. High quality code is your objective, not assuaging the concerns of your reader.
+   - If you are ever confused, or something does not look right, first stop and think, then if you are still confused pause and ask for clarification.
 
 ### Architecture Notes
 

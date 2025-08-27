@@ -250,6 +250,67 @@ tasks:
 maru2 echo --with name=$(whoami) --with date=$(date)
 ```
 
+## Defining environment variables
+
+You can set custom environment variables for individual steps using the `env` field. Variable names follow the same rules as task names. Variable values leverage the same input templating engine as `run`.
+
+```yaml
+schema-version: v0
+inputs:
+  deployment-env:
+    description: "Deployment environment"
+    default: "development"
+
+tasks:
+  deploy:
+    - id: "build-app"
+      name: "Build application with environment config"
+      run: |
+        npm run build
+        echo "build_version=$(git rev-parse --short HEAD)" >> $MARU2_OUTPUT
+      env:
+        NODE_ENV: ${{ input "deployment-env" }}
+
+    - name: "Deploy application"
+      run: |
+        echo "Deploying version $BUILD_VERSION to $DEPLOY_TARGET"
+        ${{ which "zarf" }} dev deploy .
+      env:
+        BUILD_VERSION: ${{ from "build-app" "build_version" }}
+        DEPLOY_TARGET: ${{ input "deployment-env" }}
+        ZARF_NO_PROGRESS: true
+        KUBECONFIG: /etc/kubernetes/${{ input "deployment-env" }}-config
+```
+
+ Environment variables set in the `env` field apply to that specific step. For `run` steps, they only apply to that single step. For `uses` steps, they are passed down to ALL steps in the called task.
+
+When using the `env` field on a `uses` step, those environment variables are templated and passed to all steps within the called task:
+
+```yaml
+schema-version: v0
+tasks:
+  parent-task:
+    - uses: file:subtask.yaml?task=child-task
+      with:
+        message: "Hello from parent"
+      env:
+        PARENT_VAR: "value-from-parent"
+        TEMPLATED_VAR: ${{ input "some-input" }}
+
+  # In subtask.yaml, both steps will have access to PARENT_VAR and TEMPLATED_VAR
+```
+
+### `env` Restrictions
+
+You cannot set the `PWD` environment variable through the `env` field. Use the [`dir` field](#working-directory-with-dir) instead to control the working directory:
+
+```yaml
+tasks:
+  example:
+    - run: pwd
+      dir: subdirectory # Use dir field, not env: { PWD: "..." }
+```
+
 ## Run another task as a step
 
 Calling another task within the same workflow is as simple as using the task name, similar to Makefile targets.
@@ -266,6 +327,8 @@ tasks:
     - uses: general-kenobi
       with:
         response: Your move
+      env:
+        GREETING_TYPE: "formal"
 ```
 
 ```sh

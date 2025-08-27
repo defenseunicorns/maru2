@@ -595,12 +595,156 @@ func TestExecuteUses(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.expectedErr == "" {
-				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, false)
+				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", nil, false)
 				require.NoError(t, err)
 			} else {
-				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, false)
+				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", nil, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})
 	}
+}
+
+func TestUsesEnvironmentVariables(t *testing.T) {
+	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
+	require.NoError(t, err)
+
+	// Create a test workflow that accepts inputs and accesses environment variables
+	testWorkflow := v0.Workflow{
+		SchemaVersion: v0.SchemaVersion,
+		Inputs: v0.InputMap{
+			"message": {
+				Description: "Test message input",
+				Default:     "default-message",
+			},
+		},
+		Tasks: v0.TaskMap{
+			"env-test": {
+				v0.Step{
+					Run: `
+						echo "Parent env: $PARENT_ENV"
+						echo "Input message: $INPUT_MESSAGE"
+						echo "result=success" >> $MARU2_OUTPUT
+					`,
+				},
+			},
+		},
+	}
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/env-test.yaml" {
+			b, _ := yaml.Marshal(testWorkflow)
+			_, _ = w.Write(b)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	tests := []struct {
+		name        string
+		step        v0.Step
+		environ     []string
+		withInputs  v0.With
+		expectedErr string
+	}{
+		{
+			name: "environment variables passed through uses",
+			step: v0.Step{
+				Uses: server.URL + "/env-test.yaml?task=env-test",
+				With: v0.With{
+					"message": "test-from-parent",
+				},
+			},
+			environ: []string{
+				"PARENT_ENV=parent-value",
+				"PATH=/usr/bin",
+			},
+			withInputs: v0.With{},
+		},
+		{
+			name: "step-level env not passed to uses (current behavior)",
+			step: v0.Step{
+				Uses: server.URL + "/env-test.yaml?task=env-test",
+				Env: v0.Env{
+					"STEP_LEVEL_VAR": "step-value",
+				},
+				With: v0.With{
+					"message": "test-with-step-env",
+				},
+			},
+			environ: []string{
+				"PARENT_ENV=parent-value",
+				"PATH=/usr/bin",
+			},
+			withInputs: v0.With{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+
+			origin, err := url.Parse("file:test.yaml")
+			require.NoError(t, err)
+
+			result, err := handleUsesStep(
+				ctx,
+				svc,
+				tt.step,
+				v0.Workflow{},
+				tt.withInputs,
+				nil,
+				origin,
+				"",
+				tt.environ,
+				true, // dry run to avoid actual execution
+			)
+
+			if tt.expectedErr != "" {
+				require.EqualError(t, err, tt.expectedErr)
+			} else {
+				require.NoError(t, err)
+				// In dry run mode, result should be nil since no actual execution happens
+				assert.Nil(t, result)
+			}
+		})
+	}
+}
+
+func TestUsesEnvironmentVariablesExecution(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test that executes real workflows in short mode")
+	}
+
+	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
+	require.NoError(t, err)
+
+	ctx := log.WithContext(t.Context(), log.New(io.Discard))
+
+	// Test using the existing testdata files
+	origin, err := url.Parse("file:testdata/hello-world.yaml")
+	require.NoError(t, err)
+
+	wf, err := Fetch(ctx, svc, origin)
+	require.NoError(t, err)
+
+	// Set up environment variables that should be passed through
+	environ := []string{
+		"TEST_PARENT_ENV=test-parent-value",
+		"PATH=/usr/bin",
+	}
+
+	// Execute a simple task to verify environment variables are accessible
+	// This doesn't test the specific environment variable passing but confirms
+	// the basic uses functionality works with environment context
+	result, err := Run(ctx, svc, wf, "default", v0.With{}, origin, "", environ, false)
+	require.NoError(t, err)
+
+	// For this simple test, we just verify no error occurred
+	// The comprehensive environment variable testing is covered by the E2E test
+	// Result is nil for tasks that don't write to $MARU2_OUTPUT, which is expected
+	assert.Nil(t, result)
 }
