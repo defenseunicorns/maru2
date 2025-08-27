@@ -444,6 +444,70 @@ func TestMergeWithAndParams(t *testing.T) {
 			expectedError: "strconv.ParseBool: parsing \"hello\": invalid syntax",
 		},
 		{
+			name: "uint64 input with uint64 default - type match",
+			with: v0.With{
+				"size": uint64(1024),
+			},
+			params: v0.InputMap{
+				"size": v0.InputParameter{
+					Default: uint64(512),
+				},
+			},
+			expected: v0.With{
+				"size": uint64(1024),
+			},
+		},
+		{
+			name: "uint64 input with non-uint64 default - type cast",
+			with: v0.With{
+				"size": "2048",
+			},
+			params: v0.InputMap{
+				"size": v0.InputParameter{
+					Default: uint64(512),
+				},
+			},
+			expected: v0.With{
+				"size": uint64(2048),
+			},
+		},
+		{
+			name: "uint64 input with non-uint64 default - failed type cast",
+			with: v0.With{
+				"size": "not-a-number",
+			},
+			params: v0.InputMap{
+				"size": v0.InputParameter{
+					Default: uint64(512),
+				},
+			},
+			expectedError: "unable to cast \"not-a-number\" of type string to uint64: strconv.ParseUint: parsing \"not-a-number\": invalid syntax",
+		},
+		{
+			name: "unsupported type default - slice type",
+			with: v0.With{
+				"data": "some-value",
+			},
+			params: v0.InputMap{
+				"data": v0.InputParameter{
+					Default: []string{"default", "values"},
+				},
+			},
+			expectedError: "unable to cast input \"data\" from string to []string",
+		},
+		{
+			name: "unsupported type default - map type",
+			with: v0.With{
+				"config": "some-value",
+			},
+			params: v0.InputMap{
+				"config": v0.InputParameter{
+					Default: map[string]string{"key": "value"},
+				},
+			},
+			expectedError: "unable to cast input \"config\" from string to map[string]string",
+		},
+		{
 			name: "unknown type input",
 			with: v0.With{
 				"data": []string{"a", "b"},

@@ -121,10 +121,10 @@ go test ./cmd/ -run TestE2E/<TestName> -v
 
 **Test Configuration**:
 
-- **Full test suite**: Takes ~3 minutes, includes race detection and coverage reporting
-- **Short tests**: Use `-short` flag to skip network-dependent tests
-- **E2E Testing**: Uses `testscript` framework in `/testdata/` - each `.txtar` file defines a complete test scenario
-- **Alternative interface**: The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, and can be customized via maru2's input system
+- Use `-short` flag to skip network-dependent tests
+- E2E testing uses `testscript` framework in `/testdata/` - each `.txtar` file defines a complete test scenario
+- The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, and can be customized via maru2's input system
+- Prompt the user after finishing a feature for confirmation to run the entire test suite, do not auto run it.
 
 ### Linting
 
