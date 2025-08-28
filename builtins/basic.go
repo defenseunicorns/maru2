@@ -39,22 +39,6 @@ type fetch struct {
 	parsedTimeout time.Duration
 }
 
-func (b *fetch) setDefaults() error {
-	if b.Method == "" {
-		b.Method = "GET"
-	}
-
-	b.parsedTimeout = 30 * time.Second
-	if b.Timeout != "" {
-		parsedTimeout, err := time.ParseDuration(b.Timeout)
-		if err != nil {
-			return fmt.Errorf("invalid timeout: %w", err)
-		}
-		b.parsedTimeout = parsedTimeout
-	}
-	return nil
-}
-
 // Execute the builtin
 func (b *fetch) Execute(ctx context.Context) (map[string]any, error) {
 	logger := log.FromContext(ctx)
@@ -106,4 +90,20 @@ func (b *fetch) Execute(ctx context.Context) (map[string]any, error) {
 	logger.Print(string(body))
 
 	return map[string]any{"body": string(body)}, nil
+}
+
+func (b *fetch) setDefaults() error {
+	if b.Method == "" {
+		b.Method = "GET"
+	}
+
+	b.parsedTimeout = 30 * time.Second
+	if b.Timeout != "" {
+		parsedTimeout, err := time.ParseDuration(b.Timeout)
+		if err != nil {
+			return fmt.Errorf("invalid timeout: %w", err)
+		}
+		b.parsedTimeout = parsedTimeout
+	}
+	return nil
 }
