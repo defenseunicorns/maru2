@@ -116,11 +116,10 @@ func Main() int {
 				return fmt.Errorf("reference is not a tag: %w", err)
 			}
 
-			dst, err := remote.NewRepository(ref.String())
-			if err != nil {
-				return err
+			dst := &remote.Repository{
+				Reference: ref,
+				PlainHTTP: plainHTTP,
 			}
-			dst.PlainHTTP = plainHTTP
 			transport := http.DefaultTransport.(*http.Transport).Clone()
 			transport.TLSClientConfig.InsecureSkipVerify = insecureSkipTLS
 
