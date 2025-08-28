@@ -1257,10 +1257,19 @@ func TestTemplateSlice(t *testing.T) {
 			},
 		},
 		{
-			name: "slice with template error in nested element",
+			name: "slice with template error in nested map",
 			slice: []any{
 				map[string]any{
 					"key": "${{ invalid template syntax",
+				},
+			},
+			expectedError: "function \"invalid\" not defined",
+		},
+		{
+			name: "slice with template error in nested slice",
+			slice: []any{
+				[]any{
+					"${{ invalid template syntax",
 				},
 			},
 			expectedError: "function \"invalid\" not defined",

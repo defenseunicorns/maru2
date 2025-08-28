@@ -21,9 +21,7 @@ func WorkflowSchema(version string) *jsonschema.Schema {
 			If: &jsonschema.Schema{
 				Properties: jsonschema.NewProperties(),
 			},
-			Then: &jsonschema.Schema{
-				Properties: jsonschema.NewProperties(),
-			},
+			Then:    v0.WorkFlowSchema(),
 			ID:      "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json",
 			Version: jsonschema.Version,
 		}
@@ -32,8 +30,6 @@ func WorkflowSchema(version string) *jsonschema.Schema {
 			Type: "string",
 			Enum: []any{v0.SchemaVersion},
 		})
-
-		schema.Then = v0.WorkFlowSchema()
 	}
 
 	return schema

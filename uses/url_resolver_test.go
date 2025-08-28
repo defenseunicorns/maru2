@@ -337,6 +337,12 @@ func TestResolveURL(t *testing.T) {
 			next: "oci:registry.uds.sh/maru2:latest#foo.yaml",
 		},
 		{
+			name: "oci -> file with dot path",
+			prev: "oci:registry.uds.sh/maru2:latest",
+			uri:  "file:.",
+			next: "oci:registry.uds.sh/maru2:latest#tasks.yaml",
+		},
+		{
 			name: "oci -> nested",
 			prev: "oci:registry.uds.sh/maru2:latest#foo.yaml",
 			uri:  "file:dir/foo.yaml",

@@ -1,6 +1,6 @@
 # Contributing to `defenseunicorns/maru2`
 
-1. Install Go and install project dependencies.
+1. Install project dependencies and build all binaries.
 
    ```bash
    make
@@ -26,7 +26,7 @@
 
 5. Commit your changes.
 
-   > Set up your Git config to GPG sign all commits. [Here's some documentation on how to set it up](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). You won't be able to merge your PR if you have any unverified commits.
+   > Set up your Git config to sign all commits. [Here's some documentation on how to set it up](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). You won't be able to merge your PR if you have any unverified commits.
 
    ```bash
    git commit -m "feat: add new feature"

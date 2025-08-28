@@ -35,33 +35,25 @@ type fetch struct {
 	Method  string            `json:"method,omitempty"  jsonschema:"description=HTTP method to use"`
 	Timeout string            `json:"timeout,omitempty" jsonschema:"description=Timeout for the request"`
 	Headers map[string]string `json:"headers,omitempty" jsonschema:"description=HTTP headers to send"`
+
+	parsedTimeout time.Duration
 }
 
 // Execute the builtin
 func (b *fetch) Execute(ctx context.Context) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 
-	method := b.Method
-	if method == "" {
-		method = "GET"
-	}
-
-	timeout := 30 * time.Second
-	if b.Timeout != "" {
-		parsedTimeout, err := time.ParseDuration(b.Timeout)
-		if err != nil {
-			return nil, fmt.Errorf("invalid timeout: %w", err)
-		}
-		timeout = parsedTimeout
+	if err := b.setDefaults(); err != nil {
+		return nil, err
 	}
 
 	client := &http.Client{
-		Timeout: timeout,
+		Timeout: b.parsedTimeout,
 	}
 
 	logger.Printf("Headers: %s", b.Headers)
 
-	req, err := http.NewRequestWithContext(ctx, method, b.URL, nil)
+	req, err := http.NewRequestWithContext(ctx, b.Method, b.URL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
@@ -71,6 +63,10 @@ func (b *fetch) Execute(ctx context.Context) (map[string]any, error) {
 		return nil, fmt.Errorf("error executing request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("expected status code %d got %d", http.StatusOK, resp.StatusCode)
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -94,4 +90,20 @@ func (b *fetch) Execute(ctx context.Context) (map[string]any, error) {
 	logger.Print(string(body))
 
 	return map[string]any{"body": string(body)}, nil
+}
+
+func (b *fetch) setDefaults() error {
+	if b.Method == "" {
+		b.Method = "GET"
+	}
+
+	b.parsedTimeout = 30 * time.Second
+	if b.Timeout != "" {
+		parsedTimeout, err := time.ParseDuration(b.Timeout)
+		if err != nil {
+			return fmt.Errorf("invalid timeout: %w", err)
+		}
+		b.parsedTimeout = parsedTimeout
+	}
+	return nil
 }
