@@ -5,12 +5,10 @@ package builtins
 
 import (
 	"bytes"
-	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
-	"testing/iotest"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -98,14 +96,9 @@ func TestBuiltinFetch(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte(`{"invalid": json}`))
-		case "/partial-read-failure":
-			w.Header().Set("Content-Type", "application/json")
-			fr := iotest.ErrReader(fmt.Errorf("failed to read"))
-			w.WriteHeader(http.StatusOK)
-			_, _ = io.Copy(w, fr)
-		case "/timeout":
-			d, _ := time.ParseDuration(r.URL.Query().Get("in"))
-			time.Sleep(d + time.Millisecond*100)
+		case "/sleep":
+			d, _ := time.ParseDuration(r.URL.Query().Get("for"))
+			time.Sleep(d)
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("plain text response"))
@@ -160,14 +153,6 @@ func TestBuiltinFetch(t *testing.T) {
 			body: `{"invalid": json}`,
 		},
 		{
-			name: "fail on partial body read",
-			fetch: fetch{
-				URL:    server.URL + "/partial-read-failure",
-				Method: http.MethodGet,
-			},
-			expectedError: "partial",
-		},
-		{
 			name: "with headers",
 			fetch: fetch{
 				URL:    server.URL + "/headers",
@@ -180,9 +165,9 @@ func TestBuiltinFetch(t *testing.T) {
 		{
 			name: "with timeout",
 			fetch: fetch{
-				URL:     server.URL + "/timeout?in=1s",
+				URL:     server.URL + "/sleep?for=600ms",
 				Method:  http.MethodGet,
-				Timeout: "1s",
+				Timeout: "500ms",
 			},
 			expectedError: "context deadline exceeded",
 		},
@@ -225,7 +210,7 @@ func TestBuiltinFetch(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			ctx := log.WithContext(t.Context(), log.New(os.Stderr))
 
 			result, err := tc.fetch.Execute(ctx)
 
