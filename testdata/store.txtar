@@ -1,0 +1,14 @@
+# corrupted store
+mkdir home/.maru2/store
+mv bad/index.txt home/.maru2/store/index.txt
+! exec maru2
+stderr 'ERRO failed to initialize store: invalid line format'
+
+rm home/.maru2/store/index.txt
+
+-- bad/index.txt --
+this is not the correct line format
+-- tasks.yaml --
+schema-version: v0
+tasks:
+  echo: [run: echo "Hello World!"]
