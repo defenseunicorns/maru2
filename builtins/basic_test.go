@@ -5,10 +5,13 @@ package builtins
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/iotest"
+	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
@@ -94,7 +97,18 @@ func TestBuiltinFetch(t *testing.T) {
 		case "/invalid-json":
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(`{"invalid": json}`)) // Invalid JSON
+			_, _ = w.Write([]byte(`{"invalid": json}`))
+		case "/partial-read-failure":
+			w.Header().Set("Content-Type", "application/json")
+			fr := iotest.ErrReader(fmt.Errorf("failed to read"))
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.Copy(w, fr)
+		case "/timeout":
+			d, _ := time.ParseDuration(r.URL.Query().Get("in"))
+			time.Sleep(d + time.Millisecond*100)
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("plain text response"))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -104,40 +118,60 @@ func TestBuiltinFetch(t *testing.T) {
 	testCases := []struct {
 		name          string
 		fetch         fetch
-		expectedError bool
+		body          string
+		expectedError string
 	}{
-		{
-			name: "fetch json",
-			fetch: fetch{
-				URL:    server.URL + "/json",
-				Method: "GET",
-			},
-		},
-		{
-			name: "fetch text",
-			fetch: fetch{
-				URL:    server.URL + "/text",
-				Method: "GET",
-			},
-		},
-		{
-			name: "fetch invalid json",
-			fetch: fetch{
-				URL:    server.URL + "/invalid-json",
-				Method: "GET",
-			},
-		},
 		{
 			name: "default method",
 			fetch: fetch{
 				URL: server.URL + "/text",
 			},
+			body: "plain text response",
+		},
+		{
+			name: "404",
+			fetch: fetch{
+				URL: server.URL + "/404",
+			},
+			expectedError: "expected status code 200 got 404",
+		},
+		{
+			name: "fetch json",
+			fetch: fetch{
+				URL:    server.URL + "/json",
+				Method: http.MethodGet,
+			},
+			body: `{"message":"success"}`,
+		},
+		{
+			name: "fetch text",
+			fetch: fetch{
+				URL:    server.URL + "/text",
+				Method: http.MethodGet,
+			},
+			body: "plain text response",
+		},
+		{
+			name: "fetch invalid json",
+			fetch: fetch{
+				URL:    server.URL + "/invalid-json",
+				Method: http.MethodGet,
+			},
+			body: `{"invalid": json}`,
+		},
+		{
+			name: "fail on partial body read",
+			fetch: fetch{
+				URL:    server.URL + "/partial-read-failure",
+				Method: http.MethodGet,
+			},
+			expectedError: "partial",
 		},
 		{
 			name: "with headers",
 			fetch: fetch{
 				URL:    server.URL + "/headers",
-				Method: "GET",
+				Method: http.MethodGet,
 				Headers: map[string]string{
 					"X-Custom-Header": "custom-value",
 				},
@@ -146,18 +180,19 @@ func TestBuiltinFetch(t *testing.T) {
 		{
 			name: "with timeout",
 			fetch: fetch{
-				URL:     server.URL + "/text",
-				Method:  "GET",
+				URL:     server.URL + "/timeout?in=1s",
+				Method:  http.MethodGet,
 				Timeout: "1s",
 			},
+			expectedError: "context deadline exceeded",
 		},
 		{
-			name: "invalid url",
+			name: "url does not exist",
 			fetch: fetch{
-				URL:    "http://invalid-url-that-does-not-exist.example",
-				Method: "GET",
+				URL:    "http://localhost:123456",
+				Method: http.MethodGet,
 			},
-			expectedError: true,
+			expectedError: "dial tcp: address 123456: invalid port",
 		},
 		{
 			name: "invalid timeout format",
@@ -166,7 +201,7 @@ func TestBuiltinFetch(t *testing.T) {
 				Method:  "GET",
 				Timeout: "invalid",
 			},
-			expectedError: true,
+			expectedError: `invalid timeout: time: invalid duration "invalid"`,
 		},
 		{
 			name: "empty timeout",
@@ -175,14 +210,7 @@ func TestBuiltinFetch(t *testing.T) {
 				Method:  "GET",
 				Timeout: "",
 			},
-		},
-		{
-			name: "complex timeout",
-			fetch: fetch{
-				URL:     server.URL + "/text",
-				Method:  "GET",
-				Timeout: "1m30s",
-			},
+			body: "plain text response",
 		},
 		{
 			name: "invalid request",
@@ -190,7 +218,7 @@ func TestBuiltinFetch(t *testing.T) {
 				URL:    string([]byte{0x7f}),
 				Method: "GET",
 			},
-			expectedError: true,
+			expectedError: `error creating request: parse "\x7f": net/url: invalid control character in URL`,
 		},
 	}
 
@@ -201,12 +229,12 @@ func TestBuiltinFetch(t *testing.T) {
 
 			result, err := tc.fetch.Execute(ctx)
 
-			if tc.expectedError {
-				require.Error(t, err)
+			if tc.expectedError != "" {
+				require.ErrorContains(t, err, tc.expectedError)
 				assert.Nil(t, result)
 			} else {
 				require.NoError(t, err)
-				assert.Contains(t, result, "body")
+				assert.Equal(t, tc.body, result["body"])
 			}
 		})
 	}
