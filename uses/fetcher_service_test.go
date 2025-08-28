@@ -105,6 +105,26 @@ func TestFetcherService(t *testing.T) {
 			expectedType: &GitLabClient{},
 		},
 		{
+			name:        "github token env var does not exist",
+			uri:         "pkg:github/noxsios/vai?token-from-env=TOTALLY_DOESNT_EXIST",
+			expectedErr: "token environment variable TOTALLY_DOESNT_EXIST is not set",
+		},
+		{
+			name:        "gitlab token env var does not exist",
+			uri:         "pkg:gitlab/noxsios/vai?token-from-env=TOTALLY_DOESNT_EXIST",
+			expectedErr: "token environment variable TOTALLY_DOESNT_EXIST is not set",
+		},
+		{
+			name:        "github base url is invalid",
+			uri:         "pkg:github/noxsios/vai?base=:%20invalid",
+			expectedErr: "invalid base URL: parse \": invalid\": missing protocol scheme",
+		},
+		{
+			name:        "gitlab base url is invalid",
+			uri:         "pkg:gitlab/noxsios/vai?base=:%20invalid",
+			expectedErr: "parse \": invalid/\": missing protocol scheme",
+		},
+		{
 			name:           "caching",
 			uri:            "https://example.com",
 			expectedType:   &HTTPClient{},
