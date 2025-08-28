@@ -1,27 +1,61 @@
-# Test with no arguments and no version flag - should show usage
+# with no arguments and no version flag - should show usage
 ! maru2-publish
 stderr 'accepts 1 arg\(s\), received 0'
 
-# Test with invalid log level
+# with invalid log level
 ! maru2-publish --log-level invalid-level localhost:5000/test:latest
 stderr 'invalid level: "invalid-level"'
 
-# Test with non-existent directory flag
+# with non-existent directory flag
 ! maru2-publish -C /non/existent/dir localhost:5000/test:latest
 stderr 'no such file or directory'
 
-# Test with invalid reference (no tag)
+# with invalid repository
+! maru2-publish 5555
+stderr 'ERRO unable to parse reference: invalid reference: missing registry or repository'
+
+# with invalid reference (no tag)
 ! maru2-publish localhost:5000/test
 stderr 'reference is not a tag'
 
-# Test with no entrypoints in current directory
+# with no entrypoints in current directory
 ! maru2-publish localhost:5000/test:latest
 stderr 'need at least one entrypoint'
 
-# Test version flag with no args
+# version flag with no args
 maru2-publish --version
-stdout '.*'
+stdout '(devel)'
 
-# Test version short flag with no args  
+# version short flag with no args
 maru2-publish -V
-stdout '.*'
+stdout '(devel)'
+
+# home contains an invalid config
+mkdir home/.maru2
+mv bad/alias.yaml home/.maru2/config.yaml
+! maru2-publish localhost:5000/test:latest
+stderr 'ERRO aliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
+rm home/.maru2/config.yaml
+
+# home contains an invalid docker config
+mkdir home/.docker
+mv bad/docker-config.json home/.docker/config.json
+! maru2-publish localhost:5000/test:latest
+cmpenv stderr stderr-invalid-docker-config.txt
+rm home/.docker/config.json
+
+# home is not set
+env HOME=
+! maru2-publish localhost:5000/test:latest
+stderr 'ERRO \$HOME is not defined'
+
+-- bad/alias.yaml --
+schema-version: v0
+aliases:
+  gh:
+    type: bitbucket
+-- bad/docker-config.json --
+i'm not JSON
+-- stderr-invalid-docker-config.txt --
+WARN THIS FEATURE IS IN ALPHA EXPECT FREQUENT BREAKING CHANGES
+ERRO failed to decode config file at $WORK/home/.docker/config.json: invalid config format: invalid character 'i' looking for beginning of value

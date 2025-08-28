@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/olareg/olareg"
@@ -44,6 +45,7 @@ func TestE2E(t *testing.T) {
 		Setup: func(env *testscript.Env) error {
 			env.Setenv("NO_COLOR", "true")
 			env.Setenv("REGISTRY", serverURL.Host)
+			env.Setenv("HOME", filepath.Join(env.WorkDir, "home"))
 			return nil
 		},
 		RequireUniqueNames: true,
