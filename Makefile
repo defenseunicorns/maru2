@@ -24,6 +24,9 @@ lint-fix: ## Run linters with auto-fix
 clean: ## Remove build artifacts
 	rm -rf bin/ dist/
 
+install: ## Installs local builds
+	go install -v ./cmd/maru2*
+
 hello-world:
 	echo "Hello, World!"
 
@@ -40,4 +43,4 @@ help: ## Show this help message
 	@echo 'Special targets:'
 	@echo '  <task-name>     Run any maru2 task via: make <task-name> [ARGS="--flag"]'
 
-.PHONY: all maru2 maru2-publish lint lint-fix clean hello-world
+.PHONY: all maru2 maru2-publish lint lint-fix clean install hello-world
