@@ -210,13 +210,14 @@ func TestRunContext(t *testing.T) {
 	discardLogCtx := log.WithContext(context.Background(), log.New(io.Discard))
 
 	tests := []struct {
-		name           string
-		workflow       v0.Workflow
-		taskName       string
-		setupContext   func() (context.Context, context.CancelFunc)
-		cancelAfter    time.Duration
-		expectedError  string
-		expectedOutput map[string]any
+		name                 string
+		workflow             v0.Workflow
+		taskName             string
+		setupContext         func() (context.Context, context.CancelFunc)
+		cancelAfter          time.Duration
+		expectedError        string
+		expectedOutput       map[string]any
+		expectedContextError error
 	}{
 		{
 			name: "context timeout cancellation",
@@ -240,6 +241,10 @@ func TestRunContext(t *testing.T) {
 				return context.WithTimeout(discardLogCtx, 100*time.Millisecond)
 			},
 			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "timeout-handled",
+			},
+			expectedContextError: context.DeadlineExceeded,
 		},
 		{
 			name: "manual cancellation (simulating SIGINT)",
@@ -262,8 +267,9 @@ func TestRunContext(t *testing.T) {
 			setupContext: func() (context.Context, context.CancelFunc) {
 				return context.WithCancel(discardLogCtx)
 			},
-			cancelAfter:   100 * time.Millisecond,
-			expectedError: "signal: killed",
+			cancelAfter:          100 * time.Millisecond,
+			expectedError:        "signal: killed",
+			expectedContextError: context.Canceled,
 		},
 		{
 			name: "context with cause cancellation",
@@ -289,8 +295,9 @@ func TestRunContext(t *testing.T) {
 					cancel(errors.New("custom cancellation cause"))
 				}
 			},
-			cancelAfter:   100 * time.Millisecond,
-			expectedError: "signal: killed",
+			cancelAfter:          100 * time.Millisecond,
+			expectedError:        "signal: killed",
+			expectedContextError: context.Canceled,
 		},
 		{
 			name: "successful completion without cancellation",
@@ -309,8 +316,9 @@ func TestRunContext(t *testing.T) {
 				return context.WithTimeout(discardLogCtx, 5*time.Second)
 			},
 			expectedOutput: map[string]any{
-				"result": "timeout-recovered",
+				"result": "success",
 			},
+			expectedContextError: nil,
 		},
 		{
 			name: "step timeout with context still valid",
@@ -338,6 +346,7 @@ func TestRunContext(t *testing.T) {
 			expectedOutput: map[string]any{
 				"result": "timeout-recovered",
 			},
+			expectedContextError: nil,
 		},
 	}
 
@@ -361,8 +370,16 @@ func TestRunContext(t *testing.T) {
 
 			if tc.expectedError != "" {
 				require.ErrorContains(t, err, tc.expectedError)
+
+				require.ErrorIs(t, testCtx.Err(), tc.expectedContextError)
+
+				// Special handling for context with cause cancellation
+				if tc.name == "context with cause cancellation" {
+					assert.Contains(t, context.Cause(testCtx).Error(), "custom cancellation cause")
+				}
 			} else {
 				require.NoError(t, err)
+				require.NoError(t, testCtx.Err())
 			}
 
 			assert.Equal(t, tc.expectedOutput, out)
