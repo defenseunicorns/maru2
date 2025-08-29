@@ -5,6 +5,7 @@ package maru2
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
@@ -198,6 +200,19 @@ func TestRun(t *testing.T) {
 			assert.Equal(t, tc.expectedOut, result)
 		})
 	}
+}
+
+func TestRunContext(t *testing.T) {
+	if testing.Short() {
+		t.Skip("TestRunContext may take a long time / many resources")
+	}
+	expectedTimeout := errors.New("expected timeout")
+
+	cancelAfter := func(cancel context.CancelCauseFunc, d time.Duration) {
+		time.Sleep(d)
+		cancel(expectedTimeout)
+	}
+
 }
 
 func TestToEnvVar(t *testing.T) {
