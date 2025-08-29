@@ -206,19 +206,168 @@ func TestRunContext(t *testing.T) {
 	if testing.Short() {
 		t.Skip("TestRunContext may take a long time / many resources")
 	}
-	expectedTimeout := errors.New("expected timeout")
 
-	cancelAfter := func(cancel context.CancelCauseFunc, d time.Duration) {
-		time.Sleep(d)
-		cancel(expectedTimeout)
+	discardLogCtx := log.WithContext(context.Background(), log.New(io.Discard))
+
+	tests := []struct {
+		name           string
+		workflow       v0.Workflow
+		taskName       string
+		setupContext   func() (context.Context, context.CancelFunc)
+		cancelAfter    time.Duration
+		expectedError  string
+		expectedOutput map[string]any
+	}{
+		{
+			name: "context timeout cancellation",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=timeout-handled\" >> $MARU2_OUTPUT",
+							ID:  "timeout-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "sleep",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 100*time.Millisecond)
+			},
+			expectedError: "signal: killed",
+		},
+		{
+			name: "manual cancellation (simulating SIGINT)",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=cancelled\" >> $MARU2_OUTPUT",
+							ID:  "cancel-step",
+							If:  "cancelled()",
+						},
+					},
+				},
+			},
+			taskName: "sleep",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithCancel(discardLogCtx)
+			},
+			cancelAfter:   100 * time.Millisecond,
+			expectedError: "signal: killed",
+		},
+		{
+			name: "context with cause cancellation",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=caused\" >> $MARU2_OUTPUT",
+							ID:  "cause-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "sleep",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				ctx, cancel := context.WithCancelCause(discardLogCtx)
+				return ctx, func() {
+					cancel(errors.New("custom cancellation cause"))
+				}
+			},
+			cancelAfter:   100 * time.Millisecond,
+			expectedError: "signal: killed",
+		},
+		{
+			name: "successful completion without cancellation",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"quick": []v0.Step{
+						{
+							Run: "echo \"result=success\" >> $MARU2_OUTPUT",
+							ID:  "quick-step",
+						},
+					},
+				},
+			},
+			taskName: "quick",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 5*time.Second)
+			},
+			expectedOutput: map[string]any{
+				"result": "timeout-recovered",
+			},
+		},
+		{
+			name: "step timeout with context still valid",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"timeout-step": []v0.Step{
+						{
+							Run:     "sleep 5",
+							Timeout: "50ms",
+							ID:      "timeout-step",
+						},
+						{
+							Run: "echo \"result=timeout-recovered\" >> $MARU2_OUTPUT",
+							ID:  "recovery-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "timeout-step",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 5*time.Second)
+			},
+			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "timeout-recovered",
+			},
+		},
 	}
 
-	// test cancelling from timeout
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, err := uses.NewFetcherService()
+			require.NoError(t, err)
 
-	// test cancelling from sigint
+			testCtx, cancel := tc.setupContext()
+			defer cancel()
 
-	// test cancelling from sigterm
+			// If we need to cancel after a delay, do it in a goroutine
+			if tc.cancelAfter > 0 {
+				go func() {
+					time.Sleep(tc.cancelAfter)
+					cancel()
+				}()
+			}
 
+			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, v0.With{}, nil, "", nil, false)
+
+			if tc.expectedError != "" {
+				require.ErrorContains(t, err, tc.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tc.expectedOutput, out)
+		})
+	}
 }
 
 func TestToEnvVar(t *testing.T) {
