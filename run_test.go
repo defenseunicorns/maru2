@@ -721,6 +721,43 @@ func TestHandleRunStep(t *testing.T) {
 			expectedError: "failed to convert env var \"BAD_VAR\" to string: unable to cast (1+2i) of type complex128 to string",
 			expectedLog:   "echo test\n",
 		},
+		{
+			name: "unset environment variable in sh shell",
+			step: v0.Step{
+				Run:   "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
+				Shell: "sh",
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
+		},
+		{
+			name: "unset environment variable in bash shell",
+			step: v0.Step{
+				Run:   "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
+				Shell: "bash",
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
+		},
+		{
+			name: "unset environment variable with default shell",
+			step: v0.Step{
+				Run: "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
+		},
+		{
+			name: "mixed set and unset environment variables",
+			step: v0.Step{
+				Run: "echo \"SET_VAR: '$SET_VAR', UNSET_VAR: '$UNSET_VAR'\" >/dev/null",
+				Env: v0.Env{
+					"SET_VAR": "defined_value",
+				},
+			},
+			withDefaults: v0.With{},
+			expectedLog:  "echo \"SET_VAR: '$SET_VAR', UNSET_VAR: '$UNSET_VAR'\" >/dev/null\n",
+		},
 	}
 
 	t.Setenv("NO_COLOR", "true")
