@@ -213,6 +213,12 @@ func TestRunContext(t *testing.T) {
 		cancel(expectedTimeout)
 	}
 
+	// test cancelling from timeout
+
+	// test cancelling from sigint
+
+	// test cancelling from sigterm
+
 }
 
 func TestToEnvVar(t *testing.T) {
