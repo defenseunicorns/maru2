@@ -230,13 +230,13 @@ func handleRunStep(
 
 	switch step.Shell {
 	case "bash":
-		args = []string{"-e", "-u", "-o", "pipefail", "-c", script}
+		args = []string{"-e", "-o", "pipefail", "-c", script}
 	case "pwsh", "powershell":
 		logger.Warn("support for this shell is currently untested and will potentially be removed in future versions", "shell", step.Shell)
 		args = []string{"-Command", "$ErrorActionPreference = 'Stop';", script, "; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"}
 	case "", "sh":
 		shell = "sh"
-		args = []string{"-e", "-u", "-c", script}
+		args = []string{"-e", "-c", script}
 	default:
 		return nil, fmt.Errorf("unsupported shell: %s", step.Shell)
 	}

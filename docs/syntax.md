@@ -130,8 +130,8 @@ tasks:
 
 The shell field changes how the command is executed:
 
-- `sh`: `sh -e -u -c {script}`
-- `bash`: `bash -e -u -o pipefail -c {script}`
+- `sh`: `sh -e -c {script}`
+- `bash`: `bash -e -o pipefail -c {script}`
 - `pwsh`: `pwsh -Command $ErrorActionPreference = 'Stop'; {script}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`
 - `powershell`: `powershell -Command $ErrorActionPreference = 'Stop'; {script}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`
 
