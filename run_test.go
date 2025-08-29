@@ -5,6 +5,7 @@ package maru2
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +23,7 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-func TestRunExtended(t *testing.T) {
+func TestRun(t *testing.T) {
 	tests := []struct {
 		name          string
 		workflow      v0.Workflow
@@ -200,6 +202,254 @@ func TestRunExtended(t *testing.T) {
 	}
 }
 
+func TestRunContext(t *testing.T) {
+	discardLogCtx := log.WithContext(context.Background(), log.New(io.Discard))
+
+	tests := []struct {
+		name                 string
+		workflow             v0.Workflow
+		taskName             string
+		setupContext         func() (context.Context, context.CancelFunc)
+		cancelAfter          time.Duration
+		expectedError        string
+		expectedOutput       map[string]any
+		expectedContextError error
+	}{
+		{
+			name: "context timeout cancellation",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=timeout-handled\" >> $MARU2_OUTPUT",
+							ID:  "timeout-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "sleep",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 100*time.Millisecond)
+			},
+			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "timeout-handled",
+			},
+			expectedContextError: context.DeadlineExceeded,
+		},
+		{
+			name: "manual cancellation (simulating SIGINT)",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=cancelled\" >> $MARU2_OUTPUT",
+							ID:  "cancel-step",
+							If:  "cancelled()",
+						},
+					},
+				},
+			},
+			taskName: "sleep",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithCancel(discardLogCtx)
+			},
+			cancelAfter:          100 * time.Millisecond,
+			expectedError:        "signal: killed",
+			expectedContextError: context.Canceled,
+			expectedOutput:       nil,
+		},
+		{
+			name: "context with cause cancellation",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"sleep": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=caused\" >> $MARU2_OUTPUT",
+							ID:  "cause-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "sleep",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				ctx, cancel := context.WithCancelCause(discardLogCtx)
+				return ctx, func() {
+					cancel(errors.New("custom cancellation cause"))
+				}
+			},
+			cancelAfter:          100 * time.Millisecond,
+			expectedError:        "signal: killed",
+			expectedContextError: context.Canceled,
+			expectedOutput:       nil,
+		},
+		{
+			name: "successful completion without cancellation",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"quick": []v0.Step{
+						{
+							Run: "echo \"result=success\" >> $MARU2_OUTPUT",
+							ID:  "quick-step",
+						},
+					},
+				},
+			},
+			taskName: "quick",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 5*time.Second)
+			},
+			expectedOutput: map[string]any{
+				"result": "success",
+			},
+			expectedContextError: nil,
+		},
+		{
+			name: "step timeout with context still valid",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"timeout-step": []v0.Step{
+						{
+							Run:     "sleep 5",
+							Timeout: "50ms",
+							ID:      "timeout-step",
+						},
+						{
+							Run: "echo \"result=timeout-recovered\" >> $MARU2_OUTPUT",
+							ID:  "recovery-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "timeout-step",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 5*time.Second)
+			},
+			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "timeout-recovered",
+			},
+			expectedContextError: nil,
+		},
+		{
+			name: "timeout should NOT trigger cancelled()",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"timeout-test": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
+							ID:  "cancelled-step",
+							If:  "cancelled()",
+						},
+						{
+							Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
+							ID:  "always-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "timeout-test",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 100*time.Millisecond)
+			},
+			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "always-step", // Only always() should run, not cancelled()
+			},
+			expectedContextError: context.DeadlineExceeded,
+		},
+		{
+			name: "step timeout should NOT trigger cancelled() on parent context",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"step-timeout-test": []v0.Step{
+						{
+							Run:     "sleep 5",
+							Timeout: "50ms",
+							ID:      "timeout-step",
+						},
+						{
+							Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
+							ID:  "cancelled-step",
+							If:  "cancelled()",
+						},
+						{
+							Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
+							ID:  "always-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "step-timeout-test",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 5*time.Second)
+			},
+			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "always-step", // Only always() should run, not cancelled()
+			},
+			expectedContextError: nil, // Parent context should still be valid
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, err := uses.NewFetcherService()
+			require.NoError(t, err)
+
+			testCtx, cancel := tc.setupContext()
+			defer cancel()
+
+			// If we need to cancel after a delay, do it in a goroutine
+			if tc.cancelAfter > 0 {
+				go func() {
+					time.Sleep(tc.cancelAfter)
+					cancel()
+				}()
+			}
+
+			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, v0.With{}, nil, "", nil, false)
+
+			if tc.expectedError != "" {
+				require.ErrorContains(t, err, tc.expectedError)
+
+				require.ErrorIs(t, testCtx.Err(), tc.expectedContextError)
+
+				// Special handling for context with cause cancellation
+				if tc.name == "context with cause cancellation" {
+					assert.Contains(t, context.Cause(testCtx).Error(), "custom cancellation cause")
+				}
+			} else {
+				require.NoError(t, err)
+				require.NoError(t, testCtx.Err())
+			}
+
+			assert.Equal(t, tc.expectedOutput, out)
+		})
+	}
+}
+
 func TestToEnvVar(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -210,6 +460,34 @@ func TestToEnvVar(t *testing.T) {
 		{"input_name", "INPUT_NAME"},
 		{"inputName", "INPUTNAME"},
 		{"input-name-with-dashes", "INPUT_NAME_WITH_DASHES"},
+		{"", ""},
+		{"-", "_"},
+		{"--", "__"},
+		{"_", "_"},
+		{"__", "__"},
+		{"-_", "__"},
+		{"_-", "__"},
+		{"Input-Name", "INPUT_NAME"},
+		{"INPUT-NAME", "INPUT_NAME"},
+		{"mixed_Case-Name", "MIXED_CASE_NAME"},
+		{"CamelCase-kebab_snake", "CAMELCASE_KEBAB_SNAKE"},
+		{"input1", "INPUT1"},
+		{"input-1", "INPUT_1"},
+		{"input-name-2", "INPUT_NAME_2"},
+		{"v1-beta", "V1_BETA"},
+		{"api-v2-endpoint", "API_V2_ENDPOINT"},
+		{"input--name", "INPUT__NAME"},
+		{"input---name", "INPUT___NAME"},
+		{"input-name--with-multiple", "INPUT_NAME__WITH_MULTIPLE"},
+		{"-input", "_INPUT"},
+		{"input-", "INPUT_"},
+		{"-input-", "_INPUT_"},
+		{"--input--", "__INPUT__"},
+		{"a", "A"},
+		{"z", "Z"},
+		{"1", "1"},
+		{"very-long-input-name-with-many-dashes", "VERY_LONG_INPUT_NAME_WITH_MANY_DASHES"},
+		{"very_long_input_name_with_many_underscores", "VERY_LONG_INPUT_NAME_WITH_MANY_UNDERSCORES"},
 	}
 
 	for _, tc := range tests {
