@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 (2025-08-29)
+
+## What's Changed
+* ci(deps): bump actions/dependency-review-action from 4.7.2 to 4.7.3 in the github-actions group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/108
+* chore: increase cov by @Noxsios in https://github.com/defenseunicorns/maru2/pull/111
+* docs: migration guide by @Noxsios in https://github.com/defenseunicorns/maru2/pull/101
+* refactor!: remove -u shell arg by @Noxsios in https://github.com/defenseunicorns/maru2/pull/112
+* build(deps): bump gitlab.com/gitlab-org/api/client-go from 0.142.2 to 0.142.4 in the go group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/110
+* chore: test context cancel by @Noxsios in https://github.com/defenseunicorns/maru2/pull/113
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.3.0...v0.4.0
+
 ## 0.3.0 (2025-08-27)
 
 ## What's Changed
