@@ -409,7 +409,7 @@
                 "pwsh",
                 "powershell"
               ],
-              "description": "Set the shell to execute (default: sh)\n\nsh -e -u -c {}\nbash -e -u -o pipefail -c {}\npwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }\npowershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"
+              "description": "Set the shell to execute (default: sh)\n\nsh -e -c {}\nbash -e -o pipefail -c {}\npwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }\npowershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }"
             },
             "timeout": {
               "type": "string",

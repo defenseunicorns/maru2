@@ -120,8 +120,8 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditiona
 		Type: "string",
 		Description: `Set the shell to execute (default: sh)
 
-sh -e -u -c {}
-bash -e -u -o pipefail -c {}
+sh -e -c {}
+bash -e -o pipefail -c {}
 pwsh -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
 powershell -Command $ErrorActionPreference = 'Stop'; {}; if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }`,
 		Enum: []any{"sh", "bash", "pwsh", "powershell"},
