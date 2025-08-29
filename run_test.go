@@ -21,7 +21,7 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-func TestRunExtended(t *testing.T) {
+func TestRun(t *testing.T) {
 	tests := []struct {
 		name          string
 		workflow      v0.Workflow
@@ -210,6 +210,34 @@ func TestToEnvVar(t *testing.T) {
 		{"input_name", "INPUT_NAME"},
 		{"inputName", "INPUTNAME"},
 		{"input-name-with-dashes", "INPUT_NAME_WITH_DASHES"},
+		{"", ""},
+		{"-", "_"},
+		{"--", "__"},
+		{"_", "_"},
+		{"__", "__"},
+		{"-_", "__"},
+		{"_-", "__"},
+		{"Input-Name", "INPUT_NAME"},
+		{"INPUT-NAME", "INPUT_NAME"},
+		{"mixed_Case-Name", "MIXED_CASE_NAME"},
+		{"CamelCase-kebab_snake", "CAMELCASE_KEBAB_SNAKE"},
+		{"input1", "INPUT1"},
+		{"input-1", "INPUT_1"},
+		{"input-name-2", "INPUT_NAME_2"},
+		{"v1-beta", "V1_BETA"},
+		{"api-v2-endpoint", "API_V2_ENDPOINT"},
+		{"input--name", "INPUT__NAME"},
+		{"input---name", "INPUT___NAME"},
+		{"input-name--with-multiple", "INPUT_NAME__WITH_MULTIPLE"},
+		{"-input", "_INPUT"},
+		{"input-", "INPUT_"},
+		{"-input-", "_INPUT_"},
+		{"--input--", "__INPUT__"},
+		{"a", "A"},
+		{"z", "Z"},
+		{"1", "1"},
+		{"very-long-input-name-with-many-dashes", "VERY_LONG_INPUT_NAME_WITH_MANY_DASHES"},
+		{"very_long_input_name_with_many_underscores", "VERY_LONG_INPUT_NAME_WITH_MANY_UNDERSCORES"},
 	}
 
 	for _, tc := range tests {
