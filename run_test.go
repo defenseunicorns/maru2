@@ -203,10 +203,6 @@ func TestRun(t *testing.T) {
 }
 
 func TestRunContext(t *testing.T) {
-	if testing.Short() {
-		t.Skip("TestRunContext may take a long time / many resources")
-	}
-
 	discardLogCtx := log.WithContext(context.Background(), log.New(io.Discard))
 
 	tests := []struct {
