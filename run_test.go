@@ -270,6 +270,7 @@ func TestRunContext(t *testing.T) {
 			cancelAfter:          100 * time.Millisecond,
 			expectedError:        "signal: killed",
 			expectedContextError: context.Canceled,
+			expectedOutput:       nil,
 		},
 		{
 			name: "context with cause cancellation",
@@ -298,6 +299,7 @@ func TestRunContext(t *testing.T) {
 			cancelAfter:          100 * time.Millisecond,
 			expectedError:        "signal: killed",
 			expectedContextError: context.Canceled,
+			expectedOutput:       nil,
 		},
 		{
 			name: "successful completion without cancellation",
@@ -347,6 +349,71 @@ func TestRunContext(t *testing.T) {
 				"result": "timeout-recovered",
 			},
 			expectedContextError: nil,
+		},
+		{
+			name: "timeout should NOT trigger cancelled()",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"timeout-test": []v0.Step{
+						{
+							Run: "sleep 5",
+							ID:  "sleep-step",
+						},
+						{
+							Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
+							ID:  "cancelled-step",
+							If:  "cancelled()",
+						},
+						{
+							Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
+							ID:  "always-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "timeout-test",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 100*time.Millisecond)
+			},
+			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "always-step", // Only always() should run, not cancelled()
+			},
+			expectedContextError: context.DeadlineExceeded,
+		},
+		{
+			name: "step timeout should NOT trigger cancelled() on parent context",
+			workflow: v0.Workflow{
+				Tasks: v0.TaskMap{
+					"step-timeout-test": []v0.Step{
+						{
+							Run:     "sleep 5",
+							Timeout: "50ms",
+							ID:      "timeout-step",
+						},
+						{
+							Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
+							ID:  "cancelled-step",
+							If:  "cancelled()",
+						},
+						{
+							Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
+							ID:  "always-step",
+							If:  "always()",
+						},
+					},
+				},
+			},
+			taskName: "step-timeout-test",
+			setupContext: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(discardLogCtx, 5*time.Second)
+			},
+			expectedError: "signal: killed",
+			expectedOutput: map[string]any{
+				"result": "always-step", // Only always() should run, not cancelled()
+			},
+			expectedContextError: nil, // Parent context should still be valid
 		},
 	}
 
