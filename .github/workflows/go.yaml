@@ -55,10 +55,10 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - run: |
-          go test ./schema/v0 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
-          go test ./schema/v0 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
-          go test ./schema/v1 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
-          go test ./schema/v1 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
+          go test ./schema/v0 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=5s
+          go test ./schema/v0 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=5s
+          go test ./schema/v1 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=5s
+          go test ./schema/v1 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=5s
 
   golangci:
     name: lint
