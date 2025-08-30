@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"testing"
 
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 // cancelledContext returns a context that is already cancelled
@@ -25,7 +25,7 @@ func TestIf(t *testing.T) {
 	tests := []struct {
 		name            string
 		inputExpr       string
-		with            v0.With
+		with            v1.With
 		previousOutputs CommandOutputs
 		dry             bool
 		err             error
@@ -72,7 +72,7 @@ func TestIf(t *testing.T) {
 		{
 			name:      "based upon with",
 			inputExpr: `input("foo") == "bar"`,
-			with:      v0.With{"foo": "bar"},
+			with:      v1.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
@@ -83,19 +83,19 @@ func TestIf(t *testing.T) {
 		{
 			name:      "complex boolean expression (true)",
 			inputExpr: `(input("foo") == "bar" && !failure()) || always()`,
-			with:      v0.With{"foo": "bar"},
+			with:      v1.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
 			name:      "complex boolean expression (false)",
 			inputExpr: `input("foo") == "baz" && !failure()`,
-			with:      v0.With{"foo": "bar"},
+			with:      v1.With{"foo": "bar"},
 			expected:  false,
 		},
 		{
 			name:      "access nested map in inputs",
 			inputExpr: `input("nested", "value") == "wrong-value"`,
-			with:      v0.With{"nested": map[string]any{"value": "nested-value"}},
+			with:      v1.With{"nested": map[string]any{"value": "nested-value"}},
 			expectedErr: `too many arguments to call input (1:1)
  | input("nested", "value") == "wrong-value"
  | ^`,

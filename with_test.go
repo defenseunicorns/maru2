@@ -13,12 +13,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestTemplateString(t *testing.T) {
 	tests := []struct {
 		name           string
-		input          v0.With
+		input          v1.With
 		previousOutput CommandOutputs
 		str            string
 		expected       string
@@ -32,13 +33,13 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:     "with input",
-			input:    v0.With{"name": "test"},
+			input:    v1.With{"name": "test"},
 			str:      "hello ${{ input \"name\" }}",
 			expected: "hello test",
 		},
 		{
 			name:          "with missing input",
-			input:         v0.With{},
+			input:         v1.With{},
 			str:           "hello ${{ input \"name\" }}",
 			expectedError: "\"name\" does not exist in []",
 		},
@@ -75,7 +76,7 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:  "with multiple variables",
-			input: v0.With{"name": "test"},
+			input: v1.With{"name": "test"},
 			previousOutput: CommandOutputs{
 				"step1": map[string]any{
 					"result": "success",
@@ -121,14 +122,14 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:     "dry run - with input",
-			input:    v0.With{"name": "test"},
+			input:    v1.With{"name": "test"},
 			str:      `hello ${{ input "name" }}`,
 			expected: "hello test",
 			dryRun:   true,
 		},
 		{
 			name:     "dry run - with missing input",
-			input:    v0.With{},
+			input:    v1.With{},
 			str:      `hello ${{ input "name" }}`,
 			expected: "hello ❯ input name ❮",
 			dryRun:   true,
@@ -169,7 +170,7 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:  "dry run - with multiple variables",
-			input: v0.With{"name": "test"},
+			input: v1.With{"name": "test"},
 			previousOutput: CommandOutputs{
 				"step1": map[string]any{
 					"result": "success",
@@ -222,126 +223,126 @@ func TestMergeWithAndParams(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		with          v0.With
-		params        v0.InputMap
-		expected      v0.With
+		with          v1.With
+		params        v1.InputMap
+		expected      v1.With
 		expectedError string
 	}{
 		{
 			name:     "empty inputs",
-			with:     v0.With{},
-			params:   v0.InputMap{},
-			expected: v0.With{},
+			with:     v1.With{},
+			params:   v1.InputMap{},
+			expected: v1.With{},
 		},
 		{
 			name: "nil default input parameter",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{Default: nil, Required: &requiredFalse},
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{Default: nil, Required: &requiredFalse},
 			},
-			expected: v0.With{},
+			expected: v1.With{},
 		},
 		{
 			name: "with default values",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
-				"version": v0.InputParameter{
+				"version": v1.InputParameter{
 					Default: "1.0.0",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name":    "default-name",
 				"version": "1.0.0",
 			},
 		},
 		{
 			name: "with overridden values",
-			with: v0.With{
+			with: v1.With{
 				"name": "custom-name",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
-				"version": v0.InputParameter{
+				"version": v1.InputParameter{
 					Default: "1.0.0",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name":    "custom-name",
 				"version": "1.0.0",
 			},
 		},
 		{
 			name: "with required parameter missing",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{},
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{},
 			},
-			expectedError: "missing required input: \"name\"",
+			expectedError: "name is required",
 		},
 		{
 			name: "with required parameter explicitly set to true",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Required: &requiredTrue,
 				},
 			},
-			expectedError: "missing required input: \"name\"",
+			expectedError: "name is required",
 		},
 		{
 			name: "with required parameter explicitly set to false",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Required: &requiredFalse,
 				},
 			},
-			expected: v0.With{},
+			expected: v1.With{},
 		},
 		{
 			name: "with required parameter provided",
-			with: v0.With{
+			with: v1.With{
 				"name": "custom-name",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "custom-name",
 			},
 		},
 		{
 			name: "with deprecated parameter",
-			with: v0.With{
+			with: v1.With{
 				"old-param": "value",
 			},
-			params: v0.InputMap{
-				"old-param": v0.InputParameter{
+			params: v1.InputMap{
+				"old-param": v1.InputParameter{
 					DeprecatedMessage: "Use new-param instead",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"old-param": "value",
 			},
 		},
 		{
 			name: "with extra parameters",
-			with: v0.With{
+			with: v1.With{
 				"name":    "custom-name",
 				"extra":   "extra-value",
 				"another": 123,
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name":    "custom-name",
 				"extra":   "extra-value",
 				"another": 123,
@@ -349,95 +350,95 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "string input with string default - type match",
-			with: v0.With{
+			with: v1.With{
 				"name": "custom-name",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "custom-name",
 			},
 		},
 		{
 			name: "string input with non-string default - type cast",
-			with: v0.With{
+			with: v1.With{
 				"count": "10",
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: 5,
 				},
 			},
-			expected: v0.With{
-				"count": 10,
+			expected: v1.With{
+				"count": "10",
 			},
 		},
 		{
 			name: "bool input with bool default - type match",
-			with: v0.With{
+			with: v1.With{
 				"enabled": true,
 			},
-			params: v0.InputMap{
-				"enabled": v0.InputParameter{
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
 					Default: false,
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"enabled": true,
 			},
 		},
 		{
 			name: "bool input with non-bool default - type cast",
-			with: v0.With{
+			with: v1.With{
 				"enabled": true,
 			},
-			params: v0.InputMap{
-				"enabled": v0.InputParameter{
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
 					Default: "false",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"enabled": "true",
 			},
 		},
 		{
 			name: "int input with int default - type match",
-			with: v0.With{
+			with: v1.With{
 				"count": 10,
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: 5,
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"count": 10,
 			},
 		},
 		{
 			name: "int input with non-int default - type cast",
-			with: v0.With{
+			with: v1.With{
 				"count": 10,
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: "5",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"count": "10",
 			},
 		},
 		{
 			name: "int input with non-int default - failed type cast",
-			with: v0.With{
+			with: v1.With{
 				"count": "hello",
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: true,
 				},
 			},
@@ -445,39 +446,39 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "uint64 input with uint64 default - type match",
-			with: v0.With{
+			with: v1.With{
 				"size": uint64(1024),
 			},
-			params: v0.InputMap{
-				"size": v0.InputParameter{
+			params: v1.InputMap{
+				"size": v1.InputParameter{
 					Default: uint64(512),
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"size": uint64(1024),
 			},
 		},
 		{
 			name: "uint64 input with non-uint64 default - type cast",
-			with: v0.With{
+			with: v1.With{
 				"size": "2048",
 			},
-			params: v0.InputMap{
-				"size": v0.InputParameter{
+			params: v1.InputMap{
+				"size": v1.InputParameter{
 					Default: uint64(512),
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"size": uint64(2048),
 			},
 		},
 		{
 			name: "uint64 input with non-uint64 default - failed type cast",
-			with: v0.With{
+			with: v1.With{
 				"size": "not-a-number",
 			},
-			params: v0.InputMap{
-				"size": v0.InputParameter{
+			params: v1.InputMap{
+				"size": v1.InputParameter{
 					Default: uint64(512),
 				},
 			},
@@ -485,11 +486,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "unsupported type default - slice type",
-			with: v0.With{
+			with: v1.With{
 				"data": "some-value",
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Default: []string{"default", "values"},
 				},
 			},
@@ -497,11 +498,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "unsupported type default - map type",
-			with: v0.With{
+			with: v1.With{
 				"config": "some-value",
 			},
-			params: v0.InputMap{
-				"config": v0.InputParameter{
+			params: v1.InputMap{
+				"config": v1.InputParameter{
 					Default: map[string]string{"key": "value"},
 				},
 			},
@@ -509,11 +510,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "unknown type input",
-			with: v0.With{
+			with: v1.With{
 				"data": []string{"a", "b"},
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Default: true,
 				},
 			},
@@ -521,11 +522,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "type mismatch with default",
-			with: v0.With{
+			with: v1.With{
 				"count": "not-a-number",
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: 42,
 				},
 			},
@@ -533,26 +534,26 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "valid regex validation passes",
-			with: v0.With{
+			with: v1.With{
 				"name": "Hello World",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation",
 					Validate:    "^Hello",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "Hello World",
 			},
 		},
 		{
 			name: "invalid regex validation fails",
-			with: v0.With{
+			with: v1.With{
 				"name": "Goodbye World",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation",
 					Validate:    "^Hello",
 				},
@@ -561,11 +562,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "invalid regex pattern",
-			with: v0.With{
+			with: v1.With{
 				"name": "Hello World",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation",
 					Validate:    "[", // Invalid regex
 				},
@@ -574,25 +575,25 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "validation with default value passes",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation and default",
 					Default:     "Hello Default",
 					Validate:    "^Hello",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "Hello Default",
 			},
 		},
 		{
 			name: "validation with good default value bad provided value fails",
-			with: v0.With{
+			with: v1.With{
 				"name": "Goodbye World", // Provide a value that fails validation
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation and default",
 					Default:     "Hello Default", // Default would pass validation
 					Validate:    "^Hello",
@@ -602,9 +603,9 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "validation with bad default value fails",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation and default",
 					Default:     "Goodbye World",
 					Validate:    "^Hello",
@@ -614,103 +615,103 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "non-string value with validation",
-			with: v0.With{
+			with: v1.With{
 				"count": 42,
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Description: "Count with validation",
 					Validate:    "^4",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"count": 42,
 			},
 		},
 		{
 			name: "with default-from-env value",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name from environment",
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "with default-from-env for bool value",
-			with: v0.With{},
-			params: v0.InputMap{
-				"enabled": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
 					Description:    "Boolean from environment",
 					DefaultFromEnv: "TEST_ENV_BOOL",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"enabled": "true",
 			},
 		},
 		{
 			name: "with default-from-env for int value",
-			with: v0.With{},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Description:    "Integer from environment",
 					DefaultFromEnv: "TEST_ENV_INT",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"count": "42",
 			},
 		},
 		{
 			name: "with missing environment variable",
-			with: v0.With{},
-			params: v0.InputMap{
-				"missing": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"missing": v1.InputParameter{
 					Description:    "Missing environment variable",
 					DefaultFromEnv: "NON_EXISTENT_ENV_VAR",
 				},
 			},
-			expected: v0.With{},
+			expected: v1.With{},
 		},
 		{
 			name: "with provided value overriding default-from-env",
-			with: v0.With{
+			with: v1.With{
 				"name": "provided-value",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name with provided value",
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "provided-value",
 			},
 		},
 		{
 			name: "with validation on default-from-env value - passing",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name from environment with validation",
 					DefaultFromEnv: "TEST_ENV_VAR",
 					Validate:       "^env",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "with validation on default-from-env value - failing",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name from environment with validation",
 					DefaultFromEnv: "TEST_ENV_VAR",
 					Validate:       "^invalid",
@@ -720,29 +721,29 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "test priority order: default-from-env over default",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name with both default and default-from-env",
 					Default:        "default-value",
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "test fallback from missing env var to default",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: v1.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name with both default and missing default-from-env",
 					Default:        "fallback-value",
 					DefaultFromEnv: "NON_EXISTENT_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "fallback-value",
 			},
 		},

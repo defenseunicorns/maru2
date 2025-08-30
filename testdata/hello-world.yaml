@@ -1,11 +1,14 @@
-# yaml-language-server: $schema=../schema/v0/schema.json
-schema-version: v0
+# yaml-language-server: $schema=../schema/v1/schema.json
+schema-version: v1
 tasks:
   default:
-    - run: echo 'Hello World!'
+    steps:
+      - run: echo 'Hello World!'
 
   a-task:
-    - run: echo 'task a'
+    steps:
+      - run: echo 'task a'
 
   task-b:
-    - run: echo 'task b'
+    steps:
+      - run: echo 'task b'

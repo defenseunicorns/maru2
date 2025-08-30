@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cast"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 // shortcuts is a concurrent map used to store key-value pairs for the "which" text template function.
@@ -137,12 +138,12 @@ func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandO
 }
 
 // TemplateWithMap recursively processes a With map and templates all string values
-func TemplateWithMap(ctx context.Context, input v0.With, previousOutputs CommandOutputs, withMap v0.With, dry bool) (v0.With, error) {
+func TemplateWithMap(ctx context.Context, input v1.With, previousOutputs CommandOutputs, withMap v1.With, dry bool) (v1.With, error) {
 	if len(withMap) == 0 {
 		return nil, nil
 	}
 
-	result := make(v0.With, len(withMap))
+	result := make(v1.With, len(withMap))
 	for k, v := range withMap {
 		switch val := v.(type) {
 		case string:
@@ -201,7 +202,7 @@ func templateSlice(ctx context.Context, input v0.With, previousOutputs CommandOu
 }
 
 // MergeWithAndParams merges a With map into an InputMap, handling defaults, logging warnings on deprections, etc...
-func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (v0.With, error) {
+func MergeWithAndParams(ctx context.Context, with v1.With, params v1.InputMap) (v1.With, error) {
 	logger := log.FromContext(ctx)
 	merged := maps.Clone(with)
 

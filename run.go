@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cast"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -61,16 +62,16 @@ Run follows the following general pattern:
 func Run(
 	parent context.Context,
 	svc *uses.FetcherService,
-	wf v0.Workflow,
+	wf v1.Workflow,
 	taskName string,
-	outer v0.With,
+	outer v1.With,
 	origin *url.URL,
 	cwd string,
 	environVars []string,
 	dry bool,
 ) (map[string]any, error) {
 	if taskName == "" {
-		taskName = v0.DefaultTaskName
+		taskName = v1.DefaultTaskName
 	}
 
 	task, ok := wf.Tasks.Find(taskName)
@@ -78,7 +79,7 @@ func Run(
 		return nil, addTrace(fmt.Errorf("task %q not found", taskName), fmt.Sprintf("at (%s)", origin))
 	}
 
-	withDefaults, err := MergeWithAndParams(parent, outer, wf.Inputs)
+	withDefaults, err := MergeWithAndParams(parent, outer, task.Inputs)
 	if err != nil {
 		return nil, addTrace(err, fmt.Sprintf("at (%s)", origin))
 	}
@@ -99,7 +100,7 @@ func Run(
 
 	var taskCancelledLogOnce sync.Once
 
-	for i, step := range task {
+	for i, step := range task.Steps {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 		err := func(ctx context.Context) error {
 			shouldRun, err := ShouldRun(ctx, step.If, firstError, withDefaults, outputs, dry)
@@ -156,7 +157,7 @@ func Run(
 
 			sub.Debug("completed", "outputs", len(stepResult), "duration", time.Since(start))
 
-			isLastStep := i == len(task)-1
+			isLastStep := i == len(task.Steps)-1
 			if isLastStep {
 				lastStepOutput = stepResult
 			}
@@ -183,8 +184,8 @@ func Run(
 
 func handleRunStep(
 	ctx context.Context,
-	step v0.Step,
-	withDefaults v0.With,
+	step v1.Step,
+	withDefaults v1.With,
 	outputs CommandOutputs,
 	cwd string,
 	environVars []string,

@@ -8,17 +8,17 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 func TestExecuteBuiltin(t *testing.T) {
 	testCases := []struct {
 		name          string
-		step          v0.Step
-		with          v0.With
+		step          v1.Step
+		with          v1.With
 		dry           bool
 		expectedError string
 		expectedLog   string
@@ -26,54 +26,54 @@ func TestExecuteBuiltin(t *testing.T) {
 	}{
 		{
 			name: "echo builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": "Hello, World!",
 				},
 			},
-			with:        v0.With{},
+			with:        v1.With{},
 			expectedLog: "Hello, World!\n",
 			expected:    map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "echo builtin dry run",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": "Hello, World!",
 				},
 			},
-			with:        v0.With{},
+			with:        v1.With{},
 			dry:         true,
 			expectedLog: "dry run",
 		},
 		{
 			name: "fetch builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:fetch",
-				With: v0.With{
+				With: v1.With{
 					"url":    "http://example.com",
 					"method": "GET",
 				},
 			},
-			with:        v0.With{},
+			with:        v1.With{},
 			dry:         true, // Use dry run to avoid actual HTTP requests
 			expectedLog: "dry run",
 		},
 		{
 			name: "non-existent builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:nonexistent",
 			},
-			with:          v0.With{},
+			with:          v1.With{},
 			expectedError: "builtin:nonexistent not found",
 		},
 		{
 			name: "echo builtin with invalid with",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": make(chan int),
 				},
 			},
@@ -90,25 +90,25 @@ func TestExecuteBuiltin(t *testing.T) {
 		},
 		{
 			name: "echo builtin with templated with",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": "${{ input \"greeting\" }}",
 				},
 			},
-			with:        v0.With{"greeting": "Hello from template"},
+			with:        v1.With{"greeting": "Hello from template"},
 			expectedLog: "Hello from template\n",
 			expected:    map[string]any{"stdout": "Hello from template"},
 		},
 		{
 			name: "echo builtin with broken structure",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": []string{"not", "a", "string"}, // Text should be a string, not an array
 				},
 			},
-			with:          v0.With{},
+			with:          v1.With{},
 			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type '[]string'",
 		},
 	}

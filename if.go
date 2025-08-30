@@ -12,11 +12,11 @@ import (
 
 	"github.com/expr-lang/expr"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 // ShouldRun executes If logic using expr as the engine
-func ShouldRun(ctx context.Context, expression string, err error, with v0.With, from CommandOutputs, dry bool) (bool, error) {
+func ShouldRun(ctx context.Context, expression string, err error, with v1.With, from CommandOutputs, dry bool) (bool, error) {
 	hasFailed := err != nil
 
 	if expression == "" {

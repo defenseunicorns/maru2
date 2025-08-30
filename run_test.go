@@ -20,162 +20,177 @@ import (
 	"github.com/stretchr/testify/require"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestRun(t *testing.T) {
 	tests := []struct {
 		name          string
-		workflow      v0.Workflow
+		workflow      v1.Workflow
 		taskName      string
-		with          v0.With
+		with          v1.With
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
 	}{
 		{
 			name: "simple task execution",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test": []v0.Step{
-						{
-							Run: "echo hello >/dev/null",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo hello >/dev/null",
+							},
 						},
 					},
 				},
 			},
 			taskName:    "test",
-			with:        v0.With{},
+			with:        v1.With{},
 			expectedOut: nil,
 		},
 		{
 			name: "task with output",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test": []v0.Step{
-						{
-							Run: "echo \"result=success\" >> $MARU2_OUTPUT",
-							ID:  "step1",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo \"result=success\" >> $MARU2_OUTPUT",
+								ID:  "step1",
+							},
 						},
 					},
 				},
 			},
 			taskName:    "test",
-			with:        v0.With{},
+			with:        v1.With{},
 			expectedOut: map[string]any{"result": "success"},
 		},
 		{
 			name: "task not found",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{},
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{},
 			},
 			taskName:      "nonexistent",
-			with:          v0.With{},
+			with:          v1.With{},
 			expectedError: "task \"nonexistent\" not found",
 			expectedOut:   nil,
 		},
 		{
 			name: "uses step",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test": []v0.Step{
-						{
-							Uses: "builtin:echo",
-							With: v0.With{
-								"text": "Hello, World!",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Uses: "builtin:echo",
+								With: v1.With{
+									"text": "Hello, World!",
+								},
+								ID: "echo-step",
 							},
-							ID: "echo-step",
 						},
 					},
 				},
 			},
 			taskName:    "test",
-			with:        v0.With{},
+			with:        v1.With{},
 			expectedOut: map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "conditional step execution - success path",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test": []v0.Step{
-						{
-							Run: "echo step1 >/dev/null",
-							ID:  "step1",
-						},
-						{
-							Run: "echo step2 >/dev/null",
-							ID:  "step2",
-							If:  "",
-						},
-						{
-							Run: "echo failure step",
-							ID:  "failure-step",
-							If:  "failure()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo step1 >/dev/null",
+								ID:  "step1",
+							},
+							{
+								Run: "echo step2 >/dev/null",
+								ID:  "step2",
+								If:  "",
+							},
+							{
+								Run: "echo failure step",
+								ID:  "failure-step",
+								If:  "failure()",
+							},
 						},
 					},
 				},
 			},
 			taskName:    "test",
-			with:        v0.With{},
+			with:        v1.With{},
 			expectedOut: nil,
 		},
 		{
 			name: "conditional step execution - failure path",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test": []v0.Step{
-						{
-							Run: "exit 1",
-							ID:  "step1",
-						},
-						{
-							Run: "echo normal step",
-							ID:  "normal-step",
-							If:  "",
-						},
-						{
-							Run: "echo \"result=handled\" >> $MARU2_OUTPUT",
-							ID:  "failure-step",
-							If:  "failure()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "exit 1",
+								ID:  "step1",
+							},
+							{
+								Run: "echo normal step",
+								ID:  "normal-step",
+								If:  "",
+							},
+							{
+								Run: "echo \"result=handled\" >> $MARU2_OUTPUT",
+								ID:  "failure-step",
+								If:  "failure()",
+							},
 						},
 					},
 				},
 			},
 			taskName:      "test",
-			with:          v0.With{},
+			with:          v1.With{},
 			expectedError: "exit status 1",
 			expectedOut:   map[string]any{"result": "handled"},
 		},
 		{
 			name: "failed to parse duration",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"sleep": []v0.Step{
-						{
-							Run:     "sleep 3",
-							Timeout: "1",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"sleep": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run:     "sleep 3",
+								Timeout: "1",
+							},
 						},
 					},
 				},
 			},
 			taskName:      "sleep",
-			with:          v0.With{},
 			expectedError: "time: missing unit in duration \"1\"",
 		},
 		{
-			name: "step timeout",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"sleep": []v0.Step{
-						{
-							Run:     "sleep 3",
-							Timeout: "1s",
+			name: "step with timeout",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					v1.DefaultTaskName: {
+						Inputs: v1.InputMap{},
+						Steps: []v1.Step{
+							{
+								Run:     "sleep 0.1",
+								Timeout: "50ms",
+							},
 						},
 					},
 				},
 			},
 			taskName:      "sleep",
-			with:          v0.With{},
+			with:          v1.With{},
 			expectedError: "signal: killed",
 		},
 	}

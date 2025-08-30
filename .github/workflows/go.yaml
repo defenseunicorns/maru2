@@ -41,6 +41,10 @@ jobs:
             echo "schema/v0/schema.json is dirty. Please run 'make' and commit the changes"
             exit 1
           fi
+          if ! git diff --exit-code schema/v1/schema.json; then
+            echo "schema/v1/schema.json is dirty. Please run 'make' and commit the changes"
+            exit 1
+          fi
       - run: |
           go test -race -covermode=atomic -coverprofile=coverage.out -failfast -timeout 3m ./...
         env:
@@ -53,6 +57,8 @@ jobs:
       - run: |
           go test ./schema/v0 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
           go test ./schema/v0 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
+          go test ./schema/v1 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=15s
+          go test ./schema/v1 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=15s
 
   golangci:
     name: lint

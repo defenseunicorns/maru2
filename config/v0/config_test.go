@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/defenseunicorns/maru2/config"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -134,7 +134,7 @@ func TestValidate(t *testing.T) {
 			name: "valid config",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v0.AliasMap{
+				Aliases: v1.AliasMap{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -154,7 +154,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid alias type",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v0.AliasMap{
+				Aliases: v1.AliasMap{
 					"invalid": {
 						Type: "invalid-type",
 					},
@@ -168,7 +168,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid token environment variable format",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v0.AliasMap{
+				Aliases: v1.AliasMap{
 					"gh": {
 						Type:         packageurl.TypeGithub,
 						TokenFromEnv: "123-invalid",
@@ -183,7 +183,7 @@ func TestValidate(t *testing.T) {
 			name: "invalid fetch policy",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v0.AliasMap{
+				Aliases: v1.AliasMap{
 					"gh": {
 						Type: packageurl.TypeGithub,
 					},
@@ -197,7 +197,7 @@ func TestValidate(t *testing.T) {
 			name: "multiple validation errors",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v0.AliasMap{
+				Aliases: v1.AliasMap{
 					"invalid": {
 						Type:         "invalid-type",
 						TokenFromEnv: "123-invalid",

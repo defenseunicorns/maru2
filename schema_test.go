@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestWorkflowSchema(t *testing.T) {
@@ -21,6 +22,16 @@ func TestWorkflowSchema(t *testing.T) {
 		require.NoError(t, err)
 
 		current, err := os.ReadFile("schema/v0/schema.json")
+		require.NoError(t, err)
+
+		assert.JSONEq(t, string(current), string(b))
+	})
+	t.Run(v1.SchemaVersion, func(t *testing.T) {
+		schema := WorkflowSchema(v1.SchemaVersion)
+		b, err := json.Marshal(schema)
+		require.NoError(t, err)
+
+		current, err := os.ReadFile("schema/v1/schema.json")
 		require.NoError(t, err)
 
 		assert.JSONEq(t, string(current), string(b))

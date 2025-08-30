@@ -20,7 +20,7 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 
 	"github.com/defenseunicorns/maru2"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -103,18 +103,20 @@ tasks:
 		defer rc.Close()
 
 		tru := true
-		wf, err := v0.Read(rc)
+		wf, err := v1.Read(rc)
 		require.NoError(t, err)
-		assert.Equal(t, v0.Workflow{
-			SchemaVersion: v0.SchemaVersion,
-			Inputs: v0.InputMap{"text": v0.InputParameter{
-				Description: "Text to echo",
-				Default:     "Hello, world!",
-				Required:    &tru,
+		assert.Equal(t, v1.Workflow{
+			SchemaVersion: v1.SchemaVersion,
+			Tasks: v1.TaskMap{"echo": v1.Task{
+				Inputs: v1.InputMap{"text": v1.InputParameter{
+					Description: "Text to echo",
+					Default:     "Hello, world!",
+					Required:    &tru,
+				}},
+				Steps: []v1.Step{{
+					Run: `echo "${{ input "text" }}"`,
+				}},
 			}},
-			Tasks: v0.TaskMap{"echo": v0.Task{{
-				Run: `echo "${{ input "text" }}"`,
-			}}},
 		}, wf)
 
 		// fails w/ internal not found error

@@ -12,11 +12,13 @@ import (
 	"github.com/package-url/packageurl-go"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 // ResolveRelative resolves a URI relative to a previous URI.
 // It handles different schemes (file, http, https, pkg) and resolves relative paths.
-func ResolveRelative(prev *url.URL, u string, pkgAliases v0.AliasMap) (*url.URL, error) {
+
+func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL, error) {
 	uri, err := url.Parse(u)
 	if err != nil {
 		return nil, err

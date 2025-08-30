@@ -15,15 +15,16 @@ import (
 	"github.com/spf13/afero"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
 func handleUsesStep(
 	ctx context.Context,
 	svc *uses.FetcherService,
-	step v0.Step,
-	wf v0.Workflow,
-	withDefaults v0.With,
+	step v1.Step,
+	wf v1.Workflow,
+	withDefaults v1.With,
 	outputs CommandOutputs,
 	origin *url.URL,
 	cwd string,
@@ -77,12 +78,12 @@ func handleUsesStep(
 }
 
 // Fetch fetches a workflow from a given URL.
-func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (v0.Workflow, error) {
+func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (v1.Workflow, error) {
 	logger := log.FromContext(ctx)
 
 	fetcher, err := svc.GetFetcher(uri)
 	if err != nil {
-		return v0.Workflow{}, err
+		return v1.Workflow{}, err
 	}
 
 	fetcherType := fmt.Sprintf("%T", fetcher)
@@ -94,19 +95,19 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (v0.Work
 
 	rc, err := fetcher.Fetch(ctx, uri)
 	if err != nil {
-		return v0.Workflow{}, err
+		return v1.Workflow{}, err
 	}
 	defer rc.Close()
 
-	return v0.ReadAndValidate(rc)
+	return v1.ReadAndValidate(rc)
 }
 
 // FetchAll fetches all workflows from a given URL.
-func FetchAll(ctx context.Context, svc *uses.FetcherService, wf v0.Workflow, src *url.URL) error {
+func FetchAll(ctx context.Context, svc *uses.FetcherService, wf v1.Workflow, src *url.URL) error {
 	refs := []string{}
 
 	for _, task := range wf.Tasks {
-		for _, step := range task {
+		for _, step := range task.Steps {
 			if step.Uses == "" {
 				continue
 			}
