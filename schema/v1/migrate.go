@@ -21,7 +21,7 @@ func Migrate(oldWorkflow any) (Workflow, error) {
 		// Convert aliases from v0 to v1, structure has not changed but go type has
 		if old.Aliases != nil {
 			wf.Aliases = make(AliasMap)
-			for aliasName, v0Alias := range wf.Aliases {
+			for aliasName, v0Alias := range old.Aliases {
 				wf.Aliases[aliasName] = Alias{
 					Type:         v0Alias.Type,
 					Base:         v0Alias.Base,

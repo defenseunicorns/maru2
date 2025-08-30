@@ -82,10 +82,10 @@ func TestExecuteBuiltin(t *testing.T) {
 		},
 		{
 			name: "fetch builtin with invalid with",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:fetch",
 			},
-			with:          v0.With{},
+			with:          v1.With{},
 			expectedError: "builtin:fetch: error executing request: Get \"\": unsupported protocol scheme \"\"",
 		},
 		{

@@ -282,7 +282,7 @@ func TestMergeWithAndParams(t *testing.T) {
 			params: v1.InputMap{
 				"name": v1.InputParameter{},
 			},
-			expectedError: "name is required",
+			expectedError: "missing required input: \"name\"",
 		},
 		{
 			name: "with required parameter explicitly set to true",
@@ -292,7 +292,7 @@ func TestMergeWithAndParams(t *testing.T) {
 					Required: &requiredTrue,
 				},
 			},
-			expectedError: "name is required",
+			expectedError: "missing required input: \"name\"",
 		},
 		{
 			name: "with required parameter explicitly set to false",
@@ -373,7 +373,7 @@ func TestMergeWithAndParams(t *testing.T) {
 				},
 			},
 			expected: v1.With{
-				"count": "10",
+				"count": 10,
 			},
 		},
 		{
@@ -750,20 +750,20 @@ func TestMergeWithAndParams(t *testing.T) {
 		{
 			name: "nil with parameter creates new map",
 			with: nil,
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-value",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "default-value",
 			},
 		},
 		{
 			name: "nil with parameter with required input missing",
 			with: nil,
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Required: &requiredTrue,
 				},
 			},
@@ -772,22 +772,22 @@ func TestMergeWithAndParams(t *testing.T) {
 		{
 			name: "nil with parameter with env var",
 			with: nil,
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "validation with non-string value that cannot be cast to string",
-			with: v0.With{
+			with: v1.With{
 				"data": complex(1, 2), // complex numbers cannot be cast to string
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Validate: "^test",
 				},
 			},
@@ -795,11 +795,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "string casting error in type matching section",
-			with: v0.With{
+			with: v1.With{
 				"data": complex(1, 2), // complex numbers cannot be cast to string
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Default: "string-default", // This will trigger string casting
 				},
 			},
@@ -808,13 +808,13 @@ func TestMergeWithAndParams(t *testing.T) {
 		{
 			name: "nil with parameter requiring default assignment triggers map creation",
 			with: nil, // This ensures merged starts as nil
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default:  "test-value",
 					Required: &requiredFalse, // Ensure it's not required
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"name": "test-value",
 			},
 		},

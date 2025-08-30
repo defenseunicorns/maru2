@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -26,10 +27,14 @@ func TestFetchAll(t *testing.T) {
 	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
 	require.NoError(t, err)
 
-	workflowNoRefs := v0.Workflow{
-		SchemaVersion: v0.SchemaVersion,
-		Tasks: v0.TaskMap{
-			"default": {v0.Step{Run: "echo 'hello'"}},
+	workflowNoRefs := v1.Workflow{
+		SchemaVersion: v1.SchemaVersion,
+		Tasks: v1.TaskMap{
+			"default": v1.Task{
+				Steps: []v1.Step{
+					{Run: "echo 'hello'"},
+				},
+			},
 		},
 	}
 
@@ -40,12 +45,14 @@ func TestFetchAll(t *testing.T) {
 			_, _ = w.Write(b)
 
 		case "/workflow2.yaml":
-			wf := v0.Workflow{
-				SchemaVersion: v0.SchemaVersion,
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Run: "echo 'nested start'"},
-						v0.Step{Uses: "file:workflow3.yaml"},
+			wf := v1.Workflow{
+				SchemaVersion: v1.SchemaVersion,
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Run: "echo 'nested start'"},
+							{Uses: "file:workflow3.yaml"},
+						},
 					},
 				},
 			}
@@ -64,11 +71,13 @@ func TestFetchAll(t *testing.T) {
 			_, _ = w.Write([]byte("not a valid workflow yaml"))
 
 		case "/nested404.yaml":
-			wf := v0.Workflow{
-				SchemaVersion: v0.SchemaVersion,
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: "file:dne.yaml"},
+			wf := v1.Workflow{
+				SchemaVersion: v1.SchemaVersion,
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: "file:dne.yaml"},
+						},
 					},
 				},
 			}
@@ -86,7 +95,7 @@ func TestFetchAll(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		wf          v0.Workflow
+		wf          v1.Workflow
 		expectedErr string
 	}{
 		{
@@ -95,91 +104,109 @@ func TestFetchAll(t *testing.T) {
 		},
 		{
 			name: "with empty uses field",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Run: "echo 'start'"},
-						v0.Step{Uses: ""},
-						v0.Step{Run: "echo 'end'"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Run: "echo 'start'"},
+							{Uses: ""},
+							{Run: "echo 'end'"},
+						},
 					},
 				},
 			},
 		},
 		{
 			name: "with uses referring to internal task",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Run: "echo 'start'"},
-						v0.Step{Uses: "another-task"},
-						v0.Step{Run: "echo 'end'"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Run: "echo 'start'"},
+							{Uses: "another-task"},
+							{Run: "echo 'end'"},
+						},
 					},
-					"another-task": {
-						v0.Step{Run: "echo 'internal task'"},
+					"another-task": v1.Task{
+						Steps: []v1.Step{
+							{Run: "echo 'internal task'"},
+						},
 					},
 				},
 			},
 		},
 		{
 			name: "with builtin uses",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Run: "echo 'start'"},
-						v0.Step{Uses: "builtin:foo"},
-						v0.Step{Run: "echo 'end'"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Run: "echo 'start'"},
+							{Uses: "builtin:foo"},
+							{Run: "echo 'end'"},
+						},
 					},
 				},
 			},
 		},
 		{
 			name: "with exact duplicate uses strings",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/workflow1.yaml"},
-						v0.Step{Uses: server.URL + "/workflow1.yaml"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/workflow1.yaml"},
+							{Uses: server.URL + "/workflow1.yaml"},
+						},
 					},
 				},
 			},
 		},
 		{
 			name: "with duplicate references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/workflow1.yaml?task=default"},
-						v0.Step{Uses: server.URL + "/workflow1.yaml?task=other"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/workflow1.yaml?task=default"},
+							{Uses: server.URL + "/workflow1.yaml?task=other"},
+						},
 					},
 				},
 			},
 		},
 		{
 			name: "with remote references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/workflow1.yaml"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/workflow1.yaml"},
+						},
 					},
 				},
 			},
 		},
 		{
 			name: "with nested remote references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/workflow2.yaml"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/workflow2.yaml"},
+						},
 					},
 				},
 			},
 		},
 		{
 			name: "with_invalid_remote_references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/invalid.yaml"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/invalid.yaml"},
+						},
 					},
 				},
 			},
@@ -187,58 +214,68 @@ func TestFetchAll(t *testing.T) {
 		},
 		{
 			name: "with_server_error_references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/error.yaml"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/error.yaml"},
+						},
 					},
 				},
 			},
-			expectedErr: "get \"" + server.URL + "/error.yaml\": 500 Internal Server Error",
+			expectedErr: fmt.Sprintf("get \"%s/error.yaml\": 500 Internal Server Error", server.URL),
 		},
 		{
 			name: "with_invalid_url_references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: "invalid:///url"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: "invalid:///url"},
+						},
 					},
 				},
 			},
-			expectedErr: "failed to resolve \"invalid:///url\": unsupported scheme: \"invalid\" in \"invalid:///url\"",
+			expectedErr: `failed to resolve "invalid:///url": unsupported scheme: "invalid" in "invalid:///url"`,
 		},
 		{
 			name: "with_non_existent_references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/non-existent.yaml"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/non-existent.yaml"},
+						},
 					},
 				},
 			},
-			expectedErr: "get \"" + server.URL + "/non-existent.yaml\": 404 Not Found",
+			expectedErr: fmt.Sprintf("get \"%s/non-existent.yaml\": 404 Not Found", server.URL),
 		},
 		{
 			name: "with invalid url references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: "invalid:///url"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: "invalid:///url"},
+						},
 					},
 				},
 			},
-			expectedErr: "failed to resolve \"invalid:///url\": unsupported scheme: \"invalid\" in \"invalid:///url\"",
+			expectedErr: `failed to resolve "invalid:///url": unsupported scheme: "invalid" in "invalid:///url"`,
 		},
 		{
 			name: "with nested non_existent_references",
-			wf: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"default": {
-						v0.Step{Uses: server.URL + "/nested404.yaml"},
+			wf: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Steps: []v1.Step{
+							{Uses: server.URL + "/nested404.yaml"},
+						},
 					},
 				},
 			},
-			expectedErr: "get \"" + server.URL + "/dne.yaml\": 404 Not Found",
+			expectedErr: fmt.Sprintf("get \"%s/dne.yaml\": 404 Not Found", server.URL),
 		},
 	}
 
@@ -443,10 +480,10 @@ func TestExecuteUses(t *testing.T) {
 	svc, err := uses.NewFetcherService(uses.WithClient(&http.Client{Timeout: time.Second}))
 	require.NoError(t, err)
 
-	workflowFoo := v0.Workflow{SchemaVersion: v0.SchemaVersion, Tasks: v0.TaskMap{"default": {v0.Step{Run: "echo 'foo'"}, v0.Step{Uses: "file:bar/baz.yaml?task=baz"}}}}
-	workflowBaz := v0.Workflow{SchemaVersion: v0.SchemaVersion, Tasks: v0.TaskMap{"baz": {v0.Step{Run: "echo 'baz'"}, v0.Step{Uses: "file:../hello-world.yaml"}}}}
+	workflowFoo := v1.Workflow{SchemaVersion: v1.SchemaVersion, Tasks: v1.TaskMap{"default": v1.Task{Steps: []v1.Step{{Run: "echo 'foo'"}, {Uses: "file:bar/baz.yaml?task=baz"}}}}}
+	workflowBaz := v1.Workflow{SchemaVersion: v1.SchemaVersion, Tasks: v1.TaskMap{"baz": v1.Task{Steps: []v1.Step{{Run: "echo 'baz'"}, {Uses: "file:../hello-world.yaml"}}}}}
 
-	handleWF := func(w http.ResponseWriter, wf v0.Workflow) {
+	handleWF := func(w http.ResponseWriter, wf v1.Workflow) {
 		b, err := yaml.Marshal(wf)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -464,12 +501,12 @@ func TestExecuteUses(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/hello-world.yaml":
-			handleWF(w, v0.Workflow{
-				SchemaVersion: v0.SchemaVersion,
-				Tasks: v0.TaskMap{
-					"default": {v0.Step{Run: "echo 'Hello World!'"}},
-					"a-task":  {v0.Step{Run: "echo 'task a'"}},
-					"task-b":  {v0.Step{Run: "echo 'task b'"}},
+			handleWF(w, v1.Workflow{
+				SchemaVersion: v1.SchemaVersion,
+				Tasks: v1.TaskMap{
+					"default": v1.Task{Steps: []v1.Step{{Run: "echo 'Hello World!'"}}},
+					"a-task":  v1.Task{Steps: []v1.Step{{Run: "echo 'task a'"}}},
+					"task-b":  v1.Task{Steps: []v1.Step{{Run: "echo 'task b'"}}},
 				},
 			})
 		case "/foo.yaml":
@@ -498,7 +535,7 @@ func TestExecuteUses(t *testing.T) {
 		name        string
 		uses        string
 		origin      string
-		aliases     v0.AliasMap
+		aliases     v1.AliasMap
 		skipShort   bool
 		expectedErr string
 	}{
@@ -545,7 +582,7 @@ func TestExecuteUses(t *testing.T) {
 			name:   "with map based resolver",
 			uses:   "pkg:custom/noxsios/mar2-test?task=hello-world",
 			origin: dummyOrigin,
-			aliases: v0.AliasMap{
+			aliases: v1.AliasMap{
 				"custom": {
 					Type: "gitlab",
 				},
@@ -595,10 +632,10 @@ func TestExecuteUses(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.expectedErr == "" {
-				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", nil, false)
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, v1.With{}, nil, origin, "", nil, false)
 				require.NoError(t, err)
 			} else {
-				_, err := handleUsesStep(ctx, svc, v0.Step{Uses: tt.uses}, v0.Workflow{Aliases: tt.aliases}, v0.With{}, nil, origin, "", nil, false)
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, v1.With{}, nil, origin, "", nil, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})
@@ -645,16 +682,16 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		step        v0.Step
+		step        v1.Step
 		environ     []string
-		withInputs  v0.With
+		withInputs  v1.With
 		expectedErr string
 	}{
 		{
 			name: "environment variables passed through uses",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: server.URL + "/env-test.yaml?task=env-test",
-				With: v0.With{
+				With: v1.With{
 					"message": "test-from-parent",
 				},
 			},
@@ -666,12 +703,12 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 		},
 		{
 			name: "step-level env not passed to uses (current behavior)",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: server.URL + "/env-test.yaml?task=env-test",
-				Env: v0.Env{
+				Env: v1.Env{
 					"STEP_LEVEL_VAR": "step-value",
 				},
-				With: v0.With{
+				With: v1.With{
 					"message": "test-with-step-env",
 				},
 			},
@@ -694,7 +731,7 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 				ctx,
 				svc,
 				tt.step,
-				v0.Workflow{},
+				v1.Workflow{},
 				tt.withInputs,
 				nil,
 				origin,

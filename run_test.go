@@ -189,7 +189,7 @@ func TestRun(t *testing.T) {
 					},
 				},
 			},
-			taskName:      "sleep",
+			taskName:      v1.DefaultTaskName,
 			with:          v1.With{},
 			expectedError: "signal: killed",
 		},
@@ -222,7 +222,7 @@ func TestRunContext(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		workflow             v0.Workflow
+		workflow             v1.Workflow
 		taskName             string
 		setupContext         func() (context.Context, context.CancelFunc)
 		cancelAfter          time.Duration
@@ -232,17 +232,19 @@ func TestRunContext(t *testing.T) {
 	}{
 		{
 			name: "context timeout cancellation",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"sleep": []v0.Step{
-						{
-							Run: "sleep 5",
-							ID:  "sleep-step",
-						},
-						{
-							Run: "echo \"result=timeout-handled\" >> $MARU2_OUTPUT",
-							ID:  "timeout-step",
-							If:  "always()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"sleep": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "sleep 5",
+								ID:  "sleep-step",
+							},
+							{
+								Run: "echo \"result=timeout-handled\" >> $MARU2_OUTPUT",
+								ID:  "timeout-step",
+								If:  "always()",
+							},
 						},
 					},
 				},
@@ -259,17 +261,19 @@ func TestRunContext(t *testing.T) {
 		},
 		{
 			name: "manual cancellation (simulating SIGINT)",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"sleep": []v0.Step{
-						{
-							Run: "sleep 5",
-							ID:  "sleep-step",
-						},
-						{
-							Run: "echo \"result=cancelled\" >> $MARU2_OUTPUT",
-							ID:  "cancel-step",
-							If:  "cancelled()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"sleep": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "sleep 5",
+								ID:  "sleep-step",
+							},
+							{
+								Run: "echo \"result=cancelled\" >> $MARU2_OUTPUT",
+								ID:  "cancel-step",
+								If:  "cancelled()",
+							},
 						},
 					},
 				},
@@ -285,17 +289,19 @@ func TestRunContext(t *testing.T) {
 		},
 		{
 			name: "context with cause cancellation",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"sleep": []v0.Step{
-						{
-							Run: "sleep 5",
-							ID:  "sleep-step",
-						},
-						{
-							Run: "echo \"result=caused\" >> $MARU2_OUTPUT",
-							ID:  "cause-step",
-							If:  "always()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"sleep": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "sleep 5",
+								ID:  "sleep-step",
+							},
+							{
+								Run: "echo \"result=caused\" >> $MARU2_OUTPUT",
+								ID:  "cause-step",
+								If:  "always()",
+							},
 						},
 					},
 				},
@@ -314,12 +320,14 @@ func TestRunContext(t *testing.T) {
 		},
 		{
 			name: "successful completion without cancellation",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"quick": []v0.Step{
-						{
-							Run: "echo \"result=success\" >> $MARU2_OUTPUT",
-							ID:  "quick-step",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"quick": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo \"result=success\" >> $MARU2_OUTPUT",
+								ID:  "quick-step",
+							},
 						},
 					},
 				},
@@ -335,18 +343,20 @@ func TestRunContext(t *testing.T) {
 		},
 		{
 			name: "step timeout with context still valid",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"timeout-step": []v0.Step{
-						{
-							Run:     "sleep 5",
-							Timeout: "50ms",
-							ID:      "timeout-step",
-						},
-						{
-							Run: "echo \"result=timeout-recovered\" >> $MARU2_OUTPUT",
-							ID:  "recovery-step",
-							If:  "always()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"timeout-step": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run:     "sleep 5",
+								Timeout: "50ms",
+								ID:      "timeout-step",
+							},
+							{
+								Run: "echo \"result=timeout-recovered\" >> $MARU2_OUTPUT",
+								ID:  "recovery-step",
+								If:  "always()",
+							},
 						},
 					},
 				},
@@ -363,22 +373,24 @@ func TestRunContext(t *testing.T) {
 		},
 		{
 			name: "timeout should NOT trigger cancelled()",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"timeout-test": []v0.Step{
-						{
-							Run: "sleep 5",
-							ID:  "sleep-step",
-						},
-						{
-							Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
-							ID:  "cancelled-step",
-							If:  "cancelled()",
-						},
-						{
-							Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
-							ID:  "always-step",
-							If:  "always()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"timeout-test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "sleep 5",
+								ID:  "sleep-step",
+							},
+							{
+								Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
+								ID:  "cancelled-step",
+								If:  "cancelled()",
+							},
+							{
+								Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
+								ID:  "timeout-handled-step",
+								If:  "always()",
+							},
 						},
 					},
 				},
@@ -395,23 +407,25 @@ func TestRunContext(t *testing.T) {
 		},
 		{
 			name: "step timeout should NOT trigger cancelled() on parent context",
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"step-timeout-test": []v0.Step{
-						{
-							Run:     "sleep 5",
-							Timeout: "50ms",
-							ID:      "timeout-step",
-						},
-						{
-							Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
-							ID:  "cancelled-step",
-							If:  "cancelled()",
-						},
-						{
-							Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
-							ID:  "always-step",
-							If:  "always()",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"step-timeout-test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run:     "sleep 5",
+								Timeout: "50ms",
+								ID:      "timeout-step",
+							},
+							{
+								Run: "echo \"result=cancelled-step\" >> $MARU2_OUTPUT",
+								ID:  "cancelled-step",
+								If:  "cancelled()",
+							},
+							{
+								Run: "echo \"result=always-step\" >> $MARU2_OUTPUT",
+								ID:  "timeout-handled-step",
+								If:  "always()",
+							},
 						},
 					},
 				},
@@ -444,7 +458,7 @@ func TestRunContext(t *testing.T) {
 				}()
 			}
 
-			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, v0.With{}, nil, "", nil, false)
+			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, v1.With{}, nil, "", nil, false)
 
 			if tc.expectedError != "" {
 				require.ErrorContains(t, err, tc.expectedError)
@@ -518,20 +532,20 @@ func TestPrepareEnvironment(t *testing.T) {
 	tests := []struct {
 		name            string
 		startingEnv     []string
-		withDefaults    v0.With
-		stepEnv         v0.Env
+		withDefaults    v1.With
+		stepEnv         v1.Env
 		expectedEnvVars []string
 		expectedError   string
 	}{
 		{
 			name:            "empty inputs and step env",
-			withDefaults:    v0.With{},
+			withDefaults:    v1.With{},
 			stepEnv:         nil,
 			expectedEnvVars: []string{},
 		},
 		{
 			name: "string input value",
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"test-input": "test-value",
 			},
 			stepEnv: nil,
@@ -541,7 +555,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "integer input value",
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"number": 42,
 			},
 			stepEnv: nil,
@@ -551,7 +565,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "boolean input value",
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"flag": true,
 			},
 			stepEnv: nil,
@@ -561,7 +575,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "no step env",
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"test-input": "test-value",
 			},
 			stepEnv: nil,
@@ -571,8 +585,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "step env with string",
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"CUSTOM_VAR": "custom-value",
 			},
 			expectedEnvVars: []string{
@@ -581,8 +595,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "step env with different types",
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"STRING_VAR": "hello",
 				"INT_VAR":    42,
 				"BOOL_VAR":   true,
@@ -595,10 +609,10 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "both input and step env",
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"input-var": "input-value",
 			},
-			stepEnv: v0.Env{
+			stepEnv: v1.Env{
 				"CUSTOM_VAR": "custom-value",
 			},
 			expectedEnvVars: []string{
@@ -608,14 +622,14 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:            "empty step env map",
-			withDefaults:    v0.With{},
-			stepEnv:         v0.Env{},
+			withDefaults:    v1.With{},
+			stepEnv:         v1.Env{},
 			expectedEnvVars: []string{},
 		},
 		{
 			name:         "step env overrides existing env",
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"PATH": "/custom/path",
 			},
 			expectedEnvVars: []string{
@@ -624,8 +638,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "complex values in step env",
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"JSON_VAR":   `{"key": "value", "number": 42}`,
 				"SPACES_VAR": "value with spaces",
 				"EMPTY_VAR":  "",
@@ -638,24 +652,24 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "PWD variable should be rejected",
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"PWD": "/some/path",
 			},
 			expectedError: "setting PWD environment variable is not allowed",
 		},
 		{
 			name: "invalid input type conversion",
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"bad-input": make(chan int), // channels can't be converted to string
 			},
-			stepEnv:       v0.Env{},
+			stepEnv:       v1.Env{},
 			expectedError: "failed to convert input \"bad-input\" to string",
 		},
 		{
 			name:         "invalid env var type conversion",
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"BAD_VAR": make(chan int), // channels can't be converted to string
 			},
 			expectedError: "failed to convert env var \"BAD_VAR\" to string",
@@ -667,8 +681,8 @@ func TestPrepareEnvironment(t *testing.T) {
 				"HOME=/home/user",
 				"USER=testuser",
 			},
-			withDefaults: v0.With{},
-			stepEnv:      v0.Env{},
+			withDefaults: v1.With{},
+			stepEnv:      v1.Env{},
 			expectedEnvVars: []string{
 				"PATH=/usr/bin:/bin",
 				"HOME=/home/user",
@@ -681,10 +695,10 @@ func TestPrepareEnvironment(t *testing.T) {
 				"PATH=/usr/bin:/bin",
 				"HOME=/home/user",
 			},
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"test-input": "test-value",
 			},
-			stepEnv: v0.Env{},
+			stepEnv: v1.Env{},
 			expectedEnvVars: []string{
 				"PATH=/usr/bin:/bin",
 				"HOME=/home/user",
@@ -698,8 +712,8 @@ func TestPrepareEnvironment(t *testing.T) {
 				"HOME=/home/user",
 				"EXISTING_VAR=original",
 			},
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"EXISTING_VAR": "overridden",
 				"NEW_VAR":      "new-value",
 			},
@@ -717,11 +731,11 @@ func TestPrepareEnvironment(t *testing.T) {
 				"PATH=/usr/bin:/bin",
 				"SHELL=/bin/bash",
 			},
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"name":    "test",
 				"version": 123,
 			},
-			stepEnv: v0.Env{
+			stepEnv: v1.Env{
 				"CUSTOM_VAR": "custom",
 				"DEBUG":      true,
 			},
@@ -737,10 +751,10 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:        "empty starting env vs nil starting env",
 			startingEnv: []string{},
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"test": "value",
 			},
-			stepEnv: v0.Env{
+			stepEnv: v1.Env{
 				"STEP_VAR": "step-value",
 			},
 			expectedEnvVars: []string{
@@ -772,8 +786,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:         "empty withDefaults with empty outFileName",
 			startingEnv:  []string{"USER=testuser"},
-			withDefaults: v0.With{},
-			stepEnv: v0.Env{
+			withDefaults: v1.With{},
+			stepEnv: v1.Env{
 				"STEP_VAR": "step-value",
 			},
 			expectedEnvVars: []string{
@@ -825,8 +839,8 @@ func TestPrepareEnvironment(t *testing.T) {
 func TestHandleRunStep(t *testing.T) {
 	tests := []struct {
 		name          string
-		step          v0.Step
-		withDefaults  v0.With
+		step          v1.Step
+		withDefaults  v1.With
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
@@ -834,169 +848,169 @@ func TestHandleRunStep(t *testing.T) {
 	}{
 		{
 			name: "simple command",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo hello",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo hello\n",
 		},
 		{
 			name: "command with output",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo \"result=success\" >> $MARU2_OUTPUT",
 				ID:  "step1",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedOut:  map[string]any{"result": "success"},
 			expectedLog:  "echo \"result=success\" >> $MARU2_OUTPUT\n",
 		},
 		{
 			name: "command with template",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo ${{ input \"text\" }}",
 			},
-			withDefaults: v0.With{"text": "hello world"},
+			withDefaults: v1.With{"text": "hello world"},
 			expectedLog:  "echo hello world\n",
 		},
 		{
 			name: "bash array works",
-			step: v0.Step{
+			step: v1.Step{
 				Run:   `arr=(a b c); echo "${arr[1]}"`,
 				Shell: "bash",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "arr=(a b c); echo \"${arr[1]}\"\n",
 		},
 		{
 			name: "[[ ... ]] works in bash",
-			step: v0.Step{
+			step: v1.Step{
 				Run:   `if [[ "foo" == "foo" ]]; then echo "match"; fi`,
 				Shell: "bash",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "if [[ \"foo\" == \"foo\" ]]; then echo \"match\"; fi\n",
 		},
 		{
 			name: "unsupported shell",
-			step: v0.Step{
+			step: v1.Step{
 				Run:   "echo foo",
 				Shell: "fish",
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedLog:   "echo foo\n",
 			expectedError: "unsupported shell: fish",
 		},
 		{
 			name: "dry run",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo hello",
 				ID:  "step1",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			dry:          true,
 			expectedLog:  "echo hello\n",
 		},
 		{
 			name: "command error",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "exit 1",
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: "exit status 1",
 			expectedLog:   "exit 1\n",
 		},
 		{
 			name: "muted command",
-			step: v0.Step{
+			step: v1.Step{
 				Run:  "echo 'This should not appear in output'",
 				Mute: true,
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo 'This should not appear in output'\n",
 		},
 		{
 			name: "muted command still can send outputs",
-			step: v0.Step{
+			step: v1.Step{
 				Run:  "echo 'foo=bar' >> $MARU2_OUTPUT",
 				Mute: true,
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo 'foo=bar' >> $MARU2_OUTPUT\n",
 			expectedOut:  map[string]any{"foo": "bar"},
 		},
 		{
 			name: "step with environment variables",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo \"MY_VAR=$MY_VAR\" && echo \"TEMPLATED_VAR=$TEMPLATED_VAR\"",
-				Env: v0.Env{
+				Env: v1.Env{
 					"MY_VAR":        "static-value",
 					"TEMPLATED_VAR": "${{ input \"name\" }}",
 				},
 			},
-			withDefaults: v0.With{"name": "world"},
+			withDefaults: v1.With{"name": "world"},
 			expectedLog:  "echo \"MY_VAR=$MY_VAR\" && echo \"TEMPLATED_VAR=$TEMPLATED_VAR\"\n",
 		},
 		{
 			name: "dry run with environment variables",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo \"TEST_VAR=$TEST_VAR\"",
-				Env: v0.Env{
+				Env: v1.Env{
 					"TEST_VAR": "${{ input \"value\" }}",
 				},
 			},
-			withDefaults: v0.With{"value": "dry-run-test"},
+			withDefaults: v1.With{"value": "dry-run-test"},
 			dry:          true,
 			expectedLog:  "echo \"TEST_VAR=$TEST_VAR\"\n",
 		},
 		{
 			name: "step with env templating error",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo test",
-				Env: v0.Env{
+				Env: v1.Env{
 					"BAD_VAR": "${{ input \"nonexistent\" }}",
 				},
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedLog:   "echo test\n",
 		},
 		{
 			name: "step with empty env map",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo \"Empty env map test completed\"",
-				Env: v0.Env{},
+				Env: v1.Env{},
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo \"Empty env map test completed\"\n",
 		},
 		{
 			name: "step with run templating error in dry mode",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo ${{ invalid syntax }}",
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			dry:           true,
 			expectedError: `template: dry-run expression evaluator:1: function "invalid" not defined`,
 			expectedLog:   "\n",
 		},
 		{
 			name: "step with PWD in env should fail",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo test",
-				Env: v0.Env{
+				Env: v1.Env{
 					"PWD": "/some/path",
 				},
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: "setting PWD environment variable is not allowed",
 			expectedLog:   "echo test\n",
 		},
 		{
 			name: "step with invalid input type should fail",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo test",
 			},
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"bad-input": complex(1, 2), // complex numbers can't be converted to string
 			},
 			expectedError: "failed to convert input \"bad-input\" to string: unable to cast (1+2i) of type complex128 to string",
@@ -1004,51 +1018,51 @@ func TestHandleRunStep(t *testing.T) {
 		},
 		{
 			name: "step with invalid env var type should fail",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo test",
-				Env: v0.Env{
+				Env: v1.Env{
 					"BAD_VAR": complex(1, 2), // complex numbers can't be converted to string
 				},
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: "failed to convert env var \"BAD_VAR\" to string: unable to cast (1+2i) of type complex128 to string",
 			expectedLog:   "echo test\n",
 		},
 		{
 			name: "unset environment variable in sh shell",
-			step: v0.Step{
+			step: v1.Step{
 				Run:   "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
 				Shell: "sh",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
 		},
 		{
 			name: "unset environment variable in bash shell",
-			step: v0.Step{
+			step: v1.Step{
 				Run:   "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
 				Shell: "bash",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
 		},
 		{
 			name: "unset environment variable with default shell",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
 		},
 		{
 			name: "mixed set and unset environment variables",
-			step: v0.Step{
+			step: v1.Step{
 				Run: "echo \"SET_VAR: '$SET_VAR', UNSET_VAR: '$UNSET_VAR'\" >/dev/null",
-				Env: v0.Env{
+				Env: v1.Env{
 					"SET_VAR": "defined_value",
 				},
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedLog:  "echo \"SET_VAR: '$SET_VAR', UNSET_VAR: '$UNSET_VAR'\" >/dev/null\n",
 		},
 	}
@@ -1081,9 +1095,9 @@ func TestHandleRunStep(t *testing.T) {
 func TestHandleUsesStep(t *testing.T) {
 	tests := []struct {
 		name          string
-		step          v0.Step
-		workflow      v0.Workflow
-		withDefaults  v0.With
+		step          v1.Step
+		workflow      v1.Workflow
+		withDefaults  v1.With
 		origin        string
 		dry           bool
 		expectedError string
@@ -1091,178 +1105,188 @@ func TestHandleUsesStep(t *testing.T) {
 	}{
 		{
 			name: "builtin echo",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": "Hello, World!",
 				},
 			},
-			workflow:     v0.Workflow{},
-			withDefaults: v0.With{},
+			workflow:     v1.Workflow{},
+			withDefaults: v1.With{},
 			expectedOut:  map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "dry run builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": "Hello, World!",
 				},
 			},
-			workflow:     v0.Workflow{},
-			withDefaults: v0.With{},
+			workflow:     v1.Workflow{},
+			withDefaults: v1.With{},
 			dry:          true,
 			expectedOut:  nil,
 		},
 		{
 			name: "uses with template",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": "Hello from template",
 				},
 			},
-			workflow:     v0.Workflow{},
-			withDefaults: v0.With{},
+			workflow:     v1.Workflow{},
+			withDefaults: v1.With{},
 			expectedOut:  map[string]any{"stdout": "Hello from template"},
 		},
 		{
 			name: "nonexistent builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:nonexistent",
 			},
-			workflow:      v0.Workflow{},
-			withDefaults:  v0.With{},
+			workflow:      v1.Workflow{},
+			withDefaults:  v1.With{},
 			expectedError: "builtin:nonexistent not found",
 			expectedOut:   nil,
 		},
 		{
 			name: "template error in step.With",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: v1.With{
 					"text": "${{ input \"nonexistent\" }}",
 				},
 			},
-			workflow:      v0.Workflow{},
-			withDefaults:  v0.With{},
+			workflow:      v1.Workflow{},
+			withDefaults:  v1.With{},
 			expectedError: `builtin:echo: template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedOut:   nil,
 		},
 		{
 			name: "template error in local task step.With",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "test-task",
-				With: v0.With{
+				With: v1.With{
 					"input": "${{ input \"nonexistent\" }}",
 				},
 			},
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test-task": v0.Task{
-						{
-							Run: "echo ${{ input \"input\" }}",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test-task": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo ${{ input \"input\" }}",
+							},
 						},
 					},
 				},
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedOut:   nil,
 		},
 		{
 			name: "template error in local task step.Env",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "test-task",
-				With: v0.With{
+				With: v1.With{
 					"input": "hello",
 				},
-				Env: v0.Env{
+				Env: v1.Env{
 					"TEST_VAR": "${{ input \"nonexistent\" }}",
 				},
 			},
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test-task": v0.Task{
-						{
-							Run: "echo ${{ input \"input\" }}",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test-task": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo ${{ input \"input\" }}",
+							},
 						},
 					},
 				},
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedOut:   nil,
 		},
 		{
 			name: "PWD in local task step.Env should fail",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "test-task",
-				With: v0.With{
+				With: v1.With{
 					"input": "hello",
 				},
-				Env: v0.Env{
+				Env: v1.Env{
 					"PWD": "/some/path",
 				},
 			},
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test-task": v0.Task{
-						{
-							Run: "echo ${{ input \"input\" }}",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test-task": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo ${{ input \"input\" }}",
+							},
 						},
 					},
 				},
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: "setting PWD environment variable is not allowed",
 			expectedOut:   nil,
 		},
 		{
 			name: "invalid type in local task step.Env should fail",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "test-task",
-				With: v0.With{
+				With: v1.With{
 					"input": "hello",
 				},
-				Env: v0.Env{
+				Env: v1.Env{
 					"BAD_VAR": complex(1, 2),
 				},
 			},
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test-task": v0.Task{
-						{
-							Run: "echo ${{ input \"input\" }}",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test-task": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo ${{ input \"input\" }}",
+							},
 						},
 					},
 				},
 			},
-			withDefaults:  v0.With{},
+			withDefaults:  v1.With{},
 			expectedError: "failed to convert env var \"BAD_VAR\" to string: unable to cast (1+2i) of type complex128 to string",
 			expectedOut:   nil,
 		},
 		{
-			name: "template error only in local task step.Env (valid step.With)",
-			step: v0.Step{
+			name: "template error in local task step.Env",
+			step: v1.Step{
 				Uses: "test-task",
-				With: v0.With{
+				With: v1.With{
 					"input": "valid-input",
 				},
-				Env: v0.Env{
+				Env: v1.Env{
 					"TEST_VAR": "${{ input \"nonexistent_env_var\" }}",
 				},
 			},
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test-task": v0.Task{
-						{
-							Run: "echo ${{ input \"input\" }}",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test-task": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo ${{ input \"input\" }}",
+							},
 						},
 					},
 				},
 			},
-			withDefaults: v0.With{
+			withDefaults: v1.With{
 				"input": "provided-input",
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent_env_var">: error calling input: input "nonexistent_env_var" does not exist in [input]`,
@@ -1270,46 +1294,50 @@ func TestHandleUsesStep(t *testing.T) {
 		},
 		{
 			name: "successful local task execution",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "test-task",
-				With: v0.With{
+				With: v1.With{
 					"input": "hello world",
 				},
-				Env: v0.Env{
+				Env: v1.Env{
 					"TEST_VAR": "test-value",
 				},
 			},
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"test-task": v0.Task{
-						{
-							Run: "echo ${{ input \"input\" }}",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test-task": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo ${{ input \"input\" }}",
+							},
 						},
 					},
 				},
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			dry:          true, // Use dry run to avoid actual command execution
 			expectedOut:  nil,  // Dry run returns nil
 		},
 		{
 			name: "successful local task execution with output",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "output-task",
-				With: v0.With{
+				With: v1.With{
 					"message": "test output",
 				},
 			},
-			workflow: v0.Workflow{
-				Tasks: v0.TaskMap{
-					"output-task": v0.Task{
-						{
-							Run: "echo \"result=${{ input \"message\" }}\" >> $MARU2_OUTPUT",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"output-task": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo \"result=${{ input \"message\" }}\" >> $MARU2_OUTPUT",
+							},
 						},
 					},
 				},
 			},
-			withDefaults: v0.With{},
+			withDefaults: v1.With{},
 			expectedOut:  map[string]any{"result": "test output"},
 		},
 	}
