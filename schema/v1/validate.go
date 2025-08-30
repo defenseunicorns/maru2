@@ -141,7 +141,7 @@ func Validate(wf Workflow) error {
 				if param.Validate != "" {
 					_, err := regexp.Compile(param.Validate)
 					if err != nil {
-						return err
+						return fmt.Errorf(".tasks.%s[%d].inputs.%s %q: %v", name, idx, inputName, err)
 					}
 				}
 			}
