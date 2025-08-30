@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/log"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestExecuteBuiltin(t *testing.T) {

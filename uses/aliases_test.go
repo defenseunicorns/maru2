@@ -6,9 +6,10 @@ package uses
 import (
 	"testing"
 
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/package-url/packageurl-go"
 	"github.com/stretchr/testify/assert"
+
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestConfigBasedResolver(t *testing.T) {

@@ -11,8 +11,9 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/charmbracelet/log"
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/stretchr/testify/assert"
+
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 type errLexer struct {
