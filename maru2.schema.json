@@ -448,7 +448,6 @@
           "additionalProperties": false,
           "type": "object",
           "required": [
-            "inputs",
             "steps"
           ],
           "description": "A task definition, aka a collection of steps"

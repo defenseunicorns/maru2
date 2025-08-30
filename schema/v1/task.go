@@ -15,7 +15,7 @@ const DefaultTaskName = "default"
 
 // Task is a list of steps
 type Task struct {
-	Inputs InputMap `json:"inputs"`
+	Inputs InputMap `json:"inputs,omitempty"`
 	Steps  []Step   `json:"steps"`
 }
 

@@ -1,20 +1,21 @@
 # yaml-language-server: $schema=maru2.schema.json
-schema-version: v0
-inputs:
-  text:
-    description: Text to echo
-    default: "Hello, world!"
-    required: true
-  short:
-    description: Controls whether network tests are run
-    default: false
-  uds-registry:
-    description: Registry location to publish nightly to
-    default: localhost:5005
+schema-version: v1
+# inputs:
+#   text:
+#     description: Text to echo
+#     default: "Hello, world!"
+#     required: true
+#   short:
+#     description: Controls whether network tests are run
+#     default: false
+#   uds-registry:
+#     description: Registry location to publish nightly to
+#     default: localhost:5005
 
 tasks:
   echo:
-    - run: echo "${{ input "text" }}"
+    steps:
+      - run: echo "${{ input "text" }}"
 
   test:
     - run: |
