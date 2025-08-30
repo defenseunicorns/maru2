@@ -20,6 +20,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/defenseunicorns/maru2/schema"
+	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
 // Read reads a workflow from a file
@@ -45,6 +46,12 @@ func Read(r io.Reader) (Workflow, error) {
 	case SchemaVersion:
 		var wf Workflow
 		return wf, yaml.Unmarshal(data, &wf)
+	case v0.SchemaVersion:
+		var v0Workflow v0.Workflow
+		if err := yaml.Unmarshal(data, &v0Workflow); err != nil {
+			return Workflow{}, err
+		}
+		return Migrate(v0Workflow)
 	default:
 		return Workflow{}, fmt.Errorf("unsupported schema version: expected %q, got %q", SchemaVersion, version)
 	}
