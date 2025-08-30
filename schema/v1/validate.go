@@ -67,9 +67,9 @@ func Validate(wf Workflow) error {
 			return fmt.Errorf("task name %q does not satisfy %q", name, TaskNamePattern.String())
 		}
 
-		ids := make(map[string]int, len(task))
+		ids := make(map[string]int, len(task.Steps))
 
-		for idx, step := range task {
+		for idx, step := range task.Steps {
 			// ensure that only one of run or uses fields is set
 			switch {
 			// both
@@ -132,18 +132,18 @@ func Validate(wf Workflow) error {
 					return fmt.Errorf(".tasks.%s[%d].env %q does not satisfy %q", name, idx, envName, EnvVariablePattern.String())
 				}
 			}
-		}
-	}
 
-	for name, param := range wf.Inputs {
-		if ok := InputNamePattern.MatchString(name); !ok {
-			return fmt.Errorf("input name %q does not satisfy %q", name, InputNamePattern.String())
-		}
+			for inputName, param := range task.Inputs {
+				if ok := InputNamePattern.MatchString(inputName); !ok {
+					return fmt.Errorf(".tasks.%s[%d].inputs.%s %q does not satisfy %q", name, idx, inputName, InputNamePattern.String())
+				}
 
-		if param.Validate != "" {
-			_, err := regexp.Compile(param.Validate)
-			if err != nil {
-				return err
+				if param.Validate != "" {
+					_, err := regexp.Compile(param.Validate)
+					if err != nil {
+						return err
+					}
+				}
 			}
 		}
 	}

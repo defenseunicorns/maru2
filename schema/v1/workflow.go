@@ -15,7 +15,6 @@ const SchemaVersion = "v1"
 // It represents a "tasks.yaml" file
 type Workflow struct {
 	SchemaVersion string   `json:"schema-version"`
-	Inputs        InputMap `json:"inputs,omitempty"`
 	Tasks         TaskMap  `json:"tasks,omitempty"`
 	Aliases       AliasMap `json:"aliases,omitempty"`
 }
@@ -26,9 +25,6 @@ func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 		schemaVersion.Description = "Workflow schema version."
 		schemaVersion.Enum = []any{SchemaVersion}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
-	}
-	if inputs, ok := schema.Properties.Get("inputs"); ok && inputs != nil {
-		inputs.Description = "Input parameters for the workflow"
 	}
 	if tasks, ok := schema.Properties.Get("tasks"); ok && tasks != nil {
 		tasks.Description = "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"

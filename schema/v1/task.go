@@ -14,11 +14,21 @@ import (
 const DefaultTaskName = "default"
 
 // Task is a list of steps
-type Task []Step
+type Task struct {
+	Inputs InputMap `json:"inputs"`
+	Steps  []Step   `json:"steps"`
+}
 
 // JSONSchemaExtend extends the JSON schema for a task
 func (Task) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Description = "A task definition, aka a collection of steps"
+
+	if inputs, ok := schema.Properties.Get("inputs"); ok && inputs != nil {
+		inputs.Description = "Input parameters for the task"
+	}
+	if steps, ok := schema.Properties.Get("steps"); ok && steps != nil {
+		steps.Description = "Task steps"
+	}
 }
 
 // TaskMap is a map of tasks, where the key is the task name
