@@ -10,9 +10,7 @@ import (
 // SchemaVersion is the current schema version for workflows
 const SchemaVersion = "v1"
 
-// Workflow is a wrapper struct around the input map and task map
-//
-// It represents a "tasks.yaml" file
+// Workflow represents a "tasks.yaml" file
 type Workflow struct {
 	SchemaVersion string   `json:"schema-version"`
 	Tasks         TaskMap  `json:"tasks,omitempty"`

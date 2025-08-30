@@ -46,9 +46,12 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"echo": Task{Step{
-						Run: "echo",
-					}},
+					"echo": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 		},
@@ -61,9 +64,12 @@ func TestValidate(t *testing.T) {
 			name: "invalid task name",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"2-echo": Task{Step{
-						Run: "echo",
-					}},
+					"2-echo": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 			expectedError: fmt.Sprintf("task name \"2-echo\" does not satisfy %q", TaskNamePattern.String()),
@@ -72,10 +78,13 @@ func TestValidate(t *testing.T) {
 			name: "invalid step id",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"echo": Task{Step{
-						Run: "echo",
-						ID:  "&1337",
-					}},
+					"echo": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+							ID:  "&1337",
+						}},
+					},
 				},
 			},
 			expectedError: fmt.Sprintf(".tasks.echo[0].id \"&1337\" does not satisfy %q", TaskNamePattern.String()),
@@ -85,13 +94,16 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				Tasks: TaskMap{
 					"echo": Task{
-						Step{
-							Run: "echo first",
-							ID:  "same-id",
-						},
-						Step{
-							Run: "echo second",
-							ID:  "same-id",
+						Inputs: InputMap{},
+						Steps: []Step{
+							{
+								Run: "echo first",
+								ID:  "same-id",
+							},
+							{
+								Run: "echo second",
+								ID:  "same-id",
+							},
 						},
 					},
 				},
@@ -102,10 +114,13 @@ func TestValidate(t *testing.T) {
 			name: "both run and uses set",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run:  "echo",
-						Uses: "other-task",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run:  "echo",
+							Uses: "other-task",
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0] has both run and uses fields set",
@@ -114,7 +129,10 @@ func TestValidate(t *testing.T) {
 			name: "neither run nor uses set",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"task": Task{Step{}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps:  []Step{{}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0] must have one of [run, uses] fields set",
@@ -123,9 +141,12 @@ func TestValidate(t *testing.T) {
 			name: "uses with invalid URL",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Uses: ":\\invalid",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Uses: ":\\invalid",
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0].uses parse \":\\\\invalid\": missing protocol scheme",
@@ -134,9 +155,12 @@ func TestValidate(t *testing.T) {
 			name: "uses with non-existent task",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Uses: "non-existent-task",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Uses: "non-existent-task",
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0].uses \"non-existent-task\" not found",
@@ -145,9 +169,12 @@ func TestValidate(t *testing.T) {
 			name: "uses cannot reference itself",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"self-task": Task{Step{
-						Uses: "self-task",
-					}},
+					"self-task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Uses: "self-task",
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.self-task[0].uses cannot reference itself",
@@ -156,9 +183,12 @@ func TestValidate(t *testing.T) {
 			name: "uses with invalid scheme",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Uses: "invalid://scheme",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Uses: "invalid://scheme",
+						}},
+					},
 				},
 			},
 			expectedError: fmt.Sprintf(".tasks.task[0].uses %q is not one of [%s]", "invalid", strings.Join(append(SupportedSchemes(), "builtin"), ", ")),
@@ -168,12 +198,18 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task1": Task{Step{
-						Run: "echo first",
-					}},
-					"task2": Task{Step{
-						Uses: "task1",
-					}},
+					"task1": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo first",
+						}},
+					},
+					"task2": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Uses: "task1",
+						}},
+					},
 				},
 			},
 		},
@@ -182,80 +218,94 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Uses: "http://example.com/task",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Uses: "http://example.com/task",
+						}},
+					},
 				},
 			},
 		},
 		{
-			name: "input with valid regex validation",
+			name: "task input with valid regex validation",
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
-				Inputs: InputMap{
-					"name": InputParameter{
-						Description: "Name with validation",
-						Validate:    "^Hello",
-					},
-				},
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-					}},
+					"task": Task{
+						Inputs: InputMap{
+							"name": InputParameter{
+								Description: "Name with validation",
+								Validate:    "^Hello",
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 		},
 		{
-			name: "input with invalid regex validation pattern",
+			name: "task input with invalid regex validation pattern",
 			wf: Workflow{
-				Inputs: InputMap{
-					"name": InputParameter{
-						Description: "Name with invalid validation",
-						Validate:    "[", // Invalid regex
+				Tasks: TaskMap{
+					"task": Task{
+						Inputs: InputMap{
+							"name": InputParameter{
+								Description: "Name with invalid validation",
+								Validate:    "[", // Invalid regex
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
 					},
 				},
-				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-					}},
-				},
 			},
-			expectedError: "error parsing regexp: missing closing ]: `[`",
+			expectedError: ".tasks.task.inputs.name: error parsing regexp: missing closing ]: `[`",
 		},
 		{
-			name: "multiple inputs with valid and invalid regex validation",
+			name: "multiple task inputs with valid and invalid regex validation",
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
-				Inputs: InputMap{
-					"name": InputParameter{
-						Description: "Name with validation",
-						Validate:    "^Hello",
-					},
-					"email": InputParameter{
-						Description: "Email with invalid validation",
-						Validate:    ")", // Invalid regex
-					},
-				},
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-					}},
+					"task": Task{
+						Inputs: InputMap{
+							"name": InputParameter{
+								Description: "Name with validation",
+								Validate:    "^Hello",
+							},
+							"email": InputParameter{
+								Description: "Email with invalid validation",
+								Validate:    ")", // Invalid regex
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
-			expectedError: "error parsing regexp: unexpected ): `)`",
+			expectedError: ".tasks.task.inputs.email: error parsing regexp: unexpected ): `)`",
 		},
 		{
 			name: "uses with valid task reference",
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
-				Inputs:        InputMap{},
 				Tasks: TaskMap{
-					"task1": Task{Step{
-						Run: "echo first",
-					}},
-					"task2": Task{Step{
-						Uses: "task1",
-					}},
+					"task1": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo first",
+						}},
+					},
+					"task2": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Uses: "task1",
+						}},
+					},
 				},
 			},
 		},
@@ -264,10 +314,13 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run:  "echo",
-						Uses: "builtin:echo",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run:  "echo",
+							Uses: "builtin:echo",
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0] has both run and uses fields set",
@@ -277,9 +330,12 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						// Missing both Run and Uses
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps:  []Step{{
+							// Missing both Run and Uses
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0] must have one of [run, uses] fields set",
@@ -290,12 +346,15 @@ func TestValidate(t *testing.T) {
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
 					"task": Task{
-						Step{
-							Run:  "echo",
-							Uses: "builtin:echo",
-						},
-						Step{
-							// Missing both Run and Uses
+						Inputs: InputMap{},
+						Steps: []Step{
+							{
+								Run:  "echo",
+								Uses: "builtin:echo",
+							},
+							{
+								// Missing both Run and Uses
+							},
 						},
 					},
 				},
@@ -303,18 +362,20 @@ func TestValidate(t *testing.T) {
 			expectedError: ".tasks.task[0] has both run and uses fields set",
 		},
 		{
-			name: "invalid input schema validation",
+			name: "invalid task input schema validation",
 			wf: Workflow{
-				Inputs: InputMap{
-					"input": InputParameter{
-						Description: "Invalid input",
-						Default:     make(chan int), // Invalid type for Default field
-					},
-				},
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-					}},
+					"task": Task{
+						Inputs: InputMap{
+							"input": InputParameter{
+								Description: "Invalid input",
+								Default:     make(chan int), // Invalid type for Default field
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 			expectedError: "json: unsupported type: chan int",
@@ -323,30 +384,35 @@ func TestValidate(t *testing.T) {
 			name: "invalid task schema",
 			wf: Workflow{
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-						With: map[string]any{
-							"invalid": make(chan int), // Invalid type for With field
-						},
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+							With: map[string]any{
+								"invalid": make(chan int), // Invalid type for With field
+							},
+						}},
+					},
 				},
 			},
 			expectedError: "json: unsupported type: chan int",
 		},
 		{
-			name: "valid input schema",
+			name: "valid task input schema",
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
-				Inputs: InputMap{
-					"input": InputParameter{
-						Description: "A test input",
-						Default:     "default value",
-					},
-				},
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-					}},
+					"task": Task{
+						Inputs: InputMap{
+							"input": InputParameter{
+								Description: "A test input",
+								Default:     "default value",
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 		},
@@ -355,10 +421,13 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-						Dir: "/tmp",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+							Dir: "/tmp",
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0].dir \"/tmp\" must not be absolute",
@@ -368,10 +437,13 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run:     "echo",
-						Timeout: "5",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run:     "echo",
+							Timeout: "5",
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0].timeout \"5\" is not a valid time duration",
@@ -381,11 +453,14 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run:     "echo",
-						Timeout: "5s",
-						Dir:     "tmp",
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run:     "echo",
+							Timeout: "5s",
+							Dir:     "tmp",
+						}},
+					},
 				},
 			},
 		},
@@ -394,14 +469,17 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo test",
-						Env: Env{
-							"VAR1":  "value1",
-							"VAR_2": "value2",
-							"_VAR3": "value3",
-						},
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo test",
+							Env: Env{
+								"VAR1":  "value1",
+								"VAR_2": "value2",
+								"_VAR3": "value3",
+							},
+						}},
+					},
 				},
 			},
 		},
@@ -410,14 +488,17 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo test",
-						Env: Env{
-							"STRING_VAR": "hello",
-							"INT_VAR":    42,
-							"BOOL_VAR":   true,
-						},
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo test",
+							Env: Env{
+								"STRING_VAR": "hello",
+								"INT_VAR":    42,
+								"BOOL_VAR":   true,
+							},
+						}},
+					},
 				},
 			},
 		},
@@ -426,15 +507,18 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo test",
-						Env: Env{
-							"_VAR":    "value1",
-							"VAR_":    "value2",
-							"VAR_1_2": "value3",
-							"__VAR__": "value4",
-						},
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo test",
+							Env: Env{
+								"_VAR":    "value1",
+								"VAR_":    "value2",
+								"VAR_1_2": "value3",
+								"__VAR__": "value4",
+							},
+						}},
+					},
 				},
 			},
 		},
@@ -443,10 +527,13 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo test",
-						Env: Env{},
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo test",
+							Env: Env{},
+						}},
+					},
 				},
 			},
 		},
@@ -455,31 +542,36 @@ func TestValidate(t *testing.T) {
 			wf: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo test",
-						Env: Env{
-							"1INVALID": "value", // starts with number - violates schema
-						},
-					}},
+					"task": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo test",
+							Env: Env{
+								"1INVALID": "value", // starts with number - violates schema
+							},
+						}},
+					},
 				},
 			},
 			expectedError: ".tasks.task[0].env \"1INVALID\" does not satisfy \"^[a-zA-Z_]+[a-zA-Z0-9_]*$\"",
 		},
 		{
-			name: "invalid input name",
+			name: "invalid task input name",
 			wf: Workflow{
-				Inputs: InputMap{
-					"2-invalid": InputParameter{
-						Description: "Invalid input name",
+				Tasks: TaskMap{
+					"task": Task{
+						Inputs: InputMap{
+							"2-invalid": InputParameter{
+								Description: "Invalid input name",
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
 					},
 				},
-				Tasks: TaskMap{
-					"task": Task{Step{
-						Run: "echo",
-					}},
-				},
 			},
-			expectedError: fmt.Sprintf("input name \"2-invalid\" does not satisfy %q", InputNamePattern.String()),
+			expectedError: fmt.Sprintf(".tasks.task.inputs.2-invalid \"2-invalid\" does not satisfy %q", InputNamePattern.String()),
 		},
 	}
 
@@ -510,57 +602,64 @@ func TestRead(t *testing.T) {
 schema-version: v1
 tasks:
   echo:
-    - run: echo
+    inputs: {}
+    steps:
+      - run: echo
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"echo": Task{Step{
-						Run: "echo",
-					}},
-				},
-			},
-		},
-		{
-			name: "workflow with inputs",
-			r: strings.NewReader(`
-schema-version: v1
-tasks:
-  echo:
-    - run: echo
-
-inputs:
-  name:
-    description: "string"
-    default: "default name"
-`),
-			expected: Workflow{
-				SchemaVersion: SchemaVersion,
-				Inputs: InputMap{
-					"name": InputParameter{
-						Description: "string",
-						Default:     "default name",
+					"echo": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+						}},
 					},
 				},
-				Tasks: TaskMap{
-					"echo": Task{Step{
-						Run: "echo",
-					}},
-				},
 			},
 		},
 		{
-			name: "workflow with inputs and aliases",
+			name: "workflow with task inputs",
 			r: strings.NewReader(`
 schema-version: v1
 tasks:
   echo:
-    - run: echo
-
-inputs:
-  name:
-    description: "string"
-    default: "default name"
+    inputs:
+      name:
+        description: "string"
+        default: "default name"
+    steps:
+      - run: echo
+`),
+			expected: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"echo": Task{
+						Inputs: InputMap{
+							"name": InputParameter{
+								Description: "string",
+								Default:     "default name",
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
+				},
+			},
+		},
+		{
+			name: "workflow with task inputs and aliases",
+			r: strings.NewReader(`
+schema-version: v1
+tasks:
+  echo:
+    inputs:
+      name:
+        description: "string"
+        default: "default name"
+    steps:
+      - run: echo
 
 aliases:
   gh:
@@ -568,16 +667,18 @@ aliases:
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersion,
-				Inputs: InputMap{
-					"name": InputParameter{
-						Description: "string",
-						Default:     "default name",
-					},
-				},
 				Tasks: TaskMap{
-					"echo": Task{Step{
-						Run: "echo",
-					}},
+					"echo": Task{
+						Inputs: InputMap{
+							"name": InputParameter{
+								Description: "string",
+								Default:     "default name",
+							},
+						},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 				Aliases: AliasMap{
 					"gh": {
@@ -592,7 +693,9 @@ aliases:
 schema-version: v1
 tasks:
   echo:
-    - run: echo
+    inputs: {}
+    steps:
+      - run: echo
 
 x-metadata:
   description: "This is a test workflow"
@@ -600,9 +703,12 @@ x-metadata:
 			expected: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"echo": Task{Step{
-						Run: "echo",
-					}},
+					"echo": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 		},
@@ -620,7 +726,9 @@ x-metadata:
 			r: strings.NewReader(`
 tasks:
   echo:
-    - run: echo
+    inputs: {}
+    steps:
+      - run: echo
 `),
 			expected:      Workflow{},
 			expectedError: `unsupported schema version: expected "v1", got ""`,
@@ -643,38 +751,42 @@ tasks:
 schema-version: v1
 tasks:
   echo:
-    - run: echo
-      with:
-      - invalid
+    inputs: {}
+    steps:
+      - run: echo
+        with:
+        - invalid
 `),
 			expected: Workflow{},
-			expectedError: `[7:7] sequence was used where mapping is expected
-   4 |   echo:
-   5 |     - run: echo
-   6 |       with:
->  7 |       - invalid
-             ^
+			expectedError: `[9:9] sequence was used where mapping is expected
+   6 |     steps:
+   7 |       - run: echo
+   8 |         with:
+>  9 |         - invalid
+               ^
 `,
 		},
 		{
-			name: "error marshaling input",
+			name: "error marshaling task input",
 			r: strings.NewReader(`
 schema-version: v1
 tasks:
   echo:
-    - run: echo
-
-inputs:
-  name:
-    description: []
+    inputs:
+      name:
+        description: []
+    steps:
+      - run: echo
 `),
 			expected: Workflow{},
-			expectedError: `[9:18] cannot unmarshal []interface {} into Go struct field Workflow.Inputs of type string
-   7 | inputs:
-   8 |   name:
->  9 |     description: []
-                        ^
-`,
+			expectedError: `[7:22] cannot unmarshal []interface {} into Go struct field Workflow.Tasks of type string
+   4 |   echo:
+   5 |     inputs:
+   6 |       name:
+>  7 |         description: []
+                            ^
+   8 |     steps:
+   9 |       - run: echo`,
 		},
 	}
 
@@ -707,14 +819,19 @@ func TestReadAndValidate(t *testing.T) {
 schema-version: v1
 tasks:
   echo:
-    - run: echo
+    inputs: {}
+    steps:
+      - run: echo
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"echo": Task{Step{
-						Run: "echo",
-					}},
+					"echo": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 			expectedReadErr:     "",
@@ -733,14 +850,19 @@ tasks:
 schema-version: v1
 tasks:
   2-echo:
-    - run: echo
+    inputs: {}
+    steps:
+      - run: echo
 `),
 			expected: Workflow{
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
-					"2-echo": Task{Step{
-						Run: "echo",
-					}},
+					"2-echo": Task{
+						Inputs: InputMap{},
+						Steps: []Step{{
+							Run: "echo",
+						}},
+					},
 				},
 			},
 			expectedReadErr:     "",
