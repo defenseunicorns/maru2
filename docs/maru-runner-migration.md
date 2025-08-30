@@ -40,6 +40,8 @@ now read maru2.schema.json, syntax.md and cli.md for context on how the new task
 now read maru-runner-migration.md on tips and tricks on how to migrate between maru-runner and maru2
 
 task: migrate tasks.yaml from the old (maru-runner) to the new (maru2 v1), if a property cannot be cleanly migrated, or you are unsure, comment out that property / step as is so the user can make the determination.
+
+validate: execute `maru2 --list -f tasks.yaml` to list all tasks, then execute `maru2 --dry-run -f tasks.yaml <taskname>` for each of the given tasks to ensure correctness of schema and dry run behavior.
 ```
 
 ## Table of Contents
