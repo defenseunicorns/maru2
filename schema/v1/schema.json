@@ -8,7 +8,7 @@
       "enum": [
         "v1"
       ],
-      "description": "Workflow schema version. For v1 breaking changes can be expected without any migration pathway."
+      "description": "Workflow schema version."
     },
     "inputs": {
       "additionalProperties": {
