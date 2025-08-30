@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package v0
+package v1
 
 import (
 	"encoding/json"

@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v0/schema.json",
+  "$id": "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json",
   "properties": {
     "schema-version": {
       "additionalProperties": false,
       "type": "string",
       "enum": [
-        "v0"
+        "v1"
       ],
-      "description": "Workflow schema version. For v0 breaking changes can be expected without any migration pathway."
+      "description": "Workflow schema version. For v1 breaking changes can be expected without any migration pathway."
     },
     "inputs": {
       "additionalProperties": {

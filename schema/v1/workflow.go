@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package v0
+package v1
 
 import (
 	"github.com/invopop/jsonschema"
 )
 
 // SchemaVersion is the current schema version for workflows
-const SchemaVersion = "v0"
+const SchemaVersion = "v1"
 
 // Workflow is a wrapper struct around the input map and task map
 //
@@ -23,7 +23,7 @@ type Workflow struct {
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
-		schemaVersion.Description = "Workflow schema version. For v0 breaking changes can be expected without any migration pathway."
+		schemaVersion.Description = "Workflow schema version."
 		schemaVersion.Enum = []any{SchemaVersion}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
 	}
@@ -44,7 +44,7 @@ func WorkFlowSchema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{DoNotReference: true, ExpandedStruct: true}
 	schema := reflector.Reflect(&Workflow{})
 
-	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v0/schema.json"
+	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json"
 
 	return schema
 }

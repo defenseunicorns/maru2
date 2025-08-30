@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package v0
+package v1
 
 import (
 	"fmt"
@@ -507,7 +507,7 @@ func TestRead(t *testing.T) {
 		{
 			name: "simple workflow",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
     - run: echo
@@ -524,7 +524,7 @@ tasks:
 		{
 			name: "workflow with inputs",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
     - run: echo
@@ -552,7 +552,7 @@ inputs:
 		{
 			name: "workflow with inputs and aliases",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
     - run: echo
@@ -589,7 +589,7 @@ aliases:
 		{
 			name: "workflow with extension keys",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
     - run: echo
@@ -623,7 +623,7 @@ tasks:
     - run: echo
 `),
 			expected:      Workflow{},
-			expectedError: `unsupported schema version: expected "v0", got ""`,
+			expectedError: `unsupported schema version: expected "v1", got ""`,
 		},
 		{
 			name:          "read error from reader",
@@ -640,7 +640,7 @@ tasks:
 		{
 			name: "error marshaling task",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
     - run: echo
@@ -659,7 +659,7 @@ tasks:
 		{
 			name: "error marshaling input",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
     - run: echo
@@ -704,7 +704,7 @@ func TestReadAndValidate(t *testing.T) {
 		{
 			name: "simple good read",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
     - run: echo
@@ -730,7 +730,7 @@ tasks:
 		{
 			name: "validation error",
 			r: strings.NewReader(`
-schema-version: v0
+schema-version: v1
 tasks:
   2-echo:
     - run: echo
