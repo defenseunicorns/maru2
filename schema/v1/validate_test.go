@@ -731,7 +731,7 @@ tasks:
       - run: echo
 `),
 			expected:      Workflow{},
-			expectedError: `unsupported schema version: expected "v1", got ""`,
+			expectedError: `unsupported schema version: expected oneof ["v1", "v0"], got ""`,
 		},
 		{
 			name:          "read error from reader",

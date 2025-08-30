@@ -25,4 +25,4 @@ Available:
 - hello-world
 -- stderr2.txt --
 
-ERRO failed to fetch "file:tasks.yaml": unsupported schema version: expected "v1", got ""
+ERRO failed to fetch "file:tasks.yaml": unsupported schema version: expected oneof ["v1", "v0"], got ""

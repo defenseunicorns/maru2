@@ -53,7 +53,7 @@ func Read(r io.Reader) (Workflow, error) {
 		}
 		return Migrate(v0Workflow)
 	default:
-		return Workflow{}, fmt.Errorf("unsupported schema version: expected %q, got %q", SchemaVersion, version)
+		return Workflow{}, fmt.Errorf("unsupported schema version: expected oneof [%q, %q], got %q", SchemaVersion, v0.SchemaVersion, version)
 	}
 }
 
