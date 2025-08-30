@@ -7,12 +7,13 @@ Maru2 provides several built-in tasks that can be used in your workflows. These 
 The `echo` built-in task simply outputs the provided text.
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   echo-example:
-    - uses: builtin:echo
-      with:
-        text: "Hello, World!"
+    steps:
+      - uses: builtin:echo
+        with:
+          text: "Hello, World!"
 ```
 
 ```sh
@@ -30,22 +31,23 @@ Outputs:
 The `fetch` built-in task makes HTTP requests and returns the response.
 
 ```yaml
-schema-version: v0
-inputs:
-  token:
-    description: "API token"
-
+schema-version: v1
 tasks:
   fetch-example:
-    - uses: builtin:fetch
-      with:
-        url: "https://api.example.com/data"
-        method: "GET" # Optional, defaults to GET
-        timeout: "30s" # Optional, defaults to 30 seconds
-        headers: # Optional
-          Content-Type: application/json
-          Accept: application/json
-          Authorization: Bearer ${{ input "token" }}
+    inputs:
+      token:
+        description: "API token"
+        required: true
+    steps:
+      - uses: builtin:fetch
+        with:
+          url: "https://api.example.com/data"
+          method: "GET" # Optional, defaults to GET
+          timeout: "30s" # Optional, defaults to 30 seconds
+          headers: # Optional
+            Content-Type: application/json
+            Accept: application/json
+            Authorization: Bearer ${{ input "token" }}
 ```
 
 Outputs:

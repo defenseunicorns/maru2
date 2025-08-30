@@ -24,20 +24,24 @@ clean:
 ```
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   default:
-    - uses: build
+    steps:
+      - uses: build
 
   build:
-    - run: |
-        CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
+    steps:
+      - run: |
+          CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
 
   test:
-    - run: go test -v -race -cover -failfast -timeout 3m ./...
+    steps:
+      - run: go test -v -race -cover -failfast -timeout 3m ./...
 
   clean:
-    - run: rm -rf bin/
+    steps:
+      - run: rm -rf bin/
 ```
 
 ## Schema Version
@@ -45,10 +49,10 @@ tasks:
 Maru2 workflow files require a top-level `schema-version` property:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 ```
 
-Currently, only `v0` is supported. This required property enables schema validation and will support future migrations as the workflow syntax evolves.
+Currently, `v1` is the recommended version (with `v0` still supported for backwards compatibility). This required property enables schema validation and will support future migrations as the workflow syntax evolves.
 
 ## Task names and descriptions
 
@@ -63,29 +67,38 @@ This means:
 Valid task names:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
-  build: ...
-  another-task: ...
-  UPPERCASE: ...
-  mIxEdCaSe: ...
-  WithNumbers123: ...
-  _private: ...
+  build:
+    steps: ...
+  another-task:
+    steps: ...
+  UPPERCASE:
+    steps: ...
+  mIxEdCaSe:
+    steps: ...
+  WithNumbers123:
+    steps: ...
+  _private:
+    steps: ...
 ```
 
 Invalid task names:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   # Invalid: starts with a number
-  1task: ...
+  1task:
+    steps: ...
 
   # Invalid: contains a space
-  "my task": ...
+  "my task":
+    steps: ...
 
   # Invalid: contains special characters
-  "task@example": ...
+  "task@example":
+    steps: ...
 ```
 
 Note that the same naming rules apply to step IDs. This consistency makes it easier to work with both task names and step IDs throughout your workflows.
@@ -109,23 +122,24 @@ By default, Maru2 runs shell commands using `sh`. You can specify a different sh
 Example:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   build:
-    # Run this step only on Linux
-    - run: echo "Hello from sh on Linux"
-      shell: sh
-      if: os == "linux"
+    steps:
+      # Run this step only on Linux
+      - run: echo "Hello from sh on Linux"
+        shell: sh
+        if: os == "linux"
 
-    # Run this step only on macOS
-    - run: echo "Hello from bash on macOS"
-      shell: bash
-      if: os == "darwin"
+      # Run this step only on macOS
+      - run: echo "Hello from bash on macOS"
+        shell: bash
+        if: os == "darwin"
 
-    # Run this step only on Windows
-    - run: Write-Host "Hello from PowerShell on Windows"
-      shell: powershell
-      if: os == "windows"
+      # Run this step only on Windows
+      - run: Write-Host "Hello from PowerShell on Windows"
+        shell: powershell
+        if: os == "windows"
 ```
 
 The shell field changes how the command is executed:
@@ -142,16 +156,17 @@ The shell field changes how the command is executed:
 You can specify a working directory for a step using the `dir` field. This applies to both `run` and `uses` steps.
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   build:
-    # Run a command in a specific directory
-    - run: npm install
-      dir: frontend
+    steps:
+      # Run a command in a specific directory
+      - run: npm install
+        dir: frontend
 
-    # Use a task in a specific directory
-    - uses: test
-      dir: backend
+      # Use a task in a specific directory
+      - uses: test
+        dir: backend
 ```
 
 The `dir` field must be a relative path and cannot be an absolute path. It defaults to the current working directory `maru2` is executed in.
@@ -167,9 +182,10 @@ You can set a maximum duration for a step's execution using the `timeout` field.
 ```yaml
 tasks:
   long-running-task:
-    - run: sleep 60 # This command runs for 60 seconds
-      timeout: 30s # This step will time out after 30 seconds
-    - run: echo "This message will not be displayed if the previous step times out"
+    steps:
+      - run: sleep 60 # This command runs for 60 seconds
+        timeout: 30s # This step will time out after 30 seconds
+      - run: echo "This message will not be displayed if the previous step times out"
 ```
 
 The `timeout` value should be a string representing a duration, such as "30s" for 30 seconds, "1m" for 1 minute, or "1h30m" for 1 hour and 30 minutes.
@@ -187,26 +203,26 @@ You can suppress a step's output using the `mute` field. When `mute` is set to `
 Maru2 allows you to define input parameters for your tasks. These parameters can be required or optional, and can have default values.
 
 ```yaml
-schema-version: v0
-inputs:
-  # Required input (default behavior)
-  name:
-    description: "Your name"
-
-  # Optional input with default value
-  greeting:
-    description: "Greeting to use"
-    default: "Hello"
-    required: false
-
-  # Required input with default from environment variable
-  username:
-    description: "Username"
-    default-from-env: USER
-
+schema-version: v1
 tasks:
   greet:
-    - run: echo "${{ input "greeting" }}, ${{ input "name" }}! Your username is ${{ input "username" }}."
+    inputs:
+      # Required input (default behavior)
+      name:
+        description: "Your name"
+
+      # Optional input with default value
+      greeting:
+        description: "Greeting to use"
+        default: "Hello"
+        required: false
+
+      # Required input with default from environment variable
+      username:
+        description: "Username"
+        default-from-env: USER
+    steps:
+      - run: echo "${{ input "greeting" }}, ${{ input "name" }}! Your username is ${{ input "username" }}."
 ```
 
 Input parameters have the following properties:
@@ -238,16 +254,19 @@ On top of the builtin behavior, Maru2 provides a few additional helpers:
 - `OS`, `ARCH`, `PLATFORM`: the current OS, architecture, or platform
 
 ```yaml
-schema-version: v0
-inputs:
-  date:
-    description: The date
-    default: now # default to "now" if input is nil
-
+schema-version: v1
 tasks:
   echo:
-    - run: echo "Hello, ${{ input "name" }}, today is ${{ input "date" }}"
-    - run: echo "The current OS is ${{ .OS }}, architecture is ${{ .ARCH }}, platform is ${{ .PLATFORM }}"
+    inputs:
+      date:
+        description: The date
+        default: now # default to "now" if input is nil
+      name:
+        description: Your name
+        required: true
+    steps:
+      - run: echo "Hello, ${{ input "name" }}, today is ${{ input "date" }}"
+      - run: echo "The current OS is ${{ .OS }}, architecture is ${{ .ARCH }}, platform is ${{ .PLATFORM }}"
 ```
 
 ```sh
@@ -259,47 +278,52 @@ maru2 echo --with name=$(whoami) --with date=$(date)
 You can set custom environment variables for individual steps using the `env` field. Variable names follow the same rules as task names. Variable values leverage the same input templating engine as `run`.
 
 ```yaml
-schema-version: v0
-inputs:
-  deployment-env:
-    description: "Deployment environment"
-    default: "development"
-
+schema-version: v1
 tasks:
   deploy:
-    - id: "build-app"
-      name: "Build application with environment config"
-      run: |
-        npm run build
-        echo "build_version=$(git rev-parse --short HEAD)" >> $MARU2_OUTPUT
-      env:
-        NODE_ENV: ${{ input "deployment-env" }}
+    inputs:
+      deployment-env:
+        description: "Deployment environment"
+        default: "development"
+    steps:
+      - id: "build-app"
+        name: "Build application with environment config"
+        run: |
+          npm run build
+          echo "build_version=$(git rev-parse --short HEAD)" >> $MARU2_OUTPUT
+        env:
+          NODE_ENV: ${{ input "deployment-env" }}
 
-    - name: "Deploy application"
-      run: |
-        echo "Deploying version $BUILD_VERSION to $DEPLOY_TARGET"
-        ${{ which "zarf" }} dev deploy .
-      env:
-        BUILD_VERSION: ${{ from "build-app" "build_version" }}
-        DEPLOY_TARGET: ${{ input "deployment-env" }}
-        ZARF_NO_PROGRESS: true
-        KUBECONFIG: /etc/kubernetes/${{ input "deployment-env" }}-config
+      - name: "Deploy application"
+        run: |
+          echo "Deploying version $BUILD_VERSION to $DEPLOY_TARGET"
+          ${{ which "zarf" }} dev deploy .
+        env:
+          BUILD_VERSION: ${{ from "build-app" "build_version" }}
+          DEPLOY_TARGET: ${{ input "deployment-env" }}
+          ZARF_NO_PROGRESS: true
+          KUBECONFIG: /etc/kubernetes/${{ input "deployment-env" }}-config
 ```
 
- Environment variables set in the `env` field apply to that specific step. For `run` steps, they only apply to that single step. For `uses` steps, they are passed down to ALL steps in the called task.
+Environment variables set in the `env` field apply to that specific step. For `run` steps, they only apply to that single step. For `uses` steps, they are passed down to ALL steps in the called task.
 
 When using the `env` field on a `uses` step, those environment variables are templated and passed to all steps within the called task:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   parent-task:
-    - uses: file:subtask.yaml?task=child-task
-      with:
-        message: "Hello from parent"
-      env:
-        PARENT_VAR: "value-from-parent"
-        TEMPLATED_VAR: ${{ input "some-input" }}
+    inputs:
+      some-input:
+        description: "Some input value"
+        required: true
+    steps:
+      - uses: file:subtask.yaml?task=child-task
+        with:
+          message: "Hello from parent"
+        env:
+          PARENT_VAR: "value-from-parent"
+          TEMPLATED_VAR: ${{ input "some-input" }}
 
   # In subtask.yaml, both steps will have access to PARENT_VAR and TEMPLATED_VAR
 ```
@@ -311,8 +335,9 @@ You cannot set the `PWD` environment variable through the `env` field. Use the [
 ```yaml
 tasks:
   example:
-    - run: pwd
-      dir: subdirectory # Use dir field, not env: { PWD: "..." }
+    steps:
+      - run: pwd
+        dir: subdirectory # Use dir field, not env: { PWD: "..." }
 ```
 
 ## Run another task as a step
@@ -320,19 +345,25 @@ tasks:
 Calling another task within the same workflow is as simple as using the task name, similar to Makefile targets.
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   general-kenobi:
-    - run: echo "General Kenobi, you are a bold one"
-    - run: echo "${{ input "response" }}"
+    inputs:
+      response:
+        description: "Response message"
+        required: true
+    steps:
+      - run: echo "General Kenobi, you are a bold one"
+      - run: echo "${{ input "response" }}"
 
   hello:
-    - run: echo "Hello There!"
-    - uses: general-kenobi
-      with:
-        response: Your move
-      env:
-        GREETING_TYPE: "formal"
+    steps:
+      - run: echo "Hello There!"
+      - uses: general-kenobi
+        with:
+          response: Your move
+        env:
+          GREETING_TYPE: "formal"
 ```
 
 ```sh
@@ -350,19 +381,29 @@ If the filepath is a directory, `tasks.yaml` is appended to the path.
 If the task name is not provided, the `default` task is run.
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   simple:
-    - run: echo "${{ input "message" }}"
+    inputs:
+      message:
+        description: "Message to echo"
+        required: true
+    steps:
+      - run: echo "${{ input "message" }}"
 ```
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   echo:
-    - uses: file:tasks/echo.yaml?task=simple
-      with:
-        message: ${{ input "message" }}
+    inputs:
+      message:
+        description: "Message to echo"
+        required: true
+    steps:
+      - uses: file:tasks/echo.yaml?task=simple
+        with:
+          message: ${{ input "message" }}
 ```
 
 ```sh
@@ -380,14 +421,17 @@ If a `uses` reference is not within the workflow, nor a `file:` reference, it is
 examples:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   remote-pkg:
-    - uses: pkg:github/defenseunicorns/maru2@main?task=echo
+    steps:
+      - uses: pkg:github/defenseunicorns/maru2@main?task=echo
   remote-http:
-    - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
+    steps:
+      - uses: https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo
   remote-oci:
-    - uses: oci:staging.uds.sh/public/my-workflow:latest
+    steps:
+      - uses: oci:staging.uds.sh/public/my-workflow:latest
 ```
 
 ### Package URL Aliases
@@ -401,7 +445,7 @@ If a version is not specified in a `pkg` URL, it defaults to `main`.
 Examples of using aliases in workflow files:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 aliases:
   gl:
     type: gitlab
@@ -415,21 +459,24 @@ aliases:
 tasks:
   # Using the full GitHub package URL
   alpha:
-    - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-      with:
-        message: Hello, World!
+    steps:
+      - uses: pkg:github/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+        with:
+          message: Hello, World!
 
   # Using the 'gh' alias defined in ~/.maru2/config.yaml
   bravo:
-    - uses: pkg:gh/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
-      with:
-        message: Hello, World!
+    steps:
+      - uses: pkg:gh/defenseunicorns/maru2@main?task=echo#testdata/simple.yaml
+        with:
+          message: Hello, World!
 
   # Using the 'gl' alias with GitLab
   charlie:
-    - uses: pkg:gl/noxsios/maru2@main?task=echo#testdata/simple.yaml
-      with:
-        message: Hello, World!
+    steps:
+      - uses: pkg:gl/noxsios/maru2@main?task=echo#testdata/simple.yaml
+        with:
+          message: Hello, World!
 ```
 
 The alias `gl` will be resolved to `gitlab` with the base URL qualifier set to `https://gitlab.example.com`.
@@ -444,12 +491,13 @@ An alias has the following properties:
 You can also override qualifiers defined in the alias by specifying them in the package URL:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   remote-echo:
-    - uses: pkg:gl/noxsios/maru2@main?base=https://other-gitlab.com&task=echo#testdata/simple.yaml
-      with:
-        message: Hello, World!
+    steps:
+      - uses: pkg:gl/noxsios/maru2@main?base=https://other-gitlab.com&task=echo#testdata/simple.yaml
+        with:
+          message: Hello, World!
 ```
 
 ## Step identification with `id` and `name`
@@ -462,15 +510,16 @@ Each step in a Maru2 workflow can have an optional `id` and `name` field:
 The `id` field must follow the same naming rules as task names: `^[_a-zA-Z][a-zA-Z0-9_-]*$`
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   build:
-    - name: "Install dependencies"
-      run: npm install
-      id: install
-    - name: "Build application"
-      run: npm run build
-      id: build
+    steps:
+      - name: "Install dependencies"
+        run: npm install
+        id: install
+      - name: "Build application"
+        run: npm run build
+        id: build
 ```
 
 The `name` field is primarily for documentation purposes and to improve readability of the workflow, while the `id` field is used for referencing outputs.
@@ -486,13 +535,14 @@ To set outputs from a step:
 3. Reference the output in subsequent steps using `${{ from "step-id" "output-key" }}`
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   color:
-    - run: |
-        echo "selected-color=green" >> $MARU2_OUTPUT
-      id: color-selector
-    - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
+    steps:
+      - run: |
+          echo "selected-color=green" >> $MARU2_OUTPUT
+        id: color-selector
+      - run: echo "The selected color is ${{ from "color-selector" "selected-color" }}"
 ```
 
 ```sh
@@ -506,15 +556,16 @@ The selected color is green
 You can set multiple outputs from a single step by writing multiple lines to the `$MARU2_OUTPUT` file:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   multi-output:
-    - run: |
-        echo "name=John" >> $MARU2_OUTPUT
-        echo "age=30" >> $MARU2_OUTPUT
-        echo "city=New York" >> $MARU2_OUTPUT
-      id: user-info
-    - run: echo "User ${{ from "user-info" "name" }} is ${{ from "user-info" "age" }} years old and lives in ${{ from "user-info" "city" }}"
+    steps:
+      - run: |
+          echo "name=John" >> $MARU2_OUTPUT
+          echo "age=30" >> $MARU2_OUTPUT
+          echo "city=New York" >> $MARU2_OUTPUT
+        id: user-info
+      - run: echo "User ${{ from "user-info" "name" }} is ${{ from "user-info" "age" }} years old and lives in ${{ from "user-info" "city" }}"
 ```
 
 Outputs are only available to steps that come after the step that sets them. If a step with an ID doesn't write anything to `$MARU2_OUTPUT`, no outputs will be available from that step.
@@ -524,15 +575,15 @@ Outputs are only available to steps that come after the step that sets them. If 
 In addition to static default values, you can specify environment variables as default values for input parameters using the `default-from-env` field.
 
 ```yaml
-schema-version: v0
-inputs:
-  name:
-    description: "Your name"
-    default-from-env: USER
-
+schema-version: v1
 tasks:
   hello:
-    - run: echo "Hello, ${{ input "name" }}"
+    inputs:
+      name:
+        description: "Your name"
+        default-from-env: USER
+    steps:
+      - run: echo "Hello, ${{ input "name" }}"
 ```
 
 ```sh
@@ -559,16 +610,16 @@ You can specify both `default` and `default-from-env` for the same input paramet
 4. **No value** - if none of the above are available and the input is required, an error occurs
 
 ```yaml
-schema-version: v0
-inputs:
-  ci:
-    description: "Am I running in CI?"
-    default-from-env: CI
-    default: false
-
+schema-version: v1
 tasks:
   hello:
-    - run: echo "CI is ${{ input "ci" }}"
+    inputs:
+      ci:
+        description: "Am I running in CI?"
+        default-from-env: CI
+        default: false
+    steps:
+      - run: echo "CI is ${{ input "ci" }}"
 ```
 
 ## Input validation
@@ -578,23 +629,23 @@ Maru2 allows you to validate input parameters using regular expressions. This en
 To add validation to an input parameter, use the `validate` field with a regular expression pattern:
 
 ```yaml
-schema-version: v0
-inputs:
-  name:
-    description: "Your name"
-    validate: ^\w+$ # Only allow alphanumeric characters and underscores
-
-  version:
-    description: "Semantic version"
-    validate: ^\d+\.\d+\.\d+$ # Enforce semantic versioning format (e.g., 1.2.3)
-
-  email:
-    description: "Email address"
-    validate: ^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$ # Basic email validation
-
+schema-version: v1
 tasks:
   hello:
-    - run: echo "Hello, ${{ input "name" }}"
+    inputs:
+      name:
+        description: "Your name"
+        validate: ^\w+$ # Only allow alphanumeric characters and underscores
+
+      version:
+        description: "Semantic version"
+        validate: ^\d+\.\d+\.\d+$ # Enforce semantic versioning format (e.g., 1.2.3)
+
+      email:
+        description: "Email address"
+        validate: ^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$ # Basic email validation
+    steps:
+      - run: echo "Hello, ${{ input "name" }}"
 ```
 
 When a task is run, Maru2 will validate all inputs against their respective patterns. If validation fails, an error is returned and the task is not executed:
@@ -636,23 +687,23 @@ Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: th
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
 
 ```yaml
-schema-version: v0
-inputs:
-  text:
-    description: Some text to echo
-    default: foo
-
+schema-version: v1
 tasks:
   example:
-    - run: echo "This step always runs first"
-    - run: exit 1 # This step will fail
-    - run: echo "This step will be skipped because the previous step failed"
-    - if: failure()
-      run: echo "This step runs because a previous step failed"
-    - if: always()
-      run: echo "This step always runs, regardless of previous failures"
-    - if: len(input("text")) > 5
-      run: echo "I only run when ${{ input "text" }} has a len greater than 5"
+    inputs:
+      text:
+        description: Some text to echo
+        default: foo
+    steps:
+      - run: echo "This step always runs first"
+      - run: exit 1 # This step will fail
+      - run: echo "This step will be skipped because the previous step failed"
+      - if: failure()
+        run: echo "This step runs because a previous step failed"
+      - if: always()
+        run: echo "This step always runs, regardless of previous failures"
+      - if: len(input("text")) > 5
+        run: echo "I only run when ${{ input "text" }} has a len greater than 5"
 ```
 
 ```sh

@@ -3,7 +3,7 @@
 This guide will help you migrate your existing `maru-runner` tasks to the new `maru2` format. While both tools serve similar purposes, `maru2` has a more modern, GitHub Actions-like syntax with improved capabilities.
 
 > [!NOTE]
-> This migration guide is only for migrating from `maru-runner` to `maru2`'s `v0` schema.
+> This migration guide is for migrating from `maru-runner` to `maru2`'s `v1` schema.
 >
 > This guide is a living document and _may_ not be 100% accurate in all situations.
 >
@@ -39,7 +39,7 @@ context: read maru-readme.md and maru-runner.schema.json for context on how the 
 now read maru2.schema.json, syntax.md and cli.md for context on how the new task runner schema and system works,
 now read maru-runner-migration.md on tips and tricks on how to migrate between maru-runner and maru2
 
-task: migrate tasks.yaml from the old (maru-runner) to the new (maru2), if a property cannot be cleanly migrated, or you are unsure, comment out that property / step as is so the user can make the determination.
+task: migrate tasks.yaml from the old (maru-runner) to the new (maru2 v1), if a property cannot be cleanly migrated, or you are unsure, comment out that property / step as is so the user can make the determination.
 ```
 
 ## Table of Contents
@@ -60,19 +60,19 @@ task: migrate tasks.yaml from the old (maru-runner) to the new (maru2), if a pro
 
 ## Key Differences
 
-| Feature               | maru-runner                          | maru2                            |
-| --------------------- | ------------------------------------ | -------------------------------- |
-| Configuration file    | `tasks.yaml`                         | `tasks.yaml` (same)              |
-| Schema                | Unversioned                          | Versioned and validated          |
-| Command structure     | List of tasks with actions           | Map of tasks with list of steps  |
-| Variable system       | `variables` section + `setVariables` | `inputs` section + step outputs  |
-| Command execution     | `cmd` key                            | `run` key                        |
-| Task references       | `task` key                           | `uses` key                       |
-| Includes              | `includes` imports                   | `uses` with URL format           |
-| Conditional execution | Limited via `text/template`          | Advanced expressions with `if`   |
-| Environment variables | `env` list                           | Explicit `export` in shell       |
-| Shell selection       | `shell` object with OS-specific keys | `shell` enum with simple options |
-| Wait for resources    | Built-in wait conditions             | Not yet implemented              |
+| Feature               | maru-runner                          | maru2                              |
+| --------------------- | ------------------------------------ | ---------------------------------- |
+| Configuration file    | `tasks.yaml`                         | `tasks.yaml` (same)                |
+| Schema                | Unversioned                          | Versioned and validated            |
+| Command structure     | List of tasks with actions           | Map of tasks with inputs and steps |
+| Variable system       | `variables` section + `setVariables` | Task-level `inputs` + step outputs |
+| Command execution     | `cmd` key                            | `run` key                          |
+| Task references       | `task` key                           | `uses` key                         |
+| Includes              | `includes` imports                   | `uses` with URL format             |
+| Conditional execution | Limited via `text/template`          | Advanced expressions with `if`     |
+| Environment variables | `env` list                           | Explicit `export` in shell         |
+| Shell selection       | `shell` object with OS-specific keys | `shell` enum with simple options   |
+| Wait for resources    | Built-in wait conditions             | Not yet implemented                |
 
 ## Basic Structure
 
@@ -92,22 +92,23 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
-inputs:
-  foo:
-    description: "Example input"
-    default: "foo"
-
+schema-version: v1
 tasks:
   example:
-    - run: echo "Hello World"
+    inputs:
+      foo:
+        description: "Example input"
+        default: "foo"
+    steps:
+      - run: echo "Hello World"
 ```
 
 Key differences:
 
 - `maru2` requires a [`schema-version` field](./syntax.md#schema-version)
 - Tasks in `maru2` are defined as objects, not a list of objects with `name` properties
-- Task steps in `maru2` are a list under each task
+- In v1, inputs are defined at the task level, not the workflow level
+- Task steps in `maru2` are in a `steps` array under each task
 
 ## Variables to Inputs
 
@@ -129,24 +130,24 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
-inputs:
-  foo:
-    description: "input foo"
-    default: "foo"
-  bar:
-    description: "input bar"
-    default: "bar"
-
+schema-version: v1
 tasks:
   example:
-    - run: echo "${{ input "foo" }}"
+    inputs:
+      foo:
+        description: "input foo"
+        default: "foo"
+      bar:
+        description: "input bar"
+        default: "bar"
+    steps:
+      - run: echo "${{ input "foo" }}"
 ```
 
 Key differences:
 
 - Variables are now defined as [`inputs`](./syntax.md#defining-input-parameters) with more descriptive properties
-- Inputs are by default `required: true` and workflow scoped (open to discussion)
+- Inputs are by default `required: true` and task scoped
 - Inputs are weak type safe when a `default` is set.
   - ie. if a default is of type `int`, all callers must pass a value that can be coersed to an `int`
 - Inputs can be any primitive type (`string`, `int`, `bool`)
@@ -176,16 +177,18 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   example:
-    - run: echo "First step"
-      name: "Optional step description"
-    - run: echo "Second step"
-    - uses: another-task
+    steps:
+      - run: echo "First step"
+        name: "Optional step description"
+      - run: echo "Second step"
+      - uses: another-task
 
   another-task:
-    - run: echo "This is another task"
+    steps:
+      - run: echo "This is another task"
 ```
 
 Key differences:
@@ -193,7 +196,7 @@ Key differences:
 - In `maru2`, tasks are defined as objects with keys (not in a list with `name`)
 - The task name is the object key in the [`tasks` map](./syntax.md#task-names-and-descriptions), not a `name` property
 - `maru2` has an optional [`name` property](./syntax.md#step-identification-with-id-and-name) at the step level for human-readable descriptions
-- `maru-runner`'s `actions` are now simply a list of steps
+- `maru-runner`'s `actions` are now a `steps` array under each task
 - `task` references become [`uses` references](./syntax.md#run-vs-uses)
 
 ## Command Execution
@@ -214,14 +217,15 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   example:
-    - run: echo "Hello"
-      dir: ./some-dir
-      env:
-        FOO: bar
-      mute: true
+    steps:
+      - run: echo "Hello"
+        dir: ./some-dir
+        env:
+          FOO: bar
+        mute: true
 ```
 
 Key differences:
@@ -248,15 +252,16 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   set-and-use:
-    - run: |
-        echo "Calculating value..."
-        echo "my-value=value" >> $MARU2_OUTPUT
-        echo "foo=bar" >> $MARU2_OUTPUT
-      id: step-one
-    - run: echo "The value is ${{ from "step-one" "my-value" }}"
+    steps:
+      - run: |
+          echo "Calculating value..."
+          echo "my-value=value" >> $MARU2_OUTPUT
+          echo "foo=bar" >> $MARU2_OUTPUT
+        id: step-one
+      - run: echo "The value is ${{ from "step-one" "my-value" }}"
 ```
 
 Key differences:
@@ -275,14 +280,19 @@ Limited conditional execution support.
 ### maru2
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   conditional:
-    - run: echo "This always runs"
-    - run: echo "This only runs if an input is true"
-      if: input("enable-feature") == true
-    - run: echo "This runs if the previous step failed"
-      if: failure()
+    inputs:
+      enable-feature:
+        description: "Enable the feature"
+        default: false
+    steps:
+      - run: echo "This always runs"
+      - run: echo "This only runs if an input is true"
+        if: input("enable-feature") == true
+      - run: echo "This runs if the previous step failed"
+        if: failure()
 ```
 
 Key differences:
@@ -312,13 +322,14 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   example:
-    - run: echo "Running in a directory"
-      dir: ./some/path
-    - run: echo "Using bash explicitly"
-      shell: bash
+    steps:
+      - run: echo "Running in a directory"
+        dir: ./some/path
+      - run: echo "Using bash explicitly"
+        shell: bash
 ```
 
 Key differences:
@@ -348,11 +359,12 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   with-timeout:
-    - run: some-long-command
-      timeout: "60s"
+    steps:
+      - run: some-long-command
+        timeout: "60s"
 ```
 
 Key differences:
@@ -380,17 +392,18 @@ tasks:
 ### maru2
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   include-example:
-    - uses: file:path/to/tasks.yaml?task=some-task
-    - uses: pkg:github/defenseunicorns/maru-runner?task=other-task
-    - uses: builtin:echo
-      with:
-        text: "Using a built-in task"
-    - uses: builtin:fetch
-      with:
-        url: "https://example.com"
+    steps:
+      - uses: file:path/to/tasks.yaml?task=some-task
+      - uses: pkg:github/defenseunicorns/maru-runner?task=other-task
+      - uses: builtin:echo
+        with:
+          text: "Using a built-in task"
+      - uses: builtin:fetch
+        with:
+          url: "https://example.com"
 ```
 
 Key differences:
@@ -479,32 +492,35 @@ tasks:
 ### maru2 Equivalent
 
 ```yaml
-schema-version: v0
-inputs:
-  foo:
-    description: "Example variable"
-    default: "foo"
-
+schema-version: v1
 tasks:
   default:
-    - run: echo "run default task"
+    steps:
+      - run: echo "run default task"
 
   example:
-    - uses: set-variable
-      id: set-var
-    - uses: echo-variable
-      with:
-        value: ${{ from "set-var" "foo" }}
+    steps:
+      - uses: set-variable
+        id: set-var
+      - uses: echo-variable
+        with:
+          value: ${{ from "set-var" "foo" }}
 
   set-variable:
-    - run: |
-        echo "Generating value..."
-        echo "foo=bar" >> $MARU2_OUTPUT
+    steps:
+      - run: |
+          echo "Generating value..."
+          echo "foo=bar" >> $MARU2_OUTPUT
 
   echo-variable:
-    - uses: builtin:echo
-      with:
-        text: ${{ input "value" }}
+    inputs:
+      value:
+        description: "Value to echo"
+        required: true
+    steps:
+      - uses: builtin:echo
+        with:
+          text: ${{ input "value" }}
 ```
 
 ## Authentication for Remote Tasks
@@ -524,7 +540,7 @@ By default, maru2 uses `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables t
 It additionally supports a flexible alias system:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 aliases:
   pb:
     type: gitlab
@@ -536,7 +552,8 @@ Then in your tasks:
 ```yaml
 tasks:
   remote-example:
-    - uses: pkg:pb/strawberry/jam@main?task=example
+    steps:
+      - uses: pkg:pb/strawberry/jam@main?task=example
 ```
 
 The token is pulled from the `PEANUT_BUTTER` environment variable automatically. See [package URL aliases](./syntax.md#package-url-aliases) for more.
@@ -564,6 +581,7 @@ The token is pulled from the `PEANUT_BUTTER` environment variable automatically.
 | Error handling functions      | ❌                | ✅ ([failure(), always(), cancelled()](./syntax.md#conditional-execution-with-if)) |
 | Dry run capability            | ❌                | ✅ ([preview execution](./cli.md#previewing-execution-with-dry-run))               |
 | Environment variable defaults | ❌                | ✅ ([default-from-env](./syntax.md#default-values-from-environment-variables))     |
+| Task-level input scoping      | ~                 | ✅ ([task-level inputs](./syntax.md#defining-input-parameters))                    |
 
 ## Enhanced Features in maru2
 
