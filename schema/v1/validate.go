@@ -132,16 +132,15 @@ func Validate(wf Workflow) error {
 					return fmt.Errorf(".tasks.%s[%d].env %q does not satisfy %q", name, idx, envName, EnvVariablePattern.String())
 				}
 			}
-
 			for inputName, param := range task.Inputs {
 				if ok := InputNamePattern.MatchString(inputName); !ok {
-					return fmt.Errorf(".tasks.%s[%d].inputs.%s %q does not satisfy %q", name, idx, inputName, InputNamePattern.String())
+					return fmt.Errorf(".tasks.%s.inputs.%s %q does not satisfy %q", name, inputName, inputName, InputNamePattern.String())
 				}
 
 				if param.Validate != "" {
 					_, err := regexp.Compile(param.Validate)
 					if err != nil {
-						return fmt.Errorf(".tasks.%s[%d].inputs.%s %q: %v", name, idx, inputName, err)
+						return fmt.Errorf(".tasks.%s.inputs.%s: %v", name, inputName, err)
 					}
 				}
 			}
