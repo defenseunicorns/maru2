@@ -28,7 +28,7 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
-      - run: make
+      - run: make clean all
       - run: echo "$UDS_REGISTRY_TOKEN" | go tool oras login -u "$UDS_REGISTRY_USER" --password-stdin registry.defenseunicorns.com
         env:
           UDS_REGISTRY_USER: ${{ secrets.UDS_REGISTRY_USER  }}
