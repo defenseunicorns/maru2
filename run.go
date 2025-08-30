@@ -81,7 +81,7 @@ func Run(
 
 	withDefaults, err := MergeWithAndParams(parent, outer, task.Inputs)
 	if err != nil {
-		return nil, addTrace(err, fmt.Sprintf("at (%s)", origin))
+		return nil, addTrace(err, fmt.Sprintf("at %s.inputs (%s)", taskName, origin))
 	}
 
 	logger := log.FromContext(parent)
