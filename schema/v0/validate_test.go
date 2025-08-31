@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/defenseunicorns/maru2/schema"
 	"github.com/stretchr/testify/require"
 )
 
@@ -396,7 +397,7 @@ func TestValidate(t *testing.T) {
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo test",
-						Env: Env{
+						Env: schema.Env{
 							"VAR1":  "value1",
 							"VAR_2": "value2",
 							"_VAR3": "value3",
@@ -412,7 +413,7 @@ func TestValidate(t *testing.T) {
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo test",
-						Env: Env{
+						Env: schema.Env{
 							"STRING_VAR": "hello",
 							"INT_VAR":    42,
 							"BOOL_VAR":   true,
@@ -428,7 +429,7 @@ func TestValidate(t *testing.T) {
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo test",
-						Env: Env{
+						Env: schema.Env{
 							"_VAR":    "value1",
 							"VAR_":    "value2",
 							"VAR_1_2": "value3",
@@ -445,7 +446,7 @@ func TestValidate(t *testing.T) {
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo test",
-						Env: Env{},
+						Env: schema.Env{},
 					}},
 				},
 			},
@@ -457,7 +458,7 @@ func TestValidate(t *testing.T) {
 				Tasks: TaskMap{
 					"task": Task{Step{
 						Run: "echo test",
-						Env: Env{
+						Env: schema.Env{
 							"1INVALID": "value", // starts with number - violates schema
 						},
 					}},

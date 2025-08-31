@@ -9,13 +9,8 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/defenseunicorns/maru2/builtins"
+	"github.com/defenseunicorns/maru2/schema"
 )
-
-// With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
-type With = map[string]any
-
-// Env is a map of environment variable names to values
-type Env = map[string]any
 
 // Step is a single step in a task
 //
@@ -27,11 +22,11 @@ type Step struct {
 	// Run is the command/script to run
 	Run string `json:"run,omitempty"`
 	// Env is a map of environment variables
-	Env Env `json:"env,omitempty"`
+	Env schema.Env `json:"env,omitempty"`
 	// Uses is a reference to another task
 	Uses string `json:"uses,omitempty"`
 	// With is a map of additional parameters for the step/task call
-	With With `json:"with,omitempty"`
+	With schema.With `json:"with,omitempty"`
 	// ID is a unique identifier for the step
 	ID string `json:"id,omitempty"`
 	// Name is a human-readable name for the step, pure sugar
