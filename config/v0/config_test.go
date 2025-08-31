@@ -125,10 +125,9 @@ fetch-policy: if-not-present
 func TestValidate(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name    string
-		config  *Config
-		wantErr bool
-		errMsg  string
+		name        string
+		config      *Config
+		expectedErr string
 	}{
 		{
 			name: "valid config",
@@ -161,8 +160,7 @@ func TestValidate(t *testing.T) {
 				},
 				FetchPolicy: uses.FetchPolicyIfNotPresent,
 			},
-			wantErr: true,
-			errMsg:  "aliases.invalid.type: aliases.invalid.type must be one of the following: \"github\", \"gitlab\"",
+			expectedErr: "aliases.invalid.type: aliases.invalid.type must be one of the following: \"github\", \"gitlab\"",
 		},
 		{
 			name: "invalid token environment variable format",
@@ -176,8 +174,7 @@ func TestValidate(t *testing.T) {
 				},
 				FetchPolicy: uses.FetchPolicyIfNotPresent,
 			},
-			wantErr: true,
-			errMsg:  "aliases.gh.token-from-env: Does not match pattern '^[a-zA-Z_]+[a-zA-Z0-9_]*$'",
+			expectedErr: "aliases.gh.token-from-env: Does not match pattern '^[a-zA-Z_]+[a-zA-Z0-9_]*$'",
 		},
 		{
 			name: "invalid fetch policy",
@@ -190,8 +187,7 @@ func TestValidate(t *testing.T) {
 				},
 				FetchPolicy: uses.FetchPolicy("invalid-policy"),
 			},
-			wantErr: true,
-			errMsg:  "fetch-policy: fetch-policy must be one of the following: \"always\", \"if-not-present\", \"never\"",
+			expectedErr: "fetch-policy: fetch-policy must be one of the following: \"always\", \"if-not-present\", \"never\"",
 		},
 		{
 			name: "multiple validation errors",
@@ -205,8 +201,7 @@ func TestValidate(t *testing.T) {
 				},
 				FetchPolicy: "invalid-policy",
 			},
-			wantErr: true,
-			// We're not testing the exact error message here as the order of errors might vary
+			expectedErr: "aliases.invalid.type: aliases.invalid.type must be one of the following",
 		},
 	}
 
@@ -214,11 +209,8 @@ func TestValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := Validate(tt.config)
-			if tt.wantErr {
-				require.Error(t, err)
-				if tt.errMsg != "" {
-					assert.Contains(t, err.Error(), tt.errMsg)
-				}
+			if tt.expectedErr != "" {
+				require.ErrorContains(t, err, tt.expectedErr)
 			} else {
 				require.NoError(t, err)
 			}

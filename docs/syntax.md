@@ -1,5 +1,8 @@
 # Workflow Syntax
 
+> [!INFO]
+> Looking for `v0` schema docs? They are located on the [`v0.4.0` branch](https://github.com/defenseunicorns/maru2/blob/v0.4.0/docs/syntax.md).
+
 A Maru2 workflow is any YAML file that conforms to the [`maru2` schema](../schema-validation#raw-schema).
 
 Unless specified, the default file name is `tasks.yaml`.
