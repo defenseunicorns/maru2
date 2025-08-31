@@ -5,6 +5,7 @@ package v1
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
@@ -17,11 +18,11 @@ func Migrate(oldWorkflow any) (Workflow, error) {
 	case v0.Workflow:
 		wf := Workflow{
 			SchemaVersion: SchemaVersion,
-			Tasks:         make(TaskMap),
+			Tasks:         make(TaskMap, len(old.Tasks)),
 		}
 		// Convert aliases from v0 to v1, structure has not changed but go type has
 		if old.Aliases != nil {
-			wf.Aliases = make(AliasMap)
+			wf.Aliases = make(AliasMap, len(old.Aliases))
 			for aliasName, v0Alias := range old.Aliases {
 				wf.Aliases[aliasName] = Alias{
 					Type:         v0Alias.Type,
@@ -32,61 +33,38 @@ func Migrate(oldWorkflow any) (Workflow, error) {
 		}
 
 		// Convert workflow-level inputs from v0 to task-level inputs in v1
-		inputs := make(InputMap)
-		if old.Inputs != nil {
-			for inputName, v0Input := range old.Inputs {
-				inputs[inputName] = InputParameter{
-					Description:       v0Input.Description,
-					DeprecatedMessage: v0Input.DeprecatedMessage,
-					Required:          v0Input.Required,
-					Default:           v0Input.Default,
-					DefaultFromEnv:    v0Input.DefaultFromEnv,
-					Validate:          v0Input.Validate,
-				}
+		inputs := make(InputMap, len(old.Inputs))
+		for inputName, v0Input := range old.Inputs {
+			inputs[inputName] = InputParameter{
+				Description:       v0Input.Description,
+				DeprecatedMessage: v0Input.DeprecatedMessage,
+				Required:          v0Input.Required,
+				Default:           v0Input.Default,
+				DefaultFromEnv:    v0Input.DefaultFromEnv,
+				Validate:          v0Input.Validate,
 			}
 		}
 
 		// Migrate each task from v0 to v1 format
 		for taskName, v0Task := range old.Tasks {
 			// Create a separate copy of inputs for each task
-			taskInputs := make(InputMap)
-			for inputName, v0Input := range inputs {
-				taskInputs[inputName] = InputParameter{
-					Description:       v0Input.Description,
-					DeprecatedMessage: v0Input.DeprecatedMessage,
-					Required:          v0Input.Required,
-					Default:           v0Input.Default,
-					DefaultFromEnv:    v0Input.DefaultFromEnv,
-					Validate:          v0Input.Validate,
-				}
-			}
+			taskInputs := make(InputMap, len(inputs))
+			maps.Copy(taskInputs, inputs)
 
 			// Convert v0 steps ([]Step) to v1 steps
-			v1Steps := make([]Step, len(v0Task))
+			steps := make([]Step, len(v0Task))
 			for i, v0Step := range v0Task {
-				// Convert environment variables
-				var v1Env schema.Env
-				if v0Step.Env != nil {
-					v1Env = make(schema.Env)
-					for envName, envValue := range v0Step.Env {
-						v1Env[envName] = envValue
-					}
-				}
+				env := make(schema.Env, len(v0Step.Env))
+				maps.Copy(env, v0Step.Env)
 
-				// Convert with parameters
-				var v1With schema.With
-				if v0Step.With != nil {
-					v1With = make(schema.With)
-					for withName, withValue := range v0Step.With {
-						v1With[withName] = withValue
-					}
-				}
+				with := make(schema.With, len(v0Step.With))
+				maps.Copy(with, v0Step.With)
 
-				v1Steps[i] = Step{
+				steps[i] = Step{
 					Run:     v0Step.Run,
-					Env:     v1Env,
+					Env:     env,
 					Uses:    v0Step.Uses,
-					With:    v1With,
+					With:    with,
 					ID:      v0Step.ID,
 					Name:    v0Step.Name,
 					If:      v0Step.If,
@@ -98,9 +76,8 @@ func Migrate(oldWorkflow any) (Workflow, error) {
 			}
 
 			task := Task{
-				// In v1, each task gets a copy of the workflow-level inputs from v0 to keep the same behavior
 				Inputs: taskInputs,
-				Steps:  v1Steps,
+				Steps:  steps,
 			}
 			wf.Tasks[taskName] = task
 		}
