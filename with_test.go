@@ -818,6 +818,102 @@ func TestMergeWithAndParams(t *testing.T) {
 				"name": "test-value",
 			},
 		},
+		{
+			name: "default-from-env with bool default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
+					Default:        true,
+					DefaultFromEnv: "TEST_ENV_BOOL",
+				},
+			},
+			expected: schema.With{
+				"enabled": true,
+			},
+		},
+		{
+			name: "default-from-env with int default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"count": v1.InputParameter{
+					Default:        42,
+					DefaultFromEnv: "TEST_ENV_INT",
+				},
+			},
+			expected: schema.With{
+				"count": 42,
+			},
+		},
+		{
+			name: "default-from-env with uint64 default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"size": v1.InputParameter{
+					Default:        uint64(1024),
+					DefaultFromEnv: "TEST_ENV_INT",
+				},
+			},
+			expected: schema.With{
+				"size": uint64(42),
+			},
+		},
+		{
+			name: "default-from-env with string default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
+					Default:        "default-name",
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expected: schema.With{
+				"name": "env-value",
+			},
+		},
+		{
+			name: "default-from-env with bool casting error",
+			with: schema.With{},
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
+					Default:        true,
+					DefaultFromEnv: "TEST_ENV_VAR", // "env-value" cannot be cast to bool
+				},
+			},
+			expectedError: "strconv.ParseBool: parsing \"env-value\": invalid syntax",
+		},
+		{
+			name: "default-from-env with int casting error",
+			with: schema.With{},
+			params: v1.InputMap{
+				"count": v1.InputParameter{
+					Default:        42,
+					DefaultFromEnv: "TEST_ENV_VAR", // "env-value" cannot be cast to int
+				},
+			},
+			expectedError: "unable to cast \"env-value\" of type string to int: strconv.ParseInt: parsing \"env-value\": invalid syntax",
+		},
+		{
+			name: "default-from-env with uint64 casting error",
+			with: schema.With{},
+			params: v1.InputMap{
+				"size": v1.InputParameter{
+					Default:        uint64(1024),
+					DefaultFromEnv: "TEST_ENV_VAR", // "env-value" cannot be cast to uint64
+				},
+			},
+			expectedError: "unable to cast \"env-value\" of type string to uint64: strconv.ParseUint: parsing \"env-value\": invalid syntax",
+		},
+		{
+			name: "default-from-env with unsupported type default",
+			with: schema.With{},
+			params: v1.InputMap{
+				"data": v1.InputParameter{
+					Default:        []string{"default"},
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expectedError: "unable to cast env input \"data\" from string to []string",
+		},
 	}
 
 	for _, tc := range tests {
