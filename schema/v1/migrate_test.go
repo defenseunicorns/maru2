@@ -153,7 +153,6 @@ func TestMigrate(t *testing.T) {
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
 					"simple": Task{
-						Inputs: InputMap{},
 						Steps: []Step{
 							{
 								Run: "echo hello",
@@ -193,8 +192,7 @@ func TestMigrate(t *testing.T) {
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
 					"empty": Task{
-						Inputs: InputMap{},
-						Steps:  []Step{},
+						Steps: []Step{},
 					},
 				},
 			},
@@ -233,7 +231,6 @@ func TestMigrate(t *testing.T) {
 				SchemaVersion: SchemaVersion,
 				Tasks: TaskMap{
 					"complex-step": Task{
-						Inputs: InputMap{},
 						Steps: []Step{
 							{
 								Run:  "echo test",
