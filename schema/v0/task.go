@@ -7,8 +7,9 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/defenseunicorns/maru2/schema"
 	"github.com/invopop/jsonschema"
+
+	"github.com/defenseunicorns/maru2/schema"
 )
 
 // Task is a list of steps

@@ -8,9 +8,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/schema"
 )
 
 // helloWorldWorkflow is a simple workflow that prints "Hello World!"
