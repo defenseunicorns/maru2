@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"maps"
 
-	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
@@ -44,27 +43,27 @@ func Migrate(oldWorkflow any) (Workflow, error) {
 				Validate:          v0Input.Validate,
 			}
 		}
+		if old.Inputs == nil {
+			inputs = nil
+		}
 
 		// Migrate each task from v0 to v1 format
 		for taskName, v0Task := range old.Tasks {
 			// Create a separate copy of inputs for each task
 			taskInputs := make(InputMap, len(inputs))
 			maps.Copy(taskInputs, inputs)
+			if inputs == nil {
+				taskInputs = nil
+			}
 
 			// Convert v0 steps ([]Step) to v1 steps
 			steps := make([]Step, len(v0Task))
 			for i, v0Step := range v0Task {
-				env := make(schema.Env, len(v0Step.Env))
-				maps.Copy(env, v0Step.Env)
-
-				with := make(schema.With, len(v0Step.With))
-				maps.Copy(with, v0Step.With)
-
 				steps[i] = Step{
 					Run:     v0Step.Run,
-					Env:     env,
+					Env:     maps.Clone(v0Step.Env),
 					Uses:    v0Step.Uses,
-					With:    with,
+					With:    maps.Clone(v0Step.With),
 					ID:      v0Step.ID,
 					Name:    v0Step.Name,
 					If:      v0Step.If,
