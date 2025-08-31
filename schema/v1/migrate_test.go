@@ -17,11 +17,19 @@ func TestMigrate(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name     string
-		input    any
-		expected Workflow
-		wantErr  bool
+		name        string
+		input       any
+		expected    Workflow
+		expectedErr string
 	}{
+		{
+			name:  "empty",
+			input: v0.Workflow{},
+			expected: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks:         TaskMap{},
+			},
+		},
 		{
 			name: "valid v0 workflow with inputs and tasks",
 			input: v0.Workflow{
@@ -135,7 +143,6 @@ func TestMigrate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "v0 workflow with no inputs",
@@ -161,7 +168,6 @@ func TestMigrate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "v0 workflow with no tasks",
@@ -178,7 +184,6 @@ func TestMigrate(t *testing.T) {
 				SchemaVersion: SchemaVersion,
 				Tasks:         TaskMap{},
 			},
-			wantErr: false,
 		},
 		{
 			name: "v0 workflow with empty tasks",
@@ -196,7 +201,6 @@ func TestMigrate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "v0 workflow with complex step properties",
@@ -256,17 +260,16 @@ func TestMigrate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
 		},
 		{
-			name:    "invalid input type",
-			input:   "not a workflow",
-			wantErr: true,
+			name:        "invalid input type",
+			input:       "not a workflow",
+			expectedErr: "unsupported type: string",
 		},
 		{
-			name:    "nil input",
-			input:   nil,
-			wantErr: true,
+			name:        "nil input",
+			input:       nil,
+			expectedErr: "unsupported type: <nil>",
 		},
 	}
 
@@ -276,8 +279,9 @@ func TestMigrate(t *testing.T) {
 
 			result, err := Migrate(tc.input)
 
-			if tc.wantErr {
+			if tc.expectedErr != "" {
 				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErr)
 				return
 			}
 
