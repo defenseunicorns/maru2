@@ -23,7 +23,6 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -271,7 +270,7 @@ func handleRunStep(
 	return result, nil
 }
 
-func prepareEnvironment(envVars []string, withDefaults v1.With, outFileName string, stepEnv v0.Env) ([]string, error) {
+func prepareEnvironment(envVars []string, withDefaults v1.With, outFileName string, stepEnv v1.Env) ([]string, error) {
 	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
 	copy(env, envVars)
 

@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -647,23 +646,23 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a test workflow that accepts inputs and accesses environment variables
-	testWorkflow := v0.Workflow{
-		SchemaVersion: v0.SchemaVersion,
-		Inputs: v0.InputMap{
-			"message": {
-				Description: "Test message input",
-				Default:     "default-message",
-			},
-		},
-		Tasks: v0.TaskMap{
+	testWorkflow := v1.Workflow{
+		SchemaVersion: v1.SchemaVersion,
+		Tasks: v1.TaskMap{
 			"env-test": {
-				v0.Step{
+				Inputs: v1.InputMap{
+					"message": {
+						Description: "Test message input",
+						Default:     "default-message",
+					},
+				},
+				Steps: []v1.Step{v1.Step{
 					Run: `
 						echo "Parent env: $PARENT_ENV"
 						echo "Input message: $INPUT_MESSAGE"
 						echo "result=success" >> $MARU2_OUTPUT
 					`,
-				},
+				}},
 			},
 		},
 	}

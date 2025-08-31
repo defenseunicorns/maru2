@@ -14,7 +14,6 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -160,13 +159,13 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 	}
 	defer rc.Close()
 
-	wf, err := v0.ReadAndValidate(rc)
+	wf, err := v1.ReadAndValidate(rc)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, task := range wf.Tasks {
-		for _, step := range task {
+		for _, step := range task.Steps {
 			if step.Uses == "" {
 				continue
 			}
@@ -201,7 +200,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 		}
 		defer rc.Close()
 
-		_, err = v0.ReadAndValidate(rc)
+		_, err = v1.ReadAndValidate(rc)
 		if err != nil {
 			return nil, err
 		}

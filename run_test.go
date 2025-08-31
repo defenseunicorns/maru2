@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -766,7 +765,7 @@ func TestPrepareEnvironment(t *testing.T) {
 			name:         "nil withDefaults with empty outFileName (uses.go pattern)",
 			startingEnv:  []string{"PATH=/usr/bin"},
 			withDefaults: nil,
-			stepEnv: v0.Env{
+			stepEnv: v1.Env{
 				"CUSTOM_VAR": "value",
 			},
 			expectedEnvVars: []string{
