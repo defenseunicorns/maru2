@@ -699,7 +699,7 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 				"PARENT_ENV=parent-value",
 				"PATH=/usr/bin",
 			},
-			withInputs: v0.With{},
+			withInputs: v1.With{},
 		},
 		{
 			name: "step-level env not passed to uses (current behavior)",
@@ -716,7 +716,7 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 				"PARENT_ENV=parent-value",
 				"PATH=/usr/bin",
 			},
-			withInputs: v0.With{},
+			withInputs: v1.With{},
 		},
 	}
 
@@ -777,7 +777,7 @@ func TestUsesEnvironmentVariablesExecution(t *testing.T) {
 	// Execute a simple task to verify environment variables are accessible
 	// This doesn't test the specific environment variable passing but confirms
 	// the basic uses functionality works with environment context
-	result, err := Run(ctx, svc, wf, "default", v0.With{}, origin, "", environ, false)
+	result, err := Run(ctx, svc, wf, "default", v1.With{}, origin, "", environ, false)
 	require.NoError(t, err)
 
 	// For this simple test, we just verify no error occurred

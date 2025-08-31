@@ -11,7 +11,6 @@ import (
 
 	"github.com/package-url/packageurl-go"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
@@ -34,11 +33,11 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 		return uri, nil
 	}
 
-	if !slices.Contains(v0.SupportedSchemes(), uri.Scheme) {
+	if !slices.Contains(v1.SupportedSchemes(), uri.Scheme) {
 		return nil, fmt.Errorf("unsupported scheme: %q in %q", uri.Scheme, uri)
 	}
 
-	if prev != nil && !slices.Contains(v0.SupportedSchemes(), prev.Scheme) {
+	if prev != nil && !slices.Contains(v1.SupportedSchemes(), prev.Scheme) {
 		return nil, fmt.Errorf("unsupported scheme: %q in %q", prev.Scheme, prev)
 	}
 

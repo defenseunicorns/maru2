@@ -271,7 +271,7 @@ func handleRunStep(
 	return result, nil
 }
 
-func prepareEnvironment(envVars []string, withDefaults v0.With, outFileName string, stepEnv v0.Env) ([]string, error) {
+func prepareEnvironment(envVars []string, withDefaults v1.With, outFileName string, stepEnv v0.Env) ([]string, error) {
 	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
 	copy(env, envVars)
 

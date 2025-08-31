@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
@@ -104,7 +103,7 @@ func TestIf(t *testing.T) {
 		{
 			name:      "input dne",
 			inputExpr: `input("dne") == "foo"`,
-			with:      v0.With{"bar": "baz"},
+			with:      v1.With{"bar": "baz"},
 			expectedErr: `input "dne" does not exist in [bar] (1:1)
  | input("dne") == "foo"
  | ^`,
@@ -148,56 +147,56 @@ func TestIf(t *testing.T) {
 		{
 			name:      "numeric comparison (equal)",
 			inputExpr: `input("num") == 42`,
-			with:      v0.With{"num": 42},
+			with:      v1.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (not equal)",
 			inputExpr: `input("num") != 43`,
-			with:      v0.With{"num": 42},
+			with:      v1.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (greater than)",
 			inputExpr: `input("num") > 40`,
-			with:      v0.With{"num": 42},
+			with:      v1.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (less than)",
 			inputExpr: `input("num") < 50`,
-			with:      v0.With{"num": 42},
+			with:      v1.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs",
 			inputExpr: `input("enabled")`,
-			with:      v0.With{"enabled": true},
+			with:      v1.With{"enabled": true},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs (false)",
 			inputExpr: `!input("disabled")`,
-			with:      v0.With{"disabled": false},
+			with:      v1.With{"disabled": false},
 			expected:  true,
 		},
 		{
 			name:      "mathematical operation",
 			inputExpr: `(input("num") + 8) == 50`,
-			with:      v0.With{"num": 42},
+			with:      v1.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:        "syntax error",
 			inputExpr:   `input.foo == `,
-			with:        v0.With{"foo": "bar"},
+			with:        v1.With{"foo": "bar"},
 			expectedErr: "unexpected token EOF (1:13)\n | input.foo == \n | ............^",
 		},
 		{
 			name:        "typo",
 			inputExpr:   `nputs.foo == bar`,
 			dry:         true,
-			with:        v0.With{"foo": "bar"},
+			with:        v1.With{"foo": "bar"},
 			expectedErr: "unknown name nputs (1:1)\n | nputs.foo == bar\n | ^",
 		},
 		{

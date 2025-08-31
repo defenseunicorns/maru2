@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
@@ -840,10 +839,10 @@ func TestMergeWithAndParams(t *testing.T) {
 func TestTemplateWithMap(t *testing.T) {
 	tests := []struct {
 		name           string
-		input          v0.With
+		input          v1.With
 		previousOutput CommandOutputs
 		withMap        map[string]any
-		expected       v0.With
+		expected       v1.With
 		expectedError  string
 	}{
 		{
@@ -858,19 +857,19 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "simple string value",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
 				"greeting": "Hello ${{ input \"name\" }}",
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"greeting": "Hello test",
 			},
 		},
 		{
 			name: "nested map",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -879,8 +878,8 @@ func TestTemplateWithMap(t *testing.T) {
 					"version":  "1.0",
 				},
 			},
-			expected: v0.With{
-				"config": v0.With{
+			expected: v1.With{
+				"config": v1.With{
 					"greeting": "Hello test",
 					"version":  "1.0",
 				},
@@ -888,7 +887,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "array with strings",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -897,7 +896,7 @@ func TestTemplateWithMap(t *testing.T) {
 					"Hi ${{ input \"name\" }}",
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"greetings": []any{
 					"Hello test",
 					"Hi test",
@@ -906,7 +905,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "array with maps",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -921,13 +920,13 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"users": []any{
-					v0.With{
+					v1.With{
 						"name": "test",
 						"role": "admin",
 					},
-					v0.With{
+					v1.With{
 						"name": "other",
 						"role": "user",
 					},
@@ -936,7 +935,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "nested arrays",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -947,7 +946,7 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 				},
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"data": []any{
 					[]any{
 						"test",
@@ -958,7 +957,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "complex nested structure",
-			input: v0.With{
+			input: v1.With{
 				"name":    "test",
 				"version": "2.0",
 			},
@@ -986,20 +985,20 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 				},
 			},
-			expected: v0.With{
-				"config": v0.With{
-					"app": v0.With{
+			expected: v1.With{
+				"config": v1.With{
+					"app": v1.With{
 						"name":    "test",
 						"version": "2.0",
 					},
 					"status": "success",
 				},
 				"data": []any{
-					v0.With{
+					v1.With{
 						"key":   "app_name",
 						"value": "test",
 					},
-					v0.With{
+					v1.With{
 						"key":   "app_version",
 						"value": "2.0",
 					},
@@ -1008,7 +1007,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name:  "with template error",
-			input: v0.With{},
+			input: v1.With{},
 			withMap: map[string]any{
 				"greeting": "Hello ${{ input \"missing\" }}",
 			},
@@ -1021,7 +1020,7 @@ func TestTemplateWithMap(t *testing.T) {
 				"boolean": true,
 				"null":    nil,
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"number":  42,
 				"boolean": true,
 				"null":    nil,
@@ -1029,19 +1028,19 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "With type instead of map[string]any",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
-			withMap: v0.With{
+			withMap: v1.With{
 				"greeting": "Hello ${{ input \"name\" }}",
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"greeting": "Hello test",
 			},
 		},
 		{
 			name:  "nested map with template error",
-			input: v0.With{},
+			input: v1.With{},
 			withMap: map[string]any{
 				"config": map[string]any{
 					"greeting": "Hello ${{ input \"missing\" }}",
@@ -1051,7 +1050,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name:  "slice with template error",
-			input: v0.With{},
+			input: v1.With{},
 			withMap: map[string]any{
 				"items": []any{
 					"Hello ${{ input \"missing\" }}",
@@ -1083,7 +1082,7 @@ func TestTemplateWithMap(t *testing.T) {
 func TestTemplateSlice(t *testing.T) {
 	tests := []struct {
 		name           string
-		input          v0.With
+		input          v1.With
 		previousOutput CommandOutputs
 		slice          []any
 		expected       []any
@@ -1096,7 +1095,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with strings",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1110,7 +1109,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with maps",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1122,17 +1121,17 @@ func TestTemplateSlice(t *testing.T) {
 				},
 			},
 			expected: []any{
-				v0.With{
+				v1.With{
 					"greeting": "Hello test",
 				},
-				v0.With{
+				v1.With{
 					"greeting": "Hi test",
 				},
 			},
 		},
 		{
 			name: "nested slices",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1163,7 +1162,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "mixed types",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1180,7 +1179,7 @@ func TestTemplateSlice(t *testing.T) {
 			expected: []any{
 				"Hello test",
 				42,
-				v0.With{
+				v1.With{
 					"greeting": "Hi test",
 				},
 				[]any{
@@ -1215,7 +1214,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with nested slices containing maps",
-			input: v0.With{
+			input: v1.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1227,7 +1226,7 @@ func TestTemplateSlice(t *testing.T) {
 			},
 			expected: []any{
 				[]any{
-					v0.With{
+					v1.With{
 						"key": "test",
 					},
 				},
@@ -1235,7 +1234,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with deeply nested structure",
-			input: v0.With{
+			input: v1.With{
 				"value": "nested",
 			},
 			slice: []any{
@@ -1248,8 +1247,8 @@ func TestTemplateSlice(t *testing.T) {
 				},
 			},
 			expected: []any{
-				v0.With{
-					"level1": v0.With{
+				v1.With{
+					"level1": v1.With{
 						"level2": []any{
 							"nested",
 						},
@@ -1299,10 +1298,10 @@ func TestTemplateSlice(t *testing.T) {
 func TestPerformLookups(t *testing.T) {
 	testCases := []struct {
 		name          string
-		input         v0.With
-		local         v0.With
+		input         v1.With
+		local         v1.With
 		previous      CommandOutputs
-		expected      v0.With
+		expected      v1.With
 		expectedError string
 	}{
 		{
@@ -1310,17 +1309,17 @@ func TestPerformLookups(t *testing.T) {
 		},
 		{
 			name: "invalid template",
-			local: v0.With{
+			local: v1.With{
 				"foo": `${{ input`,
 			},
 			expectedError: "template: expression evaluator:1: unclosed action",
 		},
 		{
 			name: "simple lookup + builtins",
-			input: v0.With{
+			input: v1.With{
 				"key": "value",
 			},
-			local: v0.With{
+			local: v1.With{
 				"key":      "${{ input \"key\" }}",
 				"os":       "${{ .OS }}",
 				"arch":     "${{ .ARCH }}",
@@ -1328,7 +1327,7 @@ func TestPerformLookups(t *testing.T) {
 				"int":      1,
 				"bool":     false,
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"key":      "value",
 				"os":       runtime.GOOS,
 				"arch":     runtime.GOARCH,
@@ -1339,11 +1338,11 @@ func TestPerformLookups(t *testing.T) {
 		},
 		{
 			name: "missing input",
-			input: v0.With{
+			input: v1.With{
 				"a": "b",
 				"c": "d",
 			},
-			local: v0.With{
+			local: v1.With{
 				"key": `${{ input "foo" }}`,
 			},
 			expectedError: "template: expression evaluator:1:4: executing \"expression evaluator\" at <input \"foo\">: error calling input: input \"foo\" does not exist in [a c]",
@@ -1355,23 +1354,23 @@ func TestPerformLookups(t *testing.T) {
 					"bar": "baz",
 				},
 			},
-			local: v0.With{
+			local: v1.With{
 				"foo": `${{ from "step-1" "bar" }}`,
 			},
-			expected: v0.With{
+			expected: v1.With{
 				"foo": "baz",
 			},
 		},
 		{
 			name: "lookup from previous outputs - no outputs from step",
-			local: v0.With{
+			local: v1.With{
 				"foo": `${{ from "step-1" "bar" }}`,
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from "step-1" "bar">: error calling from: no outputs from step "step-1"`,
 		},
 		{
 			name: "lookup from previous outputs - missing arg",
-			local: v0.With{
+			local: v1.With{
 				"foo": `${{ from "step-1" }}`,
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from>: wrong number of args for from: want 2 got 1`,
@@ -1383,7 +1382,7 @@ func TestPerformLookups(t *testing.T) {
 					"bar": "baz",
 				},
 			},
-			local: v0.With{
+			local: v1.With{
 				"foo": `${{ from "step-1" "dne" }}`,
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from "step-1" "dne">: error calling from: no output "dne" from step "step-1"`,

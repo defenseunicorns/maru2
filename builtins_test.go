@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
@@ -78,7 +77,7 @@ func TestExecuteBuiltin(t *testing.T) {
 					"text": make(chan int),
 				},
 			},
-			with:          v0.With{},
+			with:          v1.With{},
 			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type 'chan int'",
 		},
 		{

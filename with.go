@@ -20,7 +20,6 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
@@ -34,7 +33,7 @@ func RegisterWhichShortcut(key, value string) {
 }
 
 // TemplateString templates a string with the given input and previous outputs
-func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
+func TemplateString(ctx context.Context, input v1.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
 	var tmpl *template.Template
 
 	inputKeys := make([]string, 0, len(input))
@@ -172,7 +171,7 @@ func TemplateWithMap(ctx context.Context, input v1.With, previousOutputs Command
 }
 
 // templateSlice recursively processes a slice and templates all string values
-func templateSlice(ctx context.Context, input v0.With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
+func templateSlice(ctx context.Context, input v1.With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
 	result := make([]any, len(slice))
 	for i, v := range slice {
 		switch val := v.(type) {
@@ -216,7 +215,7 @@ func MergeWithAndParams(ctx context.Context, with v1.With, params v1.InputMap) (
 				return nil, fmt.Errorf("missing required input: %q", name)
 			}
 			if merged == nil {
-				merged = make(v0.With)
+				merged = make(v1.With)
 			}
 			if merged[name] == nil && param.DefaultFromEnv != "" {
 				if val, ok := os.LookupEnv(param.DefaultFromEnv); ok {
