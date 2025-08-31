@@ -715,6 +715,74 @@ x-metadata:
 			},
 		},
 		{
+			name: "v0 schema migration",
+			r: strings.NewReader(`
+schema-version: v0
+inputs:
+  name:
+    description: "Name to echo"
+    default: "world"
+tasks:
+  echo:
+    - run: echo "Hello ${{ input \"name\" }}"
+`),
+			expected: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"echo": Task{
+						Inputs: InputMap{
+							"name": InputParameter{
+								Description: "Name to echo",
+								Default:     "world",
+							},
+						},
+						Steps: []Step{{
+							Run: `echo "Hello ${{ input \"name\" }}"`,
+						}},
+					},
+				},
+			},
+		},
+		{
+			name: "v0 schema migration with unmarshal error",
+			r: strings.NewReader(`
+schema-version: v0
+inputs:
+  name: invalid_structure
+tasks:
+  echo:
+    - run: echo
+`),
+			expected: Workflow{},
+			expectedError: `[4:9] string was used where mapping is expected
+   2 | schema-version: v0
+   3 | inputs:
+>  4 |   name: invalid_structure
+               ^
+   5 | tasks:
+   6 |   echo:
+   7 |     - run: echo`,
+		},
+		{
+			name: "v0 schema migration with Migrate error",
+			r: strings.NewReader(`
+schema-version: v0
+tasks:
+  echo:
+    - run: echo
+      with:
+        - invalid: structure
+`),
+			expected: Workflow{},
+			expectedError: `[7:9] sequence was used where mapping is expected
+   4 |   echo:
+   5 |     - run: echo
+   6 |       with:
+>  7 |         - invalid: structure
+               ^
+`,
+		},
+		{
 			name:     "invalid yaml",
 			r:        strings.NewReader(`invalid: yaml::`),
 			expected: Workflow{},
