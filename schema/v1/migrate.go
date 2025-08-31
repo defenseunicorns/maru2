@@ -6,6 +6,7 @@ package v1
 import (
 	"fmt"
 
+	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
@@ -64,18 +65,18 @@ func Migrate(oldWorkflow any) (Workflow, error) {
 			v1Steps := make([]Step, len(v0Task))
 			for i, v0Step := range v0Task {
 				// Convert environment variables
-				var v1Env Env
+				var v1Env schema.Env
 				if v0Step.Env != nil {
-					v1Env = make(Env)
+					v1Env = make(schema.Env)
 					for envName, envValue := range v0Step.Env {
 						v1Env[envName] = envValue
 					}
 				}
 
 				// Convert with parameters
-				var v1With With
+				var v1With schema.With
 				if v0Step.With != nil {
-					v1With = make(With)
+					v1With = make(schema.With)
 					for withName, withValue := range v0Step.With {
 						v1With[withName] = withValue
 					}

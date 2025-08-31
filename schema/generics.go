@@ -9,3 +9,9 @@ type Versioned struct {
 	// SchemaVersion is the workflow schema that this workflow follows
 	SchemaVersion string `json:"schema-version"`
 }
+
+// With is a map of string keys and WithEntry values used to pass parameters to called tasks and within steps
+type With = map[string]any
+
+// Env is a map of environment variable names to values
+type Env = map[string]any
