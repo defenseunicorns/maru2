@@ -193,6 +193,129 @@ func TestRun(t *testing.T) {
 			with:          schema.With{},
 			expectedError: "signal: killed",
 		},
+		{
+			name: "ShouldRun error with no prior error",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo hello",
+								If:  "input(\"nonexistent\")",
+							},
+						},
+					},
+				},
+			},
+			taskName:      "test",
+			with:          schema.With{},
+			expectedError: "input \"nonexistent\" does not exist in [] (1:1)\n | input(\"nonexistent\")\n | ^",
+		},
+		{
+			name: "ShouldRun error with prior error (logs but continues)",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "exit 1",
+								ID:  "failing-step",
+							},
+							{
+								Run: "echo \"result=handled\" >> $MARU2_OUTPUT",
+								If:  "input(\"nonexistent\")",
+								ID:  "error-step",
+							},
+							{
+								Run: "echo \"final=done\" >> $MARU2_OUTPUT",
+								If:  "failure()",
+								ID:  "cleanup-step",
+							},
+						},
+					},
+				},
+			},
+			taskName:      "test",
+			with:          schema.With{},
+			expectedError: "exit status 1",
+			expectedOut:   map[string]any{"final": "done"},
+		},
+		{
+			name: "ShouldRun syntax error in if expression",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "echo hello",
+								If:  "invalid syntax (",
+							},
+						},
+					},
+				},
+			},
+			taskName:      "test",
+			with:          schema.With{},
+			expectedError: "unexpected token Identifier(\"syntax\") (1:9)\n | invalid syntax (\n | ........^",
+		},
+		{
+			name: "ShouldRun runtime error with prior error (logs but continues)",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "exit 1",
+								ID:  "failing-step",
+							},
+							{
+								Run: "echo \"result=handled\" >> $MARU2_OUTPUT",
+								If:  "from(\"nonexistent\", \"key\")",
+								ID:  "error-step",
+							},
+							{
+								Run: "echo \"final=done\" >> $MARU2_OUTPUT",
+								If:  "failure()",
+								ID:  "cleanup-step",
+							},
+						},
+					},
+				},
+			},
+			taskName:      "test",
+			with:          schema.With{},
+			expectedError: "exit status 1",
+			expectedOut:   map[string]any{"final": "done"},
+		},
+		{
+			name: "ShouldRun error during context cancellation path",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"test": v1.Task{
+						Steps: []v1.Step{
+							{
+								Run: "exit 1",
+								ID:  "failing-step",
+							},
+							{
+								Run: "echo skipped",
+								If:  "from(\"badstep\", \"missing\")",
+								ID:  "error-in-cancelled-context",
+							},
+							{
+								Run: "echo \"result=cleanup\" >> $MARU2_OUTPUT",
+								If:  "always()",
+								ID:  "cleanup-step",
+							},
+						},
+					},
+				},
+			},
+			taskName:      "test",
+			with:          schema.With{},
+			expectedError: "exit status 1",
+			expectedOut:   map[string]any{"result": "cleanup"},
+		},
 	}
 
 	for _, tc := range tests {

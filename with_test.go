@@ -220,6 +220,7 @@ func TestMergeWithAndParams(t *testing.T) {
 	t.Setenv("TEST_ENV_VAR", "env-value")
 	t.Setenv("TEST_ENV_BOOL", "true")
 	t.Setenv("TEST_ENV_INT", "42")
+	t.Setenv("EMPTY_VAR", "")
 
 	tests := []struct {
 		name          string
@@ -913,6 +914,161 @@ func TestMergeWithAndParams(t *testing.T) {
 				},
 			},
 			expectedError: "unable to cast env input \"data\" from string to []string",
+		},
+		{
+			name: "deprecated parameter without provided value (no warning)",
+			with: schema.With{},
+			params: v1.InputMap{
+				"old-param": v1.InputParameter{
+					DeprecatedMessage: "Use new-param instead",
+					Default:           "default-value",
+				},
+			},
+			expected: schema.With{
+				"old-param": "default-value",
+			},
+		},
+		{
+			name: "with parameter that exists in with but not provided directly",
+			with: schema.With{
+				"existing": "existing-value",
+			},
+			params: v1.InputMap{
+				"new-param": v1.InputParameter{
+					Default: "new-default",
+				},
+			},
+			expected: schema.With{
+				"existing":  "existing-value",
+				"new-param": "new-default",
+			},
+		},
+		{
+			name: "validation with nil merged value should error",
+			with: schema.With{
+				"name": nil,
+			},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
+					Validate: "^test",
+					Required: &requiredFalse,
+				},
+			},
+			expectedError: "failed to validate: input=name, value=%!s(<nil>), regexp=^test",
+		},
+		{
+			name: "default-from-env with complex type that cannot be cast",
+			with: schema.With{},
+			params: v1.InputMap{
+				"data": v1.InputParameter{
+					Default:        complex(1, 2),
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expectedError: "unable to cast env input \"data\" from string to complex128",
+		},
+		{
+			name: "env var present but empty string with bool default",
+			with: schema.With{},
+			params: v1.InputMap{
+				"flag": v1.InputParameter{
+					Default:        true,
+					DefaultFromEnv: "EMPTY_VAR",
+				},
+			},
+			expectedError: "strconv.ParseBool: parsing \"\": invalid syntax",
+		},
+		{
+			name: "required parameter with nil in with map",
+			with: schema.With{
+				"name": nil,
+			},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
+					Required: &requiredTrue,
+				},
+			},
+			expected: schema.With{
+				"name": nil,
+			},
+		},
+		{
+			name: "parameter with both default and defaultFromEnv but env var missing",
+			with: schema.With{},
+			params: v1.InputMap{
+				"config": v1.InputParameter{
+					Default:        "fallback-default",
+					DefaultFromEnv: "MISSING_ENV_VAR",
+					Required:       &requiredFalse,
+				},
+			},
+			expected: schema.With{
+				"config": "fallback-default",
+			},
+		},
+		{
+			name: "required field explicitly nil with missing parameter",
+			with: schema.With{},
+			params: v1.InputMap{
+				"test": v1.InputParameter{
+					Required: nil, // This should default to true
+				},
+			},
+			expectedError: "missing required input: \"test\"",
+		},
+		{
+			name: "parameter with default and env var, env var takes precedence but empty",
+			with: schema.With{},
+			params: v1.InputMap{
+				"priority": v1.InputParameter{
+					Default:        "default-value",
+					DefaultFromEnv: "EMPTY_VAR", // This is set to "" in test env
+					Required:       &requiredFalse,
+				},
+			},
+			expected: schema.With{
+				"priority": "",
+			},
+		},
+		{
+			name: "complex scenario with all conditions",
+			with: schema.With{
+				"existing": "keep-this",
+			},
+			params: v1.InputMap{
+				"existing": v1.InputParameter{
+					DeprecatedMessage: "This is deprecated",
+					Default:           "wont-be-used",
+				},
+				"from-env": v1.InputParameter{
+					DefaultFromEnv: "TEST_ENV_VAR",
+					Default:        "fallback",
+				},
+				"just-default": v1.InputParameter{
+					Default: "default-only",
+				},
+				"missing-required": v1.InputParameter{
+					Required: &requiredFalse,
+				},
+			},
+			expected: schema.With{
+				"existing":     "keep-this",
+				"from-env":     "env-value",
+				"just-default": "default-only",
+			},
+		},
+		{
+			name: "edge case: required true with empty default from env and no default",
+			with: schema.With{},
+			params: v1.InputMap{
+				"edge": v1.InputParameter{
+					Required:       &requiredTrue,
+					DefaultFromEnv: "EMPTY_VAR", // Set to "" in test env
+				},
+			},
+			expected: schema.With{
+				"edge": "",
+			},
 		},
 	}
 
