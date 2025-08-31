@@ -373,7 +373,7 @@ func TestMergeWithAndParams(t *testing.T) {
 				},
 			},
 			expected: schema.With{
-				"count": "10",
+				"count": 10,
 			},
 		},
 		{
@@ -401,7 +401,7 @@ func TestMergeWithAndParams(t *testing.T) {
 				},
 			},
 			expected: schema.With{
-				"enabled": true,
+				"enabled": "true",
 			},
 		},
 		{
@@ -429,7 +429,7 @@ func TestMergeWithAndParams(t *testing.T) {
 				},
 			},
 			expected: schema.With{
-				"count": 10,
+				"count": "10",
 			},
 		},
 		{
@@ -469,7 +469,7 @@ func TestMergeWithAndParams(t *testing.T) {
 				},
 			},
 			expected: schema.With{
-				"size": "2048",
+				"size": uint64(2048),
 			},
 		},
 		{

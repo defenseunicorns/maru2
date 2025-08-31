@@ -232,7 +232,7 @@ func MergeWithAndParams(ctx context.Context, with schema.With, params v1.InputMa
 			logger.Warnf("input %q is deprecated: %s", name, param.DeprecatedMessage)
 		}
 
-		// If the input is provided, and the default is set, ensure the types match, cast otherwise
+		// If the input is provided, and the default is set, cast the provided value to match the default's type
 		if param.Default != nil && with[name] != nil {
 			switch param.Default.(type) {
 			case bool:

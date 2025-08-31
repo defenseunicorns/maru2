@@ -657,7 +657,7 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 						Default:     "default-message",
 					},
 				},
-				Steps: []v1.Step{v1.Step{
+				Steps: []v1.Step{{
 					Run: `
 						echo "Parent env: $PARENT_ENV"
 						echo "Input message: $INPUT_MESSAGE"

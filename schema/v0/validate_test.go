@@ -9,8 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/schema"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/schema"
 )
 
 type badReadSeeker struct {
