@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 
+	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -23,7 +24,7 @@ func handleUsesStep(
 	svc *uses.FetcherService,
 	step v1.Step,
 	wf v1.Workflow,
-	withDefaults v1.With,
+	withDefaults schema.With,
 	outputs CommandOutputs,
 	origin *url.URL,
 	cwd string,

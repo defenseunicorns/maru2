@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/schema"
 )
 
 // cancelledContext returns a context that is already cancelled
@@ -25,7 +25,7 @@ func TestIf(t *testing.T) {
 	tests := []struct {
 		name            string
 		inputExpr       string
-		with            v1.With
+		with            schema.With
 		previousOutputs CommandOutputs
 		dry             bool
 		err             error
@@ -72,7 +72,7 @@ func TestIf(t *testing.T) {
 		{
 			name:      "based upon with",
 			inputExpr: `input("foo") == "bar"`,
-			with:      v1.With{"foo": "bar"},
+			with:      schema.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
@@ -83,19 +83,19 @@ func TestIf(t *testing.T) {
 		{
 			name:      "complex boolean expression (true)",
 			inputExpr: `(input("foo") == "bar" && !failure()) || always()`,
-			with:      v1.With{"foo": "bar"},
+			with:      schema.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
 			name:      "complex boolean expression (false)",
 			inputExpr: `input("foo") == "baz" && !failure()`,
-			with:      v1.With{"foo": "bar"},
+			with:      schema.With{"foo": "bar"},
 			expected:  false,
 		},
 		{
 			name:      "access nested map in inputs",
 			inputExpr: `input("nested", "value") == "wrong-value"`,
-			with:      v1.With{"nested": map[string]any{"value": "nested-value"}},
+			with:      schema.With{"nested": map[string]any{"value": "nested-value"}},
 			expectedErr: `too many arguments to call input (1:1)
  | input("nested", "value") == "wrong-value"
  | ^`,
@@ -103,7 +103,7 @@ func TestIf(t *testing.T) {
 		{
 			name:      "input dne",
 			inputExpr: `input("dne") == "foo"`,
-			with:      v1.With{"bar": "baz"},
+			with:      schema.With{"bar": "baz"},
 			expectedErr: `input "dne" does not exist in [bar] (1:1)
  | input("dne") == "foo"
  | ^`,
@@ -147,56 +147,56 @@ func TestIf(t *testing.T) {
 		{
 			name:      "numeric comparison (equal)",
 			inputExpr: `input("num") == 42`,
-			with:      v1.With{"num": 42},
+			with:      schema.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (not equal)",
 			inputExpr: `input("num") != 43`,
-			with:      v1.With{"num": 42},
+			with:      schema.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (greater than)",
 			inputExpr: `input("num") > 40`,
-			with:      v1.With{"num": 42},
+			with:      schema.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "numeric comparison (less than)",
 			inputExpr: `input("num") < 50`,
-			with:      v1.With{"num": 42},
+			with:      schema.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs",
 			inputExpr: `input("enabled")`,
-			with:      v1.With{"enabled": true},
+			with:      schema.With{"enabled": true},
 			expected:  true,
 		},
 		{
 			name:      "boolean value in inputs (false)",
 			inputExpr: `!input("disabled")`,
-			with:      v1.With{"disabled": false},
+			with:      schema.With{"disabled": false},
 			expected:  true,
 		},
 		{
 			name:      "mathematical operation",
 			inputExpr: `(input("num") + 8) == 50`,
-			with:      v1.With{"num": 42},
+			with:      schema.With{"num": 42},
 			expected:  true,
 		},
 		{
 			name:        "syntax error",
 			inputExpr:   `input.foo == `,
-			with:        v1.With{"foo": "bar"},
+			with:        schema.With{"foo": "bar"},
 			expectedErr: "unexpected token EOF (1:13)\n | input.foo == \n | ............^",
 		},
 		{
 			name:        "typo",
 			inputExpr:   `nputs.foo == bar`,
 			dry:         true,
-			with:        v1.With{"foo": "bar"},
+			with:        schema.With{"foo": "bar"},
 			expectedErr: "unknown name nputs (1:1)\n | nputs.foo == bar\n | ^",
 		},
 		{

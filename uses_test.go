@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -631,10 +632,10 @@ func TestExecuteUses(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.expectedErr == "" {
-				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, v1.With{}, nil, origin, "", nil, false)
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, "", nil, false)
 				require.NoError(t, err)
 			} else {
-				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, v1.With{}, nil, origin, "", nil, false)
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, "", nil, false)
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})
@@ -683,14 +684,14 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 		name        string
 		step        v1.Step
 		environ     []string
-		withInputs  v1.With
+		withInputs  schema.With
 		expectedErr string
 	}{
 		{
 			name: "environment variables passed through uses",
 			step: v1.Step{
 				Uses: server.URL + "/env-test.yaml?task=env-test",
-				With: v1.With{
+				With: schema.With{
 					"message": "test-from-parent",
 				},
 			},
@@ -698,16 +699,16 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 				"PARENT_ENV=parent-value",
 				"PATH=/usr/bin",
 			},
-			withInputs: v1.With{},
+			withInputs: schema.With{},
 		},
 		{
 			name: "step-level env not passed to uses (current behavior)",
 			step: v1.Step{
 				Uses: server.URL + "/env-test.yaml?task=env-test",
-				Env: v1.Env{
+				Env: schema.Env{
 					"STEP_LEVEL_VAR": "step-value",
 				},
-				With: v1.With{
+				With: schema.With{
 					"message": "test-with-step-env",
 				},
 			},
@@ -715,7 +716,7 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 				"PARENT_ENV=parent-value",
 				"PATH=/usr/bin",
 			},
-			withInputs: v1.With{},
+			withInputs: schema.With{},
 		},
 	}
 
@@ -776,7 +777,7 @@ func TestUsesEnvironmentVariablesExecution(t *testing.T) {
 	// Execute a simple task to verify environment variables are accessible
 	// This doesn't test the specific environment variable passing but confirms
 	// the basic uses functionality works with environment context
-	result, err := Run(ctx, svc, wf, "default", v1.With{}, origin, "", environ, false)
+	result, err := Run(ctx, svc, wf, "default", schema.With{}, origin, "", environ, false)
 	require.NoError(t, err)
 
 	// For this simple test, we just verify no error occurred

@@ -26,6 +26,7 @@ import (
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/config"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
+	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -241,7 +242,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			with := make(v1.With, len(w))
+			with := make(schema.With, len(w))
 			for k, v := range w {
 				with[k] = v
 			}

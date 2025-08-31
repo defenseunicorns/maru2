@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
@@ -107,14 +108,14 @@ func TestMigrate(t *testing.T) {
 						Steps: []Step{
 							{
 								Uses: "echo",
-								With: With{
+								With: schema.With{
 									"text": "Hello from complex task",
 								},
 								ID: "step1",
 							},
 							{
 								Run: "echo \"Debug: ${{ input \"debug\" }}\"",
-								Env: Env{
+								Env: schema.Env{
 									"DEBUG": "${{ input \"debug\" }}",
 								},
 								If:      "input(\"debug\")",
@@ -237,12 +238,12 @@ func TestMigrate(t *testing.T) {
 							{
 								Run:  "echo test",
 								Name: "Test step",
-								Env: Env{
+								Env: schema.Env{
 									"VAR1": "value1",
 									"VAR2": 42,
 									"VAR3": true,
 								},
-								With: With{
+								With: schema.With{
 									"param1": "value1",
 									"param2": 123,
 									"param3": false,

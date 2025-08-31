@@ -12,6 +12,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/muesli/termenv"
 
+	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
@@ -54,7 +55,7 @@ func printScript(logger *log.Logger, lang, script string) {
 	}
 }
 
-func printBuiltin(logger *log.Logger, builtin v1.With) {
+func printBuiltin(logger *log.Logger, builtin schema.With) {
 	b, err := yaml.MarshalWithOptions(v1.Step{With: builtin}, yaml.Indent(2), yaml.IndentSequence(true))
 	if err != nil {
 		logger.Debugf("failed to marshal builtin: %v", err)

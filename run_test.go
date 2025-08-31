@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -28,7 +29,7 @@ func TestRun(t *testing.T) {
 		name          string
 		workflow      v1.Workflow
 		taskName      string
-		with          v1.With
+		with          schema.With
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
@@ -47,7 +48,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        v1.With{},
+			with:        schema.With{},
 			expectedOut: nil,
 		},
 		{
@@ -65,7 +66,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        v1.With{},
+			with:        schema.With{},
 			expectedOut: map[string]any{"result": "success"},
 		},
 		{
@@ -74,7 +75,7 @@ func TestRun(t *testing.T) {
 				Tasks: v1.TaskMap{},
 			},
 			taskName:      "nonexistent",
-			with:          v1.With{},
+			with:          schema.With{},
 			expectedError: "task \"nonexistent\" not found",
 			expectedOut:   nil,
 		},
@@ -86,7 +87,7 @@ func TestRun(t *testing.T) {
 						Steps: []v1.Step{
 							{
 								Uses: "builtin:echo",
-								With: v1.With{
+								With: schema.With{
 									"text": "Hello, World!",
 								},
 								ID: "echo-step",
@@ -96,7 +97,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        v1.With{},
+			with:        schema.With{},
 			expectedOut: map[string]any{"stdout": "Hello, World!"},
 		},
 		{
@@ -124,7 +125,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 			taskName:    "test",
-			with:        v1.With{},
+			with:        schema.With{},
 			expectedOut: nil,
 		},
 		{
@@ -152,7 +153,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 			taskName:      "test",
-			with:          v1.With{},
+			with:          schema.With{},
 			expectedError: "exit status 1",
 			expectedOut:   map[string]any{"result": "handled"},
 		},
@@ -189,7 +190,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 			taskName:      v1.DefaultTaskName,
-			with:          v1.With{},
+			with:          schema.With{},
 			expectedError: "signal: killed",
 		},
 	}
@@ -457,7 +458,7 @@ func TestRunContext(t *testing.T) {
 				}()
 			}
 
-			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, v1.With{}, nil, "", nil, false)
+			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, schema.With{}, nil, "", nil, false)
 
 			if tc.expectedError != "" {
 				require.ErrorContains(t, err, tc.expectedError)
@@ -531,20 +532,20 @@ func TestPrepareEnvironment(t *testing.T) {
 	tests := []struct {
 		name            string
 		startingEnv     []string
-		withDefaults    v1.With
-		stepEnv         v1.Env
+		withDefaults    schema.With
+		stepEnv         schema.Env
 		expectedEnvVars []string
 		expectedError   string
 	}{
 		{
 			name:            "empty inputs and step env",
-			withDefaults:    v1.With{},
+			withDefaults:    schema.With{},
 			stepEnv:         nil,
 			expectedEnvVars: []string{},
 		},
 		{
 			name: "string input value",
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"test-input": "test-value",
 			},
 			stepEnv: nil,
@@ -554,7 +555,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "integer input value",
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"number": 42,
 			},
 			stepEnv: nil,
@@ -564,7 +565,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "boolean input value",
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"flag": true,
 			},
 			stepEnv: nil,
@@ -574,7 +575,7 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "no step env",
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"test-input": "test-value",
 			},
 			stepEnv: nil,
@@ -584,8 +585,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "step env with string",
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"CUSTOM_VAR": "custom-value",
 			},
 			expectedEnvVars: []string{
@@ -594,8 +595,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "step env with different types",
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"STRING_VAR": "hello",
 				"INT_VAR":    42,
 				"BOOL_VAR":   true,
@@ -608,10 +609,10 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name: "both input and step env",
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"input-var": "input-value",
 			},
-			stepEnv: v1.Env{
+			stepEnv: schema.Env{
 				"CUSTOM_VAR": "custom-value",
 			},
 			expectedEnvVars: []string{
@@ -621,14 +622,14 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:            "empty step env map",
-			withDefaults:    v1.With{},
-			stepEnv:         v1.Env{},
+			withDefaults:    schema.With{},
+			stepEnv:         schema.Env{},
 			expectedEnvVars: []string{},
 		},
 		{
 			name:         "step env overrides existing env",
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"PATH": "/custom/path",
 			},
 			expectedEnvVars: []string{
@@ -637,8 +638,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "complex values in step env",
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"JSON_VAR":   `{"key": "value", "number": 42}`,
 				"SPACES_VAR": "value with spaces",
 				"EMPTY_VAR":  "",
@@ -651,24 +652,24 @@ func TestPrepareEnvironment(t *testing.T) {
 		},
 		{
 			name:         "PWD variable should be rejected",
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"PWD": "/some/path",
 			},
 			expectedError: "setting PWD environment variable is not allowed",
 		},
 		{
 			name: "invalid input type conversion",
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"bad-input": make(chan int), // channels can't be converted to string
 			},
-			stepEnv:       v1.Env{},
+			stepEnv:       schema.Env{},
 			expectedError: "failed to convert input \"bad-input\" to string",
 		},
 		{
 			name:         "invalid env var type conversion",
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"BAD_VAR": make(chan int), // channels can't be converted to string
 			},
 			expectedError: "failed to convert env var \"BAD_VAR\" to string",
@@ -680,8 +681,8 @@ func TestPrepareEnvironment(t *testing.T) {
 				"HOME=/home/user",
 				"USER=testuser",
 			},
-			withDefaults: v1.With{},
-			stepEnv:      v1.Env{},
+			withDefaults: schema.With{},
+			stepEnv:      schema.Env{},
 			expectedEnvVars: []string{
 				"PATH=/usr/bin:/bin",
 				"HOME=/home/user",
@@ -694,10 +695,10 @@ func TestPrepareEnvironment(t *testing.T) {
 				"PATH=/usr/bin:/bin",
 				"HOME=/home/user",
 			},
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"test-input": "test-value",
 			},
-			stepEnv: v1.Env{},
+			stepEnv: schema.Env{},
 			expectedEnvVars: []string{
 				"PATH=/usr/bin:/bin",
 				"HOME=/home/user",
@@ -711,8 +712,8 @@ func TestPrepareEnvironment(t *testing.T) {
 				"HOME=/home/user",
 				"EXISTING_VAR=original",
 			},
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"EXISTING_VAR": "overridden",
 				"NEW_VAR":      "new-value",
 			},
@@ -730,11 +731,11 @@ func TestPrepareEnvironment(t *testing.T) {
 				"PATH=/usr/bin:/bin",
 				"SHELL=/bin/bash",
 			},
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"name":    "test",
 				"version": 123,
 			},
-			stepEnv: v1.Env{
+			stepEnv: schema.Env{
 				"CUSTOM_VAR": "custom",
 				"DEBUG":      true,
 			},
@@ -750,10 +751,10 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:        "empty starting env vs nil starting env",
 			startingEnv: []string{},
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"test": "value",
 			},
-			stepEnv: v1.Env{
+			stepEnv: schema.Env{
 				"STEP_VAR": "step-value",
 			},
 			expectedEnvVars: []string{
@@ -765,7 +766,7 @@ func TestPrepareEnvironment(t *testing.T) {
 			name:         "nil withDefaults with empty outFileName (uses.go pattern)",
 			startingEnv:  []string{"PATH=/usr/bin"},
 			withDefaults: nil,
-			stepEnv: v1.Env{
+			stepEnv: schema.Env{
 				"CUSTOM_VAR": "value",
 			},
 			expectedEnvVars: []string{
@@ -785,8 +786,8 @@ func TestPrepareEnvironment(t *testing.T) {
 		{
 			name:         "empty withDefaults with empty outFileName",
 			startingEnv:  []string{"USER=testuser"},
-			withDefaults: v1.With{},
-			stepEnv: v1.Env{
+			withDefaults: schema.With{},
+			stepEnv: schema.Env{
 				"STEP_VAR": "step-value",
 			},
 			expectedEnvVars: []string{
@@ -839,7 +840,7 @@ func TestHandleRunStep(t *testing.T) {
 	tests := []struct {
 		name          string
 		step          v1.Step
-		withDefaults  v1.With
+		withDefaults  schema.With
 		dry           bool
 		expectedError string
 		expectedOut   map[string]any
@@ -850,7 +851,7 @@ func TestHandleRunStep(t *testing.T) {
 			step: v1.Step{
 				Run: "echo hello",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo hello\n",
 		},
 		{
@@ -859,7 +860,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run: "echo \"result=success\" >> $MARU2_OUTPUT",
 				ID:  "step1",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedOut:  map[string]any{"result": "success"},
 			expectedLog:  "echo \"result=success\" >> $MARU2_OUTPUT\n",
 		},
@@ -868,7 +869,7 @@ func TestHandleRunStep(t *testing.T) {
 			step: v1.Step{
 				Run: "echo ${{ input \"text\" }}",
 			},
-			withDefaults: v1.With{"text": "hello world"},
+			withDefaults: schema.With{"text": "hello world"},
 			expectedLog:  "echo hello world\n",
 		},
 		{
@@ -877,7 +878,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run:   `arr=(a b c); echo "${arr[1]}"`,
 				Shell: "bash",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "arr=(a b c); echo \"${arr[1]}\"\n",
 		},
 		{
@@ -886,7 +887,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run:   `if [[ "foo" == "foo" ]]; then echo "match"; fi`,
 				Shell: "bash",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "if [[ \"foo\" == \"foo\" ]]; then echo \"match\"; fi\n",
 		},
 		{
@@ -895,7 +896,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run:   "echo foo",
 				Shell: "fish",
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedLog:   "echo foo\n",
 			expectedError: "unsupported shell: fish",
 		},
@@ -905,7 +906,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run: "echo hello",
 				ID:  "step1",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			dry:          true,
 			expectedLog:  "echo hello\n",
 		},
@@ -914,7 +915,7 @@ func TestHandleRunStep(t *testing.T) {
 			step: v1.Step{
 				Run: "exit 1",
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: "exit status 1",
 			expectedLog:   "exit 1\n",
 		},
@@ -924,7 +925,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run:  "echo 'This should not appear in output'",
 				Mute: true,
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo 'This should not appear in output'\n",
 		},
 		{
@@ -933,7 +934,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run:  "echo 'foo=bar' >> $MARU2_OUTPUT",
 				Mute: true,
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo 'foo=bar' >> $MARU2_OUTPUT\n",
 			expectedOut:  map[string]any{"foo": "bar"},
 		},
@@ -941,23 +942,23 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with environment variables",
 			step: v1.Step{
 				Run: "echo \"MY_VAR=$MY_VAR\" && echo \"TEMPLATED_VAR=$TEMPLATED_VAR\"",
-				Env: v1.Env{
+				Env: schema.Env{
 					"MY_VAR":        "static-value",
 					"TEMPLATED_VAR": "${{ input \"name\" }}",
 				},
 			},
-			withDefaults: v1.With{"name": "world"},
+			withDefaults: schema.With{"name": "world"},
 			expectedLog:  "echo \"MY_VAR=$MY_VAR\" && echo \"TEMPLATED_VAR=$TEMPLATED_VAR\"\n",
 		},
 		{
 			name: "dry run with environment variables",
 			step: v1.Step{
 				Run: "echo \"TEST_VAR=$TEST_VAR\"",
-				Env: v1.Env{
+				Env: schema.Env{
 					"TEST_VAR": "${{ input \"value\" }}",
 				},
 			},
-			withDefaults: v1.With{"value": "dry-run-test"},
+			withDefaults: schema.With{"value": "dry-run-test"},
 			dry:          true,
 			expectedLog:  "echo \"TEST_VAR=$TEST_VAR\"\n",
 		},
@@ -965,11 +966,11 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with env templating error",
 			step: v1.Step{
 				Run: "echo test",
-				Env: v1.Env{
+				Env: schema.Env{
 					"BAD_VAR": "${{ input \"nonexistent\" }}",
 				},
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedLog:   "echo test\n",
 		},
@@ -977,9 +978,9 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with empty env map",
 			step: v1.Step{
 				Run: "echo \"Empty env map test completed\"",
-				Env: v1.Env{},
+				Env: schema.Env{},
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo \"Empty env map test completed\"\n",
 		},
 		{
@@ -987,7 +988,7 @@ func TestHandleRunStep(t *testing.T) {
 			step: v1.Step{
 				Run: "echo ${{ invalid syntax }}",
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			dry:           true,
 			expectedError: `template: dry-run expression evaluator:1: function "invalid" not defined`,
 			expectedLog:   "\n",
@@ -996,11 +997,11 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with PWD in env should fail",
 			step: v1.Step{
 				Run: "echo test",
-				Env: v1.Env{
+				Env: schema.Env{
 					"PWD": "/some/path",
 				},
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: "setting PWD environment variable is not allowed",
 			expectedLog:   "echo test\n",
 		},
@@ -1009,7 +1010,7 @@ func TestHandleRunStep(t *testing.T) {
 			step: v1.Step{
 				Run: "echo test",
 			},
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"bad-input": complex(1, 2), // complex numbers can't be converted to string
 			},
 			expectedError: "failed to convert input \"bad-input\" to string: unable to cast (1+2i) of type complex128 to string",
@@ -1019,11 +1020,11 @@ func TestHandleRunStep(t *testing.T) {
 			name: "step with invalid env var type should fail",
 			step: v1.Step{
 				Run: "echo test",
-				Env: v1.Env{
+				Env: schema.Env{
 					"BAD_VAR": complex(1, 2), // complex numbers can't be converted to string
 				},
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: "failed to convert env var \"BAD_VAR\" to string: unable to cast (1+2i) of type complex128 to string",
 			expectedLog:   "echo test\n",
 		},
@@ -1033,7 +1034,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run:   "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
 				Shell: "sh",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
 		},
 		{
@@ -1042,7 +1043,7 @@ func TestHandleRunStep(t *testing.T) {
 				Run:   "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
 				Shell: "bash",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
 		},
 		{
@@ -1050,18 +1051,18 @@ func TestHandleRunStep(t *testing.T) {
 			step: v1.Step{
 				Run: "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null",
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo \"UNSET_VAR value: '$UNSET_VAR'\" >/dev/null\n",
 		},
 		{
 			name: "mixed set and unset environment variables",
 			step: v1.Step{
 				Run: "echo \"SET_VAR: '$SET_VAR', UNSET_VAR: '$UNSET_VAR'\" >/dev/null",
-				Env: v1.Env{
+				Env: schema.Env{
 					"SET_VAR": "defined_value",
 				},
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedLog:  "echo \"SET_VAR: '$SET_VAR', UNSET_VAR: '$UNSET_VAR'\" >/dev/null\n",
 		},
 	}
@@ -1096,7 +1097,7 @@ func TestHandleUsesStep(t *testing.T) {
 		name          string
 		step          v1.Step
 		workflow      v1.Workflow
-		withDefaults  v1.With
+		withDefaults  schema.With
 		origin        string
 		dry           bool
 		expectedError string
@@ -1106,24 +1107,24 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "builtin echo",
 			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v1.With{
+				With: schema.With{
 					"text": "Hello, World!",
 				},
 			},
 			workflow:     v1.Workflow{},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedOut:  map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "dry run builtin",
 			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v1.With{
+				With: schema.With{
 					"text": "Hello, World!",
 				},
 			},
 			workflow:     v1.Workflow{},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			dry:          true,
 			expectedOut:  nil,
 		},
@@ -1131,12 +1132,12 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "uses with template",
 			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v1.With{
+				With: schema.With{
 					"text": "Hello from template",
 				},
 			},
 			workflow:     v1.Workflow{},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedOut:  map[string]any{"stdout": "Hello from template"},
 		},
 		{
@@ -1145,7 +1146,7 @@ func TestHandleUsesStep(t *testing.T) {
 				Uses: "builtin:nonexistent",
 			},
 			workflow:      v1.Workflow{},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: "builtin:nonexistent not found",
 			expectedOut:   nil,
 		},
@@ -1153,12 +1154,12 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "template error in step.With",
 			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v1.With{
+				With: schema.With{
 					"text": "${{ input \"nonexistent\" }}",
 				},
 			},
 			workflow:      v1.Workflow{},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: `builtin:echo: template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedOut:   nil,
 		},
@@ -1166,7 +1167,7 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "template error in local task step.With",
 			step: v1.Step{
 				Uses: "test-task",
-				With: v1.With{
+				With: schema.With{
 					"input": "${{ input \"nonexistent\" }}",
 				},
 			},
@@ -1181,7 +1182,7 @@ func TestHandleUsesStep(t *testing.T) {
 					},
 				},
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedOut:   nil,
 		},
@@ -1189,10 +1190,10 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "template error in local task step.Env",
 			step: v1.Step{
 				Uses: "test-task",
-				With: v1.With{
+				With: schema.With{
 					"input": "hello",
 				},
-				Env: v1.Env{
+				Env: schema.Env{
 					"TEST_VAR": "${{ input \"nonexistent\" }}",
 				},
 			},
@@ -1207,7 +1208,7 @@ func TestHandleUsesStep(t *testing.T) {
 					},
 				},
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent">: error calling input: input "nonexistent" does not exist in []`,
 			expectedOut:   nil,
 		},
@@ -1215,10 +1216,10 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "PWD in local task step.Env should fail",
 			step: v1.Step{
 				Uses: "test-task",
-				With: v1.With{
+				With: schema.With{
 					"input": "hello",
 				},
-				Env: v1.Env{
+				Env: schema.Env{
 					"PWD": "/some/path",
 				},
 			},
@@ -1233,7 +1234,7 @@ func TestHandleUsesStep(t *testing.T) {
 					},
 				},
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: "setting PWD environment variable is not allowed",
 			expectedOut:   nil,
 		},
@@ -1241,10 +1242,10 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "invalid type in local task step.Env should fail",
 			step: v1.Step{
 				Uses: "test-task",
-				With: v1.With{
+				With: schema.With{
 					"input": "hello",
 				},
-				Env: v1.Env{
+				Env: schema.Env{
 					"BAD_VAR": complex(1, 2),
 				},
 			},
@@ -1259,7 +1260,7 @@ func TestHandleUsesStep(t *testing.T) {
 					},
 				},
 			},
-			withDefaults:  v1.With{},
+			withDefaults:  schema.With{},
 			expectedError: "failed to convert env var \"BAD_VAR\" to string: unable to cast (1+2i) of type complex128 to string",
 			expectedOut:   nil,
 		},
@@ -1267,10 +1268,10 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "template error in local task step.Env",
 			step: v1.Step{
 				Uses: "test-task",
-				With: v1.With{
+				With: schema.With{
 					"input": "valid-input",
 				},
-				Env: v1.Env{
+				Env: schema.Env{
 					"TEST_VAR": "${{ input \"nonexistent_env_var\" }}",
 				},
 			},
@@ -1285,7 +1286,7 @@ func TestHandleUsesStep(t *testing.T) {
 					},
 				},
 			},
-			withDefaults: v1.With{
+			withDefaults: schema.With{
 				"input": "provided-input",
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <input "nonexistent_env_var">: error calling input: input "nonexistent_env_var" does not exist in [input]`,
@@ -1295,10 +1296,10 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "successful local task execution",
 			step: v1.Step{
 				Uses: "test-task",
-				With: v1.With{
+				With: schema.With{
 					"input": "hello world",
 				},
-				Env: v1.Env{
+				Env: schema.Env{
 					"TEST_VAR": "test-value",
 				},
 			},
@@ -1313,7 +1314,7 @@ func TestHandleUsesStep(t *testing.T) {
 					},
 				},
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			dry:          true, // Use dry run to avoid actual command execution
 			expectedOut:  nil,  // Dry run returns nil
 		},
@@ -1321,7 +1322,7 @@ func TestHandleUsesStep(t *testing.T) {
 			name: "successful local task execution with output",
 			step: v1.Step{
 				Uses: "output-task",
-				With: v1.With{
+				With: schema.With{
 					"message": "test output",
 				},
 			},
@@ -1336,7 +1337,7 @@ func TestHandleUsesStep(t *testing.T) {
 					},
 				},
 			},
-			withDefaults: v1.With{},
+			withDefaults: schema.With{},
 			expectedOut:  map[string]any{"result": "test output"},
 		},
 	}

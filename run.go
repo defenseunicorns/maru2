@@ -23,6 +23,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
 
+	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -63,7 +64,7 @@ func Run(
 	svc *uses.FetcherService,
 	wf v1.Workflow,
 	taskName string,
-	outer v1.With,
+	outer schema.With,
 	origin *url.URL,
 	cwd string,
 	environVars []string,
@@ -184,7 +185,7 @@ func Run(
 func handleRunStep(
 	ctx context.Context,
 	step v1.Step,
-	withDefaults v1.With,
+	withDefaults schema.With,
 	outputs CommandOutputs,
 	cwd string,
 	environVars []string,
@@ -270,7 +271,7 @@ func handleRunStep(
 	return result, nil
 }
 
-func prepareEnvironment(envVars []string, withDefaults v1.With, outFileName string, stepEnv v1.Env) ([]string, error) {
+func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName string, stepEnv schema.Env) ([]string, error) {
 	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
 	copy(env, envVars)
 

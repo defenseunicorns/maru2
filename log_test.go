@@ -13,7 +13,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
 
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/schema"
 )
 
 type errLexer struct {
@@ -103,25 +103,25 @@ func TestPrintScript(t *testing.T) {
 func TestPrintBuiltin(t *testing.T) {
 	testCases := []struct {
 		name     string
-		builtin  v1.With
+		builtin  schema.With
 		expected string
 		color    bool
 	}{
 		{
 			name:     "simple shell",
-			builtin:  v1.With{"text": "hello"},
+			builtin:  schema.With{"text": "hello"},
 			expected: "\x1b[38;5;141mwith\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m\x1b[0m\n\x1b[38;5;189m  \x1b[0m\x1b[38;5;141mtext\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m \x1b[0m\x1b[38;5;189mhello\x1b[0m\x1b[38;5;189m\x1b[0m\n",
 			color:    true,
 		},
 		{
 			name:     "multiline",
-			builtin:  v1.With{"text": "hello\nworld\n!"},
+			builtin:  schema.With{"text": "hello\nworld\n!"},
 			expected: "\x1b[38;5;141mwith\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m\x1b[0m\n\x1b[38;5;189m  \x1b[0m\x1b[38;5;141mtext\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m \x1b[0m\x1b[38;5;189m|-\x1b[0m\x1b[38;5;240m\x1b[0m\n\x1b[38;5;240m    hello\x1b[0m\n\x1b[38;5;240m    world\x1b[0m\n\x1b[38;5;240m    !\x1b[0m\x1b[38;5;189m\x1b[0m\n",
 			color:    true,
 		},
 		{
 			name:    "simple shell",
-			builtin: v1.With{"text": "hello"},
+			builtin: schema.With{"text": "hello"},
 			expected: `with:
   text: hello
 `,
@@ -129,7 +129,7 @@ func TestPrintBuiltin(t *testing.T) {
 		},
 		{
 			name:    "multiline",
-			builtin: v1.With{"text": "hello\nworld\n!"},
+			builtin: schema.With{"text": "hello\nworld\n!"},
 			expected: `with:
   text: |-
     hello
@@ -159,10 +159,9 @@ func TestPrintBuiltin(t *testing.T) {
 	lexers.Register(&errLexer{name: "yaml"}) // overrides yaml lexer
 
 	var buf strings.Builder
-	printBuiltin(log.New(&buf), v1.With{"text": "echo hello"})
+	printBuiltin(log.New(&buf), schema.With{"text": "echo hello"})
 	assert.Equal(t, `with:
   text: echo hello
-
 `, buf.String())
 }
 
@@ -171,7 +170,7 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 	logger := log.New(&buf)
 	logger.SetLevel(log.DebugLevel)
 
-	builtin := v1.With{"func": func() {}}
+	builtin := schema.With{"func": func() {}}
 
 	printBuiltin(logger, builtin)
 
