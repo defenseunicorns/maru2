@@ -27,7 +27,6 @@ import (
 	"github.com/defenseunicorns/maru2/config"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	"github.com/defenseunicorns/maru2/schema"
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -248,7 +247,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if len(args) == 0 {
-				args = append(args, v1.DefaultTaskName)
+				args = append(args, schema.DefaultTaskName)
 			}
 
 			environ := os.Environ()

@@ -178,7 +178,7 @@ func TestRun(t *testing.T) {
 			name: "step with timeout",
 			workflow: v1.Workflow{
 				Tasks: v1.TaskMap{
-					v1.DefaultTaskName: {
+					schema.DefaultTaskName: {
 						Inputs: v1.InputMap{},
 						Steps: []v1.Step{
 							{
@@ -189,7 +189,7 @@ func TestRun(t *testing.T) {
 					},
 				},
 			},
-			taskName:      v1.DefaultTaskName,
+			taskName:      schema.DefaultTaskName,
 			with:          schema.With{},
 			expectedError: "signal: killed",
 		},

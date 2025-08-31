@@ -7,11 +7,9 @@ import (
 	"cmp"
 	"slices"
 
+	"github.com/defenseunicorns/maru2/schema"
 	"github.com/invopop/jsonschema"
 )
-
-// DefaultTaskName is the default task name
-const DefaultTaskName = "default"
 
 // Task is a list of steps
 type Task []Step
@@ -46,10 +44,10 @@ func (tm TaskMap) OrderedTaskNames() []string {
 		names = append(names, k)
 	}
 	slices.SortStableFunc(names, func(a, b string) int {
-		if a == DefaultTaskName {
+		if a == schema.DefaultTaskName {
 			return -1
 		}
-		if b == DefaultTaskName {
+		if b == schema.DefaultTaskName {
 			return 1
 		}
 		return cmp.Compare(a, b)

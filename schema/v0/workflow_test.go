@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/defenseunicorns/maru2/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ var helloWorldWorkflow = Workflow{
 }
 
 func TestWorkflowFind(t *testing.T) {
-	task, ok := helloWorldWorkflow.Tasks.Find(DefaultTaskName)
+	task, ok := helloWorldWorkflow.Tasks.Find(schema.DefaultTaskName)
 	assert.True(t, ok)
 
 	require.Len(t, task, 1)

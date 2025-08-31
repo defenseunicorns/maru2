@@ -71,7 +71,7 @@ func Run(
 	dry bool,
 ) (map[string]any, error) {
 	if taskName == "" {
-		taskName = v1.DefaultTaskName
+		taskName = schema.DefaultTaskName
 	}
 
 	task, ok := wf.Tasks.Find(taskName)
