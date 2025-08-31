@@ -10,6 +10,9 @@ import (
 // SchemaVersion is the current schema version for workflows
 const SchemaVersion = "v0"
 
+// branch is used in docs to point to the last time this schema had updates to its docs
+const branch = "v0.4.0"
+
 // Workflow is a wrapper struct around the input map and task map
 //
 // It represents a "tasks.yaml" file
@@ -35,7 +38,7 @@ func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	}
 	if aliases, ok := schema.Properties.Get("aliases"); ok && aliases != nil {
 		aliases.Description = `Aliases for package URLs to create shorthand references
-See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases`
+See https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#package-url-aliases`
 	}
 }
 
@@ -44,7 +47,7 @@ func WorkFlowSchema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{DoNotReference: true, ExpandedStruct: true}
 	schema := reflector.Reflect(&Workflow{})
 
-	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v0/schema.json"
+	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/" + branch + "/schema/v0/schema.json"
 
 	return schema
 }

@@ -356,7 +356,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 5. **Communication**:
    - Be brutally honest in your feedback, avoiding fluff wording and words of encouragement. High quality code is your objective, not assuaging the concerns of your reader.
    - If you are ever confused, or something does not look right, first stop and think, then if you are still confused pause and ask for clarification.
-   - Never start a response with "You're right", or "I see the issue now!", eliminate any similar phrasing from your lexicon.
+   - Avoid exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational aknowledgements.
    - Communicate in clear and concise prose that relays your intent without verbosity.
 
 ### Architecture Notes
