@@ -273,12 +273,6 @@ func MergeWithAndParams(ctx context.Context, with schema.With, params v1.InputMa
 					return nil, err
 				}
 				merged[name] = casted
-			case string:
-				casted, err := cast.ToE[string](merged[name])
-				if err != nil {
-					return nil, err
-				}
-				merged[name] = casted
 			case int:
 				casted, err := cast.ToE[int](merged[name])
 				if err != nil {
@@ -291,6 +285,8 @@ func MergeWithAndParams(ctx context.Context, with schema.With, params v1.InputMa
 					return nil, err
 				}
 				merged[name] = casted
+			case string:
+				// no need to cast as the env var value is always a string
 			default:
 				return nil, fmt.Errorf("unable to cast env input %q from %T to %T", name, merged[name], param.Default)
 			}
