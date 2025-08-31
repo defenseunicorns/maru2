@@ -16,14 +16,18 @@ import (
 func TestMigrate(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
+	boolPtr := func(b bool) *bool {
+		return &b
+	}
+
+	tests := []struct {
 		name        string
 		input       any
 		expected    Workflow
 		expectedErr string
 	}{
 		{
-			name:  "empty",
+			name:  "empty workflow",
 			input: v0.Workflow{},
 			expected: Workflow{
 				SchemaVersion: SchemaVersion,
@@ -262,108 +266,107 @@ func TestMigrate(t *testing.T) {
 			},
 		},
 		{
-			name:        "invalid input type",
+			name: "input parameter type migration",
+			input: v0.Workflow{
+				SchemaVersion: "v0",
+				Inputs: v0.InputMap{
+					"test": v0.InputParameter{
+						Description:       "Test description",
+						DeprecatedMessage: "Test deprecation",
+						Required:          boolPtr(false),
+						Default:           "test default",
+						DefaultFromEnv:    "TEST_ENV",
+						Validate:          "^test.*",
+					},
+				},
+				Tasks: v0.TaskMap{
+					"task": v0.Task{
+						{Run: "echo test"},
+					},
+				},
+			},
+			expected: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{
+						Inputs: InputMap{
+							"test": InputParameter{
+								Description:       "Test description",
+								DeprecatedMessage: "Test deprecation",
+								Required:          boolPtr(false),
+								Default:           "test default",
+								DefaultFromEnv:    "TEST_ENV",
+								Validate:          "^test.*",
+							},
+						},
+						Steps: []Step{
+							{Run: "echo test"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "alias type migration",
+			input: v0.Workflow{
+				SchemaVersion: "v0",
+				Aliases: v0.AliasMap{
+					"gh": v0.Alias{
+						Type:         "github",
+						Base:         "https://github.com",
+						TokenFromEnv: "GITHUB_TOKEN",
+					},
+				},
+				Tasks: v0.TaskMap{
+					"task": v0.Task{
+						{Run: "echo test"},
+					},
+				},
+			},
+			expected: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"task": Task{
+						Steps: []Step{
+							{Run: "echo test"},
+						},
+					},
+				},
+				Aliases: AliasMap{
+					"gh": Alias{
+						Type:         "github",
+						Base:         "https://github.com",
+						TokenFromEnv: "GITHUB_TOKEN",
+					},
+				},
+			},
+		},
+		{
+			name:        "invalid input type string",
 			input:       "not a workflow",
 			expectedErr: "unsupported type: string",
 		},
 		{
-			name:        "nil input",
+			name:        "invalid input type nil",
 			input:       nil,
 			expectedErr: "unsupported type: <nil>",
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := Migrate(tc.input)
+			result, err := Migrate(tt.input)
 
-			if tc.expectedErr != "" {
+			if tt.expectedErr != "" {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), tc.expectedErr)
+				assert.Contains(t, err.Error(), tt.expectedErr)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tc.expected, result)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-func TestMigrateInputParameterTypes(t *testing.T) {
-	t.Parallel()
-
-	v0Input := v0.InputParameter{
-		Description:       "Test description",
-		DeprecatedMessage: "Test deprecation",
-		Required:          boolPtr(false),
-		Default:           "test default",
-		DefaultFromEnv:    "TEST_ENV",
-		Validate:          "^test.*",
-	}
-
-	v0Workflow := v0.Workflow{
-		SchemaVersion: "v0",
-		Inputs: v0.InputMap{
-			"test": v0Input,
-		},
-		Tasks: v0.TaskMap{
-			"task": v0.Task{
-				{Run: "echo test"},
-			},
-		},
-	}
-
-	result, err := Migrate(v0Workflow)
-	require.NoError(t, err)
-
-	expectedInput := InputParameter{
-		Description:       "Test description",
-		DeprecatedMessage: "Test deprecation",
-		Required:          boolPtr(false),
-		Default:           "test default",
-		DefaultFromEnv:    "TEST_ENV",
-		Validate:          "^test.*",
-	}
-
-	assert.Equal(t, expectedInput, result.Tasks["task"].Inputs["test"])
-}
-
-func TestMigrateAliasTypes(t *testing.T) {
-	t.Parallel()
-
-	v0Alias := v0.Alias{
-		Type:         "github",
-		Base:         "https://github.com",
-		TokenFromEnv: "GITHUB_TOKEN",
-	}
-
-	v0Workflow := v0.Workflow{
-		SchemaVersion: "v0",
-		Aliases: v0.AliasMap{
-			"gh": v0Alias,
-		},
-		Tasks: v0.TaskMap{
-			"task": v0.Task{
-				{Run: "echo test"},
-			},
-		},
-	}
-
-	result, err := Migrate(v0Workflow)
-	require.NoError(t, err)
-
-	expectedAlias := Alias{
-		Type:         "github",
-		Base:         "https://github.com",
-		TokenFromEnv: "GITHUB_TOKEN",
-	}
-
-	assert.Equal(t, expectedAlias, result.Aliases["gh"])
-}
-
-// boolPtr returns a pointer to a boolean value
-func boolPtr(b bool) *bool {
-	return &b
 }
