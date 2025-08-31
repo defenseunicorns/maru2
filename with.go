@@ -264,6 +264,38 @@ func MergeWithAndParams(ctx context.Context, with schema.With, params v1.InputMa
 			}
 		}
 
+		// if default-from-env is provided, and the default is set, cast the provided value to match the default's type
+		if param.Default != nil && param.DefaultFromEnv != "" && merged[name] != nil {
+			switch param.Default.(type) {
+			case bool:
+				casted, err := cast.ToE[bool](merged[name])
+				if err != nil {
+					return nil, err
+				}
+				merged[name] = casted
+			case string:
+				casted, err := cast.ToE[string](merged[name])
+				if err != nil {
+					return nil, err
+				}
+				merged[name] = casted
+			case int:
+				casted, err := cast.ToE[int](merged[name])
+				if err != nil {
+					return nil, err
+				}
+				merged[name] = casted
+			case uint64:
+				casted, err := cast.ToE[uint64](merged[name])
+				if err != nil {
+					return nil, err
+				}
+				merged[name] = casted
+			default:
+				return nil, fmt.Errorf("unable to cast env input %q from %T to %T", name, merged[name], param.Default)
+			}
+		}
+
 		if param.Validate != "" {
 			stringified, err := cast.ToE[string](merged[name])
 			if err != nil {
