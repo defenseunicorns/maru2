@@ -80,6 +80,22 @@ func TestGitHubFetcher(t *testing.T) {
 - testing increases confidence in consistency of behavior, not correctness
 <!-- pause -->
 - testing increases code quality as a second order effect
+<!-- pause -->
+- percentages become less reliable as the project scales
+
+```diff
+@@            Coverage Diff             @@
+##             main     #115      +/-   ##
+==========================================
++ Coverage   90.90%   92.35%   +1.44%
+==========================================
+  Files          36       44       +8
+  Lines        2649     3242     +593
+==========================================
++ Hits         2408     2994     +586
+- Misses        177      182       +5
+- Partials       64       66       +2
+```
 
 <!-- end_slide -->
 
