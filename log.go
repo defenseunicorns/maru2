@@ -76,7 +76,7 @@ func printBuiltin(logger *log.Logger, builtin schema.With) {
 
 	if err := quick.Highlight(&buf, string(b), "yaml", "terminal256", style); err != nil {
 		logger.Debugf("failed to highlight: %v", err)
-		logger.Printf("%s", string(b))
+		logger.Printf("%s", strings.TrimSpace(string(b)))
 		return
 	}
 
