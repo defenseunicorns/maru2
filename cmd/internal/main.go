@@ -38,6 +38,12 @@ func main() {
 
 	root.AddCommand(cli)
 
+	migrate := maru2cmd.NewMigrateCmd()
+	// rename migrate -> migrate-workflow (or w/e you wish to call the command)
+	migrate.Use = "migrate-workflow"
+	migrate.Aliases = []string{"mw"}
+	root.AddCommand(migrate)
+
 	// standard setup for context and logger
 	// customize as you see fit
 	ctx := context.Background()
