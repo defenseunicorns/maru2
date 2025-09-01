@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"strings"
+
 	"github.com/charmbracelet/log"
 	"github.com/goccy/go-yaml"
 	"github.com/spf13/afero"
@@ -24,6 +26,79 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
+
+// marshalWorkflowWithSpacing creates perfectly spaced YAML using CustomMarshaler
+func marshalWorkflowWithSpacing(wf v1.Workflow) ([]byte, error) {
+	// Get sorted task names for deterministic output
+	var taskNames []string
+	for name := range wf.Tasks {
+		taskNames = append(taskNames, name)
+	}
+
+	// Sort task names
+	for i := 0; i < len(taskNames); i++ {
+		for j := i + 1; j < len(taskNames); j++ {
+			if taskNames[i] > taskNames[j] {
+				taskNames[i], taskNames[j] = taskNames[j], taskNames[i]
+			}
+		}
+	}
+
+	// Build schema-version section
+	result := "schema-version: " + wf.SchemaVersion + "\n\n"
+
+	// Build tasks section
+	if len(wf.Tasks) > 0 {
+		result += "tasks:\n"
+
+		for i, name := range taskNames {
+			if i > 0 {
+				result += "\n" // Add blank line between tasks
+			}
+
+			// Marshal individual task
+			taskYAML, err := yaml.MarshalWithOptions(wf.Tasks[name],
+				yaml.Indent(2),
+				yaml.IndentSequence(true),
+				yaml.UseLiteralStyleIfMultiline(true),
+				yaml.UseSingleQuote(false))
+			if err != nil {
+				return nil, err
+			}
+
+			// Add task name and indent content
+			result += "  " + name + ":\n"
+			lines := strings.Split(string(taskYAML), "\n")
+			for _, line := range lines {
+				if strings.TrimSpace(line) != "" {
+					result += "    " + line + "\n"
+				}
+			}
+		}
+	}
+
+	// Add aliases if they exist
+	if len(wf.Aliases) > 0 {
+		result += "\n"
+		aliasesYAML, err := yaml.MarshalWithOptions(wf.Aliases,
+			yaml.Indent(2),
+			yaml.IndentSequence(true),
+			yaml.UseLiteralStyleIfMultiline(true),
+			yaml.UseSingleQuote(false))
+		if err != nil {
+			return nil, err
+		}
+		result += "aliases:\n"
+		lines := strings.Split(string(aliasesYAML), "\n")
+		for _, line := range lines {
+			if strings.TrimSpace(line) != "" {
+				result += "  " + line + "\n"
+			}
+		}
+	}
+
+	return []byte(result), nil
+}
 
 func main() {
 	ctx := context.Background()
@@ -100,10 +175,18 @@ func migrate(ctx context.Context, p string) error {
 }
 
 func pretty(wf v1.Workflow, prefix []byte) ([]byte, error) {
-	b, err := yaml.MarshalWithOptions(wf, yaml.Indent(2), yaml.IndentSequence(true), yaml.UseLiteralStyleIfMultiline(true), yaml.UseSingleQuote(false))
+	// Use CustomMarshaler for zero post-processing spacing control
+	b, err := yaml.MarshalWithOptions(wf,
+		yaml.Indent(2),
+		yaml.IndentSequence(true),
+		yaml.UseLiteralStyleIfMultiline(true),
+		yaml.UseSingleQuote(false),
+		yaml.CustomMarshaler[v1.Workflow](marshalWorkflowWithSpacing))
+
 	if err != nil {
 		return nil, err
 	}
+
 	return append(prefix, b...), nil
 }
 
