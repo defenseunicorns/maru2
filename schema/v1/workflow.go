@@ -13,8 +13,8 @@ const SchemaVersion = "v1"
 // Workflow represents a "tasks.yaml" file
 type Workflow struct {
 	SchemaVersion string   `json:"schema-version"`
-	Tasks         TaskMap  `json:"tasks,omitempty"`
 	Aliases       AliasMap `json:"aliases,omitempty"`
+	Tasks         TaskMap  `json:"tasks,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow

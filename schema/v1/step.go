@@ -175,9 +175,9 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 		})
 
 		withSchema := reflector.Reflect(builtinEmpty)
-		withSchema.Version = ""
 
 		if withSchema != nil {
+			withSchema.Version = ""
 			withSchema.Description = fmt.Sprintf("Configuration for builtin:%s", name)
 
 			// processSchema allows schema types to be either string or their original type for templating
