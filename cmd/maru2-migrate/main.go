@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -26,79 +27,6 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
-
-// marshalWorkflowWithSpacing creates perfectly spaced YAML using CustomMarshaler
-func marshalWorkflowWithSpacing(wf v1.Workflow) ([]byte, error) {
-	// Get sorted task names for deterministic output
-	var taskNames []string
-	for name := range wf.Tasks {
-		taskNames = append(taskNames, name)
-	}
-
-	// Sort task names
-	for i := 0; i < len(taskNames); i++ {
-		for j := i + 1; j < len(taskNames); j++ {
-			if taskNames[i] > taskNames[j] {
-				taskNames[i], taskNames[j] = taskNames[j], taskNames[i]
-			}
-		}
-	}
-
-	// Build schema-version section
-	result := "schema-version: " + wf.SchemaVersion + "\n\n"
-
-	// Build tasks section
-	if len(wf.Tasks) > 0 {
-		result += "tasks:\n"
-
-		for i, name := range taskNames {
-			if i > 0 {
-				result += "\n" // Add blank line between tasks
-			}
-
-			// Marshal individual task
-			taskYAML, err := yaml.MarshalWithOptions(wf.Tasks[name],
-				yaml.Indent(2),
-				yaml.IndentSequence(true),
-				yaml.UseLiteralStyleIfMultiline(true),
-				yaml.UseSingleQuote(false))
-			if err != nil {
-				return nil, err
-			}
-
-			// Add task name and indent content
-			result += "  " + name + ":\n"
-			lines := strings.Split(string(taskYAML), "\n")
-			for _, line := range lines {
-				if strings.TrimSpace(line) != "" {
-					result += "    " + line + "\n"
-				}
-			}
-		}
-	}
-
-	// Add aliases if they exist
-	if len(wf.Aliases) > 0 {
-		result += "\n"
-		aliasesYAML, err := yaml.MarshalWithOptions(wf.Aliases,
-			yaml.Indent(2),
-			yaml.IndentSequence(true),
-			yaml.UseLiteralStyleIfMultiline(true),
-			yaml.UseSingleQuote(false))
-		if err != nil {
-			return nil, err
-		}
-		result += "aliases:\n"
-		lines := strings.Split(string(aliasesYAML), "\n")
-		for _, line := range lines {
-			if strings.TrimSpace(line) != "" {
-				result += "  " + line + "\n"
-			}
-		}
-	}
-
-	return []byte(result), nil
-}
 
 func main() {
 	ctx := context.Background()
@@ -175,14 +103,8 @@ func migrate(ctx context.Context, p string) error {
 }
 
 func pretty(wf v1.Workflow, prefix []byte) ([]byte, error) {
-	// Use CustomMarshaler for zero post-processing spacing control
-	b, err := yaml.MarshalWithOptions(wf,
-		yaml.Indent(2),
-		yaml.IndentSequence(true),
-		yaml.UseLiteralStyleIfMultiline(true),
-		yaml.UseSingleQuote(false),
-		yaml.CustomMarshaler[v1.Workflow](marshalWorkflowWithSpacing))
-
+	opts := append(commonYAMLOpts(), yaml.CustomMarshaler(marshalWorkflowWithSpacing))
+	b, err := yaml.MarshalWithOptions(wf, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +112,16 @@ func pretty(wf v1.Workflow, prefix []byte) ([]byte, error) {
 	return append(prefix, b...), nil
 }
 
-// going to comment every fuction in this guy cause this is a complex operation
+func commonYAMLOpts() []yaml.EncodeOption {
+	return []yaml.EncodeOption{
+		yaml.Indent(2),
+		yaml.IndentSequence(true),
+		yaml.UseLiteralStyleIfMultiline(true),
+		yaml.UseSingleQuote(false),
+	}
+}
+
+// going to comment every function in this guy cause this is a complex operation
 func atomicWriteAndBackup(p string, b []byte) error {
 	if filepath.IsAbs(p) {
 		return fmt.Errorf("%s cannot be absolute", p)
@@ -251,4 +182,54 @@ func atomicWriteAndBackup(p string, b []byte) error {
 		return fmt.Errorf("failed swapping %s and %s: %w", tmp.Name(), src.Name(), err)
 	}
 	return nil
+}
+
+// marshalWorkflowWithSpacing creates perfectly spaced YAML using CustomMarshaler
+func marshalWorkflowWithSpacing(wf v1.Workflow) ([]byte, error) {
+	b := bytes.Buffer{}
+
+	// Build schema-version section
+	b.WriteString("schema-version: " + wf.SchemaVersion + "\n\n")
+
+	// Add aliases if they exist
+	if len(wf.Aliases) > 0 {
+		b.WriteString("\n")
+		aliasesYAML, err := yaml.MarshalWithOptions(wf.Aliases, commonYAMLOpts()...)
+		if err != nil {
+			return nil, err
+		}
+		b.WriteString("aliases:\n")
+		for line := range strings.SplitSeq(string(aliasesYAML), "\n") {
+			if strings.TrimSpace(line) != "" {
+				b.WriteString("  " + line + "\n")
+			}
+		}
+	}
+
+	// Build tasks section
+	if len(wf.Tasks) > 0 {
+		b.WriteString("tasks:\n")
+
+		for i, name := range wf.Tasks.OrderedTaskNames() {
+			if i > 0 {
+				b.WriteString("\n") // Add blank line between tasks
+			}
+
+			// Marshal individual task
+			taskYAML, err := yaml.MarshalWithOptions(wf.Tasks[name], commonYAMLOpts()...)
+			if err != nil {
+				return nil, err
+			}
+
+			// Add task name and indent content
+			b.WriteString("  " + name + ":\n")
+			for line := range strings.SplitSeq(string(taskYAML), "\n") {
+				if strings.TrimSpace(line) != "" {
+					b.WriteString("    " + line + "\n")
+				}
+			}
+		}
+	}
+
+	return b.Bytes(), nil
 }
