@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
@@ -23,8 +24,15 @@ import (
 )
 
 func main() {
-	if len(os.Args) > 1 {
-		fatal(fmt.Errorf("must provide path(s) to migrate"))
+	ctx := context.Background()
+	logger := log.NewWithOptions(os.Stderr, log.Options{
+		ReportTimestamp: false,
+		Level:           log.DebugLevel,
+	})
+	ctx = log.WithContext(ctx, logger)
+
+	if len(os.Args) < 2 {
+		logger.Fatal("must provide path(s) to migrate")
 	}
 
 	var to string
@@ -34,23 +42,20 @@ func main() {
 
 	paths := os.Args[1:]
 
-	ctx := context.Background()
-
-	fs := afero.NewOsFs()
 	for _, p := range paths {
-		err := migrate(ctx, fs, p)
+		err := migrate(ctx, p)
 		if err != nil {
-			fatal(err)
+			logger.Fatal(err)
 		}
 	}
 }
 
-func migrate(ctx context.Context, fs afero.Fs, p string) error {
+func migrate(ctx context.Context, p string) error {
 	uri := &url.URL{
 		Scheme: "file",
 		Opaque: p,
 	}
-	fetcher := uses.NewLocalFetcher(fs)
+	fetcher := uses.NewLocalFetcher(afero.NewOsFs())
 
 	rc, err := fetcher.Fetch(ctx, uri)
 	if err != nil {
@@ -100,11 +105,11 @@ func pretty(wf v1.Workflow) ([]byte, error) {
 // going to comment every fuction in this guy cause this is a complex operation
 func atomicWriteAndBackup(p string, b []byte) error {
 	if filepath.IsAbs(p) {
-		return fmt.Errorf("%s cannot be absolute")
+		return fmt.Errorf("%s cannot be absolute", p)
 	}
 
 	// create a temp file to write to
-	tmp, err := os.CreateTemp("", "")
+	tmp, err := os.Create(p + ".tmp")
 	if err != nil {
 		return err
 	}
@@ -148,14 +153,11 @@ func atomicWriteAndBackup(p string, b []byte) error {
 		return err
 	}
 
+	// atomic rename src -> src.bak
 	if err := unix.Renameat2(unix.AT_FDCWD, src.Name(), unix.AT_FDCWD, bak.Name(), unix.RENAME_EXCHANGE); err != nil {
 		return fmt.Errorf("failed swapping %s and %s: %w", src.Name(), bak.Name(), err)
 	}
 
-	return unix.Renameat2(int(tmp.Fd()), tmp.Name(), unix.AT_FDCWD, src.Name(), unix.RENAME_EXCHANGE)
-}
-
-func fatal(err error) {
-	fmt.Fprintf(os.Stderr, "error: %v", err)
-	os.Exit(1)
+	// atomic rename tmp -> src
+	return unix.Renameat2(unix.AT_FDCWD, tmp.Name(), unix.AT_FDCWD, src.Name(), unix.RENAME_EXCHANGE)
 }
