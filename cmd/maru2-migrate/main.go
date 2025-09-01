@@ -14,13 +14,15 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/log"
+	"github.com/goccy/go-yaml"
+	"github.com/spf13/afero"
+	"golang.org/x/sys/unix"
+
+	maru2cmd "github.com/defenseunicorns/maru2/cmd"
 	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
-	"github.com/goccy/go-yaml"
-	"github.com/spf13/afero"
-	"golang.org/x/sys/unix"
 )
 
 func main() {
@@ -29,6 +31,7 @@ func main() {
 		ReportTimestamp: false,
 		Level:           log.DebugLevel,
 	})
+	logger.SetStyles(maru2cmd.DefaultStyles())
 	ctx = log.WithContext(ctx, logger)
 
 	if len(os.Args) < 2 {
@@ -47,6 +50,7 @@ func main() {
 		if err != nil {
 			logger.Fatal(err)
 		}
+		logger.Info("migrated and backed up", "path", p, "backup", p+".bak")
 	}
 }
 
@@ -84,7 +88,8 @@ func migrate(ctx context.Context, p string) error {
 		if err != nil {
 			return err
 		}
-		b, err := pretty(wf)
+		prefix := []byte("# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json\n")
+		b, err := pretty(wf, prefix)
 		if err != nil {
 			return err
 		}
@@ -94,12 +99,12 @@ func migrate(ctx context.Context, p string) error {
 	}
 }
 
-func pretty(wf v1.Workflow) ([]byte, error) {
-	b, err := yaml.MarshalWithOptions(wf, yaml.Indent(2), yaml.IndentSequence(true), yaml.UseLiteralStyleIfMultiline(true))
+func pretty(wf v1.Workflow, prefix []byte) ([]byte, error) {
+	b, err := yaml.MarshalWithOptions(wf, yaml.Indent(2), yaml.IndentSequence(true), yaml.UseLiteralStyleIfMultiline(true), yaml.UseSingleQuote(false))
 	if err != nil {
 		return nil, err
 	}
-	return b, nil
+	return append(prefix, b...), nil
 }
 
 // going to comment every fuction in this guy cause this is a complex operation
@@ -159,5 +164,8 @@ func atomicWriteAndBackup(p string, b []byte) error {
 	}
 
 	// atomic rename tmp -> src
-	return unix.Renameat2(unix.AT_FDCWD, tmp.Name(), unix.AT_FDCWD, src.Name(), unix.RENAME_EXCHANGE)
+	if err := unix.Renameat2(unix.AT_FDCWD, tmp.Name(), unix.AT_FDCWD, src.Name(), unix.RENAME_EXCHANGE); err != nil {
+		return fmt.Errorf("failed swapping %s and %s: %w", tmp.Name(), src.Name(), err)
+	}
+	return nil
 }
