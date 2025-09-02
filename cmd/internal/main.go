@@ -38,6 +38,13 @@ func main() {
 
 	root.AddCommand(cli)
 
+	publish := maru2cmd.NewPublishCmd()
+	// rename maru2-publish -> publish-workflow (or w/e you wish to call the command)
+	publish.Use = "publish-workflow"
+	publish.Aliases = []string{"publish-wf", "pwf"}
+
+	root.AddCommand(publish)
+
 	// standard setup for context and logger
 	// customize as you see fit
 	ctx := context.Background()

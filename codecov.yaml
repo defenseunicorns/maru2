@@ -1,3 +1,4 @@
 ignore:
   - cmd/maru2/main.go # barebones wrapper, too annoying to get coverage
+  - cmd/maru2-publish/main.go # barebones wrapper, too annoying to get coverage
   - cmd/internal/main.go # example / docs code
