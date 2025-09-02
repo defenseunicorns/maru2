@@ -10,6 +10,35 @@ stderr 'string was used where mapping is expected'
 ! exec maru2 -f workflow-absolute-path.yaml --list
 stderr 'cannot be an absolute path'
 
+# alias resolution functionality
+exec maru2 -f workflow-with-aliases.yaml --list
+stderr 'local-task'
+stderr 'remote-task'
+stderr 'local:echo-local'
+
+# local alias resolution
+exec maru2 -f workflow-with-aliases.yaml local-task
+stdout 'Local alias resolved successfully'
+
+# direct alias call
+exec maru2 -f workflow-with-aliases.yaml local:echo-local
+
+# task within alias not found
+! exec maru2 -f workflow-with-aliases.yaml local:dne
+stderr 'ERRO task "dne" not found'
+
+# alias fails to resolve
+! exec maru2 -f workflow-with-aliases.yaml dne:echo-local
+stderr 'ERRO unsupported scheme: "dne" in "dne:echo-local"'
+
+# alias fails to fetch
+! exec maru2 -f workflow-resolve-error.yaml missing:anything
+stderr 'ERRO stat does-not-exist.yaml: no such file or directory'
+
+# alias fails during run
+! exec maru2 -f workflow-with-aliases.yaml local:fails
+stderr 'ERRO at fails\[0\] \(file:local-tasks.yaml\?task=fails\)'
+
 -- workflow-absolute-path.yaml --
 schema-version: v1
 aliases:
@@ -44,3 +73,30 @@ tasks:
 this is not valid yaml content
   - malformed
     syntax
+
+-- workflow-with-aliases.yaml --
+schema-version: v1
+aliases:
+  local:
+    path: local-tasks.yaml
+tasks:
+  local-task:
+    steps:
+      - uses: local:echo-local
+  remote-task:
+    inputs:
+      message:
+        description: Message for remote task
+        default: hello from remote
+    steps:
+      - run: echo "${{ input \"message\" }}"
+
+-- local-tasks.yaml --
+schema-version: v1
+tasks:
+  echo-local:
+    steps:
+      - run: echo "Local alias resolved successfully"
+  fails:
+    steps:
+      - run: exit 1
