@@ -130,7 +130,26 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
-			return wf.Tasks.OrderedTaskNames(), cobra.ShellCompDirectiveNoFileComp
+
+			names := wf.Tasks.OrderedTaskNames()
+
+			for name, alias := range wf.Aliases {
+				if alias.Path != "" {
+					next, err := uses.ResolveRelative(resolved, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
+					if err != nil {
+						return nil, cobra.ShellCompDirectiveError
+					}
+					aliasedWF, err := maru2.Fetch(cmd.Context(), svc, next)
+					if err != nil {
+						return nil, cobra.ShellCompDirectiveError
+					}
+					for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
+						names = append(names, fmt.Sprintf("%s:%s", name, n))
+					}
+				}
+			}
+
+			return names, cobra.ShellCompDirectiveNoFileComp
 		},
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
 			l, err := log.ParseLevel(level)
@@ -231,6 +250,22 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					logger.Printf("- %s", n)
 				}
 
+				for name, alias := range wf.Aliases {
+					if alias.Path != "" {
+						next, err := uses.ResolveRelative(resolved, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
+						if err != nil {
+							return err
+						}
+						aliasedWF, err := maru2.Fetch(ctx, svc, next)
+						if err != nil {
+							return err
+						}
+						for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
+							logger.Printf("- %s:%s", name, n)
+						}
+					}
+				}
+
 				return nil
 			}
 
@@ -253,6 +288,25 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			environ := os.Environ()
 
 			for _, call := range args {
+				parts := strings.SplitN(call, ":", 2)
+
+				if len(parts) == 2 {
+					next, err := uses.ResolveRelative(resolved, call, wf.Aliases)
+					if err != nil {
+						return err
+					}
+					nextWf, err := maru2.Fetch(ctx, svc, next)
+					if err != nil {
+						return err
+					}
+
+					_, err = maru2.Run(ctx, svc, nextWf, parts[1], with, next, "", environ, dry)
+					if err != nil {
+						return err
+					}
+					continue
+				}
+
 				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, "", environ, dry)
 				if err != nil {
 					return err

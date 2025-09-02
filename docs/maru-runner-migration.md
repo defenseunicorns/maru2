@@ -400,12 +400,20 @@ tasks:
     steps:
       - uses: file:path/to/tasks.yaml?task=some-task
       - uses: pkg:github/defenseunicorns/maru-runner?task=other-task
-      - uses: builtin:echo
-        with:
-          text: "Using a built-in task"
-      - uses: builtin:fetch
-        with:
-          url: "https://example.com"
+```
+
+or:
+
+```yaml
+schema-version: v1
+aliases:
+  local:
+    path: ./path/to/tasks.yaml
+tasks:
+  include-example:
+    steps:
+      - uses: local:some-task
+      - uses: pkg:github/defenseunicorns/maru-runner?task=other-task
 ```
 
 Key differences:
@@ -414,6 +422,7 @@ Key differences:
 - Format is `protocol:path?task=task-name` (similar to package URLs)
 - Supported protocols: [`file:`](./syntax.md#run-a-task-from-a-local-file), [`http:`, `https:`, `pkg:github`, `pkg:gitlab`](./syntax.md#run-a-task-from-a-remote-file), [`builtin:`](./builtins.md), [`oci:`](./publish.md)
 - Built-in tasks like `builtin:echo` and `builtin:fetch` provide common functionality
+- Support for local path [`aliases`](./syntax.md#local-file-aliases)
 
 ## Command Line Usage
 

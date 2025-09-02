@@ -34,7 +34,7 @@ stdout '(devel)'
 mkdir home/.maru2
 mv bad/alias.yaml home/.maru2/config.yaml
 ! maru2-publish localhost:5000/test:latest
-stderr 'ERRO aliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
+stderr 'ERRO aliases.gh: Must validate one and only one schema \(oneOf\)\naliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
 rm home/.maru2/config.yaml
 
 # home contains an invalid docker config

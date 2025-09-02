@@ -33,6 +33,9 @@ maru2 --from other-tasks.yaml build
 
 # Run a task from a remote workflow
 maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
+
+# Run a task using an alias (if aliases are defined in the workflow)
+maru2 alias-name:task-name
 ```
 
 ## All Available Flags
@@ -66,9 +69,11 @@ Available:
 - default
 - build
 - test
+- local-alias:setup
+- local-alias:deploy
 ```
 
-If a `default` task is defined, it's listed first. Otherwise, tasks are displayed in alphabetical order.
+If a `default` task is defined, it's listed first. Otherwise, tasks are displayed in alphabetical order. Tasks from local file aliases are also shown in the format `alias:task-name`.
 
 You can also list tasks from a specific file or remote workflow:
 
@@ -179,6 +184,20 @@ maru2 clean build test deploy
 
 Tasks are executed in the order specified on the command line, which is useful for creating simple pipelines.
 
+### Running Aliased Tasks
+
+If your workflow defines local file aliases, you can run tasks from those aliased workflows directly:
+
+```sh
+# Run a task from a local alias
+maru2 common:setup
+
+# Run multiple aliased tasks
+maru2 common:setup utils:compile common:deploy
+```
+
+The `alias:task` format allows you to reference tasks from aliased workflow files without needing to specify the full file path.
+
 ## Working with Workflow Files
 
 ### Local Workflow Files
@@ -286,6 +305,20 @@ maru2 --from "'pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml'" [tab
 
 # Alternative: use --list to discover available tasks
 maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
+```
+
+### Completion with Aliased Tasks
+
+Tab completion also works with aliased tasks. If your workflow defines aliases, you'll see them in completion:
+
+```sh
+# Tab completion shows both regular and aliased tasks
+maru2 [tab][tab]
+# Shows: default build test common:setup common:deploy utils:compile
+
+# Complete specific alias
+maru2 common:[tab][tab]
+# Shows: common:setup common:deploy
 ```
 
 ## Additional Options

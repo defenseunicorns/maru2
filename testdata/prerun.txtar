@@ -25,7 +25,7 @@ stderr 'ERRO fetch-policy: fetch-policy must be one of the following: "always", 
 
 mv bad/alias.yaml home/.maru2/config.yaml
 ! exec maru2
-stderr 'ERRO aliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
+stderr 'ERRO aliases.gh: Must validate one and only one schema \(oneOf\)\naliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
 
 rm home/.maru2/config.yaml
 

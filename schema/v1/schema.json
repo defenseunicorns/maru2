@@ -12,37 +12,58 @@
     },
     "aliases": {
       "additionalProperties": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "github",
-              "gitlab"
+        "oneOf": [
+          {
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Relative path to workflow"
+              }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "path"
             ],
-            "description": "Type of the alias, maps to a package URL type"
+            "description": "Local file alias"
           },
-          "base": {
-            "type": "string",
-            "description": "Base URL for the underlying client (e.g. https://mygitlab.com )"
-          },
-          "token-from-env": {
-            "type": "string",
-            "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
-            "description": "Environment variable containing the token for authentication"
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "github",
+                  "gitlab"
+                ],
+                "description": "Type of the alias, maps to a package URL type"
+              },
+              "base-url": {
+                "type": "string",
+                "description": "Base URL for the underlying client (e.g. https://mygitlab.com )"
+              },
+              "token-from-env": {
+                "type": "string",
+                "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
+                "description": "Environment variable containing the token for authentication"
+              }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "description": "Remote alias (GitHub, GitLab, etc.)"
           }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "type"
         ],
-        "description": "An alias to a package URL"
+        "type": "object",
+        "description": "An alias to a package URL or a local file path"
       },
       "propertyNames": {
         "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
       },
       "type": "object",
-      "description": "Aliases for package URLs to create shorthand references\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases"
+      "description": "Aliases for package URLs or local file paths to create shorthand references\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#local-file-aliases\n"
     },
     "tasks": {
       "additionalProperties": {

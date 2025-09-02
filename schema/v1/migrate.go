@@ -25,7 +25,7 @@ func Migrate(oldWorkflow any) (Workflow, error) {
 			for aliasName, v0Alias := range old.Aliases {
 				wf.Aliases[aliasName] = Alias{
 					Type:         v0Alias.Type,
-					Base:         v0Alias.Base,
+					BaseURL:      v0Alias.Base,
 					TokenFromEnv: v0Alias.TokenFromEnv,
 				}
 			}

@@ -28,8 +28,11 @@ func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 		tasks.Description = "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
 	}
 	if aliases, ok := schema.Properties.Get("aliases"); ok && aliases != nil {
-		aliases.Description = `Aliases for package URLs to create shorthand references
-See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases`
+		aliases.Description = `Aliases for package URLs or local file paths to create shorthand references
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases
+
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#local-file-aliases
+`
 	}
 }
 

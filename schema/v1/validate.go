@@ -69,6 +69,17 @@ func Validate(wf Workflow) error {
 		return errors.New("no tasks available")
 	}
 
+	namespaces := []string{}
+	for ns, alias := range wf.Aliases {
+		namespaces = append(namespaces, ns)
+		if filepath.IsAbs(alias.Path) {
+			return fmt.Errorf(".aliases.%s cannot be an absolute path: %s", ns, alias.Path)
+		}
+		if slices.Contains(SupportedSchemes(), ns) {
+			return fmt.Errorf(".aliases.%s cannot be one of [%s]", ns, strings.Join(SupportedSchemes(), ", "))
+		}
+	}
+
 	for name, task := range wf.Tasks {
 		if ok := TaskNamePattern.MatchString(name); !ok {
 			return fmt.Errorf("task name %q does not satisfy %q", name, TaskNamePattern.String())
@@ -114,9 +125,17 @@ func Validate(wf Workflow) error {
 					}
 				} else {
 					schemes := append(SupportedSchemes(), "builtin")
+					schemes = append(schemes, namespaces...)
 
 					if !slices.Contains(schemes, u.Scheme) {
 						return fmt.Errorf(".tasks.%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))
+					}
+
+					if slices.Contains(namespaces, u.Scheme) {
+						task := u.Opaque
+						if !TaskNamePattern.MatchString(task) {
+							return fmt.Errorf(".tasks.%s[%d].uses does not satisfy alias:task syntax: task %q does not satisfy %q", name, idx, task, TaskNamePattern)
+						}
 					}
 				}
 			}
