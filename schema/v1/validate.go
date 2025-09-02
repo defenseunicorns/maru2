@@ -127,6 +127,13 @@ func Validate(wf Workflow) error {
 					if !slices.Contains(schemes, u.Scheme) {
 						return fmt.Errorf(".tasks.%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))
 					}
+
+					if slices.Contains(namespaces, u.Scheme) {
+						task := u.Opaque
+						if !TaskNamePattern.MatchString(task) {
+							return fmt.Errorf(".tasks.%s[%d].uses does not satisfy alias:task syntax: task %q does not satisfy %q", name, idx, task, TaskNamePattern)
+						}
+					}
 				}
 			}
 

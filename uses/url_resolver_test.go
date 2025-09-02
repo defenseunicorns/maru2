@@ -496,6 +496,17 @@ func TestResolveURL(t *testing.T) {
 			},
 			next: "file:local/path/to/file.yaml?task=task-name",
 		},
+		{
+			name: "alias path resolution with invalid task name",
+			prev: "file:foo.yaml",
+			uri:  "custom:2-invalid-task",
+			aliases: v1.AliasMap{
+				"custom": {
+					Path: "local/path/to/file.yaml",
+				},
+			},
+			expectedErr: `"2-invalid-task" does not satisfy "^[_a-zA-Z][a-zA-Z0-9_-]*$"`,
+		},
 	}
 
 	for _, tc := range tests {

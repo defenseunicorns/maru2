@@ -745,6 +745,44 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: ".tasks.test[0].uses \"unknown\" is not one of [file, http, https, pkg, oci, builtin]",
 		},
+		{
+			name: "invalid uses with alias namespace and invalid task name",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"custom": {
+						Path: "custom/path.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{
+							Uses: "custom:2-invalid-task",
+						}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".tasks.test[0].uses does not satisfy alias:task syntax: task \"2-invalid-task\" does not satisfy %q", TaskNamePattern.String()),
+		},
+		{
+			name: "invalid uses with alias namespace and empty task name",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"custom": {
+						Path: "custom/path.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{
+							Uses: "custom:",
+						}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".tasks.test[0].uses does not satisfy alias:task syntax: task \"\" does not satisfy %q", TaskNamePattern.String()),
+		},
 	}
 
 	for _, tc := range testCases {
