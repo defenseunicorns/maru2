@@ -22,8 +22,9 @@ func (AliasMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 // Alias defines how an alias should be resolved
 type Alias struct {
 	Type         string `json:"type"`
-	Base         string `json:"base,omitempty"`
+	BaseURL      string `json:"base-url,omitempty"`
 	TokenFromEnv string `json:"token-from-env,omitempty"`
+	Path         string `json:"path,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for an alias
@@ -42,5 +43,9 @@ func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if tokenFromEnv, ok := schema.Properties.Get("token-from-env"); ok && tokenFromEnv != nil {
 		tokenFromEnv.Description = "Environment variable containing the token for authentication"
 		tokenFromEnv.Pattern = EnvVariablePattern.String()
+	}
+
+	if path, ok := schema.Properties.Get("path"); ok && path != nil {
+		path.Description = "Relative path to workflow"
 	}
 }

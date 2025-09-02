@@ -142,7 +142,7 @@ func TestMigrate(t *testing.T) {
 				Aliases: AliasMap{
 					"gh": Alias{
 						Type:         "github",
-						Base:         "https://api.github.com",
+						BaseURL:      "https://api.github.com",
 						TokenFromEnv: "GITHUB_TOKEN",
 					},
 				},
@@ -335,7 +335,7 @@ func TestMigrate(t *testing.T) {
 				Aliases: AliasMap{
 					"gh": Alias{
 						Type:         "github",
-						Base:         "https://github.com",
+						BaseURL:      "https://github.com",
 						TokenFromEnv: "GITHUB_TOKEN",
 					},
 				},

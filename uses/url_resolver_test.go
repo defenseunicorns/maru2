@@ -255,8 +255,8 @@ func TestResolveURL(t *testing.T) {
 			uri:  "pkg:github/owner/repo@v1.0.0#dir/bar.yaml",
 			aliases: v1.AliasMap{
 				"github": {
-					Type: "github",
-					Base: "https://github.com/",
+					Type:    "github",
+					BaseURL: "https://github.com/",
 				},
 			},
 			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com%2F#dir/bar.yaml",
@@ -267,8 +267,8 @@ func TestResolveURL(t *testing.T) {
 			uri:  "file:bar.yaml",
 			aliases: v1.AliasMap{
 				"github": {
-					Type: "github",
-					Base: "https://github.com",
+					Type:    "github",
+					BaseURL: "https://github.com",
 				},
 			},
 			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fgithub.com#dir/bar.yaml",
@@ -280,7 +280,7 @@ func TestResolveURL(t *testing.T) {
 			aliases: v1.AliasMap{
 				"github": {
 					Type:         "github",
-					Base:         "https://github.com",
+					BaseURL:      "https://github.com",
 					TokenFromEnv: "GITHUB_TOKEN",
 				},
 			},

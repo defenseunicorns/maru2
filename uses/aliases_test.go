@@ -51,8 +51,8 @@ func TestConfigBasedResolver(t *testing.T) {
 			inputQualifiers: map[string]string{},
 			aliases: v1.AliasMap{
 				"gl": {
-					Type: packageurl.TypeGitlab,
-					Base: "https://gitlab.example.com",
+					Type:    packageurl.TypeGitlab,
+					BaseURL: "https://gitlab.example.com",
 				},
 			},
 			wantType:       packageurl.TypeGitlab,
@@ -65,8 +65,8 @@ func TestConfigBasedResolver(t *testing.T) {
 			inputQualifiers: map[string]string{QualifierBaseURL: "https://my-gitlab.com"},
 			aliases: v1.AliasMap{
 				"gl": {
-					Type: packageurl.TypeGitlab,
-					Base: "https://gitlab.example.com",
+					Type:    packageurl.TypeGitlab,
+					BaseURL: "https://gitlab.example.com",
 				},
 			},
 			wantType:       packageurl.TypeGitlab,

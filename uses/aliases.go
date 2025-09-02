@@ -18,8 +18,8 @@ func ResolveAlias(pURL packageurl.PackageURL, aliases v1.AliasMap) (packageurl.P
 
 	qualifiers := pURL.Qualifiers.Map()
 
-	if aliasDef.Base != "" && qualifiers[QualifierBaseURL] == "" {
-		qualifiers[QualifierBaseURL] = aliasDef.Base
+	if aliasDef.BaseURL != "" && qualifiers[QualifierBaseURL] == "" {
+		qualifiers[QualifierBaseURL] = aliasDef.BaseURL
 	}
 
 	if aliasDef.TokenFromEnv != "" && qualifiers[QualifierTokenFromEnv] == "" {
