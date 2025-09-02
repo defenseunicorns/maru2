@@ -11,11 +11,12 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
+// NewMigrateCmd creates a new migrate command
 func NewMigrateCmd() *cobra.Command {
 	var to string
 
 	cmd := &cobra.Command{
-		Use:   "migrate",
+		Use:   "maru2-migrate",
 		Short: "Migrate a maru2 workflow to a new schema version",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -23,7 +24,7 @@ func NewMigrateCmd() *cobra.Command {
 
 			for _, p := range args {
 				logger.Info("migrating", "path", p, "to", to)
-				err := migrate.Run(cmd.Context(), p, v1.SchemaVersion)
+				err := migrate.Path(cmd.Context(), p, v1.SchemaVersion)
 				if err != nil {
 					return err
 				}

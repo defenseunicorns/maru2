@@ -8,34 +8,26 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path/filepath"
 
 	"github.com/goccy/go-yaml"
-	"github.com/spf13/afero"
 	"golang.org/x/sys/unix"
 
 	"github.com/defenseunicorns/maru2/schema"
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
-	"github.com/defenseunicorns/maru2/uses"
 )
 
-func Run(ctx context.Context, p string, to string) error {
-	uri := &url.URL{
-		Scheme: "file",
-		Opaque: p,
-	}
-	fetcher := uses.NewLocalFetcher(afero.NewOsFs())
-
-	rc, err := fetcher.Fetch(ctx, uri)
+// Path migrates a maru2 workflow at path p to the specified schema version
+func Path(ctx context.Context, p string, to string) error {
+	f, err := os.Open(p)
 	if err != nil {
 		return err
 	}
-	defer rc.Close()
+	defer f.Close()
 
-	b, err := io.ReadAll(rc)
+	b, err := io.ReadAll(f)
 	if err != nil {
 		return err
 	}
