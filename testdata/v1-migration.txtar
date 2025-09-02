@@ -1,4 +1,4 @@
-# Test v1 schema migration and validation
+# schema migration and validation
 exec maru2 -f tasks-v0.yaml --list
 stderr 'echo-task'
 
@@ -8,11 +8,11 @@ stderr 'echo-task'
 exec maru2 -f tasks-v1.yaml echo-task -w message='v1 migration test'
 stdout 'v1 migration test'
 
-# Test that v0 files are automatically migrated to v1
+# v0 files are automatically migrated to v1
 exec maru2 -f tasks-v0.yaml echo-task -w message='v0 auto-migration'
 stdout 'v0 auto-migration'
 
-# Test invalid schema version
+# invalid schema version
 ! exec maru2 -f tasks-invalid.yaml --list
 stderr 'unsupported schema version'
 

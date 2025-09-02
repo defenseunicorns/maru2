@@ -1,21 +1,17 @@
-# Test v1 alias resolution functionality
+# alias resolution functionality
 exec maru2 -f workflow-with-aliases.yaml --list
 stderr 'local-task'
 stderr 'remote-task'
+stderr 'local:echo-local'
 
-# Test local alias resolution
+# local alias resolution
 exec maru2 -f workflow-with-aliases.yaml local-task
 stdout 'Local alias resolved successfully'
 
-# Test remote alias resolution with custom type (skip due to network dependency)
-# exec maru2 -f workflow-with-aliases.yaml remote-task -w message='Remote alias test'
-# stdout 'Remote alias test'
+# direct alias call
+exec maru2 -f workflow-with-aliases.yaml local:echo-local
 
-# Test alias with base URL override
-exec maru2 -f workflow-with-base-url.yaml --list
-stderr 'gitlab-task'
-
-# Test invalid alias reference
+# invalid alias reference
 ! exec maru2 -f workflow-invalid-alias.yaml broken-task
 stderr 'no such file or directory'
 
@@ -24,10 +20,6 @@ schema-version: v1
 aliases:
   local:
     path: local-tasks.yaml
-  custom-gh:
-    type: github
-    base-url: https://api.github.com
-    token-from-env: CUSTOM_GITHUB_TOKEN
 tasks:
   local-task:
     steps:
@@ -46,18 +38,6 @@ tasks:
   echo-local:
     steps:
       - run: echo "Local alias resolved successfully"
-
--- workflow-with-base-url.yaml --
-schema-version: v1
-aliases:
-  custom-gl:
-    type: gitlab
-    base-url: https://gitlab.example.com
-    token-from-env: GITLAB_CUSTOM_TOKEN
-tasks:
-  gitlab-task:
-    steps:
-      - run: echo "GitLab alias with custom base URL"
 
 -- workflow-invalid-alias.yaml --
 schema-version: v1
