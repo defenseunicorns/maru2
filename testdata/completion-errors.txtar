@@ -1,0 +1,43 @@
+exec maru2 -f workflow-missing-alias.yaml __complete task
+stderr 'Completion ended with directive: ShellCompDirectiveError'
+
+exec maru2 -f workflow-invalid-alias.yaml __complete task
+stderr 'Completion ended with directive: ShellCompDirectiveError'
+
+exec maru2 -f workflow-absolute-alias.yaml __complete task
+stderr 'Completion ended with directive: ShellCompDirectiveError'
+
+-- workflow-missing-alias.yaml --
+schema-version: v1
+aliases:
+  missing:
+    path: does-not-exist.yaml
+tasks:
+  main-task:
+    steps:
+      - run: echo "main"
+
+-- workflow-invalid-alias.yaml --
+schema-version: v1
+aliases:
+  broken:
+    path: invalid.yaml
+tasks:
+  main-task:
+    steps:
+      - run: echo "main"
+
+-- invalid.yaml --
+this is not valid yaml
+  malformed: content
+    - invalid
+
+-- workflow-absolute-alias.yaml --
+schema-version: v1
+aliases:
+  absolute:
+    path: /absolute/path/to/file.yaml
+tasks:
+  main-task:
+    steps:
+      - run: echo "main"

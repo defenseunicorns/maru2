@@ -1,0 +1,46 @@
+# alias points to non-existent file
+! exec maru2 -f workflow-resolve-error.yaml --list
+stderr 'no such file or directory'
+
+# alias points to invalid YAML content
+! exec maru2 -f workflow-fetch-error.yaml --list
+stderr 'string was used where mapping is expected'
+
+# absolute paths not allowed in aliases
+! exec maru2 -f workflow-absolute-path.yaml --list
+stderr 'cannot be an absolute path'
+
+-- workflow-absolute-path.yaml --
+schema-version: v1
+aliases:
+  missing:
+    path: /non/existent/path/to/file.yaml
+tasks:
+  test-task:
+    steps:
+      - run: echo "test"
+
+-- workflow-resolve-error.yaml --
+schema-version: v1
+aliases:
+  missing:
+    path: does-not-exist.yaml
+tasks:
+  main-task:
+    steps:
+      - run: echo "main"
+
+-- workflow-fetch-error.yaml --
+schema-version: v1
+aliases:
+  invalid:
+    path: broken.yaml
+tasks:
+  main-task:
+    steps:
+      - run: echo "main"
+
+-- broken.yaml --
+this is not valid yaml content
+  - malformed
+    syntax
