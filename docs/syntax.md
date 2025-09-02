@@ -452,12 +452,12 @@ schema-version: v1
 aliases:
   gl:
     type: gitlab
-    base: https://gitlab.example.com
+    base-url: https://gitlab.example.com
   gh:
     type: github
   internal:
     type: gitlab
-    base: https://gitlab.internal.company.com
+    base-url: https://gitlab.internal.company.com
 
 tasks:
   # Using the full GitHub package URL

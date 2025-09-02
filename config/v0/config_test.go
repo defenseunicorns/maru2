@@ -24,7 +24,7 @@ func TestFileSystemConfigLoader(t *testing.T) {
 aliases:
   gl:
     type: gitlab
-    base: https://gitlab.example.com
+    base-url: https://gitlab.example.com
   gh:
     type: github
   another:
@@ -44,12 +44,12 @@ aliases:
 	glAlias, ok := cfg.Aliases["gl"]
 	assert.True(t, ok)
 	assert.Equal(t, packageurl.TypeGitlab, glAlias.Type)
-	assert.Equal(t, "https://gitlab.example.com", glAlias.Base)
+	assert.Equal(t, "https://gitlab.example.com", glAlias.BaseURL)
 
 	ghAlias, ok := cfg.Aliases["gh"]
 	assert.True(t, ok)
 	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
-	assert.Empty(t, ghAlias.Base)
+	assert.Empty(t, ghAlias.BaseURL)
 
 	cfg, err = LoadConfig(afero.NewBasePathFs(fsys, "nonexistent-dir"))
 	require.NoError(t, err)
@@ -138,8 +138,8 @@ func TestValidate(t *testing.T) {
 						Type: packageurl.TypeGithub,
 					},
 					"gl": {
-						Type: packageurl.TypeGitlab,
-						Base: "https://gitlab.example.com",
+						Type:    packageurl.TypeGitlab,
+						BaseURL: "https://gitlab.example.com",
 					},
 					"custom": {
 						Type:         packageurl.TypeGithub,

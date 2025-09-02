@@ -24,7 +24,7 @@ func TestDefaultDirectory(t *testing.T) {
 aliases:
   gl:
     type: gitlab
-    base: https://gitlab.example.com
+    base-url: https://gitlab.example.com
   gh:
     type: github
   another:
@@ -36,8 +36,8 @@ aliases:
 		SchemaVersion: configv0.SchemaVersion,
 		Aliases: v1.AliasMap{
 			"gl": {
-				Type: packageurl.TypeGitlab,
-				Base: "https://gitlab.example.com",
+				Type:    packageurl.TypeGitlab,
+				BaseURL: "https://gitlab.example.com",
 			},
 			"gh": {
 				Type: packageurl.TypeGithub,
