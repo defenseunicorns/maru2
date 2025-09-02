@@ -37,12 +37,14 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 		for ns, alias := range pkgAliases {
 			if ns == uri.Scheme && alias.Path != "" {
 				task := uri.Opaque
-				if !v1.TaskNamePattern.MatchString(task) {
-					return nil, fmt.Errorf("%q does not satisfy %q", task, v1.TaskNamePattern)
-				}
-				uri, err = url.Parse("file:" + alias.Path + "?task=" + task)
+				uri, err = url.Parse("file:" + alias.Path)
 				if err != nil {
 					return nil, err
+				}
+				if task != "" {
+					q := uri.Query()
+					q.Set("task", task)
+					uri.RawQuery = q.Encode()
 				}
 				break
 			}
