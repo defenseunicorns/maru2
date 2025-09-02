@@ -27,7 +27,6 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gitlab.com/gitlab-org/api/client-go v0.142.4
-	golang.org/x/sys v0.34.0
 	oras.land/oras-go/v2 v2.6.0
 )
 
@@ -73,6 +72,7 @@ require (
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
