@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 (2025-09-02)
+
+## What's Changed
+* feat!: task inputs by @Noxsios in https://github.com/defenseunicorns/maru2/pull/115
+* build(deps): bump the go group with 3 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/116
+* chore: shift where publish lives and better embed example by @Noxsios in https://github.com/defenseunicorns/maru2/pull/118
+* chore: update codeowners by @Noxsios in https://github.com/defenseunicorns/maru2/pull/119
+* feat!: alias include by @Noxsios in https://github.com/defenseunicorns/maru2/pull/120
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.4.0...v0.5.0
+
 ## 0.4.0 (2025-08-29)
 
 ## What's Changed
