@@ -76,7 +76,7 @@
           "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"
         },
         "type": "object",
-        "description": "Aliases for package URLs to create shorthand references\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases"
+        "description": "Aliases for package URLs or local file paths to create shorthand references\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#local-file-aliases\n"
       },
       "tasks": {
         "additionalProperties": {
