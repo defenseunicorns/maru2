@@ -290,7 +290,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			for _, call := range args {
 				parts := strings.SplitN(call, ":", 2)
 
-				if len(parts) > 1 {
+				if len(parts) == 2 {
 					next, err := uses.ResolveRelative(resolved, call, wf.Aliases)
 					if err != nil {
 						return err

@@ -783,6 +783,91 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: fmt.Sprintf(".tasks.test[0].uses does not satisfy alias:task syntax: task \"\" does not satisfy %q", TaskNamePattern.String()),
 		},
+		{
+			name: "invalid alias name using supported scheme",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"file": {
+						Path: "some/path.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".aliases.file cannot be one of [%s]", strings.Join(SupportedSchemes(), ", ")),
+		},
+		{
+			name: "invalid alias name using http scheme",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"http": {
+						Type: "github",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".aliases.http cannot be one of [%s]", strings.Join(SupportedSchemes(), ", ")),
+		},
+		{
+			name: "invalid alias name using pkg scheme",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"pkg": {
+						Path: "local/path.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".aliases.pkg cannot be one of [%s]", strings.Join(SupportedSchemes(), ", ")),
+		},
+		{
+			name: "invalid alias name using https scheme",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"https": {
+						Type: "gitlab",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".aliases.https cannot be one of [%s]", strings.Join(SupportedSchemes(), ", ")),
+		},
+		{
+			name: "invalid alias name using oci scheme",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"oci": {
+						Path: "workflows/common.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".aliases.oci cannot be one of [%s]", strings.Join(SupportedSchemes(), ", ")),
+		},
 	}
 
 	for _, tc := range testCases {

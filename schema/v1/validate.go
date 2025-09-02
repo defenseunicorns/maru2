@@ -75,6 +75,9 @@ func Validate(wf Workflow) error {
 		if filepath.IsAbs(alias.Path) {
 			return fmt.Errorf(".aliases.%s cannot be an absolute path: %s", ns, alias.Path)
 		}
+		if slices.Contains(SupportedSchemes(), ns) {
+			return fmt.Errorf(".aliases.%s cannot be one of [%s]", ns, strings.Join(SupportedSchemes(), ", "))
+		}
 	}
 
 	for name, task := range wf.Tasks {
