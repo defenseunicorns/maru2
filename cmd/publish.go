@@ -4,10 +4,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"runtime/debug"
+	"syscall"
 
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
@@ -141,4 +144,30 @@ func NewPublishCmd() *cobra.Command {
 	migrate.Flags().StringSliceVarP(&entrypoints, "entrypoint", "e", entrypoints, "Slice(s) of relative paths to workflows")
 
 	return migrate
+}
+
+// PublishMain executes the root command for the maru2-publish CLI.
+//
+// It returns 0 on success, 1 on failure and logs any errors.
+func PublishMain() int {
+	cli := NewPublishCmd()
+
+	ctx := context.Background()
+
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
+
+	logger := log.NewWithOptions(os.Stderr, log.Options{
+		ReportTimestamp: false,
+	})
+
+	logger.SetStyles(DefaultStyles())
+
+	ctx = log.WithContext(ctx, logger)
+
+	if err := cli.ExecuteContext(ctx); err != nil {
+		logger.Error(err)
+		return 1
+	}
+	return 0
 }
