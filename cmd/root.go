@@ -231,6 +231,22 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					logger.Printf("- %s", n)
 				}
 
+				for name, alias := range wf.Aliases {
+					if alias.Path != "" {
+						next, err := uses.ResolveRelative(resolved, strings.Join([]string{name, alias.Path}, ":"), wf.Aliases)
+						if err != nil {
+							return err
+						}
+						aliasedWF, err := maru2.Fetch(ctx, svc, next)
+						if err != nil {
+							return err
+						}
+						for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
+							logger.Printf("- %s:%s", name, n)
+						}
+					}
+				}
+
 				return nil
 			}
 
