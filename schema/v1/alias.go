@@ -29,7 +29,7 @@ type Alias struct {
 
 // JSONSchemaExtend extends the JSON schema for an alias
 func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
-	schema.Description = "An alias to a package URL"
+	schema.Description = "An alias to a package URL or a local file path"
 
 	schema.Properties = nil
 	schema.Required = nil

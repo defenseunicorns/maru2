@@ -106,6 +106,11 @@ This example demonstrates inputs, task references, and output passing:
 # yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json
 schema-version: v1
 
+aliases:
+  # Local file alias for common tasks
+  common:
+    path: workflows/common.yaml
+
 tasks:
   # This is the default task that runs when you type just 'maru2'
   default:
@@ -119,6 +124,8 @@ tasks:
         with:
           message: |
             ${{ input "message" }}
+      # Use a task from an aliased workflow
+      - uses: common:cleanup
 
   # A reusable greeting task
   greet:
@@ -144,6 +151,9 @@ maru2 --with message="Hello, Maru2!"
 
 # Run a specific task
 maru2 greet --with message="Specific greeting"
+
+# Run a task from a local alias
+maru2 common:cleanup
 ```
 
 ## Advanced Features
@@ -155,7 +165,9 @@ Maru2 includes powerful features for complex workflows:
 - **Environment variable integration** - Use environment variables as input defaults
 - **Remote task execution** - Execute tasks from remote repositories
 - **Input validation** - Validate inputs using regular expressions
-- **Package URL aliases** - Create shortcuts for common repositories
+- **Package URL aliases** - Create shortcuts for remote repositories and local workflow files
+- **Local file aliases** - Reference local workflow files with short aliases
+- **Aliased task execution** - Run tasks from aliased workflows using `alias:task` syntax
 
 ## Next Steps
 

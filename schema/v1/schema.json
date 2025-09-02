@@ -57,7 +57,7 @@
           }
         ],
         "type": "object",
-        "description": "An alias to a package URL"
+        "description": "An alias to a package URL or a local file path"
       },
       "propertyNames": {
         "pattern": "^[_a-zA-Z][a-zA-Z0-9_-]*$"

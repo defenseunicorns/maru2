@@ -437,13 +437,9 @@ tasks:
       - uses: oci:staging.uds.sh/public/my-workflow:latest
 ```
 
-### Package URL Aliases
+## Aliases
 
-Maru2 supports defining aliases for package URLs to create shorthand references for commonly used package types.
-
-You can define aliases for package URLs to simplify references to frequently used repositories or to set default qualifiers.
-
-If a version is not specified in a `pkg` URL, it defaults to `main`.
+Maru2 supports defining aliases for package URLs or local paths to create shorthand references for commonly used package types.
 
 Examples of using aliases in workflow files:
 
@@ -458,6 +454,8 @@ aliases:
   internal:
     type: gitlab
     base-url: https://gitlab.internal.company.com
+  local-tasks:
+    path: tasks/common.yaml
 
 tasks:
   # Using the full GitHub package URL
@@ -484,23 +482,49 @@ tasks:
 
 The alias `gl` will be resolved to `gitlab` with the base URL qualifier set to `https://gitlab.example.com`.
 
-An alias has the following properties:
+Maru2 supports two types of aliases:
 
-- `alias_name`: A short name you want to use as an alias
-- `type`: The actual package URL type (github, gitlab, etc.) - this is required
-- `base`: (Optional) Base URL for the repository (useful for self-hosted instances)
+### Package URL Aliases
+
+Remote aliases reference external repositories (GitHub, GitLab, etc.) and have the following properties:
+
+- `type`: The package URL type (github, gitlab, etc.) - **required**
+- `base-url`: (Optional) Base URL for the repository (useful for self-hosted instances)
 - `token-from-env`: (Optional) Environment variable name containing an access token. Environment variable names must start with a letter or underscore, and can contain letters, numbers, and underscores (e.g., `MY_ENV_VAR`, `_ANOTHER_VAR`).
 
-You can also override qualifiers defined in the alias by specifying them in the package URL:
+### Local File Aliases
+
+Local file aliases reference workflow files within your project and have the following properties:
+
+- `path`: Relative path to a local workflow file - **required**
+
+Local aliases allow you to create shorthand references to workflow files in your project:
 
 ```yaml
 schema-version: v1
+aliases:
+  common:
+    path: workflows/common.yaml
+  utils:
+    path: scripts/utils.yaml
+
 tasks:
-  remote-echo:
+  build:
     steps:
-      - uses: pkg:gl/noxsios/maru2@main?base=https://other-gitlab.com&task=echo#testdata/simple.yaml
-        with:
-          message: Hello, World!
+      - uses: common:setup
+      - uses: utils:compile
+```
+
+This is particularly useful for organizing complex projects with multiple workflow files:
+
+```text
+my-project/
+├── tasks.yaml              # Main workflow
+├── workflows/
+│   ├── common.yaml         # Shared setup tasks
+│   └── deployment.yaml     # Deployment workflows
+└── scripts/
+    └── utils.yaml          # Utility tasks
 ```
 
 ## Step identification with `id` and `name`
