@@ -1,0 +1,52 @@
+# Test v1 schema migration and validation
+exec maru2 -f tasks-v0.yaml --list
+stderr 'echo-task'
+
+exec maru2 -f tasks-v1.yaml --list
+stderr 'echo-task'
+
+exec maru2 -f tasks-v1.yaml echo-task -w message='v1 migration test'
+stdout 'v1 migration test'
+
+# Test that v0 files are automatically migrated to v1
+exec maru2 -f tasks-v0.yaml echo-task -w message='v0 auto-migration'
+stdout 'v0 auto-migration'
+
+# Test invalid schema version
+! exec maru2 -f tasks-invalid.yaml --list
+stderr 'unsupported schema version'
+
+-- tasks-v0.yaml --
+schema-version: v0
+inputs:
+  message:
+    description: Message to echo
+    required: true
+    default: hello world
+tasks:
+  echo-task:
+    - run: echo "${{ input "message" }}"
+
+-- tasks-v1.yaml --
+schema-version: v1
+tasks:
+  echo-task:
+    inputs:
+      message:
+        description: Message to echo
+        required: true
+        default: hello world
+    steps:
+      - run: echo "${{ input "message" }}"
+
+-- tasks-invalid.yaml --
+schema-version: v99
+tasks:
+  echo-task:
+    inputs:
+      message:
+        description: Message to echo
+        required: true
+        default: hello world
+    steps:
+      - run: echo "${{ input "message" }}"
