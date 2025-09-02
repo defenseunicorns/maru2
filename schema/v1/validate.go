@@ -70,8 +70,11 @@ func Validate(wf Workflow) error {
 	}
 
 	namespaces := []string{}
-	for ns := range wf.Aliases {
+	for ns, alias := range wf.Aliases {
 		namespaces = append(namespaces, ns)
+		if filepath.IsAbs(alias.Path) {
+			return fmt.Errorf(".aliases.%s cannot be an absolute path: %s", ns, alias.Path)
+		}
 	}
 
 	for name, task := range wf.Tasks {

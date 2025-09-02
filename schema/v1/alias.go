@@ -31,14 +31,12 @@ type Alias struct {
 func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Description = "An alias to a package URL"
 
-	// Clear existing properties to avoid conflicts with oneOf
 	schema.Properties = nil
 	schema.Required = nil
 	schema.AdditionalProperties = nil
 
 	var one uint64 = 1
 
-	// Make path and other properties mutually exclusive using oneOf
 	localProps := jsonschema.NewProperties()
 	localProps.Set("path", &jsonschema.Schema{
 		Type:        "string",
