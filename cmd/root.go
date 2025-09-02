@@ -253,6 +253,25 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			environ := os.Environ()
 
 			for _, call := range args {
+				parts := strings.SplitN(call, ":", 2)
+
+				if len(parts) > 1 {
+					next, err := uses.ResolveRelative(resolved, call, wf.Aliases)
+					if err != nil {
+						return err
+					}
+					nextWf, err := maru2.Fetch(ctx, svc, next)
+					if err != nil {
+						return err
+					}
+
+					_, err = maru2.Run(ctx, svc, nextWf, parts[1], with, next, "", environ, dry)
+					if err != nil {
+						return err
+					}
+					continue
+				}
+
 				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, "", environ, dry)
 				if err != nil {
 					return err
