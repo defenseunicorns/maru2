@@ -34,6 +34,22 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 	}
 
 	if !slices.Contains(v1.SupportedSchemes(), uri.Scheme) {
+		var localPath string
+		var task string
+		for ns, alias := range pkgAliases {
+			if ns == uri.Scheme && alias.Path != "" {
+				localPath = alias.Path
+				task = uri.Opaque
+				break
+			}
+		}
+		uri, err = url.Parse("file:" + localPath + "?=" + task)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !slices.Contains(v1.SupportedSchemes(), uri.Scheme) {
 		return nil, fmt.Errorf("unsupported scheme: %q in %q", uri.Scheme, uri)
 	}
 
@@ -70,7 +86,7 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 			if pURL.Version == "" {
 				pURL.Version = DefaultVersion
 			}
-			resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
+			resolvedPURL, isAlias := ResolvePkgAlias(pURL, pkgAliases)
 			if isAlias {
 				return url.Parse(resolvedPURL.String())
 			}
@@ -126,7 +142,7 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 		}
 		pURL.Qualifiers = packageurl.QualifiersFromMap(qm)
 
-		resolvedPURL, isAlias := ResolveAlias(pURL, pkgAliases)
+		resolvedPURL, isAlias := ResolvePkgAlias(pURL, pkgAliases)
 		if isAlias {
 			pURL = resolvedPURL
 		}

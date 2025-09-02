@@ -9,8 +9,8 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
-// ResolveAlias resolves a package URL using the given aliases map
-func ResolveAlias(pURL packageurl.PackageURL, aliases v1.AliasMap) (packageurl.PackageURL, bool) {
+// ResolvePkgAlias resolves a package URL using the given aliases map
+func ResolvePkgAlias(pURL packageurl.PackageURL, aliases v1.AliasMap) (packageurl.PackageURL, bool) {
 	aliasDef, ok := aliases[pURL.Type]
 	if !ok {
 		return pURL, false

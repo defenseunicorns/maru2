@@ -12,33 +12,50 @@
     },
     "aliases": {
       "additionalProperties": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "github",
-              "gitlab"
+        "oneOf": [
+          {
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Relative path to workflow"
+              }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "path"
             ],
-            "description": "Type of the alias, maps to a package URL type"
+            "description": "Local file alias"
           },
-          "base-url": {
-            "type": "string"
-          },
-          "token-from-env": {
-            "type": "string",
-            "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
-            "description": "Environment variable containing the token for authentication"
-          },
-          "path": {
-            "type": "string",
-            "description": "Relative path to workflow"
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "github",
+                  "gitlab"
+                ],
+                "description": "Type of the alias, maps to a package URL type"
+              },
+              "base-url": {
+                "type": "string",
+                "description": "Base URL for the underlying client (e.g. https://mygitlab.com )"
+              },
+              "token-from-env": {
+                "type": "string",
+                "pattern": "^[a-zA-Z_]+[a-zA-Z0-9_]*$",
+                "description": "Environment variable containing the token for authentication"
+              }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "description": "Remote alias (GitHub, GitLab, etc.)"
           }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "type"
         ],
+        "type": "object",
         "description": "An alias to a package URL"
       },
       "propertyNames": {

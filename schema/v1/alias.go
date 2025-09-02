@@ -21,7 +21,7 @@ func (AliasMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 
 // Alias defines how an alias should be resolved
 type Alias struct {
-	Type         string `json:"type"`
+	Type         string `json:"type,omitempty"`
 	BaseURL      string `json:"base-url,omitempty"`
 	TokenFromEnv string `json:"token-from-env,omitempty"`
 	Path         string `json:"path,omitempty"`
@@ -31,21 +31,53 @@ type Alias struct {
 func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Description = "An alias to a package URL"
 
-	if typ, ok := schema.Properties.Get("type"); ok && typ != nil {
-		typ.Description = "Type of the alias, maps to a package URL type"
-		typ.Enum = []any{packageurl.TypeGithub, packageurl.TypeGitlab}
-	}
+	// Clear existing properties to avoid conflicts with oneOf
+	schema.Properties = nil
+	schema.Required = nil
+	schema.AdditionalProperties = nil
 
-	if base, ok := schema.Properties.Get("base"); ok && base != nil {
-		base.Description = "Base URL for the underlying client (e.g. https://mygitlab.com )"
-	}
+	var one uint64 = 1
 
-	if tokenFromEnv, ok := schema.Properties.Get("token-from-env"); ok && tokenFromEnv != nil {
-		tokenFromEnv.Description = "Environment variable containing the token for authentication"
-		tokenFromEnv.Pattern = EnvVariablePattern.String()
-	}
+	// Make path and other properties mutually exclusive using oneOf
+	localProps := jsonschema.NewProperties()
+	localProps.Set("path", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Relative path to workflow",
+		MinLength:   &one,
+	})
 
-	if path, ok := schema.Properties.Get("path"); ok && path != nil {
-		path.Description = "Relative path to workflow"
+	remoteProps := jsonschema.NewProperties()
+	remoteProps.Set("type", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Type of the alias, maps to a package URL type",
+		Enum:        []any{packageurl.TypeGithub, packageurl.TypeGitlab},
+	})
+	remoteProps.Set("base-url", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Base URL for the underlying client (e.g. https://mygitlab.com )",
+	})
+	remoteProps.Set("token-from-env", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Environment variable containing the token for authentication",
+		Pattern:     EnvVariablePattern.String(),
+	})
+
+	schema.OneOf = []*jsonschema.Schema{
+		{
+			// Local file alias - only path is allowed
+			Type:                 "object",
+			Description:          "Local file alias",
+			Properties:           localProps,
+			Required:             []string{"path"},
+			AdditionalProperties: jsonschema.FalseSchema,
+		},
+		{
+			// Remote alias - type is required, path is not allowed
+			Type:                 "object",
+			Description:          "Remote alias (GitHub, GitLab, etc.)",
+			Properties:           remoteProps,
+			Required:             []string{"type"},
+			AdditionalProperties: jsonschema.FalseSchema,
+		},
 	}
 }

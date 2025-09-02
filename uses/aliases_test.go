@@ -102,7 +102,7 @@ func TestConfigBasedResolver(t *testing.T) {
 				Subpath:    "path/to/file.yaml",
 			}
 
-			resolvedPURL, isResolved := ResolveAlias(inputPURL, tt.aliases)
+			resolvedPURL, isResolved := ResolvePkgAlias(inputPURL, tt.aliases)
 
 			assert.Equal(t, tt.wantResolved, isResolved)
 			assert.Equal(t, tt.wantType, resolvedPURL.Type)
