@@ -87,6 +87,90 @@ func TestConfigBasedResolver(t *testing.T) {
 			wantQualifiers: map[string]string{QualifierTokenFromEnv: "GITHUB2_TOKEN"},
 			wantResolved:   true,
 		},
+		{
+			name:            "alias not found",
+			inputType:       "nonexistent",
+			inputQualifiers: map[string]string{},
+			aliases: v1.AliasMap{
+				"other": {
+					Type: packageurl.TypeGithub,
+				},
+			},
+			wantType:       "nonexistent",
+			wantQualifiers: map[string]string{},
+			wantResolved:   false,
+		},
+		{
+			name:            "empty aliases map",
+			inputType:       "custom",
+			inputQualifiers: map[string]string{},
+			aliases:         v1.AliasMap{},
+			wantType:        "custom",
+			wantQualifiers:  map[string]string{},
+			wantResolved:    false,
+		},
+		{
+			name:            "alias with only base URL",
+			inputType:       "custom",
+			inputQualifiers: map[string]string{},
+			aliases: v1.AliasMap{
+				"custom": {
+					Type:    packageurl.TypeGitlab,
+					BaseURL: "https://gitlab.example.com",
+				},
+			},
+			wantType:       packageurl.TypeGitlab,
+			wantQualifiers: map[string]string{QualifierBaseURL: "https://gitlab.example.com"},
+			wantResolved:   true,
+		},
+		{
+			name:            "alias with only token from env",
+			inputType:       "custom",
+			inputQualifiers: map[string]string{},
+			aliases: v1.AliasMap{
+				"custom": {
+					Type:         packageurl.TypeGithub,
+					TokenFromEnv: "CUSTOM_TOKEN",
+				},
+			},
+			wantType:       packageurl.TypeGithub,
+			wantQualifiers: map[string]string{QualifierTokenFromEnv: "CUSTOM_TOKEN"},
+			wantResolved:   true,
+		},
+		{
+			name:            "existing qualifiers preserved and merged",
+			inputType:       "custom",
+			inputQualifiers: map[string]string{"existing": "value", QualifierBaseURL: "override"},
+			aliases: v1.AliasMap{
+				"custom": {
+					Type:         packageurl.TypeGithub,
+					BaseURL:      "https://github.com",
+					TokenFromEnv: "GITHUB_TOKEN",
+				},
+			},
+			wantType: packageurl.TypeGithub,
+			wantQualifiers: map[string]string{
+				"existing":            "value",
+				QualifierBaseURL:      "override", // existing value preserved
+				QualifierTokenFromEnv: "GITHUB_TOKEN",
+			},
+			wantResolved: true,
+		},
+		{
+			name:            "alias with path field ignored in resolution",
+			inputType:       "custom",
+			inputQualifiers: map[string]string{},
+			aliases: v1.AliasMap{
+				"custom": {
+					Type:    packageurl.TypeGithub,
+					BaseURL: "https://github.com",
+					Path:    "this/should/be/ignored",
+				},
+			},
+			wantType:       packageurl.TypeGithub,
+			wantQualifiers: map[string]string{QualifierBaseURL: "https://github.com"},
+			wantResolved:   true,
+		},
 	}
 
 	for _, tt := range tests {

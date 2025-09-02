@@ -399,6 +399,103 @@ func TestResolveURL(t *testing.T) {
 			},
 			expectedErr: `parse "file:invalid%url%path\x7f?task=task-name": net/url: invalid control character in URL`,
 		},
+		{
+			name: "pkg alias resolution with qualifiers",
+			prev: "file:foo.yaml",
+			uri:  "pkg:custom/owner/repo@v1.0.0#dir/foo.yaml",
+			aliases: v1.AliasMap{
+				"custom": {
+					Type:         "github",
+					BaseURL:      "https://custom.github.com",
+					TokenFromEnv: "CUSTOM_TOKEN",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fcustom.github.com&token-from-env=CUSTOM_TOKEN#dir/foo.yaml",
+		},
+		{
+			name: "pkg alias resolution preserves existing qualifiers",
+			prev: "file:foo.yaml",
+			uri:  "pkg:custom/owner/repo@v1.0.0?existing=value#dir/foo.yaml",
+			aliases: v1.AliasMap{
+				"custom": {
+					Type:         "github",
+					BaseURL:      "https://custom.github.com",
+					TokenFromEnv: "CUSTOM_TOKEN",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=https%3A%2F%2Fcustom.github.com&existing=value&token-from-env=CUSTOM_TOKEN#dir/foo.yaml",
+		},
+		{
+			name: "pkg alias resolution does not override existing qualifiers",
+			prev: "file:foo.yaml",
+			uri:  "pkg:custom/owner/repo@v1.0.0?base=override#dir/foo.yaml",
+			aliases: v1.AliasMap{
+				"custom": {
+					Type:         "github",
+					BaseURL:      "https://custom.github.com",
+					TokenFromEnv: "CUSTOM_TOKEN",
+				},
+			},
+			next: "pkg:github/owner/repo@v1.0.0?base=override&token-from-env=CUSTOM_TOKEN#dir/foo.yaml",
+		},
+		{
+			name: "oci -> https",
+			prev: "oci:registry.uds.sh/maru2:latest",
+			uri:  "https://example.com/workflow.yaml",
+			next: "oci:registry.uds.sh/maru2:latest#https://example.com/workflow.yaml",
+		},
+		{
+			name: "file -> file with complex path traversal",
+			prev: "file:a/b/c/d/foo.yaml",
+			uri:  "file:../../../bar.yaml",
+			next: "file:a/bar.yaml",
+		},
+		{
+			name: "pkg -> file with complex path traversal",
+			prev: "pkg:github/owner/repo@v1.0.0#a/b/c/d/foo.yaml",
+			uri:  "file:../../../bar.yaml",
+			next: "pkg:github/owner/repo@v1.0.0#a/bar.yaml",
+		},
+		{
+			name: "https -> file with query parameters",
+			prev: "https://example.com/dir/foo.yaml?param=value",
+			uri:  "file:bar.yaml?new=param",
+			next: "https://example.com/dir/bar.yaml?new=param",
+		},
+		{
+			name: "pkg -> pkg with different namespace",
+			prev: "pkg:github/owner1/repo1@v1.0.0#dir/foo.yaml",
+			uri:  "pkg:gitlab/owner2/repo2@v2.0.0#other/bar.yaml",
+			next: "pkg:gitlab/owner2/repo2@v2.0.0#other/bar.yaml",
+		},
+		{
+			name: "oci -> oci valid transition",
+			prev: "oci:registry1.com/repo:tag",
+			uri:  "oci:registry2.com/other:tag",
+			next: "oci:registry2.com/other:tag",
+		},
+		{
+			name:        "invalid transition: unsupported prev scheme",
+			prev:        "unsupported:foo",
+			uri:         "file:bar.yaml",
+			expectedErr: `unsupported scheme: "unsupported" in "unsupported:foo"`,
+		},
+		{
+			name: "nil prev with absolute file path",
+			uri:  "file:/absolute/path.yaml",
+			next: "file:/absolute/path.yaml",
+		},
+		{
+			name: "alias path resolution with query parameters",
+			prev: "file:foo.yaml",
+			uri:  "custom:task-name?param=value",
+			aliases: v1.AliasMap{
+				"custom": {
+					Path: "local/path/to/file.yaml",
+				},
+			},
+			next: "file:local/path/to/file.yaml?task=task-name",
+		},
 	}
 
 	for _, tc := range tests {

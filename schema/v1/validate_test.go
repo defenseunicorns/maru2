@@ -575,6 +575,176 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: fmt.Sprintf(".tasks.task.inputs.2-invalid \"2-invalid\" does not satisfy %q", InputNamePattern.String()),
 		},
+		{
+			name: "valid alias with path",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"local": {
+						Path: "relative/path.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid alias with absolute path",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"local": {
+						Path: "/absolute/path.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: ".aliases.local cannot be an absolute path: /absolute/path.yaml",
+		},
+		{
+			name: "valid alias with remote type",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"gh": {
+						Type:         "github",
+						BaseURL:      "https://api.github.com",
+						TokenFromEnv: "GITHUB_TOKEN",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+		},
+		{
+			name: "valid input with regex validation",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"test": Task{
+						Inputs: InputMap{
+							"version": {
+								Description: "Version number",
+								Validate:    `^v\d+\.\d+\.\d+$`,
+							},
+						},
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid input name pattern",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"test": Task{
+						Inputs: InputMap{
+							"2invalid": {
+								Description: "Invalid input name",
+							},
+						},
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".tasks.test.inputs.2invalid \"2invalid\" does not satisfy %q", InputNamePattern.String()),
+		},
+		{
+			name: "invalid regex pattern in input validation",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"test": Task{
+						Inputs: InputMap{
+							"version": {
+								Description: "Version number",
+								Validate:    "[invalid regex",
+							},
+						},
+						Steps: []Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expectedError: ".tasks.test.inputs.version: error parsing regexp: missing closing ]: `[invalid regex`",
+		},
+		{
+			name: "valid step env variable names",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{
+							Run: "echo test",
+							Env: map[string]any{
+								"VALID_ENV":   "value1",
+								"ANOTHER_VAR": "value2",
+								"VAR123":      "value3",
+							},
+						}},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid step env variable name",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{
+							Run: "echo test",
+							Env: map[string]any{
+								"2invalid": "value",
+							},
+						}},
+					},
+				},
+			},
+			expectedError: fmt.Sprintf(".tasks.test[0].env \"2invalid\" does not satisfy %q", EnvVariablePattern.String()),
+		},
+		{
+			name: "valid uses with alias namespace",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Aliases: AliasMap{
+					"custom": {
+						Path: "custom/path.yaml",
+					},
+				},
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{
+							Uses: "custom:task-name",
+						}},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid uses with unknown namespace",
+			wf: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks: TaskMap{
+					"test": Task{
+						Steps: []Step{{
+							Uses: "unknown:task-name",
+						}},
+					},
+				},
+			},
+			expectedError: ".tasks.test[0].uses \"unknown\" is not one of [file, http, https, pkg, oci, builtin]",
+		},
 	}
 
 	for _, tc := range testCases {
