@@ -11,14 +11,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	"github.com/defenseunicorns/maru2/schema"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestExecuteBuiltin(t *testing.T) {
 	testCases := []struct {
 		name          string
-		step          v0.Step
-		with          v0.With
+		step          v1.Step
+		with          schema.With
 		dry           bool
 		expectedError string
 		expectedLog   string
@@ -26,89 +27,89 @@ func TestExecuteBuiltin(t *testing.T) {
 	}{
 		{
 			name: "echo builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: schema.With{
 					"text": "Hello, World!",
 				},
 			},
-			with:        v0.With{},
+			with:        schema.With{},
 			expectedLog: "Hello, World!\n",
 			expected:    map[string]any{"stdout": "Hello, World!"},
 		},
 		{
 			name: "echo builtin dry run",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: schema.With{
 					"text": "Hello, World!",
 				},
 			},
-			with:        v0.With{},
+			with:        schema.With{},
 			dry:         true,
 			expectedLog: "dry run",
 		},
 		{
 			name: "fetch builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:fetch",
-				With: v0.With{
+				With: schema.With{
 					"url":    "http://example.com",
 					"method": "GET",
 				},
 			},
-			with:        v0.With{},
+			with:        schema.With{},
 			dry:         true, // Use dry run to avoid actual HTTP requests
 			expectedLog: "dry run",
 		},
 		{
 			name: "non-existent builtin",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:nonexistent",
 			},
-			with:          v0.With{},
+			with:          schema.With{},
 			expectedError: "builtin:nonexistent not found",
 		},
 		{
 			name: "echo builtin with invalid with",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: schema.With{
 					"text": make(chan int),
 				},
 			},
-			with:          v0.With{},
+			with:          schema.With{},
 			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type 'chan int'",
 		},
 		{
 			name: "fetch builtin with invalid with",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:fetch",
 			},
-			with:          v0.With{},
+			with:          schema.With{},
 			expectedError: "builtin:fetch: error executing request: Get \"\": unsupported protocol scheme \"\"",
 		},
 		{
 			name: "echo builtin with templated with",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: schema.With{
 					"text": "${{ input \"greeting\" }}",
 				},
 			},
-			with:        v0.With{"greeting": "Hello from template"},
+			with:        schema.With{"greeting": "Hello from template"},
 			expectedLog: "Hello from template\n",
 			expected:    map[string]any{"stdout": "Hello from template"},
 		},
 		{
 			name: "echo builtin with broken structure",
-			step: v0.Step{
+			step: v1.Step{
 				Uses: "builtin:echo",
-				With: v0.With{
+				With: schema.With{
 					"text": []string{"not", "a", "string"}, // Text should be a string, not an array
 				},
 			},
-			with:          v0.With{},
+			with:          schema.With{},
 			expectedError: "builtin:echo: decoding failed due to the following error(s):\n\n'Text' expected type 'string', got unconvertible type '[]string'",
 		},
 	}

@@ -19,7 +19,7 @@ import (
 
 	"github.com/defenseunicorns/maru2/config"
 	"github.com/defenseunicorns/maru2/schema"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -29,7 +29,7 @@ const SchemaVersion = "v0"
 // Config is the system configuration file for maru2
 type Config struct {
 	SchemaVersion string           `json:"schema-version"`
-	Aliases       v0.AliasMap      `json:"aliases"`
+	Aliases       v1.AliasMap      `json:"aliases"`
 	FetchPolicy   uses.FetchPolicy `json:"fetch-policy"`
 }
 
@@ -45,7 +45,7 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 // LoadConfig loads the configuration from the file system
 func LoadConfig(fsys afero.Fs) (*Config, error) {
 	cfg := &Config{
-		Aliases:     v0.AliasMap{},
+		Aliases:     v1.AliasMap{},
 		FetchPolicy: uses.DefaultFetchPolicy,
 	}
 

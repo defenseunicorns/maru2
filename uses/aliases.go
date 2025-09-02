@@ -6,11 +6,11 @@ package uses
 import (
 	"github.com/package-url/packageurl-go"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 // ResolveAlias resolves a package URL using the given aliases map
-func ResolveAlias(pURL packageurl.PackageURL, aliases v0.AliasMap) (packageurl.PackageURL, bool) {
+func ResolveAlias(pURL packageurl.PackageURL, aliases v1.AliasMap) (packageurl.PackageURL, bool) {
 	aliasDef, ok := aliases[pURL.Type]
 	if !ok {
 		return pURL, false

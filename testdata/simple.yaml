@@ -1,44 +1,51 @@
-# yaml-language-server: $schema=../schema/v0/schema.json
-schema-version: v0
-inputs:
-  message:
-    required: false
-    description: message to echo
+# yaml-language-server: $schema=../schema/v1/schema.json
+schema-version: v1
 
 tasks:
   echo:
-    - run: |
-        echo "$INPUT_MESSAGE"
+    inputs:
+      message:
+        required: false
+        description: message to echo
+    steps:
+      - run: |
+          echo "$INPUT_MESSAGE"
 
   hello-world:
-    - uses: file:hello-world.yaml
+    steps:
+      - uses: file:hello-world.yaml
 
   pwd:
-    - run: pwd
+    steps:
+      - run: pwd
 
   chuck:
-    - uses: builtin:fetch
-      with:
-        url: https://api.chucknorris.io/jokes/random
-        timeout: 10s
-        headers:
-          Accept: application/json
+    steps:
+      - uses: builtin:fetch
+        with:
+          url: https://api.chucknorris.io/jokes/random
+          timeout: 10s
+          headers:
+            Accept: application/json
 
   fails:
-    - run: exit 2
+    steps:
+      - run: exit 2
 
   continues:
-    - run: echo 1
-    - uses: fails
-    - run: echo 3
-    - if: always()
-      run: echo 3
+    steps:
+      - run: echo 1
+      - uses: fails
+      - run: echo 3
+      - if: always()
+        run: echo 3
 
   sleep:
-    - run: sleep 10
-    - run: echo "there"
-      if: always()
-    - run: echo "hello"
-      if: cancelled()
-    - run: echo obi
-      if: failure()
+    steps:
+      - run: sleep 10
+      - run: echo "there"
+        if: always()
+      - run: echo "hello"
+        if: cancelled()
+      - run: echo obi
+        if: failure()

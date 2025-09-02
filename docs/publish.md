@@ -44,19 +44,21 @@ Consider the following project structure:
 `tasks.yaml`:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   default:
-    - uses: file:tasks/helper.yaml?task=hello
+    steps:
+      - uses: file:tasks/helper.yaml?task=hello
 ```
 
 `tasks/helper.yaml`:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   hello:
-    - run: echo "Hello from helper!"
+    steps:
+      - run: echo "Hello from helper!"
 ```
 
 To publish this workflow, you would run:
@@ -71,10 +73,11 @@ maru2-publish staging.uds.sh/public/my-workflow:latest -e tasks.yaml
 Once published, you can use the workflow in another project with the `oci:` scheme:
 
 ```yaml
-schema-version: v0
+schema-version: v1
 tasks:
   run-published:
-    - uses: oci:staging.uds.sh/public/my-workflow:latest
+    steps:
+      - uses: oci:staging.uds.sh/public/my-workflow:latest
 ```
 
 By default, this looks for the `file:tasks.yaml` entry in the published manifest and runs the `default` task.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package v0
+package v1
 
 import (
 	"encoding/json"
@@ -19,9 +19,18 @@ import (
 var helloWorldWorkflow = Workflow{
 	SchemaVersion: SchemaVersion,
 	Tasks: TaskMap{
-		"default": {Step{Run: "echo 'Hello World!'"}},
-		"a-task":  {Step{Run: "echo 'task a'"}},
-		"task-b":  {Step{Run: "echo 'task b'"}},
+		"default": Task{
+			Inputs: InputMap{},
+			Steps:  []Step{{Run: "echo 'Hello World!'"}},
+		},
+		"a-task": Task{
+			Inputs: InputMap{},
+			Steps:  []Step{{Run: "echo 'task a'"}},
+		},
+		"task-b": Task{
+			Inputs: InputMap{},
+			Steps:  []Step{{Run: "echo 'task b'"}},
+		},
 	},
 }
 
@@ -29,12 +38,12 @@ func TestWorkflowFind(t *testing.T) {
 	task, ok := helloWorldWorkflow.Tasks.Find(schema.DefaultTaskName)
 	assert.True(t, ok)
 
-	require.Len(t, task, 1)
-	assert.Equal(t, "echo 'Hello World!'", task[0].Run)
+	require.Len(t, task.Steps, 1)
+	assert.Equal(t, "echo 'Hello World!'", task.Steps[0].Run)
 
 	task, ok = helloWorldWorkflow.Tasks.Find("foo")
-	assert.Nil(t, task)
 	assert.False(t, ok)
+	assert.Equal(t, Task{}, task)
 }
 
 func TestOrderedTaskNames(t *testing.T) {
@@ -42,7 +51,12 @@ func TestOrderedTaskNames(t *testing.T) {
 	expected := []string{"default", "a-task", "task-b"}
 	assert.ElementsMatch(t, expected, names)
 
-	wf := Workflow{Tasks: TaskMap{"foo": nil, "bar": nil, "baz": nil, "default": nil}}
+	wf := Workflow{Tasks: TaskMap{
+		"foo":     Task{Inputs: InputMap{}, Steps: []Step{}},
+		"bar":     Task{Inputs: InputMap{}, Steps: []Step{}},
+		"baz":     Task{Inputs: InputMap{}, Steps: []Step{}},
+		"default": Task{Inputs: InputMap{}, Steps: []Step{}},
+	}}
 	names = wf.Tasks.OrderedTaskNames()
 	expected = []string{"default", "bar", "baz", "foo"}
 	assert.ElementsMatch(t, expected, names)

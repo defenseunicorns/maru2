@@ -1,44 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package v0
+package v1
 
 import (
 	"github.com/invopop/jsonschema"
 )
 
 // SchemaVersion is the current schema version for workflows
-const SchemaVersion = "v0"
+const SchemaVersion = "v1"
 
-// branch is used in docs to point to the last time this schema had updates to its docs
-const branch = "v0.4.0"
-
-// Workflow is a wrapper struct around the input map and task map
-//
-// It represents a "tasks.yaml" file
+// Workflow represents a "tasks.yaml" file
 type Workflow struct {
 	SchemaVersion string   `json:"schema-version"`
-	Inputs        InputMap `json:"inputs,omitempty"`
-	Tasks         TaskMap  `json:"tasks,omitempty"`
 	Aliases       AliasMap `json:"aliases,omitempty"`
+	Tasks         TaskMap  `json:"tasks,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Workflow) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
-		schemaVersion.Description = "Workflow schema version. For v0 breaking changes can be expected without any migration pathway."
+		schemaVersion.Description = "Workflow schema version."
 		schemaVersion.Enum = []any{SchemaVersion}
 		schemaVersion.AdditionalProperties = jsonschema.FalseSchema
-	}
-	if inputs, ok := schema.Properties.Get("inputs"); ok && inputs != nil {
-		inputs.Description = "Input parameters for the workflow"
 	}
 	if tasks, ok := schema.Properties.Get("tasks"); ok && tasks != nil {
 		tasks.Description = "Map of tasks where the key is the task name, the task named 'default' is called when no task is specified"
 	}
 	if aliases, ok := schema.Properties.Get("aliases"); ok && aliases != nil {
 		aliases.Description = `Aliases for package URLs to create shorthand references
-See https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#package-url-aliases`
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#package-url-aliases`
 	}
 }
 
@@ -47,7 +38,7 @@ func WorkFlowSchema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{DoNotReference: true, ExpandedStruct: true}
 	schema := reflector.Reflect(&Workflow{})
 
-	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/" + branch + "/schema/v0/schema.json"
+	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json"
 
 	return schema
 }

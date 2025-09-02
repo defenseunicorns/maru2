@@ -53,7 +53,7 @@ These foundational rules guide all performance and algorithmic decisions:
 
 ### High-Level Repository Information
 
-- **Size**: Medium-sized Go project (~106 files including tests and documentation)
+- **Size**: Medium-sized Go project
 - **Language**: Go (current version in `go.mod`) (primary), YAML, Markdown, Shell scripts
 - **Framework**: Cobra CLI framework with Go modules dependency management
 - **Target**: Cross-platform static binaries (Linux, macOS, supports amd64/arm64) with `CGO_ENABLED=0`
@@ -80,10 +80,11 @@ make maru2-publish  # Build publish binary only
 make clean          # Remove build artifacts
 ```
 
-**Critical**: The `make` command generates two schema files:
+**Critical**: The `make` command generates three schema files:
 
 - `maru2.schema.json` (root-level, for public consumption and IDE integration)
 - `schema/v0/schema.json` (version-specific, for internal validation)
+- `schema/v1/schema.json` (version-specific, for internal validation)
 
 These files MUST be committed if changed during development.
 
@@ -170,7 +171,9 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
   /maru2-schema/  - Schema generation utility
   /internal/    - Example of embedding maru2 in other CLIs
 /schema/        - YAML schema definitions (versioned)
-  /v0/          - Current schema version
+  /v0/          - Schema version 0
+  /v1/          - Schema version 1
+  /generics.go  - Shared schema components
 /config/        - Configuration file handling (versioned)
   /v0/          - Current config schema version
 /uses/          - Remote task fetching (GitHub, GitLab, OCI)
@@ -183,7 +186,9 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 **Builtin System**: Built-in tasks are registered in `builtins/registration.go` with a factory pattern. Each builtin implements the `Builtin` interface with an `Execute(ctx context.Context) (map[string]any, error)` method. Use `builtins.Get("name")` to retrieve instances.
 
-**Schema-Driven Validation**: The entire workflow syntax is defined via Go structs in `schema/v0/` that auto-generate JSON schemas. The `WorkFlowSchema()` function creates the main schema, while individual structs use `JSONSchemaExtend()` methods for documentation or behavior that is too complex to represent within the struct tags. Configuration files are also versioned using the same pattern in `config/v0/`.
+**Schema-Driven Validation**: The entire workflow syntax is defined via Go structs in `schema/v0/` and `schema/v1/` that auto-generate JSON schemas. The `WorkFlowSchema()` function creates the main schema, while individual structs use `JSONSchemaExtend()` methods for documentation or behavior that is too complex to represent within the struct tags. Configuration files are also versioned using the same pattern in `config/v0/`.
+
+**Schema Versioning**: Maru2 now supports multiple schema versions (v0 and v1) with separate validation pipelines. The build process generates version-specific schema files for internal validation while maintaining a public schema for IDE integration.
 
 **Remote Uses System**: The `uses/` package implements pluggable fetchers for different protocols (GitHub, GitLab, OCI, HTTP, local files). Each fetcher implements the `Fetcher` interface and is registered via URL scheme detection.
 
@@ -211,6 +216,8 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 - **`tasks.yaml`**: Example workflow showing maru2 syntax and defining available tasks
 - **`maru2.schema.json`**: Auto-generated JSON schema for YAML validation
 - **`.goreleaser.yaml`**: Release automation configuration
+- **`codecov.yaml`**: Code coverage configuration
+- **`release-please-config.json`**: Release automation configuration
 
 ### GitHub Workflows & CI
 
@@ -223,7 +230,7 @@ Located in `.github/workflows/`:
 
 **CI Requirements**:
 
-- All schema files must remain in sync
+- All schema files must remain in sync (v0, v1, and public schemas)
 - Tests must pass on both Linux and macOS
 - Linting must pass
 - Coverage reporting included
@@ -233,7 +240,7 @@ Located in `.github/workflows/`:
 
 The CI runs these checks:
 
-1. `make` (build + schema generation)
+1. `make` (build + schema generation for all versions)
 2. Schema sync validation (`git diff --exit-code`)
 3. `go test -race -cover` with coverage reporting
 4. `golangci-lint run`
@@ -356,11 +363,13 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 5. **Communication**:
    - Be brutally honest in your feedback, avoiding fluff wording and words of encouragement. High quality code is your objective, not assuaging the concerns of your reader.
    - If you are ever confused, or something does not look right, first stop and think, then if you are still confused pause and ask for clarification.
+   - Avoid exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational aknowledgements.
+   - Communicate in clear and concise prose that relays your intent without verbosity.
 
 ### Architecture Notes
 
 - **Remote fetching**: Supports HTTP, GitHub, GitLab, and OCI artifact sources
-- **Schema validation**: JSON Schema validation for YAML workflows
+- **Schema validation**: JSON Schema validation for YAML workflows with versioned schemas
 - **Template engine**: Built-in expression evaluation for dynamic values
 
 ### Key Source Files
@@ -369,7 +378,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 **Core workflow engine**: `run.go` - handles task execution, environment setup, step processing
 
-**Schema system**: `schema/v0/` - defines workflow syntax and validation rules
+**Schema system**: `schema/v0/` and `schema/v1/` - defines workflow syntax and validation rules
 
 **Built-in tasks**: `builtins/` - implements `builtin:echo` and `builtin:fetch` tasks
 
@@ -400,6 +409,6 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 **Always start with `make`** when working on this codebase to ensure binaries and schemas are properly generated and synchronized.
 
-**Schema changes**: Always commit the generated files after running `make` as they are part of the project's interface.
+**Avoid** exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational aknowledgements.
 
 **Trust these instructions** and only search for additional information if something is incomplete or incorrect. The build and test commands documented here have been validated to work correctly.

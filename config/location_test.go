@@ -16,7 +16,7 @@ import (
 
 	"github.com/defenseunicorns/maru2/config"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestDefaultDirectory(t *testing.T) {
@@ -33,8 +33,8 @@ aliases:
 `
 
 	tcfg := &configv0.Config{
-		SchemaVersion: v0.SchemaVersion,
-		Aliases: v0.AliasMap{
+		SchemaVersion: configv0.SchemaVersion,
+		Aliases: v1.AliasMap{
 			"gl": {
 				Type: packageurl.TypeGitlab,
 				Base: "https://gitlab.example.com",

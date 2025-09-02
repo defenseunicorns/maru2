@@ -20,7 +20,8 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cast"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	"github.com/defenseunicorns/maru2/schema"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 // shortcuts is a concurrent map used to store key-value pairs for the "which" text template function.
@@ -33,7 +34,7 @@ func RegisterWhichShortcut(key, value string) {
 }
 
 // TemplateString templates a string with the given input and previous outputs
-func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
+func TemplateString(ctx context.Context, input schema.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
 	var tmpl *template.Template
 
 	inputKeys := make([]string, 0, len(input))
@@ -137,12 +138,12 @@ func TemplateString(ctx context.Context, input v0.With, previousOutputs CommandO
 }
 
 // TemplateWithMap recursively processes a With map and templates all string values
-func TemplateWithMap(ctx context.Context, input v0.With, previousOutputs CommandOutputs, withMap v0.With, dry bool) (v0.With, error) {
+func TemplateWithMap(ctx context.Context, input schema.With, previousOutputs CommandOutputs, withMap schema.With, dry bool) (schema.With, error) {
 	if len(withMap) == 0 {
 		return nil, nil
 	}
 
-	result := make(v0.With, len(withMap))
+	result := make(schema.With, len(withMap))
 	for k, v := range withMap {
 		switch val := v.(type) {
 		case string:
@@ -171,7 +172,7 @@ func TemplateWithMap(ctx context.Context, input v0.With, previousOutputs Command
 }
 
 // templateSlice recursively processes a slice and templates all string values
-func templateSlice(ctx context.Context, input v0.With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
+func templateSlice(ctx context.Context, input schema.With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
 	result := make([]any, len(slice))
 	for i, v := range slice {
 		switch val := v.(type) {
@@ -201,7 +202,7 @@ func templateSlice(ctx context.Context, input v0.With, previousOutputs CommandOu
 }
 
 // MergeWithAndParams merges a With map into an InputMap, handling defaults, logging warnings on deprections, etc...
-func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (v0.With, error) {
+func MergeWithAndParams(ctx context.Context, with schema.With, params v1.InputMap) (schema.With, error) {
 	logger := log.FromContext(ctx)
 	merged := maps.Clone(with)
 
@@ -215,7 +216,7 @@ func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (
 				return nil, fmt.Errorf("missing required input: %q", name)
 			}
 			if merged == nil {
-				merged = make(v0.With)
+				merged = make(schema.With)
 			}
 			if merged[name] == nil && param.DefaultFromEnv != "" {
 				if val, ok := os.LookupEnv(param.DefaultFromEnv); ok {
@@ -231,7 +232,7 @@ func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (
 			logger.Warnf("input %q is deprecated: %s", name, param.DeprecatedMessage)
 		}
 
-		// If the input is provided, and the default is set, ensure the types match, cast otherwise
+		// If the input is provided, and the default is set, cast the provided value to match the default's type
 		if param.Default != nil && with[name] != nil {
 			switch param.Default.(type) {
 			case bool:
@@ -260,6 +261,34 @@ func MergeWithAndParams(ctx context.Context, with v0.With, params v0.InputMap) (
 				merged[name] = casted
 			default:
 				return nil, fmt.Errorf("unable to cast input %q from %T to %T", name, with[name], param.Default)
+			}
+		}
+
+		// if default-from-env is provided, and the default is set, cast the provided value to match the default's type
+		if param.Default != nil && param.DefaultFromEnv != "" && merged[name] != nil {
+			switch param.Default.(type) {
+			case bool:
+				casted, err := cast.ToE[bool](merged[name])
+				if err != nil {
+					return nil, err
+				}
+				merged[name] = casted
+			case int:
+				casted, err := cast.ToE[int](merged[name])
+				if err != nil {
+					return nil, err
+				}
+				merged[name] = casted
+			case uint64:
+				casted, err := cast.ToE[uint64](merged[name])
+				if err != nil {
+					return nil, err
+				}
+				merged[name] = casted
+			case string:
+				// no need to cast as the env var value is always a string
+			default:
+				return nil, fmt.Errorf("unable to cast env input %q from %T to %T", name, merged[name], param.Default)
 			}
 		}
 

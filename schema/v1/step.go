@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-package v0
+package v1
 
 import (
 	"fmt"
@@ -80,22 +80,22 @@ func (Step) JSONSchemaExtend(schema *jsonschema.Schema) {
 		Type: "string",
 		Description: `Location of a task to call
 
-Calling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#run-another-task-as-a-step
-Calling tasks from local files: https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#run-a-task-from-a-local-file
-Calling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#run-a-task-from-a-remote-file`,
+Calling tasks from within the same file: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-another-task-as-a-step
+Calling tasks from local files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-local-file
+Calling tasks from remote files: https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#run-a-task-from-a-remote-file`,
 		Examples: []any{
 			"local-task",
 			"file:testdata/simple.yaml?task=echo",
 			"builtin:echo",
 			"pkg:github/defenseunicorns/maru2@main?task=echo",
-			"https://raw.githubusercontent.com/defenseunicorns/maru2/" + branch + "/testdata/simple.yaml?task=echo",
+			"https://raw.githubusercontent.com/defenseunicorns/maru2/main/testdata/simple.yaml?task=echo",
 		},
 	})
 	props.Set("id", &jsonschema.Schema{
 		Type: "string",
 		Description: `Unique identifier for the step, required to access step outputs
 
-See https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#passing-outputs`,
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-outputs`,
 	})
 	props.Set("name", &jsonschema.Schema{
 		Type:        "string",
@@ -105,7 +105,7 @@ See https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#
 		Type: "string",
 		Description: `Expression that controls whether the step is executed
 
-See https://github.com/defenseunicorns/maru2/blob/` + branch + `/docs/syntax.md#conditional-execution-with-if`,
+See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#conditional-execution-with-if`,
 	})
 	props.Set("dir", &jsonschema.Schema{
 		Type:        "string",
@@ -175,9 +175,9 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 		})
 
 		withSchema := reflector.Reflect(builtinEmpty)
-		withSchema.Version = ""
 
 		if withSchema != nil {
+			withSchema.Version = ""
 			withSchema.Description = fmt.Sprintf("Configuration for builtin:%s", name)
 
 			// processSchema allows schema types to be either string or their original type for templating
@@ -285,7 +285,7 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 
 	withSchema := &jsonschema.Schema{
 		Type:        "object",
-		Description: "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/" + branch + "/docs/syntax.md#passing-inputs",
+		Description: "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-inputs",
 		MinItems:    &single,
 		PatternProperties: map[string]*jsonschema.Schema{
 			EnvVariablePattern.String(): {

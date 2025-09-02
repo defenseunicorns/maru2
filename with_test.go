@@ -12,13 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	"github.com/defenseunicorns/maru2/schema"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestTemplateString(t *testing.T) {
 	tests := []struct {
 		name           string
-		input          v0.With
+		input          schema.With
 		previousOutput CommandOutputs
 		str            string
 		expected       string
@@ -32,13 +33,13 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:     "with input",
-			input:    v0.With{"name": "test"},
+			input:    schema.With{"name": "test"},
 			str:      "hello ${{ input \"name\" }}",
 			expected: "hello test",
 		},
 		{
 			name:          "with missing input",
-			input:         v0.With{},
+			input:         schema.With{},
 			str:           "hello ${{ input \"name\" }}",
 			expectedError: "\"name\" does not exist in []",
 		},
@@ -75,7 +76,7 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:  "with multiple variables",
-			input: v0.With{"name": "test"},
+			input: schema.With{"name": "test"},
 			previousOutput: CommandOutputs{
 				"step1": map[string]any{
 					"result": "success",
@@ -121,14 +122,14 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:     "dry run - with input",
-			input:    v0.With{"name": "test"},
+			input:    schema.With{"name": "test"},
 			str:      `hello ${{ input "name" }}`,
 			expected: "hello test",
 			dryRun:   true,
 		},
 		{
 			name:     "dry run - with missing input",
-			input:    v0.With{},
+			input:    schema.With{},
 			str:      `hello ${{ input "name" }}`,
 			expected: "hello ❯ input name ❮",
 			dryRun:   true,
@@ -169,7 +170,7 @@ func TestTemplateString(t *testing.T) {
 		},
 		{
 			name:  "dry run - with multiple variables",
-			input: v0.With{"name": "test"},
+			input: schema.With{"name": "test"},
 			previousOutput: CommandOutputs{
 				"step1": map[string]any{
 					"result": "success",
@@ -219,75 +220,76 @@ func TestMergeWithAndParams(t *testing.T) {
 	t.Setenv("TEST_ENV_VAR", "env-value")
 	t.Setenv("TEST_ENV_BOOL", "true")
 	t.Setenv("TEST_ENV_INT", "42")
+	t.Setenv("EMPTY_VAR", "")
 
 	tests := []struct {
 		name          string
-		with          v0.With
-		params        v0.InputMap
-		expected      v0.With
+		with          schema.With
+		params        v1.InputMap
+		expected      schema.With
 		expectedError string
 	}{
 		{
 			name:     "empty inputs",
-			with:     v0.With{},
-			params:   v0.InputMap{},
-			expected: v0.With{},
+			with:     schema.With{},
+			params:   v1.InputMap{},
+			expected: schema.With{},
 		},
 		{
 			name: "nil default input parameter",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{Default: nil, Required: &requiredFalse},
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{Default: nil, Required: &requiredFalse},
 			},
-			expected: v0.With{},
+			expected: schema.With{},
 		},
 		{
 			name: "with default values",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
-				"version": v0.InputParameter{
+				"version": v1.InputParameter{
 					Default: "1.0.0",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name":    "default-name",
 				"version": "1.0.0",
 			},
 		},
 		{
 			name: "with overridden values",
-			with: v0.With{
+			with: schema.With{
 				"name": "custom-name",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
-				"version": v0.InputParameter{
+				"version": v1.InputParameter{
 					Default: "1.0.0",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name":    "custom-name",
 				"version": "1.0.0",
 			},
 		},
 		{
 			name: "with required parameter missing",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{},
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{},
 			},
 			expectedError: "missing required input: \"name\"",
 		},
 		{
 			name: "with required parameter explicitly set to true",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Required: &requiredTrue,
 				},
 			},
@@ -295,53 +297,53 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "with required parameter explicitly set to false",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Required: &requiredFalse,
 				},
 			},
-			expected: v0.With{},
+			expected: schema.With{},
 		},
 		{
 			name: "with required parameter provided",
-			with: v0.With{
+			with: schema.With{
 				"name": "custom-name",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "custom-name",
 			},
 		},
 		{
 			name: "with deprecated parameter",
-			with: v0.With{
+			with: schema.With{
 				"old-param": "value",
 			},
-			params: v0.InputMap{
-				"old-param": v0.InputParameter{
+			params: v1.InputMap{
+				"old-param": v1.InputParameter{
 					DeprecatedMessage: "Use new-param instead",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"old-param": "value",
 			},
 		},
 		{
 			name: "with extra parameters",
-			with: v0.With{
+			with: schema.With{
 				"name":    "custom-name",
 				"extra":   "extra-value",
 				"another": 123,
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name":    "custom-name",
 				"extra":   "extra-value",
 				"another": 123,
@@ -349,95 +351,95 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "string input with string default - type match",
-			with: v0.With{
+			with: schema.With{
 				"name": "custom-name",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-name",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "custom-name",
 			},
 		},
 		{
 			name: "string input with non-string default - type cast",
-			with: v0.With{
+			with: schema.With{
 				"count": "10",
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: 5,
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"count": 10,
 			},
 		},
 		{
 			name: "bool input with bool default - type match",
-			with: v0.With{
+			with: schema.With{
 				"enabled": true,
 			},
-			params: v0.InputMap{
-				"enabled": v0.InputParameter{
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
 					Default: false,
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"enabled": true,
 			},
 		},
 		{
 			name: "bool input with non-bool default - type cast",
-			with: v0.With{
+			with: schema.With{
 				"enabled": true,
 			},
-			params: v0.InputMap{
-				"enabled": v0.InputParameter{
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
 					Default: "false",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"enabled": "true",
 			},
 		},
 		{
 			name: "int input with int default - type match",
-			with: v0.With{
+			with: schema.With{
 				"count": 10,
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: 5,
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"count": 10,
 			},
 		},
 		{
 			name: "int input with non-int default - type cast",
-			with: v0.With{
+			with: schema.With{
 				"count": 10,
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: "5",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"count": "10",
 			},
 		},
 		{
 			name: "int input with non-int default - failed type cast",
-			with: v0.With{
+			with: schema.With{
 				"count": "hello",
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: true,
 				},
 			},
@@ -445,39 +447,39 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "uint64 input with uint64 default - type match",
-			with: v0.With{
+			with: schema.With{
 				"size": uint64(1024),
 			},
-			params: v0.InputMap{
-				"size": v0.InputParameter{
+			params: v1.InputMap{
+				"size": v1.InputParameter{
 					Default: uint64(512),
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"size": uint64(1024),
 			},
 		},
 		{
 			name: "uint64 input with non-uint64 default - type cast",
-			with: v0.With{
+			with: schema.With{
 				"size": "2048",
 			},
-			params: v0.InputMap{
-				"size": v0.InputParameter{
+			params: v1.InputMap{
+				"size": v1.InputParameter{
 					Default: uint64(512),
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"size": uint64(2048),
 			},
 		},
 		{
 			name: "uint64 input with non-uint64 default - failed type cast",
-			with: v0.With{
+			with: schema.With{
 				"size": "not-a-number",
 			},
-			params: v0.InputMap{
-				"size": v0.InputParameter{
+			params: v1.InputMap{
+				"size": v1.InputParameter{
 					Default: uint64(512),
 				},
 			},
@@ -485,11 +487,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "unsupported type default - slice type",
-			with: v0.With{
+			with: schema.With{
 				"data": "some-value",
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Default: []string{"default", "values"},
 				},
 			},
@@ -497,11 +499,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "unsupported type default - map type",
-			with: v0.With{
+			with: schema.With{
 				"config": "some-value",
 			},
-			params: v0.InputMap{
-				"config": v0.InputParameter{
+			params: v1.InputMap{
+				"config": v1.InputParameter{
 					Default: map[string]string{"key": "value"},
 				},
 			},
@@ -509,11 +511,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "unknown type input",
-			with: v0.With{
+			with: schema.With{
 				"data": []string{"a", "b"},
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Default: true,
 				},
 			},
@@ -521,11 +523,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "type mismatch with default",
-			with: v0.With{
+			with: schema.With{
 				"count": "not-a-number",
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Default: 42,
 				},
 			},
@@ -533,26 +535,26 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "valid regex validation passes",
-			with: v0.With{
+			with: schema.With{
 				"name": "Hello World",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation",
 					Validate:    "^Hello",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "Hello World",
 			},
 		},
 		{
 			name: "invalid regex validation fails",
-			with: v0.With{
+			with: schema.With{
 				"name": "Goodbye World",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation",
 					Validate:    "^Hello",
 				},
@@ -561,11 +563,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "invalid regex pattern",
-			with: v0.With{
+			with: schema.With{
 				"name": "Hello World",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation",
 					Validate:    "[", // Invalid regex
 				},
@@ -574,25 +576,25 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "validation with default value passes",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation and default",
 					Default:     "Hello Default",
 					Validate:    "^Hello",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "Hello Default",
 			},
 		},
 		{
 			name: "validation with good default value bad provided value fails",
-			with: v0.With{
+			with: schema.With{
 				"name": "Goodbye World", // Provide a value that fails validation
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation and default",
 					Default:     "Hello Default", // Default would pass validation
 					Validate:    "^Hello",
@@ -602,9 +604,9 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "validation with bad default value fails",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description: "Name with validation and default",
 					Default:     "Goodbye World",
 					Validate:    "^Hello",
@@ -614,103 +616,103 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "non-string value with validation",
-			with: v0.With{
+			with: schema.With{
 				"count": 42,
 			},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Description: "Count with validation",
 					Validate:    "^4",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"count": 42,
 			},
 		},
 		{
 			name: "with default-from-env value",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name from environment",
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "with default-from-env for bool value",
-			with: v0.With{},
-			params: v0.InputMap{
-				"enabled": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
 					Description:    "Boolean from environment",
 					DefaultFromEnv: "TEST_ENV_BOOL",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"enabled": "true",
 			},
 		},
 		{
 			name: "with default-from-env for int value",
-			with: v0.With{},
-			params: v0.InputMap{
-				"count": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"count": v1.InputParameter{
 					Description:    "Integer from environment",
 					DefaultFromEnv: "TEST_ENV_INT",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"count": "42",
 			},
 		},
 		{
 			name: "with missing environment variable",
-			with: v0.With{},
-			params: v0.InputMap{
-				"missing": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"missing": v1.InputParameter{
 					Description:    "Missing environment variable",
 					DefaultFromEnv: "NON_EXISTENT_ENV_VAR",
 				},
 			},
-			expected: v0.With{},
+			expected: schema.With{},
 		},
 		{
 			name: "with provided value overriding default-from-env",
-			with: v0.With{
+			with: schema.With{
 				"name": "provided-value",
 			},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name with provided value",
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "provided-value",
 			},
 		},
 		{
 			name: "with validation on default-from-env value - passing",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name from environment with validation",
 					DefaultFromEnv: "TEST_ENV_VAR",
 					Validate:       "^env",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "with validation on default-from-env value - failing",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name from environment with validation",
 					DefaultFromEnv: "TEST_ENV_VAR",
 					Validate:       "^invalid",
@@ -720,49 +722,49 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "test priority order: default-from-env over default",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name with both default and default-from-env",
 					Default:        "default-value",
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "test fallback from missing env var to default",
-			with: v0.With{},
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Description:    "Name with both default and missing default-from-env",
 					Default:        "fallback-value",
 					DefaultFromEnv: "NON_EXISTENT_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "fallback-value",
 			},
 		},
 		{
 			name: "nil with parameter creates new map",
 			with: nil,
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default: "default-value",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "default-value",
 			},
 		},
 		{
 			name: "nil with parameter with required input missing",
 			with: nil,
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Required: &requiredTrue,
 				},
 			},
@@ -771,22 +773,22 @@ func TestMergeWithAndParams(t *testing.T) {
 		{
 			name: "nil with parameter with env var",
 			with: nil,
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					DefaultFromEnv: "TEST_ENV_VAR",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "env-value",
 			},
 		},
 		{
 			name: "validation with non-string value that cannot be cast to string",
-			with: v0.With{
+			with: schema.With{
 				"data": complex(1, 2), // complex numbers cannot be cast to string
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Validate: "^test",
 				},
 			},
@@ -794,11 +796,11 @@ func TestMergeWithAndParams(t *testing.T) {
 		},
 		{
 			name: "string casting error in type matching section",
-			with: v0.With{
+			with: schema.With{
 				"data": complex(1, 2), // complex numbers cannot be cast to string
 			},
-			params: v0.InputMap{
-				"data": v0.InputParameter{
+			params: v1.InputMap{
+				"data": v1.InputParameter{
 					Default: "string-default", // This will trigger string casting
 				},
 			},
@@ -807,14 +809,265 @@ func TestMergeWithAndParams(t *testing.T) {
 		{
 			name: "nil with parameter requiring default assignment triggers map creation",
 			with: nil, // This ensures merged starts as nil
-			params: v0.InputMap{
-				"name": v0.InputParameter{
+			params: v1.InputMap{
+				"name": v1.InputParameter{
 					Default:  "test-value",
 					Required: &requiredFalse, // Ensure it's not required
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"name": "test-value",
+			},
+		},
+		{
+			name: "default-from-env with bool default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
+					Default:        true,
+					DefaultFromEnv: "TEST_ENV_BOOL",
+				},
+			},
+			expected: schema.With{
+				"enabled": true,
+			},
+		},
+		{
+			name: "default-from-env with int default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"count": v1.InputParameter{
+					Default:        42,
+					DefaultFromEnv: "TEST_ENV_INT",
+				},
+			},
+			expected: schema.With{
+				"count": 42,
+			},
+		},
+		{
+			name: "default-from-env with uint64 default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"size": v1.InputParameter{
+					Default:        uint64(1024),
+					DefaultFromEnv: "TEST_ENV_INT",
+				},
+			},
+			expected: schema.With{
+				"size": uint64(42),
+			},
+		},
+		{
+			name: "default-from-env with string default and casting",
+			with: schema.With{},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
+					Default:        "default-name",
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expected: schema.With{
+				"name": "env-value",
+			},
+		},
+		{
+			name: "default-from-env with bool casting error",
+			with: schema.With{},
+			params: v1.InputMap{
+				"enabled": v1.InputParameter{
+					Default:        true,
+					DefaultFromEnv: "TEST_ENV_VAR", // "env-value" cannot be cast to bool
+				},
+			},
+			expectedError: "strconv.ParseBool: parsing \"env-value\": invalid syntax",
+		},
+		{
+			name: "default-from-env with int casting error",
+			with: schema.With{},
+			params: v1.InputMap{
+				"count": v1.InputParameter{
+					Default:        42,
+					DefaultFromEnv: "TEST_ENV_VAR", // "env-value" cannot be cast to int
+				},
+			},
+			expectedError: "unable to cast \"env-value\" of type string to int: strconv.ParseInt: parsing \"env-value\": invalid syntax",
+		},
+		{
+			name: "default-from-env with uint64 casting error",
+			with: schema.With{},
+			params: v1.InputMap{
+				"size": v1.InputParameter{
+					Default:        uint64(1024),
+					DefaultFromEnv: "TEST_ENV_VAR", // "env-value" cannot be cast to uint64
+				},
+			},
+			expectedError: "unable to cast \"env-value\" of type string to uint64: strconv.ParseUint: parsing \"env-value\": invalid syntax",
+		},
+		{
+			name: "default-from-env with unsupported type default",
+			with: schema.With{},
+			params: v1.InputMap{
+				"data": v1.InputParameter{
+					Default:        []string{"default"},
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expectedError: "unable to cast env input \"data\" from string to []string",
+		},
+		{
+			name: "deprecated parameter without provided value (no warning)",
+			with: schema.With{},
+			params: v1.InputMap{
+				"old-param": v1.InputParameter{
+					DeprecatedMessage: "Use new-param instead",
+					Default:           "default-value",
+				},
+			},
+			expected: schema.With{
+				"old-param": "default-value",
+			},
+		},
+		{
+			name: "with parameter that exists in with but not provided directly",
+			with: schema.With{
+				"existing": "existing-value",
+			},
+			params: v1.InputMap{
+				"new-param": v1.InputParameter{
+					Default: "new-default",
+				},
+			},
+			expected: schema.With{
+				"existing":  "existing-value",
+				"new-param": "new-default",
+			},
+		},
+		{
+			name: "validation with nil merged value should error",
+			with: schema.With{
+				"name": nil,
+			},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
+					Validate: "^test",
+					Required: &requiredFalse,
+				},
+			},
+			expectedError: "failed to validate: input=name, value=%!s(<nil>), regexp=^test",
+		},
+		{
+			name: "default-from-env with complex type that cannot be cast",
+			with: schema.With{},
+			params: v1.InputMap{
+				"data": v1.InputParameter{
+					Default:        complex(1, 2),
+					DefaultFromEnv: "TEST_ENV_VAR",
+				},
+			},
+			expectedError: "unable to cast env input \"data\" from string to complex128",
+		},
+		{
+			name: "env var present but empty string with bool default",
+			with: schema.With{},
+			params: v1.InputMap{
+				"flag": v1.InputParameter{
+					Default:        true,
+					DefaultFromEnv: "EMPTY_VAR",
+				},
+			},
+			expectedError: "strconv.ParseBool: parsing \"\": invalid syntax",
+		},
+		{
+			name: "required parameter with nil in with map",
+			with: schema.With{
+				"name": nil,
+			},
+			params: v1.InputMap{
+				"name": v1.InputParameter{
+					Required: &requiredTrue,
+				},
+			},
+			expected: schema.With{
+				"name": nil,
+			},
+		},
+		{
+			name: "parameter with both default and defaultFromEnv but env var missing",
+			with: schema.With{},
+			params: v1.InputMap{
+				"config": v1.InputParameter{
+					Default:        "fallback-default",
+					DefaultFromEnv: "MISSING_ENV_VAR",
+					Required:       &requiredFalse,
+				},
+			},
+			expected: schema.With{
+				"config": "fallback-default",
+			},
+		},
+		{
+			name: "required field explicitly nil with missing parameter",
+			with: schema.With{},
+			params: v1.InputMap{
+				"test": v1.InputParameter{
+					Required: nil, // This should default to true
+				},
+			},
+			expectedError: "missing required input: \"test\"",
+		},
+		{
+			name: "parameter with default and env var, env var takes precedence but empty",
+			with: schema.With{},
+			params: v1.InputMap{
+				"priority": v1.InputParameter{
+					Default:        "default-value",
+					DefaultFromEnv: "EMPTY_VAR", // This is set to "" in test env
+					Required:       &requiredFalse,
+				},
+			},
+			expected: schema.With{
+				"priority": "",
+			},
+		},
+		{
+			name: "complex scenario with all conditions",
+			with: schema.With{
+				"existing": "keep-this",
+			},
+			params: v1.InputMap{
+				"existing": v1.InputParameter{
+					DeprecatedMessage: "This is deprecated",
+					Default:           "wont-be-used",
+				},
+				"from-env": v1.InputParameter{
+					DefaultFromEnv: "TEST_ENV_VAR",
+					Default:        "fallback",
+				},
+				"just-default": v1.InputParameter{
+					Default: "default-only",
+				},
+				"missing-required": v1.InputParameter{
+					Required: &requiredFalse,
+				},
+			},
+			expected: schema.With{
+				"existing":     "keep-this",
+				"from-env":     "env-value",
+				"just-default": "default-only",
+			},
+		},
+		{
+			name: "edge case: required true with empty default from env and no default",
+			with: schema.With{},
+			params: v1.InputMap{
+				"edge": v1.InputParameter{
+					Required:       &requiredTrue,
+					DefaultFromEnv: "EMPTY_VAR", // Set to "" in test env
+				},
+			},
+			expected: schema.With{
+				"edge": "",
 			},
 		},
 	}
@@ -839,10 +1092,10 @@ func TestMergeWithAndParams(t *testing.T) {
 func TestTemplateWithMap(t *testing.T) {
 	tests := []struct {
 		name           string
-		input          v0.With
+		input          schema.With
 		previousOutput CommandOutputs
 		withMap        map[string]any
-		expected       v0.With
+		expected       schema.With
 		expectedError  string
 	}{
 		{
@@ -857,19 +1110,19 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "simple string value",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
 				"greeting": "Hello ${{ input \"name\" }}",
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"greeting": "Hello test",
 			},
 		},
 		{
 			name: "nested map",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -878,8 +1131,8 @@ func TestTemplateWithMap(t *testing.T) {
 					"version":  "1.0",
 				},
 			},
-			expected: v0.With{
-				"config": v0.With{
+			expected: schema.With{
+				"config": schema.With{
 					"greeting": "Hello test",
 					"version":  "1.0",
 				},
@@ -887,7 +1140,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "array with strings",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -896,7 +1149,7 @@ func TestTemplateWithMap(t *testing.T) {
 					"Hi ${{ input \"name\" }}",
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"greetings": []any{
 					"Hello test",
 					"Hi test",
@@ -905,7 +1158,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "array with maps",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -920,13 +1173,13 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"users": []any{
-					v0.With{
+					schema.With{
 						"name": "test",
 						"role": "admin",
 					},
-					v0.With{
+					schema.With{
 						"name": "other",
 						"role": "user",
 					},
@@ -935,7 +1188,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "nested arrays",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			withMap: map[string]any{
@@ -946,7 +1199,7 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 				},
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"data": []any{
 					[]any{
 						"test",
@@ -957,7 +1210,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "complex nested structure",
-			input: v0.With{
+			input: schema.With{
 				"name":    "test",
 				"version": "2.0",
 			},
@@ -985,20 +1238,20 @@ func TestTemplateWithMap(t *testing.T) {
 					},
 				},
 			},
-			expected: v0.With{
-				"config": v0.With{
-					"app": v0.With{
+			expected: schema.With{
+				"config": schema.With{
+					"app": schema.With{
 						"name":    "test",
 						"version": "2.0",
 					},
 					"status": "success",
 				},
 				"data": []any{
-					v0.With{
+					schema.With{
 						"key":   "app_name",
 						"value": "test",
 					},
-					v0.With{
+					schema.With{
 						"key":   "app_version",
 						"value": "2.0",
 					},
@@ -1007,7 +1260,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name:  "with template error",
-			input: v0.With{},
+			input: schema.With{},
 			withMap: map[string]any{
 				"greeting": "Hello ${{ input \"missing\" }}",
 			},
@@ -1020,7 +1273,7 @@ func TestTemplateWithMap(t *testing.T) {
 				"boolean": true,
 				"null":    nil,
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"number":  42,
 				"boolean": true,
 				"null":    nil,
@@ -1028,19 +1281,19 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name: "With type instead of map[string]any",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
-			withMap: v0.With{
+			withMap: schema.With{
 				"greeting": "Hello ${{ input \"name\" }}",
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"greeting": "Hello test",
 			},
 		},
 		{
 			name:  "nested map with template error",
-			input: v0.With{},
+			input: schema.With{},
 			withMap: map[string]any{
 				"config": map[string]any{
 					"greeting": "Hello ${{ input \"missing\" }}",
@@ -1050,7 +1303,7 @@ func TestTemplateWithMap(t *testing.T) {
 		},
 		{
 			name:  "slice with template error",
-			input: v0.With{},
+			input: schema.With{},
 			withMap: map[string]any{
 				"items": []any{
 					"Hello ${{ input \"missing\" }}",
@@ -1082,7 +1335,7 @@ func TestTemplateWithMap(t *testing.T) {
 func TestTemplateSlice(t *testing.T) {
 	tests := []struct {
 		name           string
-		input          v0.With
+		input          schema.With
 		previousOutput CommandOutputs
 		slice          []any
 		expected       []any
@@ -1095,7 +1348,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with strings",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1109,7 +1362,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with maps",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1121,17 +1374,17 @@ func TestTemplateSlice(t *testing.T) {
 				},
 			},
 			expected: []any{
-				v0.With{
+				schema.With{
 					"greeting": "Hello test",
 				},
-				v0.With{
+				schema.With{
 					"greeting": "Hi test",
 				},
 			},
 		},
 		{
 			name: "nested slices",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1162,7 +1415,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "mixed types",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1179,7 +1432,7 @@ func TestTemplateSlice(t *testing.T) {
 			expected: []any{
 				"Hello test",
 				42,
-				v0.With{
+				schema.With{
 					"greeting": "Hi test",
 				},
 				[]any{
@@ -1214,7 +1467,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with nested slices containing maps",
-			input: v0.With{
+			input: schema.With{
 				"name": "test",
 			},
 			slice: []any{
@@ -1226,7 +1479,7 @@ func TestTemplateSlice(t *testing.T) {
 			},
 			expected: []any{
 				[]any{
-					v0.With{
+					schema.With{
 						"key": "test",
 					},
 				},
@@ -1234,7 +1487,7 @@ func TestTemplateSlice(t *testing.T) {
 		},
 		{
 			name: "slice with deeply nested structure",
-			input: v0.With{
+			input: schema.With{
 				"value": "nested",
 			},
 			slice: []any{
@@ -1247,8 +1500,8 @@ func TestTemplateSlice(t *testing.T) {
 				},
 			},
 			expected: []any{
-				v0.With{
-					"level1": v0.With{
+				schema.With{
+					"level1": schema.With{
 						"level2": []any{
 							"nested",
 						},
@@ -1298,10 +1551,10 @@ func TestTemplateSlice(t *testing.T) {
 func TestPerformLookups(t *testing.T) {
 	testCases := []struct {
 		name          string
-		input         v0.With
-		local         v0.With
+		input         schema.With
+		local         schema.With
 		previous      CommandOutputs
-		expected      v0.With
+		expected      schema.With
 		expectedError string
 	}{
 		{
@@ -1309,17 +1562,17 @@ func TestPerformLookups(t *testing.T) {
 		},
 		{
 			name: "invalid template",
-			local: v0.With{
+			local: schema.With{
 				"foo": `${{ input`,
 			},
 			expectedError: "template: expression evaluator:1: unclosed action",
 		},
 		{
 			name: "simple lookup + builtins",
-			input: v0.With{
+			input: schema.With{
 				"key": "value",
 			},
-			local: v0.With{
+			local: schema.With{
 				"key":      "${{ input \"key\" }}",
 				"os":       "${{ .OS }}",
 				"arch":     "${{ .ARCH }}",
@@ -1327,7 +1580,7 @@ func TestPerformLookups(t *testing.T) {
 				"int":      1,
 				"bool":     false,
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"key":      "value",
 				"os":       runtime.GOOS,
 				"arch":     runtime.GOARCH,
@@ -1338,11 +1591,11 @@ func TestPerformLookups(t *testing.T) {
 		},
 		{
 			name: "missing input",
-			input: v0.With{
+			input: schema.With{
 				"a": "b",
 				"c": "d",
 			},
-			local: v0.With{
+			local: schema.With{
 				"key": `${{ input "foo" }}`,
 			},
 			expectedError: "template: expression evaluator:1:4: executing \"expression evaluator\" at <input \"foo\">: error calling input: input \"foo\" does not exist in [a c]",
@@ -1354,23 +1607,23 @@ func TestPerformLookups(t *testing.T) {
 					"bar": "baz",
 				},
 			},
-			local: v0.With{
+			local: schema.With{
 				"foo": `${{ from "step-1" "bar" }}`,
 			},
-			expected: v0.With{
+			expected: schema.With{
 				"foo": "baz",
 			},
 		},
 		{
 			name: "lookup from previous outputs - no outputs from step",
-			local: v0.With{
+			local: schema.With{
 				"foo": `${{ from "step-1" "bar" }}`,
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from "step-1" "bar">: error calling from: no outputs from step "step-1"`,
 		},
 		{
 			name: "lookup from previous outputs - missing arg",
-			local: v0.With{
+			local: schema.With{
 				"foo": `${{ from "step-1" }}`,
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from>: wrong number of args for from: want 2 got 1`,
@@ -1382,7 +1635,7 @@ func TestPerformLookups(t *testing.T) {
 					"bar": "baz",
 				},
 			},
-			local: v0.With{
+			local: schema.With{
 				"foo": `${{ from "step-1" "dne" }}`,
 			},
 			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from "step-1" "dne">: error calling from: no output "dne" from step "step-1"`,

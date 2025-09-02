@@ -9,7 +9,7 @@ import (
 	"github.com/package-url/packageurl-go"
 	"github.com/stretchr/testify/assert"
 
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
 func TestConfigBasedResolver(t *testing.T) {
@@ -18,7 +18,7 @@ func TestConfigBasedResolver(t *testing.T) {
 		name            string
 		inputType       string
 		inputQualifiers map[string]string
-		aliases         v0.AliasMap
+		aliases         v1.AliasMap
 		wantType        string
 		wantQualifiers  map[string]string
 		wantResolved    bool
@@ -27,7 +27,7 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "no alias",
 			inputType:       packageurl.TypeGithub,
 			inputQualifiers: map[string]string{},
-			aliases:         v0.AliasMap{},
+			aliases:         v1.AliasMap{},
 			wantType:        packageurl.TypeGithub,
 			wantQualifiers:  map[string]string{},
 			wantResolved:    false,
@@ -36,7 +36,7 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "simple alias",
 			inputType:       "custom",
 			inputQualifiers: map[string]string{},
-			aliases: v0.AliasMap{
+			aliases: v1.AliasMap{
 				"custom": {
 					Type: packageurl.TypeGithub,
 				},
@@ -49,7 +49,7 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "alias with base",
 			inputType:       "gl",
 			inputQualifiers: map[string]string{},
-			aliases: v0.AliasMap{
+			aliases: v1.AliasMap{
 				"gl": {
 					Type: packageurl.TypeGitlab,
 					Base: "https://gitlab.example.com",
@@ -63,7 +63,7 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "alias with overridden base",
 			inputType:       "gl",
 			inputQualifiers: map[string]string{QualifierBaseURL: "https://my-gitlab.com"},
-			aliases: v0.AliasMap{
+			aliases: v1.AliasMap{
 				"gl": {
 					Type: packageurl.TypeGitlab,
 					Base: "https://gitlab.example.com",
@@ -77,7 +77,7 @@ func TestConfigBasedResolver(t *testing.T) {
 			name:            "alias with token from env",
 			inputType:       "another",
 			inputQualifiers: map[string]string{},
-			aliases: v0.AliasMap{
+			aliases: v1.AliasMap{
 				"another": {
 					Type:         packageurl.TypeGithub,
 					TokenFromEnv: "GITHUB2_TOKEN",

@@ -26,7 +26,7 @@ import (
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/config"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
-	v0 "github.com/defenseunicorns/maru2/schema/v0"
+	"github.com/defenseunicorns/maru2/schema"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -241,13 +241,13 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			with := make(v0.With, len(w))
+			with := make(schema.With, len(w))
 			for k, v := range w {
 				with[k] = v
 			}
 
 			if len(args) == 0 {
-				args = append(args, v0.DefaultTaskName)
+				args = append(args, schema.DefaultTaskName)
 			}
 
 			environ := os.Environ()

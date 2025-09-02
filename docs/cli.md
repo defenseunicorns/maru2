@@ -359,12 +359,14 @@ When a step in a Maru2 workflow fails, the error is propagated up the call stack
 ```yaml
 tasks:
   fail:
-    - run: exit 1
+    steps:
+      - run: exit 1
 
   caller:
-    - run: echo "Starting workflow"
-    - uses: fail
-    - run: echo "This step will be skipped"
+    steps:
+      - run: echo "Starting workflow"
+      - uses: fail
+      - run: echo "This step will be skipped"
 ```
 
 ```sh
