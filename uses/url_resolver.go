@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/package-url/packageurl-go"
 
@@ -36,12 +37,19 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 	if !slices.Contains(v1.SupportedSchemes(), uri.Scheme) {
 		for ns, alias := range pkgAliases {
 			if ns == uri.Scheme && alias.Path != "" {
-				task := uri.Opaque
+				var task string
+				parts := strings.SplitN(u, ":", 2)
+				if len(parts) > 1 {
+					task = parts[1]
+				}
 				uri, err = url.Parse("file:" + alias.Path)
 				if err != nil {
 					return nil, err
 				}
 				if task != "" {
+					if !v1.TaskNamePattern.MatchString(task) {
+						return nil, fmt.Errorf("%q does not satisfy %q", task, v1.TaskNamePattern)
+					}
 					q := uri.Query()
 					q.Set("task", task)
 					uri.RawQuery = q.Encode()

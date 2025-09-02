@@ -397,7 +397,7 @@ func TestResolveURL(t *testing.T) {
 					Path: "invalid%url%path\x7f",
 				},
 			},
-			expectedErr: `parse "file:invalid%url%path\x7f?task=task-name": net/url: invalid control character in URL`,
+			expectedErr: `parse "file:invalid%url%path\x7f": net/url: invalid control character in URL`,
 		},
 		{
 			name: "pkg alias resolution with qualifiers",
@@ -494,7 +494,7 @@ func TestResolveURL(t *testing.T) {
 					Path: "local/path/to/file.yaml",
 				},
 			},
-			next: "file:local/path/to/file.yaml?task=task-name",
+			expectedErr: `"task-name?param=value" does not satisfy "^[_a-zA-Z][a-zA-Z0-9_-]*$"`,
 		},
 		{
 			name: "alias path resolution with invalid task name",

@@ -135,7 +135,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			for name, alias := range wf.Aliases {
 				if alias.Path != "" {
-					next, err := uses.ResolveRelative(resolved, strings.Join([]string{name, alias.Path}, ":"), wf.Aliases)
+					next, err := uses.ResolveRelative(resolved, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
 					if err != nil {
 						return nil, cobra.ShellCompDirectiveError
 					}
@@ -252,7 +252,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 				for name, alias := range wf.Aliases {
 					if alias.Path != "" {
-						next, err := uses.ResolveRelative(resolved, strings.Join([]string{name, alias.Path}, ":"), wf.Aliases)
+						next, err := uses.ResolveRelative(resolved, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
 						if err != nil {
 							return err
 						}
