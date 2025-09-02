@@ -22,10 +22,28 @@ cmp stderr good-stderr.txt
 default
 bar
 foo
+other:default
+other:bar
+other:foo
 :4
 -- good-stderr.txt --
 Completion ended with directive: ShellCompDirectiveNoFileComp
 -- tasks.yaml --
+schema-version: v1
+aliases:
+  other:
+    path: tasks/other.yaml
+tasks:
+  default:
+    steps:
+      - run: echo "default"
+  foo:
+    steps:
+      - run: echo "foo"
+  bar:
+    steps:
+      - run: echo "bar"
+-- tasks/other.yaml --
 schema-version: v0
 tasks:
   default:

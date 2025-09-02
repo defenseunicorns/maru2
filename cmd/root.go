@@ -130,7 +130,26 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			if err != nil {
 				return nil, cobra.ShellCompDirectiveError
 			}
-			return wf.Tasks.OrderedTaskNames(), cobra.ShellCompDirectiveNoFileComp
+
+			names := wf.Tasks.OrderedTaskNames()
+
+			for name, alias := range wf.Aliases {
+				if alias.Path != "" {
+					next, err := uses.ResolveRelative(resolved, strings.Join([]string{name, alias.Path}, ":"), wf.Aliases)
+					if err != nil {
+						return nil, cobra.ShellCompDirectiveError
+					}
+					aliasedWF, err := maru2.Fetch(cmd.Context(), svc, next)
+					if err != nil {
+						return nil, cobra.ShellCompDirectiveError
+					}
+					for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
+						names = append(names, fmt.Sprintf("%s:%s", name, n))
+					}
+				}
+			}
+
+			return names, cobra.ShellCompDirectiveNoFileComp
 		},
 		PreRunE: func(cmd *cobra.Command, _ []string) error {
 			l, err := log.ParseLevel(level)
