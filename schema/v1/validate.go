@@ -69,6 +69,11 @@ func Validate(wf Workflow) error {
 		return errors.New("no tasks available")
 	}
 
+	namespaces := []string{}
+	for ns := range wf.Aliases {
+		namespaces = append(namespaces, ns)
+	}
+
 	for name, task := range wf.Tasks {
 		if ok := TaskNamePattern.MatchString(name); !ok {
 			return fmt.Errorf("task name %q does not satisfy %q", name, TaskNamePattern.String())
@@ -114,6 +119,7 @@ func Validate(wf Workflow) error {
 					}
 				} else {
 					schemes := append(SupportedSchemes(), "builtin")
+					schemes = append(schemes, namespaces...)
 
 					if !slices.Contains(schemes, u.Scheme) {
 						return fmt.Errorf(".tasks.%s[%d].uses %q is not one of [%s]", name, idx, u.Scheme, strings.Join(schemes, ", "))

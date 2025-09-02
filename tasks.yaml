@@ -1,6 +1,10 @@
 # yaml-language-server: $schema=maru2.schema.json
 schema-version: v1
 
+aliases:
+  simple:
+    path: testdata/simple.yaml
+
 tasks:
   echo:
     inputs:
@@ -10,6 +14,7 @@ tasks:
         required: true
     steps:
       - run: echo "${{ input "text" }}"
+      - uses: simple:hello-world
 
   test:
     inputs:

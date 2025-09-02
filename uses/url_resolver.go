@@ -43,7 +43,7 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 				break
 			}
 		}
-		uri, err = url.Parse("file:" + localPath + "?=" + task)
+		uri, err = url.Parse("file:" + localPath + "?task=" + task)
 		if err != nil {
 			return nil, err
 		}
