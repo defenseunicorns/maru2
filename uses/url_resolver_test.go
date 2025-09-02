@@ -354,6 +354,51 @@ func TestResolveURL(t *testing.T) {
 			uri:  "pkg:github/owner/repo@v1.0.0#dir/foo.yaml",
 			next: "oci:registry.uds.sh/maru2:latest#pkg:github/owner/repo@v1.0.0%23dir/foo.yaml",
 		},
+		{
+			name: "alias path resolution",
+			prev: "file:foo.yaml",
+			uri:  "custom:task-name",
+			aliases: v1.AliasMap{
+				"custom": {
+					Path: "local/path/to/file.yaml",
+				},
+			},
+			next: "file:local/path/to/file.yaml?task=task-name",
+		},
+		{
+			name: "unsupported scheme with empty path (no alias resolution)",
+			prev: "file:foo.yaml",
+			uri:  "custom:task-name",
+			aliases: v1.AliasMap{
+				"custom": {
+					Type: "github",
+					// Path is empty, so no alias resolution should occur
+				},
+			},
+			expectedErr: `unsupported scheme: "custom" in "custom:task-name"`,
+		},
+		{
+			name: "unsupported scheme with no matching alias",
+			prev: "file:foo.yaml",
+			uri:  "unknown:task-name",
+			aliases: v1.AliasMap{
+				"custom": {
+					Path: "some/path",
+				},
+			},
+			expectedErr: `unsupported scheme: "unknown" in "unknown:task-name"`,
+		},
+		{
+			name: "unsupported scheme with invalid file URL after alias resolution",
+			prev: "file:foo.yaml",
+			uri:  "custom:task-name",
+			aliases: v1.AliasMap{
+				"custom": {
+					Path: "invalid%url%path\x7f",
+				},
+			},
+			expectedErr: `parse "file:invalid%url%path\x7f?task=task-name": net/url: invalid control character in URL`,
+		},
 	}
 
 	for _, tc := range tests {
