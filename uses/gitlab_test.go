@@ -5,7 +5,6 @@ package uses
 
 import (
 	"io"
-	"net/url"
 	"testing"
 
 	"github.com/charmbracelet/log"
@@ -29,27 +28,42 @@ func TestGitLabFetcher(t *testing.T) {
 		assert.Nil(t, rc)
 		require.EqualError(t, err, `uri is nil`)
 
-		u, err := url.Parse("file:foo.yaml")
+		u, err := ResolveRelative(nil, "file:foo.yaml", nil)
 		require.NoError(t, err)
 
 		rc, err = client.Fetch(ctx, u)
 		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
 		assert.Nil(t, rc)
 
-		u, err = url.Parse("pkg:github/foo.yaml")
+		u, err = ResolveRelative(nil, "pkg:github/foo.yaml", nil)
 		require.NoError(t, err)
 
 		rc, err = client.Fetch(ctx, u)
 		require.EqualError(t, err, `purl type is not "gitlab": "github"`)
 		assert.Nil(t, rc)
 
-		u, err = url.Parse("pkg:gitlab/noxsios/vai@main?task=hello-world#vai.yaml")
+		u, err = ResolveRelative(nil, "pkg:gitlab/noxsios/vai@main?task=hello-world#vai.yaml", nil)
 		require.NoError(t, err)
 
 		rc, err = client.Fetch(ctx, u)
 		require.NoError(t, err)
 
 		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
+
+		assert.Equal(t, `# yaml-language-server: $schema=vai.schema.json
+
+hello-world:
+  - run: echo "Hello, World!"
+`, string(b))
+
+		u, err = ResolveRelative(nil, "pkg:gitlab/noxsios/vai@foo%2Fbar?task=hello-world#vai.yaml", nil)
+		require.NoError(t, err)
+
+		rc, err = client.Fetch(ctx, u)
+		require.NoError(t, err)
+
+		b, err = io.ReadAll(rc)
 		require.NoError(t, err)
 
 		assert.Equal(t, `# yaml-language-server: $schema=vai.schema.json
@@ -79,9 +93,14 @@ hello-world:
 		client, err := NewGitLabClient(nil, "", "")
 		require.NoError(t, err)
 		assert.NotNil(t, client)
-		baseURL := "https://gitlab.example.com"
+
+		assert.Equal(t, "https://gitlab.com/api/v4/", client.client.BaseURL().String())
+
+		baseURL := "https://gitlab.example.com/"
 		client, err = NewGitLabClient(nil, baseURL, "")
 		require.NoError(t, err)
 		assert.NotNil(t, client)
+
+		assert.Equal(t, baseURL+"api/v4/", client.client.BaseURL().String())
 	})
 }

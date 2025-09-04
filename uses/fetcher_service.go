@@ -137,13 +137,13 @@ func (s *FetcherService) createFetcher(uri *url.URL) (Fetcher, error) {
 
 		qualifiers := pURL.Qualifiers.Map()
 		tokenEnv := qualifiers[QualifierTokenFromEnv]
-		base := qualifiers[QualifierBaseURL]
+		baseURL := qualifiers[QualifierBaseURL]
 
 		switch pURL.Type {
 		case packageurl.TypeGithub:
-			fetcher, err = NewGitHubClient(s.client, base, tokenEnv)
+			fetcher, err = NewGitHubClient(s.client, baseURL, tokenEnv)
 		case packageurl.TypeGitlab:
-			fetcher, err = NewGitLabClient(s.client, base, tokenEnv)
+			fetcher, err = NewGitLabClient(s.client, baseURL, tokenEnv)
 		default:
 			return nil, fmt.Errorf("unsupported package type: %q", pURL.Type)
 		}

@@ -20,7 +20,7 @@ const DefaultVersion = "main"
 const QualifierTokenFromEnv = "token-from-env"
 
 // QualifierBaseURL is the qualifier for the base URL to use when fetching a package
-const QualifierBaseURL = "base"
+const QualifierBaseURL = "base-url"
 
 // QualifierTask is the qualifier for the task to use when fetching a package
 const QualifierTask = "task"
