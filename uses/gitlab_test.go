@@ -48,13 +48,22 @@ func TestGitLabFetcher(t *testing.T) {
 		rc, err = client.Fetch(ctx, u)
 		require.NoError(t, err)
 
+		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
+
+		assert.Equal(t, `# yaml-language-server: $schema=vai.schema.json
+
+hello-world:
+  - run: echo "Hello, World!"
+`, string(b))
+
 		u, err = ResolveRelative(nil, "pkg:gitlab/noxsios/vai@foo%2Fbar?task=hello-world#vai.yaml", nil)
 		require.NoError(t, err)
 
 		rc, err = client.Fetch(ctx, u)
 		require.NoError(t, err)
 
-		b, err := io.ReadAll(rc)
+		b, err = io.ReadAll(rc)
 		require.NoError(t, err)
 
 		assert.Equal(t, `# yaml-language-server: $schema=vai.schema.json
