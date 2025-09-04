@@ -94,7 +94,7 @@ hello-world:
 		require.NoError(t, err)
 		assert.NotNil(t, client)
 
-		assert.Equal(t, "https://localhost:555/api/v4/", client.client.BaseURL().String())
+		assert.Equal(t, "https://gitlab.com/api/v4/", client.client.BaseURL().String())
 
 		baseURL := "https://gitlab.example.com/"
 		client, err = NewGitLabClient(nil, baseURL, "")
