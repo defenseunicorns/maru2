@@ -116,12 +116,12 @@ func TestFetcherService(t *testing.T) {
 		},
 		{
 			name:        "github base url is invalid",
-			uri:         "pkg:github/noxsios/vai?base=:%20invalid",
+			uri:         "pkg:github/noxsios/vai?base-url=:%20invalid",
 			expectedErr: "invalid base URL: parse \": invalid\": missing protocol scheme",
 		},
 		{
 			name:        "gitlab base url is invalid",
-			uri:         "pkg:gitlab/noxsios/vai?base=:%20invalid",
+			uri:         "pkg:gitlab/noxsios/vai?base-url=:%20invalid",
 			expectedErr: "parse \": invalid/\": missing protocol scheme",
 		},
 		{
@@ -248,7 +248,7 @@ func TestFetcherService(t *testing.T) {
 		},
 		{
 			name:         "get github fetcher with base url qualifier",
-			uri:          "pkg:github/defenseunicorns/maru2?base=https://github.example.com",
+			uri:          "pkg:github/defenseunicorns/maru2?base-url=https://github.example.com",
 			expectedType: &GitHubClient{},
 		},
 		{
@@ -258,7 +258,7 @@ func TestFetcherService(t *testing.T) {
 		},
 		{
 			name:         "get github fetcher with both qualifiers",
-			uri:          "pkg:github/defenseunicorns/maru2?base=https://github.example.com&token-from-env=GITHUB_TOKEN",
+			uri:          "pkg:github/defenseunicorns/maru2?base-url=https://github.example.com&token-from-env=GITHUB_TOKEN",
 			expectedType: &GitHubClient{},
 		},
 		{
