@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.1 (2025-09-04)
+
+## What's Changed
+* ci(deps): bump the github-actions group with 2 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/123
+* build(deps): bump the go group across 1 directory with 3 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/122
+* fix: base url by @Noxsios in https://github.com/defenseunicorns/maru2/pull/124
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.5.0...v0.5.1
+
 ## 0.5.0 (2025-09-02)
 
 ## What's Changed
