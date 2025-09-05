@@ -53,6 +53,42 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
+brews:
+  - name: "{{ .Env.BREW_NAME }}"
+    repository:
+      owner: defenseunicorns
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      branch: "{{ .ProjectName }}-{{ .Tag }}"
+      pull_request:
+        enabled: true
+        base:
+          branch: main
+          owner: defenseunicorns
+          name: homebrew-tap
+
+    commit_msg_template: "build(release): upgrade {{ .ProjectName }} to {{ .Tag }}"
+    homepage: "https://github.com/defenseunicorns/maru2"
+    description: "A simple task runner"
+
+  # NOTE: We are using .Version instead of .Tag because homebrew has weird semver parsing rules and won't be able to
+  #       install versioned releases that has a `v` character before the version number.
+  - name: "maru2@{{ .Version }}"
+    repository:
+      owner: defenseunicorns
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      branch: "{{ .ProjectName }}-{{ .Tag }}"
+      pull_request:
+        enabled: true
+        base:
+          branch: main
+          owner: defenseunicorns
+          name: homebrew-tap
+    commit_msg_template: "build(release): {{ .ProjectName }}@{{ .Tag }}"
+    homepage: "https://github.com/defenseunicorns/maru2"
+    description: "A simple task runner"
+
 changelog:
   disable: true
 
