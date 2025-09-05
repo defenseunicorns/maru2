@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+
+	"github.com/defenseunicorns/maru2/builtins/keycloak"
 )
 
 var _register sync.RWMutex
@@ -18,9 +20,10 @@ type Builtin interface {
 }
 
 var _registrations = map[string]func() Builtin{
-	"echo":          func() Builtin { return &echo{} },
-	"fetch":         func() Builtin { return &fetch{} },
-	"wacky-structs": func() Builtin { return &wackyStructs{} },
+	"echo":                  func() Builtin { return &echo{} },
+	"fetch":                 func() Builtin { return &fetch{} },
+	"keycloak:create-group": func() Builtin { return &keycloak.CreateGroup{} },
+	"wacky-structs":         func() Builtin { return &wackyStructs{} },
 }
 
 // Get returns a new instance of the requested builtin
