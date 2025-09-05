@@ -164,6 +164,57 @@
                     "properties": {
                       "uses": {
                         "type": "string",
+                        "pattern": "^builtin:keycloak:create-group(@.*)?$"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "with": {
+                        "properties": {
+                          "keycloak-url": {
+                            "type": "string",
+                            "description": "Base URL for Keycloak",
+                            "default": "https://keycloak.admin.uds.dev"
+                          },
+                          "realm": {
+                            "type": "string",
+                            "description": "Keycloak realm name",
+                            "default": "uds"
+                          },
+                          "admin-username": {
+                            "type": "string",
+                            "description": "Admin username"
+                          },
+                          "admin-password": {
+                            "type": "string",
+                            "description": "Admin password"
+                          },
+                          "group": {
+                            "type": "string",
+                            "description": "Name of group to create"
+                          }
+                        },
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "admin-username",
+                          "admin-password",
+                          "group"
+                        ],
+                        "description": "Configuration for builtin:keycloak:create-group"
+                      }
+                    },
+                    "required": [
+                      "with"
+                    ]
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "uses": {
+                        "type": "string",
                         "pattern": "^builtin:wacky-structs(@.*)?$"
                       }
                     }

@@ -1,0 +1,33 @@
+# exec docker run -d \
+# -e KEYCLOAK_USER=admin \
+# -e KEYCLOAK_PASSWORD=secret \
+# -e KEYCLOAK_IMPORT=/tmp/gocloak-realm.json \
+# -v "`pwd`/testdata/gocloak-realm.json:/tmp/gocloak-realm.json" \
+# -p 8080:8080 \
+# --name gocloak-test \
+# quay.io/keycloak/keycloak:latest -Dkeycloak.profile.feature.upload_scripts=enabled
+
+exec maru2 create-group -w keycloak-url="localhost:8008" -w admin-username=admin -w admin-password=secret
+
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  create-group:
+    inputs:
+      admin-username:
+        description: Admin user
+      admin-password:
+        description: Admin pass
+      group:
+        description: Group to create
+        default: test-group
+    steps:
+      - uses: builtin:keycloak:create-group
+        with:
+          admin-username: ${{ input "admin-username" }}
+          admin-password: ${{ input "admin-password" }}
+          group: ${{ input "group" }}
+        id: create
+      - uses: builtin:echo
+        with:
+          text: Group ${{ input "group" }} has an ID of ${{ from "create" "id" }}
