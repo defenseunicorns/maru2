@@ -105,7 +105,7 @@ brews:
           owner: defenseunicorns
           name: homebrew-tap
 
-    commit_msg_template: "build(release): upgrade {{ .ProjectName }} to {{ .Tag }}"
+    commit_msg_template: "build(release): upgrade {{ .ProjectName }}-publish to {{ .Tag }}"
     homepage: "https://github.com/defenseunicorns/maru2"
     description: "Pack a maru2 workflow into an OCI artifact and publish"
 
@@ -124,7 +124,7 @@ brews:
           branch: main
           owner: defenseunicorns
           name: homebrew-tap
-    commit_msg_template: "build(release): {{ .ProjectName }}@{{ .Tag }}"
+    commit_msg_template: "build(release): {{ .ProjectName }}-publish@{{ .Tag }}"
     homepage: "https://github.com/defenseunicorns/maru2"
     description: "Pack a maru2 workflow into an OCI artifact and publish"
 
