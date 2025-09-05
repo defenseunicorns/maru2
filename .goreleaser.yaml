@@ -54,7 +54,8 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
 
 brews:
-  - name: "{{ .Env.BREW_NAME }}"
+  - name: maru2
+    ids: [maru2]
     repository:
       owner: defenseunicorns
       name: homebrew-tap
@@ -74,6 +75,7 @@ brews:
   # NOTE: We are using .Version instead of .Tag because homebrew has weird semver parsing rules and won't be able to
   #       install versioned releases that has a `v` character before the version number.
   - name: "maru2@{{ .Version }}"
+    ids: [maru2]
     repository:
       owner: defenseunicorns
       name: homebrew-tap
@@ -88,6 +90,43 @@ brews:
     commit_msg_template: "build(release): {{ .ProjectName }}@{{ .Tag }}"
     homepage: "https://github.com/defenseunicorns/maru2"
     description: "A simple task runner"
+
+  - name: maru2-publish
+    ids: [maru2-publish]
+    repository:
+      owner: defenseunicorns
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      branch: "{{ .ProjectName }}-{{ .Tag }}"
+      pull_request:
+        enabled: true
+        base:
+          branch: main
+          owner: defenseunicorns
+          name: homebrew-tap
+
+    commit_msg_template: "build(release): upgrade {{ .ProjectName }} to {{ .Tag }}"
+    homepage: "https://github.com/defenseunicorns/maru2"
+    description: "Pack a maru2 workflow into an OCI artifact and publish"
+
+  # NOTE: We are using .Version instead of .Tag because homebrew has weird semver parsing rules and won't be able to
+  #       install versioned releases that has a `v` character before the version number.
+  - name: "maru2-publish@{{ .Version }}"
+    ids: [maru2-publish]
+    repository:
+      owner: defenseunicorns
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      branch: "{{ .ProjectName }}-{{ .Tag }}"
+      pull_request:
+        enabled: true
+        base:
+          branch: main
+          owner: defenseunicorns
+          name: homebrew-tap
+    commit_msg_template: "build(release): {{ .ProjectName }}@{{ .Tag }}"
+    homepage: "https://github.com/defenseunicorns/maru2"
+    description: "Pack a maru2 workflow into an OCI artifact and publish"
 
 changelog:
   disable: true
