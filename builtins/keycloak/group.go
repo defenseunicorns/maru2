@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
+// Package keycloak provides builtins for interacting with Keycloak admin APIs
 package keycloak
 
 import (
@@ -12,26 +13,19 @@ import (
 )
 
 const (
-	DefaultURL   = "https://keycloak.admin.uds.dev"
+	// DefaultURL is the default Keycloak admin URL
+	DefaultURL = "https://keycloak.admin.uds.dev"
+	// DefaultRealm is the default Keycloak realm name
 	DefaultRealm = "uds"
 )
 
+// CreateGroup is a builtin for creating Keycloak groups
 type CreateGroup struct {
 	KeycloakURL   string `json:"keycloak-url,omitempty" jsonschema:"description=Base URL for Keycloak,default=https://keycloak.admin.uds.dev"`
 	Realm         string `json:"realm,omitempty"        jsonschema:"description=Keycloak realm name,default=uds"`
 	AdminUsername string `json:"admin-username"         jsonschema:"description=Admin username"`
 	AdminPassword string `json:"admin-password"         jsonschema:"description=Admin password"`
 	Group         string `json:"group"                  jsonschema:"description=Name of group to create"`
-}
-
-func (b *CreateGroup) setDefaults() {
-	if b.KeycloakURL == "" {
-		b.KeycloakURL = DefaultURL
-	}
-
-	if b.Realm == "" {
-		b.Realm = DefaultRealm
-	}
 }
 
 // Execute the builtin
@@ -68,4 +62,14 @@ func (b *CreateGroup) Execute(ctx context.Context) (map[string]any, error) {
 	}
 
 	return map[string]any{"id": id}, nil
+}
+
+func (b *CreateGroup) setDefaults() {
+	if b.KeycloakURL == "" {
+		b.KeycloakURL = DefaultURL
+	}
+
+	if b.Realm == "" {
+		b.Realm = DefaultRealm
+	}
 }
