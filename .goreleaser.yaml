@@ -67,10 +67,11 @@ brews:
           branch: main
           owner: defenseunicorns
           name: homebrew-tap
-
     commit_msg_template: "build(release): upgrade {{ .ProjectName }} to {{ .Tag }}"
     homepage: "https://github.com/defenseunicorns/maru2"
     description: "A simple task runner"
+    post_install: |
+      generate_completions_from_executable(bin/"maru2", "completion")
 
   # NOTE: We are using .Version instead of .Tag because homebrew has weird semver parsing rules and won't be able to
   #       install versioned releases that has a `v` character before the version number.
@@ -90,6 +91,8 @@ brews:
     commit_msg_template: "build(release): {{ .ProjectName }}@{{ .Tag }}"
     homepage: "https://github.com/defenseunicorns/maru2"
     description: "A simple task runner"
+    post_install: |
+      generate_completions_from_executable(bin/"maru2@{{ .Version }}", "completion")
 
   - name: maru2-publish
     ids: [maru2-publish]
@@ -104,10 +107,11 @@ brews:
           branch: main
           owner: defenseunicorns
           name: homebrew-tap
-
     commit_msg_template: "build(release): upgrade {{ .ProjectName }}-publish to {{ .Tag }}"
     homepage: "https://github.com/defenseunicorns/maru2"
     description: "Pack a maru2 workflow into an OCI artifact and publish"
+    post_install: |
+      generate_completions_from_executable(bin/"maru2-publish", "completion")
 
   # NOTE: We are using .Version instead of .Tag because homebrew has weird semver parsing rules and won't be able to
   #       install versioned releases that has a `v` character before the version number.
@@ -127,6 +131,8 @@ brews:
     commit_msg_template: "build(release): {{ .ProjectName }}-publish@{{ .Tag }}"
     homepage: "https://github.com/defenseunicorns/maru2"
     description: "Pack a maru2 workflow into an OCI artifact and publish"
+    post_install: |
+      generate_completions_from_executable(bin/"maru2-publish@{{ .Version }}", "completions")
 
 changelog:
   disable: true
