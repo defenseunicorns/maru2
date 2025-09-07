@@ -23,7 +23,8 @@ var _registrations = map[string]func() Builtin{
 	"wacky-structs": func() Builtin { return &wackyStructs{} },
 }
 
-// Get returns a new instance of the requested builtin
+// Get retrieves a new instance of a registered builtin task
+//
 // Returns nil if the builtin doesn't exist
 func Get(name string) Builtin {
 	_register.RLock()
