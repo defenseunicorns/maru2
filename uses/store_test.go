@@ -22,7 +22,7 @@ import (
 func TestNewLocalStore(t *testing.T) {
 	testCases := []struct {
 		name        string
-		setup       func(fs afero.Fs) error
+		setup       func(fsys afero.Fs) error
 		expectedErr string
 		validate    func(t *testing.T, s *LocalStore)
 	}{
@@ -32,15 +32,15 @@ func TestNewLocalStore(t *testing.T) {
 				assert.NotNil(t, s.index)
 				assert.Empty(t, s.index)
 
-				content, err := afero.ReadFile(s.fs, IndexFileName)
+				content, err := afero.ReadFile(s.fsys, IndexFileName)
 				require.NoError(t, err)
 				assert.Empty(t, string(content))
 			},
 		},
 		{
 			name: "new store with existing valid index",
-			setup: func(fs afero.Fs) error {
-				return afero.WriteFile(fs, IndexFileName, []byte(`https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10`), 0o644)
+			setup: func(fsys afero.Fs) error {
+				return afero.WriteFile(fsys, IndexFileName, []byte(`https://example.com h1:7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9 10`), 0o644)
 			},
 			validate: func(t *testing.T, s *LocalStore) {
 				assert.NotNil(t, s.index)
@@ -52,8 +52,8 @@ func TestNewLocalStore(t *testing.T) {
 		},
 		{
 			name: "new store with existing invalid index",
-			setup: func(fs afero.Fs) error {
-				return afero.WriteFile(fs, IndexFileName, []byte(`invalid txt`), 0o644)
+			setup: func(fsys afero.Fs) error {
+				return afero.WriteFile(fsys, IndexFileName, []byte(`invalid txt`), 0o644)
 			},
 			expectedErr: "invalid line format",
 		},
@@ -161,7 +161,7 @@ func TestLocalStoreFetch(t *testing.T) {
 
 			store := &LocalStore{
 				index: tc.index,
-				fs:    fs,
+				fsys:    fs,
 			}
 
 			for name, content := range tc.files {
@@ -211,11 +211,11 @@ func TestLocalStoreStore(t *testing.T) {
 				assert.Equal(t, int64(12), desc.Size)
 				assert.Equal(t, contentHex, desc.Hex)
 
-				content, err := afero.ReadFile(s.fs, contentHex)
+				content, err := afero.ReadFile(s.fsys, contentHex)
 				require.NoError(t, err)
 				assert.Equal(t, "hello world!", string(content))
 
-				indexContent, err := afero.ReadFile(s.fs, IndexFileName)
+				indexContent, err := afero.ReadFile(s.fsys, IndexFileName)
 				require.NoError(t, err)
 				assert.Contains(t, string(indexContent), contentHex)
 				assert.Contains(t, string(indexContent), "https://example.com/workflow")
@@ -258,7 +258,7 @@ func TestLocalStoreStore(t *testing.T) {
 
 			store := &LocalStore{
 				index: tc.initialIndex,
-				fs:    fs,
+				fsys:    fs,
 			}
 
 			err := afero.WriteFile(fs, IndexFileName, []byte("{}"), 0o644)
@@ -380,7 +380,7 @@ func TestLocalStoreExists(t *testing.T) {
 
 			store := &LocalStore{
 				index: tc.index,
-				fs:    fs,
+				fsys:    fs,
 			}
 
 			for name, content := range tc.files {

@@ -27,9 +27,9 @@ type FetcherService struct {
 type FetcherServiceOption func(*FetcherService)
 
 // WithFS sets the filesystem to be used by the fetcher service
-func WithFS(fs afero.Fs) FetcherServiceOption {
+func WithFS(fsys afero.Fs) FetcherServiceOption {
 	return func(s *FetcherService) {
-		s.fsys = fs
+		s.fsys = fsys
 	}
 }
 
@@ -54,7 +54,9 @@ func WithFetchPolicy(policy FetchPolicy) FetcherServiceOption {
 	}
 }
 
-// NewFetcherService creates a new FetcherService with custom resolver and filesystem
+// NewFetcherService creates a configured service for fetching remote workflows
+//
+// Supports GitHub, GitLab, OCI, HTTP sources with caching, custom storage, and fetch policies
 func NewFetcherService(opts ...FetcherServiceOption) (*FetcherService, error) {
 	svc := &FetcherService{
 		fetcherCache: make(map[string]Fetcher),

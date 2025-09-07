@@ -151,14 +151,14 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf v1.Workflow, src
 }
 
 // ListAllLocal recursively discovers all local references contained in a workflow
-func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, error) {
+func ListAllLocal(ctx context.Context, src *url.URL, fsys afero.Fs) ([]string, error) {
 	if src.Scheme != "file" {
 		return nil, nil
 	}
 
 	relativeRefs := []string{}
 
-	rc, err := uses.NewLocalFetcher(fs).Fetch(ctx, src)
+	rc, err := uses.NewLocalFetcher(fsys).Fetch(ctx, src)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 		// strip query params, like ?task=
 		resolved.RawQuery = ""
 
-		rc, err := uses.NewLocalFetcher(fs).Fetch(ctx, resolved)
+		rc, err := uses.NewLocalFetcher(fsys).Fetch(ctx, resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -213,7 +213,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fs afero.Fs) ([]string, err
 		// now we know its a valid workflow, we can save the location
 		fullRefs = append(fullRefs, resolved.String())
 
-		sub, err := ListAllLocal(ctx, resolved, fs)
+		sub, err := ListAllLocal(ctx, resolved, fsys)
 		if err != nil {
 			return nil, err
 		}
