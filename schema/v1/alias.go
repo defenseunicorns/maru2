@@ -48,13 +48,13 @@ func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 
 	remoteProps := jsonschema.NewProperties()
 	remoteProps.Set("type", &jsonschema.Schema{
-		Type:        "string",
+		Type: "string",
 		Description: `Package URL type:
 
 scheme:type/namespace/name@version?qualifiers#subpath
 
 https://github.com/package-url/purl-spec#purl`,
-		Enum:        []any{packageurl.TypeGithub, packageurl.TypeGitlab},
+		Enum: []any{packageurl.TypeGithub, packageurl.TypeGitlab},
 	})
 	remoteProps.Set("base-url", &jsonschema.Schema{
 		Type:        "string",
