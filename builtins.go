@@ -32,7 +32,7 @@ func ExecuteBuiltin(ctx context.Context, step v1.Step, with schema.With, previou
 	var rendered schema.With
 	if with != nil {
 		var err error
-		rendered, err = TemplateWithMap(ctx, with, previousOutputs, step.With, dry)
+		rendered, err = TemplateWithMap(ctx, step.With, with, previousOutputs, dry)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", step.Uses, err)
 		}

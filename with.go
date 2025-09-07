@@ -36,9 +36,9 @@ func RegisterWhichShortcut(key, value string) {
 // TemplateString expands templates in str using Go's text/template engine
 //
 // Templates leverage Go's `text/template` engine
-// 
+//
 // In dry run mode, missing inputs and outputs are rendered with special markers
-func TemplateString(ctx context.Context, with schema.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
+func TemplateString(ctx context.Context, str string, with schema.With, previousOutputs CommandOutputs, dry bool) (string, error) {
 	var tmpl *template.Template
 
 	inputKeys := make([]string, 0, len(with))
@@ -144,7 +144,7 @@ func TemplateString(ctx context.Context, with schema.With, previousOutputs Comma
 // TemplateWithMap recursively expands templates in all string values within a map
 //
 // Handles nested maps and slices while preserving non-string values
-func TemplateWithMap(ctx context.Context, input schema.With, previousOutputs CommandOutputs, withMap schema.With, dry bool) (schema.With, error) {
+func TemplateWithMap(ctx context.Context, withMap schema.With, input schema.With, previousOutputs CommandOutputs, dry bool) (schema.With, error) {
 	if len(withMap) == 0 {
 		return nil, nil
 	}
@@ -153,19 +153,19 @@ func TemplateWithMap(ctx context.Context, input schema.With, previousOutputs Com
 	for k, v := range withMap {
 		switch val := v.(type) {
 		case string:
-			templated, err := TemplateString(ctx, input, previousOutputs, val, dry)
+			templated, err := TemplateString(ctx, val, input, previousOutputs, dry)
 			if err != nil {
 				return nil, err
 			}
 			result[k] = templated
 		case map[string]any:
-			nestedMap, err := TemplateWithMap(ctx, input, previousOutputs, val, dry)
+			nestedMap, err := TemplateWithMap(ctx, val, input, previousOutputs, dry)
 			if err != nil {
 				return nil, err
 			}
 			result[k] = nestedMap
 		case []any:
-			templatedSlice, err := templateSlice(ctx, input, previousOutputs, val, dry)
+			templatedSlice, err := templateSlice(ctx, val, input, previousOutputs, dry)
 			if err != nil {
 				return nil, err
 			}
@@ -180,24 +180,24 @@ func TemplateWithMap(ctx context.Context, input schema.With, previousOutputs Com
 // templateSlice recursively expands templates in all string values within a slice
 //
 // Handles nested maps and slices while preserving non-string values
-func templateSlice(ctx context.Context, input schema.With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
+func templateSlice(ctx context.Context, slice []any, input schema.With, previousOutputs CommandOutputs, dry bool) ([]any, error) {
 	result := make([]any, len(slice))
 	for i, v := range slice {
 		switch val := v.(type) {
 		case string:
-			templated, err := TemplateString(ctx, input, previousOutputs, val, dry)
+			templated, err := TemplateString(ctx, val, input, previousOutputs, dry)
 			if err != nil {
 				return nil, err
 			}
 			result[i] = templated
 		case map[string]any:
-			nestedMap, err := TemplateWithMap(ctx, input, previousOutputs, val, dry)
+			nestedMap, err := TemplateWithMap(ctx, val, input, previousOutputs, dry)
 			if err != nil {
 				return nil, err
 			}
 			result[i] = nestedMap
 		case []any:
-			templatedSlice, err := templateSlice(ctx, input, previousOutputs, val, dry)
+			templatedSlice, err := templateSlice(ctx, val, input, previousOutputs, dry)
 			if err != nil {
 				return nil, err
 			}

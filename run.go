@@ -194,7 +194,7 @@ func handleRunStep(
 
 	logger := log.FromContext(ctx)
 
-	script, err := TemplateString(ctx, withDefaults, outputs, step.Run, dry)
+	script, err := TemplateString(ctx, step.Run, withDefaults, outputs, dry)
 	if err != nil {
 		if dry {
 			printScript(logger, step.Shell, script)
@@ -216,7 +216,7 @@ func handleRunStep(
 		os.Remove(outFile.Name())
 	}()
 
-	templatedEnv, err := TemplateWithMap(ctx, withDefaults, outputs, step.Env, dry)
+	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, dry)
 	if err != nil {
 		return nil, err
 	}

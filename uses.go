@@ -45,14 +45,14 @@ func handleUsesStep(
 
 	logger.Debug("templating", "input", withDefaults, "local", step.With)
 
-	templatedWith, err := TemplateWithMap(ctx, withDefaults, outputs, step.With, dry)
+	templatedWith, err := TemplateWithMap(ctx, step.With, withDefaults, outputs, dry)
 	if err != nil {
 		return nil, err
 	}
 
 	logger.Debug("templated", "result", templatedWith)
 
-	templatedEnv, err := TemplateWithMap(ctx, withDefaults, outputs, step.Env, dry)
+	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, dry)
 	if err != nil {
 		return nil, err
 	}
