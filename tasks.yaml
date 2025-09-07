@@ -1,10 +1,6 @@
 # yaml-language-server: $schema=maru2.schema.json
 schema-version: v1
 
-aliases:
-  gl:
-    type: gitlab
-
 tasks:
   echo:
     inputs:
