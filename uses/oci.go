@@ -28,7 +28,7 @@ type OCIClient struct {
 
 // NewOCIClient creates a new ORAS client
 func NewOCIClient(baseClient *http.Client, insecureSkipTLSVerify, plainHTTP bool) (*OCIClient, error) {
-	storeOpts := credentials.StoreOptions{}
+	storeOpts := credentials.StoreOptions{DetectDefaultNativeStore: true}
 	credStore, err := credentials.NewStoreFromDocker(storeOpts)
 	if err != nil {
 		return nil, err

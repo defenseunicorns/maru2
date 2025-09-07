@@ -22,6 +22,8 @@ type GitHubClient struct {
 }
 
 // NewGitHubClient creates a new GitHub client
+//
+// Uses auth token from tokenEnv > GITHUB_ENV > no auth token
 func NewGitHubClient(client *http.Client, base string, tokenEnv string) (*GitHubClient, error) {
 	c := github.NewClient(client)
 

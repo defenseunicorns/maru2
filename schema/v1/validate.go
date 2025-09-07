@@ -60,6 +60,9 @@ func Read(r io.Reader) (Workflow, error) {
 	}
 }
 
+// Since every validation operation leverages the same schema, only calculate it once to save some compute cycles
+//
+// This also prevents any schema changes from occurring at runtime
 var schemaOnce = sync.OnceValues(func() (string, error) {
 	s := WorkFlowSchema()
 	b, err := json.Marshal(s)
