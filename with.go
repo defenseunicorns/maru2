@@ -38,11 +38,11 @@ func RegisterWhichShortcut(key, value string) {
 // Templates leverage Go's `text/template` engine
 // 
 // In dry run mode, missing inputs and outputs are rendered with special markers
-func TemplateString(ctx context.Context, input schema.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
+func TemplateString(ctx context.Context, with schema.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
 	var tmpl *template.Template
 
-	inputKeys := make([]string, 0, len(input))
-	for k := range input {
+	inputKeys := make([]string, 0, len(with))
+	for k := range with {
 		inputKeys = append(inputKeys, k)
 	}
 	slices.Sort(inputKeys)
@@ -68,7 +68,7 @@ func TemplateString(ctx context.Context, input schema.With, previousOutputs Comm
 
 		fm := template.FuncMap{
 			"input": func(in string) (any, error) {
-				v, ok := input[in]
+				v, ok := with[in]
 				if !ok {
 					logger.Warnf("input %q was not provided, available: %s", in, inputKeys)
 					return style.Render(fmt.Sprintf("❯ input %s ❮", in)), nil
@@ -95,7 +95,7 @@ func TemplateString(ctx context.Context, input schema.With, previousOutputs Comm
 	} else {
 		fm := template.FuncMap{
 			"input": func(in string) (any, error) {
-				v, ok := input[in]
+				v, ok := with[in]
 				if !ok {
 					return "", fmt.Errorf("input %q does not exist in %s", in, inputKeys)
 				}
