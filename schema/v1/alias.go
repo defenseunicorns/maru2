@@ -19,7 +19,9 @@ func (AliasMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 	}
 }
 
-// Alias defines how an alias should be resolved
+// Alias defines the structure of a maru2 uses alias
+//
+// Using the JSON schema, one of type or path is required and mutually exclusive
 type Alias struct {
 	Type         string `json:"type,omitempty"`
 	BaseURL      string `json:"base-url,omitempty"`
@@ -47,7 +49,11 @@ func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 	remoteProps := jsonschema.NewProperties()
 	remoteProps.Set("type", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Type of the alias, maps to a package URL type",
+		Description: `Package URL type:
+
+scheme:type/namespace/name@version?qualifiers#subpath
+
+https://github.com/package-url/purl-spec#purl`,
 		Enum:        []any{packageurl.TypeGithub, packageurl.TypeGitlab},
 	})
 	remoteProps.Set("base-url", &jsonschema.Schema{
@@ -72,7 +78,7 @@ func (Alias) JSONSchemaExtend(schema *jsonschema.Schema) {
 		{
 			// Remote alias - type is required, path is not allowed
 			Type:                 "object",
-			Description:          "Remote alias (GitHub, GitLab, etc.)",
+			Description:          "Package URL alias (GitHub, GitLab, etc.) https://github.com/package-url/purl-spec#purl",
 			Properties:           remoteProps,
 			Required:             []string{"type"},
 			AdditionalProperties: jsonschema.FalseSchema,
