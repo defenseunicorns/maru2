@@ -274,6 +274,13 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				if err := maru2.FetchAll(ctx, svc, wf, resolved); err != nil {
 					return err
 				}
+				// allow no args w/ fetch all
+				if len(args) == 0 {
+					if gc {
+						return store.GC()
+					}
+					return nil
+				}
 			}
 
 			with := make(schema.With, len(w))
