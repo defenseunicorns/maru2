@@ -33,7 +33,11 @@ func RegisterWhichShortcut(key, value string) {
 	shortcuts.Store(key, value)
 }
 
-// TemplateString templates a string with the given input and previous outputs
+// TemplateString expands templates in str using Go's text/template engine
+//
+// Templates leverage Go's `text/template` engine
+// 
+// In dry run mode, missing inputs and outputs are rendered with special markers
 func TemplateString(ctx context.Context, input schema.With, previousOutputs CommandOutputs, str string, dry bool) (string, error) {
 	var tmpl *template.Template
 
@@ -137,7 +141,9 @@ func TemplateString(ctx context.Context, input schema.With, previousOutputs Comm
 	return result.String(), nil
 }
 
-// TemplateWithMap recursively processes a With map and templates all string values
+// TemplateWithMap recursively expands templates in all string values within a map
+//
+// Handles nested maps and slices while preserving non-string values
 func TemplateWithMap(ctx context.Context, input schema.With, previousOutputs CommandOutputs, withMap schema.With, dry bool) (schema.With, error) {
 	if len(withMap) == 0 {
 		return nil, nil
@@ -171,7 +177,9 @@ func TemplateWithMap(ctx context.Context, input schema.With, previousOutputs Com
 	return result, nil
 }
 
-// templateSlice recursively processes a slice and templates all string values
+// templateSlice recursively expands templates in all string values within a slice
+//
+// Handles nested maps and slices while preserving non-string values
 func templateSlice(ctx context.Context, input schema.With, previousOutputs CommandOutputs, slice []any, dry bool) ([]any, error) {
 	result := make([]any, len(slice))
 	for i, v := range slice {
@@ -201,7 +209,12 @@ func templateSlice(ctx context.Context, input schema.With, previousOutputs Comma
 	return result, nil
 }
 
-// MergeWithAndParams merges a With map into an InputMap, handling defaults, logging warnings on deprections, etc...
+// MergeWithAndParams merges runtime inputs with parameter definitions
+//
+// Resolves defaults, environment variables, validates inputs with regex,
+// enforces required parameters, and handles type casting
+//
+// Resolution priority: provided > default-from-env > default > error if required
 func MergeWithAndParams(ctx context.Context, with schema.With, params v1.InputMap) (schema.With, error) {
 	logger := log.FromContext(ctx)
 	merged := maps.Clone(with)

@@ -15,7 +15,11 @@ import (
 	"github.com/defenseunicorns/maru2/schema"
 )
 
-// ShouldRun executes If logic using expr as the engine
+// ShouldRun evaluates if expressions using the expr engine
+//
+// Provides built-in functions: failure(), always(), cancelled(), input("name"), from("step-id", "key")
+//
+// Returns false for failed steps when no expression is provided
 func ShouldRun(ctx context.Context, expression string, err error, with schema.With, from CommandOutputs, dry bool) (bool, error) {
 	hasFailed := err != nil
 

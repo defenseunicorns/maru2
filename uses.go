@@ -19,6 +19,10 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
+// handleUsesStep executes remote workflow imports
+//
+// Fetches, validates, and executes tasks from remote sources (GitHub, GitLab, OCI, HTTP) or local file paths
+// using package URL resolution and alias expansion
 func handleUsesStep(
 	ctx context.Context,
 	svc *uses.FetcherService,

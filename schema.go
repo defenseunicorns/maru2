@@ -10,7 +10,10 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
-// WorkflowSchema generates the schema for either a given version, or all versions in one meta schema
+// WorkflowSchema generates JSON Schema for workflow validation
+//
+// Returns version-specific schema for v0/v1, or a meta-schema with conditional
+// validation that automatically selects the correct version based on schema-version field
 func WorkflowSchema(version string) *jsonschema.Schema {
 	var schema *jsonschema.Schema
 
