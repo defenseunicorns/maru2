@@ -98,6 +98,21 @@ func TestFetchE2E(t *testing.T) {
 			b, _ := yaml.Marshal(wf)
 			_, _ = w.Write(b)
 
+		case "/workflow-that-uses-missing.yaml":
+			wf := v1.Workflow{
+				SchemaVersion: v1.SchemaVersion,
+				Tasks: v1.TaskMap{
+					"task": v1.Task{
+						Steps: []v1.Step{
+							{Run: "echo 'This workflow uses a missing dependency'"},
+							{Uses: "file:definitely-does-not-exist.yaml"},
+						},
+					},
+				},
+			}
+			b, _ := yaml.Marshal(wf)
+			_, _ = w.Write(b)
+
 		default:
 			w.WriteHeader(http.StatusNotFound)
 			_, _ = w.Write([]byte("not found"))

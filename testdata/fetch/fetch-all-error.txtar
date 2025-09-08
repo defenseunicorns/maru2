@@ -1,0 +1,39 @@
+# Test fetch-all error handling for workflows with invalid dependencies
+
+exec envsubst workflow-with-missing-dep.yaml workflow-with-invalid-yaml-dep.yaml workflow-with-server-error.yaml
+
+# Test fetch-all with workflow containing non-existent remote dependency
+! exec maru2 --fetch-all --from file:workflow-with-missing-dep.yaml
+stderr 'ERRO.*404 Not Found'
+
+# Test fetch-all with workflow containing invalid YAML dependency  
+! exec maru2 --fetch-all --from file:workflow-with-invalid-yaml-dep.yaml
+stderr 'ERRO.*string was used where mapping is expected'
+
+# Test fetch-all with workflow containing server error dependency
+! exec maru2 --fetch-all --from file:workflow-with-server-error.yaml
+stderr 'ERRO.*500 Internal Server Error'
+
+-- workflow-with-missing-dep.yaml --
+schema-version: v1
+tasks:
+  main:
+    steps:
+      - run: echo "Starting workflow"
+      - uses: ${HTTP_BASE_URL}/non-existent-workflow.yaml
+
+-- workflow-with-invalid-yaml-dep.yaml --
+schema-version: v1
+tasks:
+  main:
+    steps:
+      - run: echo "Starting workflow"
+      - uses: ${HTTP_BASE_URL}/invalid.yaml
+
+-- workflow-with-server-error.yaml --
+schema-version: v1
+tasks:
+  main:
+    steps:
+      - run: echo "Starting workflow"
+      - uses: ${HTTP_BASE_URL}/error.yaml
