@@ -36,6 +36,7 @@ func envsubst() {
 
 	fatal := func(err error) {
 		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
 	}
 
 	for _, path := range paths {
@@ -49,4 +50,5 @@ func envsubst() {
 			fatal(err)
 		}
 	}
+	os.Exit(0)
 }
