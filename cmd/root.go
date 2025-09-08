@@ -59,7 +59,6 @@ func NewRootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return nil
 		default:
 			configDir, err := config.DefaultDirectory()
 			if err != nil {
@@ -70,8 +69,20 @@ func NewRootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return nil
 		}
+
+		// default < cfg < flags
+		if !cmd.Flags().Changed("fetch-policy") && cfg.FetchPolicy != policy {
+			if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
+				return err
+			}
+		}
+
+		if policy == uses.FetchPolicyNever && fetchAll {
+			return fmt.Errorf("cannot fetch all with fetch policy %q", policy)
+		}
+
+		return nil
 	}
 
 	root := &cobra.Command{
@@ -99,22 +110,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			if err := loadConfig(cmd); err != nil {
-				return err
-			}
-
-			// default < cfg < flags
-			if !cmd.Flags().Changed("fetch-policy") && cfg.FetchPolicy != policy {
-				if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
-					return err
-				}
-			}
-
-			if policy == uses.FetchPolicyNever && fetchAll {
-				return fmt.Errorf("cannot fetch all with fetch policy %q", policy)
-			}
-
-			return nil
+			return loadConfig(cmd)
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			svc, err := uses.NewFetcherService(
