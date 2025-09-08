@@ -448,6 +448,169 @@ tasks:
 			srcURL:    "file:tasks.yaml",
 			expectErr: "file does not exist",
 		},
+		{
+			name: "workflow with aliases containing paths",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v1
+aliases:
+  local-alias:
+    path: "alias-dep.yaml"
+  another-alias:
+    path: "nested/alias-dep2.yaml"
+tasks:
+  main:
+    steps:
+      - uses: "file:dep.yaml?task=dep"
+`,
+				"dep.yaml": `
+schema-version: v1
+tasks:
+  dep:
+    steps:
+      - run: "echo dep"
+`,
+				"alias-dep.yaml": `
+schema-version: v1
+tasks:
+  alias-task:
+    steps:
+      - run: "echo alias task"
+`,
+				"nested/alias-dep2.yaml": `
+schema-version: v1
+tasks:
+  alias-task2:
+    steps:
+      - run: "echo alias task 2"
+`,
+			},
+			srcURL:       "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml", "file:dep.yaml", "file:alias-dep.yaml", "file:nested/alias-dep2.yaml"},
+		},
+		{
+			name: "workflow with aliases without paths (only remote type aliases)",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v1
+aliases:
+  github-alias:
+    type: "github"
+    base-url: "https://github.com"
+  gitlab-alias:
+    type: "gitlab"
+    base-url: "https://gitlab.com"
+tasks:
+  main:
+    steps:
+      - run: "echo hello"
+`,
+			},
+			srcURL:       "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml"},
+		},
+		{
+			name: "workflow with mixed aliases (some with paths, some without)",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v1
+aliases:
+  local-alias:
+    path: "local-dep.yaml"
+  github-alias:
+    type: "github"
+    base-url: "https://github.com"
+  another-local:
+    path: "another-local-dep.yaml"
+tasks:
+  main:
+    steps:
+      - uses: "file:main-dep.yaml?task=main"
+`,
+				"main-dep.yaml": `
+schema-version: v1
+tasks:
+  main:
+    steps:
+      - run: "echo main"
+`,
+				"local-dep.yaml": `
+schema-version: v1
+tasks:
+  local-task:
+    steps:
+      - run: "echo local task"
+`,
+				"another-local-dep.yaml": `
+schema-version: v1
+tasks:
+  another-task:
+    steps:
+      - run: "echo another task"
+`,
+			},
+			srcURL:       "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml", "file:main-dep.yaml", "file:local-dep.yaml", "file:another-local-dep.yaml"},
+		},
+		{
+			name: "workflow with alias pointing to non-existent file",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v1
+aliases:
+  broken-alias:
+    path: "non-existent.yaml"
+tasks:
+  main:
+    steps:
+      - run: "echo hello"
+`,
+			},
+			srcURL:    "file:tasks.yaml",
+			expectErr: "file does not exist",
+		},
+		{
+			name: "workflow with alias pointing to invalid workflow",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v1
+aliases:
+  invalid-alias:
+    path: "invalid.yaml"
+tasks:
+  main:
+    steps:
+      - run: "echo hello"
+`,
+				"invalid.yaml": "not: a: valid: workflow",
+			},
+			srcURL:    "file:tasks.yaml",
+			expectErr: "mapping value is not allowed in this context",
+		},
+		{
+			name: "workflow with valid path alias",
+			files: map[string]string{
+				"tasks.yaml": `
+schema-version: v1
+aliases:
+  valid-alias:
+    path: "valid-dep.yaml"
+tasks:
+  main:
+    steps:
+      - run: "echo hello"
+`,
+				"valid-dep.yaml": `
+schema-version: v1
+tasks:
+  valid-task:
+    steps:
+      - run: "echo valid"
+`,
+			},
+			srcURL:       "file:tasks.yaml",
+			expectedRefs: []string{"file:tasks.yaml", "file:valid-dep.yaml"},
+		},
 	}
 
 	for _, tc := range tests {
