@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.2 (2025-09-08)
+
+## What's Changed
+* ci: wire up brew by @Noxsios in https://github.com/defenseunicorns/maru2/pull/129
+* build(deps): bump the go group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/131
+* ci(deps): bump codecov/codecov-action from 5.5.0 to 5.5.1 in the github-actions group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/126
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.5.1...v0.5.2
+
 ## 0.5.1 (2025-09-04)
 
 ## What's Changed
