@@ -12,7 +12,10 @@ import (
 
 var _register sync.RWMutex
 
-// Builtin is a simple interface, only implementable on structs due to how the with re-parsing logic works
+// Builtin defines the interface for built-in tasks (builtin:echo, builtin:fetch)
+//
+// Implementations must be structs to support configuration binding via mapstructure.
+// The Execute method receives context and returns outputs that can be accessed by subsequent steps
 type Builtin interface {
 	Execute(ctx context.Context) (map[string]any, error)
 }
@@ -23,8 +26,9 @@ var _registrations = map[string]func() Builtin{
 	"wacky-structs": func() Builtin { return &wackyStructs{} },
 }
 
-// Get retrieves a new instance of a registered builtin task
+// Get retrieves a fresh instance of a registered builtin task
 //
+// Each call returns a new instance to avoid shared state between executions.
 // Returns nil if the builtin doesn't exist
 func Get(name string) Builtin {
 	_register.RLock()
@@ -37,7 +41,10 @@ func Get(name string) Builtin {
 	return factory()
 }
 
-// Register registers a new builtin
+// Register adds a new builtin task to the global registry
+//
+// Used by internal packages and extensions to provide additional builtin functionality.
+// Registration functions must return fresh instances to avoid shared state
 func Register(name string, registrationFunc func() Builtin) error {
 	_register.Lock()
 	defer _register.Unlock()
@@ -59,7 +66,9 @@ func Register(name string, registrationFunc func() Builtin) error {
 	return nil
 }
 
-// Names returns a list of all builtin names
+// Names returns a sorted list of all registered builtin task names
+//
+// Used for completion, help text, and validation of builtin: references
 func Names() []string {
 	_register.RLock()
 	defer _register.RUnlock()

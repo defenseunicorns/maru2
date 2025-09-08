@@ -81,7 +81,10 @@ func handleUsesStep(
 	return Run(ctx, svc, nextWf, taskName, templatedWith, next, cwd, env, dry)
 }
 
-// Fetch fetches a workflow from a given URL.
+// Fetch downloads and validates a workflow from a remote or local source
+//
+// Supports multiple fetcher types (GitHub, GitLab, OCI, HTTP, local files) with
+// automatic fetcher selection based on URL scheme and configuration
 func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (v1.Workflow, error) {
 	logger := log.FromContext(ctx)
 
@@ -106,7 +109,10 @@ func Fetch(ctx context.Context, svc *uses.FetcherService, uri *url.URL) (v1.Work
 	return v1.ReadAndValidate(rc)
 }
 
-// FetchAll fetches all workflows from a given URL.
+// FetchAll recursively downloads all remote workflow dependencies
+//
+// Scans the workflow for uses: references, resolves URLs relative to the source,
+// and pre-fetches all dependencies into the cache for offline execution
 func FetchAll(ctx context.Context, svc *uses.FetcherService, wf v1.Workflow, src *url.URL) error {
 	refs := []string{}
 
@@ -150,7 +156,10 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf v1.Workflow, src
 	return nil
 }
 
-// ListAllLocal recursively discovers all local references contained in a workflow
+// ListAllLocal recursively discovers all local file dependencies in a workflow tree
+//
+// Scans file:// workflows for local uses: references, validates them, and returns
+// the complete list of local files needed for execution
 func ListAllLocal(ctx context.Context, src *url.URL, fsys afero.Fs) ([]string, error) {
 	if src.Scheme != "file" {
 		return nil, nil
@@ -183,6 +192,12 @@ func ListAllLocal(ctx context.Context, src *url.URL, fsys afero.Fs) ([]string, e
 			}
 
 			relativeRefs = append(relativeRefs, step.Uses)
+		}
+	}
+
+	for _, alias := range wf.Aliases {
+		if alias.Path != "" {
+			relativeRefs = append(relativeRefs, fmt.Sprintf("file:%s", alias.Path))
 		}
 	}
 

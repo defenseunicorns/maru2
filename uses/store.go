@@ -54,7 +54,10 @@ type LocalStore struct {
 	mu sync.RWMutex
 }
 
-// NewLocalStore creates a new store at the given path.
+// NewLocalStore creates a filesystem-based workflow cache
+//
+// Initializes or loads an existing cache with integrity checking.
+// The index.txt file tracks cached workflows with SHA256 digests
 func NewLocalStore(fsys afero.Fs) (*LocalStore, error) {
 	index := make(map[string]Descriptor, 0)
 
@@ -67,7 +70,7 @@ func NewLocalStore(fsys afero.Fs) (*LocalStore, error) {
 		defer f.Close()
 
 		return &LocalStore{
-			fsys:    fsys,
+			fsys:  fsys,
 			index: index,
 		}, nil
 	}
@@ -87,12 +90,15 @@ func NewLocalStore(fsys afero.Fs) (*LocalStore, error) {
 	}
 
 	return &LocalStore{
-		fsys:    fsys,
+		fsys:  fsys,
 		index: index,
 	}, nil
 }
 
-// ParseIndex parses an index file.
+// ParseIndex reads and validates cache index entries
+//
+// Each line format: <url> h1:<sha256-hex> <size-bytes>
+// Returns a map of URLs to their descriptors for cache lookups
 func ParseIndex(r io.Reader) (map[string]Descriptor, error) {
 	index := make(map[string]Descriptor, 0)
 

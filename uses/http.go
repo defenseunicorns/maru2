@@ -16,13 +16,17 @@ type HTTPClient struct {
 	client *http.Client
 }
 
-// NewHTTPClient returns a new HTTPClient
+// NewHTTPClient creates a client for fetching workflows over HTTP/HTTPS
+//
+// Provides a simple HTTP fetcher with proper user agent and context support
 func NewHTTPClient(client *http.Client) *HTTPClient {
 	return &HTTPClient{client: client}
 }
 
-// Fetch performs a GET request using the default HTTP client
-// against the provided raw URL string and returns the request body
+// Fetch downloads workflow content from HTTP/HTTPS URLs
+//
+// Sets a maru2 user agent and handles standard HTTP error responses.
+// Returns the response body as a ReadCloser for streaming
 func (f *HTTPClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	if uri == nil {
 		return nil, fmt.Errorf("uri is nil")

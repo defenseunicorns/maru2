@@ -16,6 +16,10 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
+// printScript renders shell script content with syntax highlighting
+//
+// Uses chroma for syntax highlighting with adaptive color schemes (light/dark theme support)
+// Falls back to plain text output when NO_COLOR is set or highlighting fails
 func printScript(logger *log.Logger, lang, script string) {
 	script = strings.TrimSpace(script)
 
@@ -55,6 +59,10 @@ func printScript(logger *log.Logger, lang, script string) {
 	}
 }
 
+// printBuiltin renders builtin task configuration with syntax highlighting
+//
+// Marshals the builtin With map as YAML and applies syntax highlighting for better readability
+// Used in dry-run mode to preview builtin task execution without running commands
 func printBuiltin(logger *log.Logger, builtin schema.With) {
 	b, err := yaml.MarshalWithOptions(v1.Step{With: builtin}, yaml.Indent(2), yaml.IndentSequence(true))
 	if err != nil {

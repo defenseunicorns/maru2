@@ -15,8 +15,11 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
-// ResolveRelative resolves a URI relative to a previous URI.
-// It handles different schemes (file, http, https, pkg) and resolves relative paths.
+// ResolveRelative resolves workflow references relative to the current context
+//
+// Handles multiple URL schemes (file, http, https, pkg, oci) with proper path resolution.
+// Supports package URL aliases, task parameters, and cross-scheme transitions.
+// Returns resolved URL ready for fetching
 func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL, error) {
 	uri, err := url.Parse(u)
 	if err != nil {
