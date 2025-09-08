@@ -51,8 +51,9 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 // If the configuration file does not exist, this function returns a default valid but "empty" config
 func LoadConfig(r io.Reader) (*Config, error) {
 	cfg := &Config{
-		Aliases:     v1.AliasMap{},
-		FetchPolicy: uses.DefaultFetchPolicy,
+		SchemaVersion: SchemaVersion,
+		Aliases:       v1.AliasMap{},
+		FetchPolicy:   uses.DefaultFetchPolicy,
 	}
 
 	data, err := io.ReadAll(r)

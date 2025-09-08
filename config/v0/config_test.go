@@ -102,6 +102,7 @@ aliases:
 			cfg, err := LoadConfig(tt.reader)
 
 			if tt.expectErr != "" {
+				assert.Nil(t, cfg)
 				require.ErrorContains(t, err, tt.expectErr)
 				return
 			}
@@ -122,43 +123,64 @@ func TestLoadDefaultConfig(t *testing.T) {
 			require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0o644))
 		}
 
-		originalHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpDir)
-		t.Cleanup(func() { os.Setenv("HOME", originalHome) })
+		t.Setenv("HOME", tmpDir)
 
 		return tmpDir
 	}
 
-	t.Run("no config file returns defaults", func(t *testing.T) {
-		setupTempHome(t, "")
-
-		cfg, err := LoadDefaultConfig()
-		require.NoError(t, err)
-		assert.Empty(t, cfg.Aliases)
-		assert.Equal(t, uses.DefaultFetchPolicy, cfg.FetchPolicy)
-	})
-
-	t.Run("valid config file loads correctly", func(t *testing.T) {
-		content := `schema-version: v0
+	tests := []struct {
+		name          string
+		configContent string
+		expectErr     string
+		expected      *Config
+	}{
+		{
+			name:          "no config file returns defaults",
+			configContent: "",
+			expected: &Config{
+				SchemaVersion: "",
+				Aliases:       v1.AliasMap{},
+				FetchPolicy:   uses.DefaultFetchPolicy,
+			},
+		},
+		{
+			name: "valid config file loads correctly",
+			configContent: `schema-version: v0
 aliases:
   gh:
     type: github
-fetch-policy: always`
-		setupTempHome(t, content)
+fetch-policy: always`,
+			expected: &Config{
+				SchemaVersion: SchemaVersion,
+				Aliases: v1.AliasMap{
+					"gh": {Type: packageurl.TypeGithub},
+				},
+				FetchPolicy: uses.FetchPolicyAlways,
+			},
+		},
+		{
+			name:          "invalid config file returns error",
+			configContent: `schema-version: v999`,
+			expectErr:     "failed to load config file",
+		},
+	}
 
-		cfg, err := LoadDefaultConfig()
-		require.NoError(t, err)
-		assert.Len(t, cfg.Aliases, 1)
-		assert.Equal(t, uses.FetchPolicyAlways, cfg.FetchPolicy)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupTempHome(t, tt.configContent)
 
-	t.Run("invalid config file returns error", func(t *testing.T) {
-		setupTempHome(t, `schema-version: v999`)
+			cfg, err := LoadDefaultConfig()
 
-		_, err := LoadDefaultConfig()
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to load config file")
-	})
+			if tt.expectErr != "" {
+				assert.Nil(t, cfg)
+				require.EqualError(t, err, tt.expectErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, cfg)
+		})
+	}
 }
 
 func TestValidate(t *testing.T) {
