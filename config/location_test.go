@@ -10,13 +10,13 @@ import (
 	"testing"
 
 	"github.com/package-url/packageurl-go"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/defenseunicorns/maru2/config"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 func TestDefaultDirectory(t *testing.T) {
@@ -30,6 +30,7 @@ aliases:
   another:
     type: github
     token-from-env: GITHUB_TOKEN
+fetch-policy: always
 `
 
 	tcfg := &configv0.Config{
@@ -47,6 +48,7 @@ aliases:
 				TokenFromEnv: "GITHUB_TOKEN",
 			},
 		},
+		FetchPolicy: uses.FetchPolicyAlways,
 	}
 
 	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
@@ -66,8 +68,18 @@ aliases:
 		configDir, err = config.DefaultDirectory()
 		assert.Equal(t, filepath.Join(tmpDir, ".maru2"), configDir)
 		require.NoError(t, err)
-		cfg, err := configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
+		f, err := os.Open(filepath.Join(configDir, config.DefaultFileName))
 		require.NoError(t, err)
-		assert.Equal(t, tcfg.Aliases, cfg.Aliases)
+		t.Cleanup(func() {
+			f.Close()
+		})
+
+		cfg, err := configv0.LoadConfig(f)
+		require.NoError(t, err)
+		assert.Equal(t, tcfg, cfg)
+
+		cfg, err = configv0.LoadDefaultConfig()
+		require.NoError(t, err)
+		assert.Equal(t, tcfg, cfg)
 	}
 }
