@@ -9,7 +9,11 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
-// ResolvePkgAlias resolves a package URL using the given aliases map
+// ResolvePkgAlias transforms package URLs using configured aliases
+//
+// Maps short package URL types to full package URLs with authentication
+// and base URL configuration. Returns the resolved package URL and whether
+// an alias was expanded
 func ResolvePkgAlias(pURL packageurl.PackageURL, aliases v1.AliasMap) (packageurl.PackageURL, bool) {
 	aliasDef, ok := aliases[pURL.Type]
 	if !ok {

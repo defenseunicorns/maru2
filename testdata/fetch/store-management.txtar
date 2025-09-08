@@ -1,0 +1,66 @@
+# Test store management and garbage collection with remote workflows
+
+# Test with custom store location
+exec maru2 --store ./custom-store --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+stderr 'echo.*Hello from remote'
+
+# Verify store directory was created
+exists custom-store
+exists custom-store/index.txt
+exec cat custom-store/index.txt
+stdout 'h1:c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f 83'
+exec grep -E '^.*/simple\.yaml h1:[a-fA-F0-9]{64} [0-9]+$' custom-store/index.txt
+exists custom-store/c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f
+exec cat custom-store/c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f
+stdout 'schema-version: v1'
+stdout 'hello:'
+stdout 'echo.*Hello from remote'
+
+# Test garbage collection with store
+exec maru2 --store ./custom-store --gc --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+exists custom-store/index.txt
+exec cat custom-store/index.txt
+stdout 'h1:c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f 83'
+exec sh -c 'count=$(ls -1 custom-store | wc -l); test $count -eq 2'
+exists custom-store/c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f
+
+# Test fetch-all with custom store and garbage collection
+exec maru2 --store ./test-store --fetch-all --gc --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+stderr 'echo.*Hello from remote'
+
+# Verify test-store directory was created
+exists test-store
+exists test-store/index.txt
+exec cat test-store/index.txt
+stdout 'h1:c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f 83'
+exec grep -E '^.*/simple\.yaml h1:[a-fA-F0-9]{64} [0-9]+$' test-store/index.txt
+exists test-store/c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f
+exec sh -c 'count=$(ls -1 test-store | wc -l); test $count -eq 2'
+
+# Verify .maru2/store was used
+exec maru2 --store . --from $HTTP_BASE_URL/simple.yaml --fetch-all
+exists .maru2/store
+exists .maru2/store/index.txt
+exec cat .maru2/store/index.txt
+stdout 'h1:c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f 83'
+exec grep -E '^.*/simple\.yaml h1:[a-fA-F0-9]{64} [0-9]+$' .maru2/store/index.txt
+exists .maru2/store/c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f
+
+# Test that multiple workflows can be stored and indexed correctly
+exec maru2 --from $HTTP_BASE_URL/with-uses.yaml main
+stdout 'Starting main task'
+stdout 'Hello from remote!'
+exec cat .maru2/store/index.txt
+stdout 'h1:c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f 83'
+stdout 'h1:176463993ec1ee8190e560f6617b3c5a8e33d275fb65ec2fb46a65bbdec97eda 119'
+exists .maru2/store/c9f947bb2f66f244ae2960ede2fa5bbce1e5acd115fbb7de082d35e9de57ad5f
+exists .maru2/store/176463993ec1ee8190e560f6617b3c5a8e33d275fb65ec2fb46a65bbdec97eda
+exec sh -c 'count=$(ls -1 .maru2/store | wc -l); test $count -eq 3'
+exec cat .maru2/store/176463993ec1ee8190e560f6617b3c5a8e33d275fb65ec2fb46a65bbdec97eda
+stdout 'schema-version: v1'
+stdout 'main:'
+stdout 'Starting main task'
+stdout 'Hello from remote'

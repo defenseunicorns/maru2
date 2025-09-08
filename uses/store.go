@@ -49,25 +49,28 @@ type Storage interface {
 type LocalStore struct {
 	index map[string]Descriptor
 
-	fs afero.Fs
+	fsys afero.Fs
 
 	mu sync.RWMutex
 }
 
-// NewLocalStore creates a new store at the given path.
-func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
+// NewLocalStore creates a filesystem-based workflow cache
+//
+// Initializes or loads an existing cache with integrity checking.
+// The index.txt file tracks cached workflows with SHA256 digests
+func NewLocalStore(fsys afero.Fs) (*LocalStore, error) {
 	index := make(map[string]Descriptor, 0)
 
-	_, err := fs.Stat(IndexFileName)
+	_, err := fsys.Stat(IndexFileName)
 	if os.IsNotExist(err) {
-		f, err := fs.Create(IndexFileName)
+		f, err := fsys.Create(IndexFileName)
 		if err != nil {
 			return nil, err
 		}
 		defer f.Close()
 
 		return &LocalStore{
-			fs:    fs,
+			fsys:  fsys,
 			index: index,
 		}, nil
 	}
@@ -75,7 +78,7 @@ func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
 		return nil, err
 	}
 
-	f, err := fs.Open(IndexFileName)
+	f, err := fsys.Open(IndexFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -87,12 +90,15 @@ func NewLocalStore(fs afero.Fs) (*LocalStore, error) {
 	}
 
 	return &LocalStore{
-		fs:    fs,
+		fsys:  fsys,
 		index: index,
 	}, nil
 }
 
-// ParseIndex parses an index file.
+// ParseIndex reads and validates cache index entries
+//
+// Each line format: <url> h1:<sha256-hex> <size-bytes>
+// Returns a map of URLs to their descriptors for cache lookups
 func ParseIndex(r io.Reader) (map[string]Descriptor, error) {
 	index := make(map[string]Descriptor, 0)
 
@@ -139,7 +145,7 @@ func (s *LocalStore) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, erro
 		return nil, fmt.Errorf("descriptor not found")
 	}
 
-	f, err := s.fs.Open(desc.Hex)
+	f, err := s.fsys.Open(desc.Hex)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +170,7 @@ func (s *LocalStore) Store(rc io.Reader, uri *url.URL) error {
 
 	encoded := hex.EncodeToString(hasher.Sum(nil))
 
-	if err := afero.WriteFile(s.fs, encoded, buf.Bytes(), 0o644); err != nil {
+	if err := afero.WriteFile(s.fsys, encoded, buf.Bytes(), 0o644); err != nil {
 		return err
 	}
 
@@ -185,7 +191,7 @@ func (s *LocalStore) Store(rc io.Reader, uri *url.URL) error {
 		b = fmt.Appendf(b, "%s h1:%s %d\n", key, desc.Hex, desc.Size)
 	}
 
-	return afero.WriteFile(s.fs, IndexFileName, b, 0o644)
+	return afero.WriteFile(s.fsys, IndexFileName, b, 0o644)
 }
 
 // Exists checks if a workflow exists in the store.
@@ -198,7 +204,7 @@ func (s *LocalStore) Exists(uri *url.URL) (bool, error) {
 		return false, nil
 	}
 
-	fi, err := s.fs.Stat(desc.Hex)
+	fi, err := s.fsys.Stat(desc.Hex)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, fmt.Errorf("descriptor exists in index, but no corresponding file was found, possible cache corruption: %s", desc.Hex)
@@ -212,7 +218,7 @@ func (s *LocalStore) Exists(uri *url.URL) (bool, error) {
 
 	hasher := sha256.New()
 
-	f, err := s.fs.Open(desc.Hex)
+	f, err := s.fsys.Open(desc.Hex)
 	if err != nil {
 		return false, err
 	}
@@ -248,7 +254,7 @@ func (s *LocalStore) GC() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	all, err := afero.ReadDir(s.fs, ".")
+	all, err := afero.ReadDir(s.fsys, ".")
 	if err != nil {
 		return err
 	}
@@ -264,7 +270,7 @@ outer:
 				continue outer
 			}
 		}
-		if err := s.fs.Remove(fi.Name()); err != nil {
+		if err := s.fsys.Remove(fi.Name()); err != nil {
 			return err
 		}
 	}

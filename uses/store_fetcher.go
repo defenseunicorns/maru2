@@ -19,6 +19,8 @@ type StoreFetcher struct {
 }
 
 // Fetch implements the Fetcher interface
+//
+// This is one of my favorite functions
 func (f *StoreFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	switch f.Policy {
 	case FetchPolicyNever:

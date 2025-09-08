@@ -1,0 +1,22 @@
+# Test fetch policies with remote workflows
+
+# Test fetch policy always
+exec maru2 --fetch-policy always --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+stderr 'echo.*Hello from remote'
+
+# Cache the workflow by running it once with default policy
+exec maru2 --fetch-policy if-not-present --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+
+# Test never policy with cached version
+exec maru2 --fetch-policy never --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+
+# Test that never policy fails for non-cached workflows
+! exec maru2 --fetch-policy never --from $HTTP_BASE_URL/with-uses.yaml main
+stderr 'ERRO failed to fetch "http://127.0.0.1:[0-9]+/with-uses.yaml": descriptor not found'
+
+# Test if-not-present policy (default)
+exec maru2 --fetch-policy if-not-present --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'

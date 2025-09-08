@@ -13,6 +13,7 @@ import (
 // FetchPolicy defines the fetching behavior for the fetcher service
 type FetchPolicy string
 
+// validate that FetchPolicy implements pflag.Value interface
 var _ pflag.Value = (*FetchPolicy)(nil)
 
 const (

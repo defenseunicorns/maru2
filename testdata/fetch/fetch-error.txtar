@@ -1,0 +1,33 @@
+# Test error handling for various remote fetch scenarios
+
+# Test unsupported scheme
+! exec maru2 --from ftp://example.com/workflow.yaml task
+stderr 'ERRO failed to resolve "ftp://example.com/workflow.yaml": unsupported scheme: "ftp"'
+
+# Test invalid package URL
+! exec maru2 --from 'pkg:invalid/url' task
+stderr 'ERRO.*unsupported package type: "invalid"'
+
+# Test 404 not found
+! exec maru2 --from $HTTP_BASE_URL/nonexistent.yaml task
+stderr 'ERRO.*404 Not Found'
+
+# Test invalid YAML content
+! exec maru2 --from $HTTP_BASE_URL/invalid.yaml task
+stderr 'ERRO.*string was used where mapping is expected'
+
+# Test server error (500)
+! exec maru2 --from $HTTP_BASE_URL/error.yaml task
+stderr 'ERRO.*500 Internal Server Error'
+
+# Test missing task in remote workflow
+! exec maru2 --from $HTTP_BASE_URL/simple.yaml nonexistent-task
+stderr 'ERRO task "nonexistent-task" not found'
+
+# Test invalid fetch policy
+! exec maru2 --fetch-policy invalid task
+stderr 'ERRO invalid argument "invalid" for "-p, --fetch-policy" flag: invalid fetch policy: invalid'
+
+# Test fetch-all with invalid policy
+! exec maru2 --fetch-policy never --fetch-all task
+stderr 'ERRO cannot fetch all with fetch policy "never"'

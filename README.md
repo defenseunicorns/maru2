@@ -62,6 +62,8 @@ If you are coming from `maru-runner` / `uds run` and looking to transition, chec
 
 If you are looking to embed maru2 into another Cobra CLI, take a look at the example in [`cmd/internal`](./cmd/internal/main.go).
 
+If you are looking for developer docs, the best way to view them is `go doc -http` or visit [pkg.go.dev](https://pkg.go.dev/github.com/defenseunicorns/maru2).
+
 ## Contributing
 
 Thanks for taking time out of your day to contribute! Read the [contributing guide](./.github/CONTRIBUTING.md) for more information.

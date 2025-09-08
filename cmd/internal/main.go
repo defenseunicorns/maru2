@@ -76,28 +76,34 @@ func main() {
 	// ExecuteContextC is the most preferred method
 	cmd, err := root.ExecuteContextC(ctx)
 	if err != nil {
-		// the below is a copy-paste from maru2, as the formatting of
-		// logging maru2's final error is left up to implementation
-		//
-		// the below is what users will see if they use maru2 as a standalone CLI
+		switch cmd.Use {
+		case "run": // same as w/e the new maru2 command name is
 
-		logger.Print("")
+			// the below is a copy-paste from maru2, as the formatting of
+			// logging maru2's final error is left up to implementation
+			//
+			// the below is what users will see if they use maru2 as a standalone CLI
 
-		if errors.Is(cmd.Context().Err(), context.DeadlineExceeded) {
-			logger.Error("task timed out")
-		}
+			logger.Print("")
 
-		var tErr *maru2.TraceError
-		if errors.As(err, &tErr) && len(tErr.Trace) > 0 {
-			trace := tErr.Trace
-			slices.Reverse(trace)
-			if len(trace) == 1 {
-				logger.Error(tErr)
-				logger.Error(trace[0])
-			} else {
-				logger.Error(tErr, "traceback (most recent call first)", strings.Join(trace, "\n"))
+			if errors.Is(cmd.Context().Err(), context.DeadlineExceeded) {
+				logger.Error("task timed out")
 			}
-		} else {
+
+			var tErr *maru2.TraceError
+			if errors.As(err, &tErr) && len(tErr.Trace) > 0 {
+				trace := tErr.Trace
+				slices.Reverse(trace)
+				if len(trace) == 1 {
+					logger.Error(tErr)
+					logger.Error(trace[0])
+				} else {
+					logger.Error(tErr, "traceback (most recent call first)", strings.Join(trace, "\n"))
+				}
+			} else {
+				logger.Error(err)
+			}
+		default:
 			logger.Error(err)
 		}
 	}

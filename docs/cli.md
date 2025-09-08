@@ -246,7 +246,7 @@ Available policies:
 To update all remote references without executing any tasks:
 
 ```sh
-maru2 --dry-run --log-level error --fetch-policy always
+maru2 --fetch-policy always --fetch-all
 ```
 
 This combination refreshes your cache without running any code.

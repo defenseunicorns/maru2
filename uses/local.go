@@ -15,12 +15,12 @@ import (
 
 // LocalFetcher fetches a file from the local filesystem.
 type LocalFetcher struct {
-	fs afero.Fs
+	fsys afero.Fs
 }
 
 // NewLocalFetcher creates a new local fetcher
-func NewLocalFetcher(fs afero.Fs) *LocalFetcher {
-	return &LocalFetcher{fs}
+func NewLocalFetcher(fsys afero.Fs) *LocalFetcher {
+	return &LocalFetcher{fsys}
 }
 
 // Fetch opens a file handle at the given location
@@ -40,7 +40,7 @@ func (f *LocalFetcher) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, er
 	p := clone.String()
 	p = filepath.Clean(p)
 
-	fileInfo, err := f.fs.Stat(p)
+	fileInfo, err := f.fsys.Stat(p)
 	if err != nil {
 		return nil, err
 	}
@@ -49,5 +49,5 @@ func (f *LocalFetcher) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, er
 		return nil, fmt.Errorf("read %s: is a directory", p)
 	}
 
-	return f.fs.Open(p)
+	return f.fsys.Open(p)
 }

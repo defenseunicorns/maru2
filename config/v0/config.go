@@ -2,6 +2,8 @@
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
 // Package v0 provides the schema for v0 of the system config file for maru2
+//
+// v0 allows for breaking changes without a major version increase
 package v0
 
 import (
@@ -43,6 +45,10 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 }
 
 // LoadConfig loads the configuration from the file system
+//
+// # It assumes the provided fs's base directory contains a valid configuration file
+//
+// If the configuration file does not exist, this function returns a default valid but "empty" config
 func LoadConfig(fsys afero.Fs) (*Config, error) {
 	cfg := &Config{
 		Aliases:     v1.AliasMap{},
@@ -74,11 +80,15 @@ func LoadConfig(fsys afero.Fs) (*Config, error) {
 			return nil, fmt.Errorf("failed to parse config file: %w", err)
 		}
 		return cfg, Validate(cfg)
+	// See schema/v1/validate.go for an example on how auto migrations during loading/reading can work for when v1 of config is released
 	default:
 		return nil, fmt.Errorf("unsupported config schema version: expected %q, got %q", SchemaVersion, version)
 	}
 }
 
+// Since every validation operation leverages the same config, only calculate it once to save some compute cycles
+//
+// This also prevents any schema changes from occurring at runtime
 var schemaOnce = sync.OnceValues(func() (string, error) {
 	s := Schema()
 	b, err := json.Marshal(s)
@@ -111,7 +121,9 @@ func Validate(config *Config) error {
 	return resErr
 }
 
-// Schema returns the JSON schema for the Config type
+// Schema generates the JSON schema for v0 configuration validation
+//
+// Returns a schema for IDE integration and automated validation
 func Schema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{DoNotReference: true}
 	return reflector.Reflect(&Config{})

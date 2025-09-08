@@ -9,6 +9,8 @@ tasks:
         default: "Hello, world!"
         required: true
     steps:
+      # experiment w/ https://github.com/harrydowning/vscode-yaml-embedded-languages
+      # yaml-embedded-languages: shell
       - run: echo "${{ input "text" }}"
 
   test:

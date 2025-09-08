@@ -360,7 +360,7 @@ tasks:
 			manifestDesc, manifest, err := fetchManifest(t, dst)
 			require.NoError(t, err)
 
-			assert.Equal(t, MediaTypeWorkflow, manifest.ArtifactType)
+			assert.Equal(t, MediaTypeWorkflowCollection, manifest.ArtifactType)
 			assert.Equal(t, ocispec.MediaTypeImageManifest, manifestDesc.MediaType)
 			assert.Equal(t, ocispec.MediaTypeImageManifest, manifest.MediaType)
 			assert.Equal(t, ocispec.DescriptorEmptyJSON, manifest.Config)

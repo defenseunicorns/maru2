@@ -12,7 +12,7 @@ import (
 	"github.com/defenseunicorns/maru2/schema"
 )
 
-// Task is a list of steps
+// Task is a list of steps and input parameters
 type Task struct {
 	Inputs InputMap `json:"inputs,omitempty"`
 	Steps  []Step   `json:"steps"`
@@ -41,6 +41,8 @@ func (TaskMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 }
 
 // Find returns a task by name
+//
+// Yes, this function is essentially syntactic sugar for Go map functionality, but I like it, so I'm keeping it
 func (tm TaskMap) Find(call string) (Task, bool) {
 	task, ok := tm[call]
 	return task, ok

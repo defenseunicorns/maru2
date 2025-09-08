@@ -23,7 +23,10 @@ import (
 	v0 "github.com/defenseunicorns/maru2/schema/v0"
 )
 
-// Read reads a workflow from a file
+// Read parses and validates a workflow from YAML/JSON input
+//
+// Handles v0->v1 migration automatically and performs JSON Schema validation.
+// Returns a fully validated Workflow struct ready for execution
 func Read(r io.Reader) (Workflow, error) {
 	if rs, ok := r.(io.Seeker); ok {
 		_, err := rs.Seek(0, io.SeekStart)
@@ -57,13 +60,19 @@ func Read(r io.Reader) (Workflow, error) {
 	}
 }
 
+// Since every validation operation leverages the same schema, only calculate it once to save some compute cycles
+//
+// This also prevents any schema changes from occurring at runtime
 var schemaOnce = sync.OnceValues(func() (string, error) {
 	s := WorkFlowSchema()
 	b, err := json.Marshal(s)
 	return string(b), err
 })
 
-// Validate validates a workflow
+// Validate performs semantic validation on a parsed workflow
+//
+// Checks task existence, alias path restrictions, use URL validity, input parameters,
+// step dependencies, timeout formats, and conditional expressions
 func Validate(wf Workflow) error {
 	if len(wf.Tasks) == 0 {
 		return errors.New("no tasks available")
@@ -197,7 +206,9 @@ func Validate(wf Workflow) error {
 	return resErr
 }
 
-// ReadAndValidate reads and validates a workflow
+// ReadAndValidate combines Read and Validate for one-step workflow processing
+//
+// Convenience function for parsing and validating workflows in a single call
 func ReadAndValidate(r io.Reader) (Workflow, error) {
 	wf, err := Read(r)
 	if err != nil {

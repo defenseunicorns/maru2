@@ -7,7 +7,9 @@ All tests are run via [`cmd/root_test.go` `TestE2E`](../cmd/root_test.go).
 To run individual tests:
 
 ```sh
-go test ./cmd/ -run TestE2E/<Test>
+go test ./cmd/ -run TestE2E/<test>
+go test ./cmd/ -run TestPublishE2E/<test>
+go test ./cmd/ -run TestFetchE2E/<test>
 
 # e.g.
 go test ./cmd/ -run TestE2E/version -v # <- add -v if you want extra verbosity / to see STDOUT and STDERR

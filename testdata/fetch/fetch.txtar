@@ -1,0 +1,46 @@
+# Test complex scenario with multiple remote dependencies and fetch-all
+
+exec envsubst complex-workflow.yaml
+
+# Test fetch-all prefetches all nested dependencies
+exec maru2 --fetch-all --from file:complex-workflow.yaml
+! stderr .
+! stdout .
+
+# Test execution after fetch-all
+exec maru2 --from file:complex-workflow.yaml complex
+stdout 'Starting complex workflow'
+stdout 'Hello from remote!'
+stdout 'Starting main task'
+stdout 'Hello from remote!'
+stdout 'Complex workflow complete'
+
+# Test fetch-all with always policy to refresh cache
+exec maru2 --fetch-policy always --fetch-all --from file:complex-workflow.yaml complex
+stdout 'Starting complex workflow'
+stdout 'Hello from remote!'
+stdout 'Starting main task'
+stdout 'Hello from remote!'
+stdout 'Complex workflow complete'
+
+# Test cache efficiency
+exec maru2 --fetch-policy if-not-present --from file:complex-workflow.yaml complex
+stdout 'Starting complex workflow'
+stdout 'Hello from remote!'
+
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  local:
+    steps:
+      - run: echo "Local task"
+
+-- complex-workflow.yaml --
+schema-version: v1
+tasks:
+  complex:
+    steps:
+      - run: echo "Starting complex workflow"
+      - uses: ${HTTP_BASE_URL}/simple.yaml?task=hello
+      - uses: ${HTTP_BASE_URL}/with-uses.yaml?task=main
+      - run: echo "Complex workflow complete"

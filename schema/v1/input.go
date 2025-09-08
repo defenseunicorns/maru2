@@ -5,17 +5,24 @@ package v1
 
 import "github.com/invopop/jsonschema"
 
-// InputMap is a map of input parameters for a step
+// InputMap defines input parameters for task execution
+//
+// Maps parameter names to their definitions including validation, defaults, and documentation
 type InputMap map[string]InputParameter
 
-// JSONSchemaExtend extends the JSON schema for an input map
+// JSONSchemaExtend restricts input parameter names to valid patterns
+//
+// Enforces naming conventions for input parameters (kebab-case, alphanumeric + hyphens)
 func (InputMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.PropertyNames = &jsonschema.Schema{
 		Pattern: InputNamePattern.String(),
 	}
 }
 
-// InputParameter represents a single input parameter for a step, to be used w/ `with`
+// InputParameter defines a single input parameter for tasks and steps
+//
+// Supports validation, default values from environment variables,
+// deprecation warnings, and required/optional configuration
 type InputParameter struct {
 	// Description of the input parameter
 	Description string `json:"description"`
@@ -31,7 +38,10 @@ type InputParameter struct {
 	Validate string `json:"validate,omitempty"`
 }
 
-// JSONSchemaExtend extends the JSON schema for a step
+// JSONSchemaExtend generates detailed schema documentation for input parameters
+//
+// Creates comprehensive validation rules for parameter configuration including
+// type constraints, validation patterns, and environment variable integration
 func (InputParameter) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Description = "Input parameter for the step"
 

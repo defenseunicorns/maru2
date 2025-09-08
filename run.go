@@ -194,7 +194,7 @@ func handleRunStep(
 
 	logger := log.FromContext(ctx)
 
-	script, err := TemplateString(ctx, withDefaults, outputs, step.Run, dry)
+	script, err := TemplateString(ctx, step.Run, withDefaults, outputs, dry)
 	if err != nil {
 		if dry {
 			printScript(logger, step.Shell, script)
@@ -216,7 +216,7 @@ func handleRunStep(
 		os.Remove(outFile.Name())
 	}()
 
-	templatedEnv, err := TemplateWithMap(ctx, withDefaults, outputs, step.Env, dry)
+	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, dry)
 	if err != nil {
 		return nil, err
 	}
@@ -271,6 +271,10 @@ func handleRunStep(
 	return result, nil
 }
 
+// prepareEnvironment builds the final environment variable list for command execution
+//
+// Combines system env vars, input parameters as env vars, step-level env vars,
+// and the output file path for step communication
 func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName string, stepEnv schema.Env) ([]string, error) {
 	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
 	copy(env, envVars)
@@ -322,6 +326,9 @@ func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName 
 	return env, nil
 }
 
+// toEnvVar converts input parameter names to environment variable format
+//
+// Transforms kebab-case to SCREAMING_SNAKE_CASE (e.g., "my-input" -> "MY_INPUT")
 func toEnvVar(s string) string {
 	return strings.ToUpper(strings.ReplaceAll(s, "-", "_"))
 }
@@ -344,7 +351,10 @@ func (e *TraceError) Unwrap() error {
 	return e.err
 }
 
-// addTrace adds a new frame and returns a new TraceError
+// addTrace wraps errors with execution context for debugging
+//
+// Creates or extends a TraceError with frame information to show
+// the execution path when errors occur
 func addTrace(err error, frame string) error {
 	var tErr *TraceError
 	if errors.As(err, &tErr) {

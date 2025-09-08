@@ -200,7 +200,7 @@ func TestTemplateString(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			result, err := TemplateString(ctx, tc.input, tc.previousOutput, tc.str, tc.dryRun)
+			result, err := TemplateString(ctx, tc.str, tc.input, tc.previousOutput, tc.dryRun)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -1319,7 +1319,7 @@ func TestTemplateWithMap(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			result, err := TemplateWithMap(ctx, tc.input, tc.previousOutput, tc.withMap, false)
+			result, err := TemplateWithMap(ctx, tc.withMap, tc.input, tc.previousOutput, false)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -1535,7 +1535,7 @@ func TestTemplateSlice(t *testing.T) {
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			result, err := templateSlice(ctx, tc.input, tc.previousOutput, tc.slice, false)
+			result, err := templateSlice(ctx, tc.slice, tc.input, tc.previousOutput, false)
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -1646,7 +1646,7 @@ func TestPerformLookups(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			templated, err := TemplateWithMap(ctx, tc.input, tc.previous, tc.local, false)
+			templated, err := TemplateWithMap(ctx, tc.local, tc.input, tc.previous, false)
 			if tc.expectedError == "" {
 				require.NoError(t, err)
 			} else {

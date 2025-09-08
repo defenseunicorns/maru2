@@ -25,7 +25,13 @@ import (
 // MediaTypeWorkflow is the mediatype for all maru2 workflows
 const MediaTypeWorkflow = "application/vnd.maru2.workflow.v1+yaml"
 
-// Publish fetches all remote imports in <cwd>/tasks.yaml, stores them in a temp dir, then pushes them to a OCI registry
+// MediaTypeWorkflowCollection is the mediatype for the maru2 OCI collection artifact
+const MediaTypeWorkflowCollection = "application/vnd.maru2.collection.v1"
+
+// Publish packages workflows as OCI artifacts in a container registry
+//
+// Fetches all remote imports, stores them in a temp directory, then pushes
+// the complete workflow bundle to the OCI registry for distribution
 func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string, aliases v1.AliasMap) error {
 	logger := log.FromContext(ctx)
 
@@ -124,7 +130,7 @@ func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string, 
 		layers = append(layers, desc)
 	}
 
-	root, err := oras.PackManifest(ctx, ociStore, oras.PackManifestVersion1_1, MediaTypeWorkflow, oras.PackManifestOptions{
+	root, err := oras.PackManifest(ctx, ociStore, oras.PackManifestVersion1_1, MediaTypeWorkflowCollection, oras.PackManifestOptions{
 		Layers: layers,
 	})
 	if err != nil {
