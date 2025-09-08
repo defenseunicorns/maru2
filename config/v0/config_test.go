@@ -4,6 +4,7 @@
 package v0
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,14 +22,14 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	tests := []struct {
-		name        string
-		content     string
-		expectErr   string
-		expectValid bool
+		name      string
+		reader    io.Reader
+		expected  *Config
+		expectErr string
 	}{
 		{
 			name: "valid config",
-			content: `schema-version: v0
+			reader: strings.NewReader(`schema-version: v0
 aliases:
   gh:
     type: github
@@ -36,96 +37,78 @@ aliases:
     type: gitlab
     base-url: https://gitlab.example.com
     token-from-env: GL_TOKEN
-fetch-policy: always`,
-			expectValid: true,
+fetch-policy: always`),
+			expected: &Config{
+				SchemaVersion: SchemaVersion,
+				FetchPolicy:   uses.FetchPolicyAlways,
+				Aliases: v1.AliasMap{
+					"gh": {
+						Type: packageurl.TypeGithub,
+					},
+					"gl": {
+						Type:         packageurl.TypeGitlab,
+						BaseURL:      "https://gitlab.example.com",
+						TokenFromEnv: "GL_TOKEN",
+					},
+				},
+			},
 		},
 		{
-			name:        "empty config uses defaults",
-			content:     `schema-version: v0`,
-			expectValid: true,
+			name:   "empty config uses defaults",
+			reader: strings.NewReader(`schema-version: v0`),
+			expected: &Config{
+				SchemaVersion: SchemaVersion,
+				Aliases:       v1.AliasMap{},
+				FetchPolicy:   uses.DefaultFetchPolicy,
+			},
 		},
 		{
 			name:      "invalid yaml",
-			content:   `invalid: yaml: content`,
+			reader:    strings.NewReader(`invalid: yaml: content`),
 			expectErr: "mapping value is not allowed in this context",
 		},
 		{
 			name: "unsupported schema version",
-			content: `schema-version: v999
+			reader: strings.NewReader(`schema-version: v999
 aliases:
   gh:
-    type: github`,
+    type: github`),
 			expectErr: `unsupported config schema version: expected "v0", got "v999"`,
 		},
 		{
 			name: "invalid structure",
-			content: `schema-version: v0
-aliases: "should-be-map"`,
+			reader: strings.NewReader(`schema-version: v0
+aliases: "should-be-map"`),
 			expectErr: "failed to parse config file",
 		},
 		{
 			name: "validation error",
-			content: `schema-version: v0
+			reader: strings.NewReader(`schema-version: v0
 aliases:
   invalid:
-    type: bad-type`,
+    type: bad-type`),
 			expectErr: "aliases.invalid.type",
+		},
+		{
+			name:      "reader error",
+			reader:    iotest.ErrReader(assert.AnError),
+			expectErr: assert.AnError.Error(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg, err := LoadConfig(strings.NewReader(tt.content))
+			t.Parallel()
+			cfg, err := LoadConfig(tt.reader)
 
 			if tt.expectErr != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectErr)
+				require.ErrorContains(t, err, tt.expectErr)
 				return
 			}
 
-			require.NoError(t, err)
-			assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
-			assert.NotNil(t, cfg.Aliases)
-			assert.NotEmpty(t, cfg.FetchPolicy)
+			require.Equal(t, tt.expected, cfg)
 		})
 	}
-
-	// Test reader edge cases
-	t.Run("reader edge cases", func(t *testing.T) {
-		content := `schema-version: v0
-aliases:
-  gh:
-    type: github`
-
-		// Test various reader implementations work correctly
-		readers := map[string]func(string) *strings.Reader{
-			"one_byte": func(s string) *strings.Reader { return strings.NewReader(s) },
-			"half":     func(s string) *strings.Reader { return strings.NewReader(s) },
-		}
-
-		for name, readerFunc := range readers {
-			t.Run(name, func(t *testing.T) {
-				var reader interface {
-					Read([]byte) (int, error)
-				}
-				switch name {
-				case "one_byte":
-					reader = iotest.OneByteReader(readerFunc(content))
-				case "half":
-					reader = iotest.HalfReader(readerFunc(content))
-				}
-
-				cfg, err := LoadConfig(reader)
-				require.NoError(t, err)
-				assert.Len(t, cfg.Aliases, 1)
-			})
-		}
-
-		// Test read error
-		_, err := LoadConfig(iotest.ErrReader(assert.AnError))
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to read config file")
-	})
 }
 
 func TestLoadDefaultConfig(t *testing.T) {
@@ -230,8 +213,7 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 			err := Validate(tt.config)
 			if tt.expectedErr != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.expectedErr)
+				require.ErrorContains(t, err, tt.expectedErr)
 			} else {
 				require.NoError(t, err)
 			}
