@@ -347,8 +347,7 @@ tasks:
 			require.NoError(t, err)
 			dst.PlainHTTP = true
 
-			// TODO: test w/ aliases?
-			err = Publish(ctx, dst, tc.entrypoints, nil)
+			err = Publish(ctx, dst, tc.entrypoints)
 
 			if tc.expectErr != "" {
 				require.Error(t, err)

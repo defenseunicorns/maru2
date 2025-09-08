@@ -18,7 +18,6 @@ import (
 	"oras.land/oras-go/v2/content/file"
 	"oras.land/oras-go/v2/registry/remote"
 
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -32,7 +31,7 @@ const MediaTypeWorkflowCollection = "application/vnd.maru2.collection.v1"
 //
 // Fetches all remote imports, stores them in a temp directory, then pushes
 // the complete workflow bundle to the OCI registry for distribution
-func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string, aliases v1.AliasMap) error {
+func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string) error {
 	logger := log.FromContext(ctx)
 
 	if len(entrypoints) == 0 {
@@ -61,7 +60,7 @@ func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string, 
 
 	fs := afero.NewOsFs()
 	for _, point := range entrypoints {
-		src, err := uses.ResolveRelative(nil, point, aliases)
+		src, err := uses.ResolveRelative(nil, point, nil)
 		if err != nil {
 			return err
 		}
