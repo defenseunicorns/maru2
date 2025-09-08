@@ -1,0 +1,48 @@
+# Test remote workflow resolution with different URL schemes and query parameters
+
+# Test HTTP scheme with task query parameter
+exec maru2 --from $HTTP_BASE_URL/simple.yaml?task=hello hello
+stdout 'Hello from remote!'
+stderr 'echo.*Hello from remote'
+
+# Test file: scheme for local files  
+exec sh -c 'echo "schema-version: v1" > local-workflow.yaml'
+exec sh -c 'echo "tasks:" >> local-workflow.yaml'
+exec sh -c 'echo "  local-task:" >> local-workflow.yaml'
+exec sh -c 'echo "    steps:" >> local-workflow.yaml'
+exec sh -c 'echo "      - run: echo \"Local file task\"" >> local-workflow.yaml'
+
+exec maru2 --from file:local-workflow.yaml local-task
+stdout 'Local file task'
+stderr 'echo "Local file task"'
+
+# Test relative file resolution in workflow uses
+exec sh -c 'echo "schema-version: v1" > main-workflow.yaml'
+exec sh -c 'echo "tasks:" >> main-workflow.yaml'
+exec sh -c 'echo "  main:" >> main-workflow.yaml'
+exec sh -c 'echo "    steps:" >> main-workflow.yaml'
+exec sh -c 'echo "      - run: echo \"Main task\"" >> main-workflow.yaml'
+exec sh -c 'echo "      - uses: file:local-workflow.yaml?task=local-task" >> main-workflow.yaml'
+
+exec maru2 --from file:main-workflow.yaml main
+stdout 'Main task'
+stdout 'Local file task'
+stderr 'echo "Main task"'
+stderr 'echo "Local file task"'
+
+# Test that fetch-all prefetches all dependencies
+exec maru2 --fetch-all --from file:main-workflow.yaml
+! stderr .
+! stdout .
+
+# Test fetch-all with execution
+exec maru2 --fetch-all --from file:main-workflow.yaml main
+stdout 'Main task'
+stdout 'Local file task'
+
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  default:
+    steps:
+      - run: echo "Default task"

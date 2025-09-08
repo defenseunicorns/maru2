@@ -1,0 +1,29 @@
+# Test fetch policies with remote workflows
+
+# Test fetch policy always - should always refetch even if cached
+exec maru2 --fetch-policy always --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+stderr 'echo.*Hello from remote'
+
+# Cache the workflow by running it once with default policy
+exec maru2 --fetch-policy if-not-present --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+
+# Now test never policy - should use cached version
+exec maru2 --fetch-policy never --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+
+# Test that never policy fails for non-cached workflows
+! exec maru2 --fetch-policy never --from $HTTP_BASE_URL/with-uses.yaml main
+stderr 'ERRO'
+
+# Test if-not-present policy (default) - should use cache if available
+exec maru2 --fetch-policy if-not-present --from $HTTP_BASE_URL/simple.yaml hello
+stdout 'Hello from remote!'
+
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  local-hello:
+    steps:
+      - run: echo "Local hello"

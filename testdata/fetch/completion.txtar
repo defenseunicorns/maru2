@@ -1,0 +1,21 @@
+# Test fetch completion functionality
+
+# Test completion for fetch-policy flag
+exec maru2 __complete --fetch-policy
+stdout 'always'
+stdout 'if-not-present'
+stdout 'never'
+cmp stderr completion-stderr.txt
+
+# Test completion with remote workflow from flag works
+exec maru2 __complete --from $HTTP_BASE_URL/simple.yaml hello
+cmp stderr completion-stderr.txt
+
+-- completion-stderr.txt --
+Completion ended with directive: ShellCompDirectiveNoFileComp
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  local:
+    steps:
+      - run: echo "Local task"
