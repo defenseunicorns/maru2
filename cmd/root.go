@@ -50,6 +50,30 @@ func NewRootCmd() *cobra.Command {
 
 	var cfg *configv0.Config // cfg is not set via CLI flag
 
+	// closure initializer
+	loadConfig := func(cmd *cobra.Command) error {
+		switch cmd.Flags().Changed("config") {
+		case true:
+			var err error
+			cfg, err = configv0.LoadConfig(afero.NewOsFs())
+			if err != nil {
+				return err
+			}
+			return nil
+		default:
+			configDir, err := config.DefaultDirectory()
+			if err != nil {
+				return err
+			}
+
+			cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+
 	root := &cobra.Command{
 		Use:   "maru2",
 		Short: "A simple task runner",
@@ -75,18 +99,12 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			configDir, err := config.DefaultDirectory()
-			if err != nil {
-				return err
-			}
-
-			cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
-			if err != nil {
+			if err := loadConfig(cmd); err != nil {
 				return err
 			}
 
 			// default < cfg < flags
-			if !cmd.Flags().Changed("fetch-policy") {
+			if !cmd.Flags().Changed("fetch-policy") && cfg.FetchPolicy != policy {
 				if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
 					return err
 				}
@@ -111,13 +129,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			// if we are a sub-command, load the cfg as PersistentPreRun isnt run
 			// when performing tab completions on sub-commands
 			if cmd.Parent() != nil {
-				configDir, err := config.DefaultDirectory()
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
-				cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
-				if err != nil {
+				if err := loadConfig(cmd); err != nil {
 					return nil, cobra.ShellCompDirectiveError
 				}
 			}
