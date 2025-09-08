@@ -1,14 +1,7 @@
 # Test complex scenario with multiple remote dependencies and fetch-all
 
 # Create a workflow that has multiple remote dependencies  
-exec sh -c 'echo "schema-version: v1" > complex-workflow.yaml'
-exec sh -c 'echo "tasks:" >> complex-workflow.yaml'
-exec sh -c 'echo "  complex:" >> complex-workflow.yaml'
-exec sh -c 'echo "    steps:" >> complex-workflow.yaml'
-exec sh -c 'echo "      - run: echo \"Starting complex workflow\"" >> complex-workflow.yaml'
-exec sh -c 'echo "      - uses: ${HTTP_BASE_URL}/simple.yaml?task=hello" >> complex-workflow.yaml'
-exec sh -c 'echo "      - uses: ${HTTP_BASE_URL}/with-uses.yaml?task=main" >> complex-workflow.yaml'
-exec sh -c 'echo "      - run: echo \"Complex workflow complete\"" >> complex-workflow.yaml'
+exec envsubst complex-workflow.yaml
 
 # Test fetch-all prefetches all nested dependencies
 exec maru2 --fetch-all --from file:complex-workflow.yaml
@@ -42,3 +35,13 @@ tasks:
   local:
     steps:
       - run: echo "Local task"
+
+-- complex-workflow.yaml --
+schema-version: v1
+tasks:
+  complex:
+    steps:
+      - run: echo "Starting complex workflow"
+      - uses: ${HTTP_BASE_URL}/simple.yaml?task=hello
+      - uses: ${HTTP_BASE_URL}/with-uses.yaml?task=main
+      - run: echo "Complex workflow complete"

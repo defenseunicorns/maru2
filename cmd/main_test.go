@@ -23,9 +23,7 @@ func TestMain(m *testing.M) {
 			code := cmd.PublishMain()
 			os.Exit(code)
 		},
-		"envsubst": func() {
-			envsubst()
-		},
+		"envsubst": envsubst,
 	})
 }
 
@@ -49,6 +47,7 @@ func envsubst() {
 		if err != nil {
 			fatal(err)
 		}
+		fmt.Fprint(os.Stdout, out)
 	}
 	os.Exit(0)
 }
