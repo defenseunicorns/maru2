@@ -138,7 +138,7 @@ func TestLoadDefaultConfig(t *testing.T) {
 			name:          "no config file returns defaults",
 			configContent: "",
 			expected: &Config{
-				SchemaVersion: "",
+				SchemaVersion: SchemaVersion,
 				Aliases:       v1.AliasMap{},
 				FetchPolicy:   uses.DefaultFetchPolicy,
 			},

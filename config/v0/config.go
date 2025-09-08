@@ -35,6 +35,15 @@ type Config struct {
 	FetchPolicy   uses.FetchPolicy `json:"fetch-policy"`
 }
 
+// the default config, matches flag defaults in cmd/root.go
+func defaultConfig() *Config {
+	return &Config{
+		SchemaVersion: SchemaVersion,
+		Aliases:       v1.AliasMap{},
+		FetchPolicy:   uses.DefaultFetchPolicy,
+	}
+}
+
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
@@ -50,11 +59,7 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 //
 // If the configuration file does not exist, this function returns a default valid but "empty" config
 func LoadConfig(r io.Reader) (*Config, error) {
-	cfg := &Config{
-		SchemaVersion: SchemaVersion,
-		Aliases:       v1.AliasMap{},
-		FetchPolicy:   uses.DefaultFetchPolicy,
-	}
+	cfg := defaultConfig()
 
 	data, err := io.ReadAll(r)
 	if err != nil {
@@ -81,17 +86,15 @@ func LoadConfig(r io.Reader) (*Config, error) {
 	}
 }
 
+// LoadDefaultConfig loads the config from config.DefaultDirectory
+// if this file does not exist, the default config is returned
 func LoadDefaultConfig() (*Config, error) {
 	configDir, err := config.DefaultDirectory()
 	if err != nil {
 		return nil, err
 	}
 
-	// the default config, matches flag defaults in cmd/root.go
-	cfg := &Config{
-		Aliases:     v1.AliasMap{},
-		FetchPolicy: uses.DefaultFetchPolicy,
-	}
+	cfg := defaultConfig()
 
 	f, err := os.Open(filepath.Join(configDir, config.DefaultFileName))
 	if err != nil {
