@@ -1,11 +1,11 @@
 # Test basic fetch-all functionality
 
-# Test fetch-all with explicit store location and task execution
+# Test fetch-all with explicit store location
 exec maru2 --store ./store --fetch-all --from $HTTP_BASE_URL/simple.yaml hello
 stdout 'Hello from remote!'
 stderr 'echo.*Hello from remote'
 
-# Test that fetch-all with never policy fails
+# Test fetch-all with never policy fails
 ! exec maru2 --fetch-policy never --fetch-all
 stderr 'ERRO cannot fetch all with fetch policy "never"'
 

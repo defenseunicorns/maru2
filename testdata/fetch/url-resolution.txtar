@@ -5,10 +5,12 @@ exec maru2 --from $HTTP_BASE_URL/simple.yaml?task=hello hello
 stdout 'Hello from remote!'
 stderr 'echo.*Hello from remote'
 
+# Test file: scheme for local files
 exec maru2 --from file:local-workflow.yaml local-task
 stdout 'Local file task'
 stderr 'echo "Local file task"'
 
+# Test relative file resolution in workflow uses
 exec maru2 --from file:main-workflow.yaml main
 stdout 'Main task'
 stdout 'Local file task'
