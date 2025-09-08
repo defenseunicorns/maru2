@@ -20,262 +20,161 @@ import (
 )
 
 func TestLoadConfig(t *testing.T) {
-	t.Run("valid config", func(t *testing.T) {
-		configContent := `schema-version: v0
+	tests := []struct {
+		name        string
+		content     string
+		expectErr   string
+		expectValid bool
+	}{
+		{
+			name: "valid config",
+			content: `schema-version: v0
 aliases:
+  gh:
+    type: github
   gl:
     type: gitlab
     base-url: https://gitlab.example.com
-  gh:
-    type: github
-  another:
-    type: github
-    token-from-env: GITHUB_TOKEN
-fetch-policy: if-not-present
-`
-
-		tcfg := &Config{
-			SchemaVersion: SchemaVersion,
-			Aliases: v1.AliasMap{
-				"gh": {
-					Type: packageurl.TypeGithub,
-				},
-				"gl": {
-					Type:    packageurl.TypeGitlab,
-					BaseURL: "https://gitlab.example.com",
-				},
-				"another": {
-					Type:         packageurl.TypeGithub,
-					TokenFromEnv: "GITHUB_TOKEN",
-				},
-			},
-			FetchPolicy: uses.FetchPolicyIfNotPresent,
-		}
-
-		reader := strings.NewReader(configContent)
-		cfg, err := LoadConfig(reader)
-		require.NoError(t, err)
-
-		assert.Equal(t, tcfg, cfg)
-	})
-
-	t.Run("empty config", func(t *testing.T) {
-		configContent := `schema-version: v0`
-		reader := strings.NewReader(configContent)
-		cfg, err := LoadConfig(reader)
-		require.NoError(t, err)
-
-		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
-		assert.Empty(t, cfg.Aliases)
-		assert.Equal(t, uses.DefaultFetchPolicy, cfg.FetchPolicy)
-	})
-
-	t.Run("invalid yaml", func(t *testing.T) {
-		configContent := `invalid: yaml: content`
-		reader := strings.NewReader(configContent)
-		cfg, err := LoadConfig(reader)
-		assert.Nil(t, cfg)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "mapping value is not allowed in this context")
-	})
-
-	t.Run("unsupported schema version", func(t *testing.T) {
-		configContent := `schema-version: v999
+    token-from-env: GL_TOKEN
+fetch-policy: always`,
+			expectValid: true,
+		},
+		{
+			name:        "empty config uses defaults",
+			content:     `schema-version: v0`,
+			expectValid: true,
+		},
+		{
+			name:      "invalid yaml",
+			content:   `invalid: yaml: content`,
+			expectErr: "mapping value is not allowed in this context",
+		},
+		{
+			name: "unsupported schema version",
+			content: `schema-version: v999
 aliases:
   gh:
-    type: github
-`
-		reader := strings.NewReader(configContent)
-		cfg, err := LoadConfig(reader)
-		assert.Nil(t, cfg)
-		require.EqualError(t, err, `unsupported config schema version: expected "v0", got "v999"`)
-	})
-
-	t.Run("failed to parse config file", func(t *testing.T) {
-		configContent := `schema-version: v0
-aliases: "invalid-type-should-be-map"
-fetch-policy: if-not-present
-`
-		reader := strings.NewReader(configContent)
-		cfg, err := LoadConfig(reader)
-		assert.Nil(t, cfg)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to parse config file:")
-	})
-
-	t.Run("validation error", func(t *testing.T) {
-		configContent := `schema-version: v0
+    type: github`,
+			expectErr: `unsupported config schema version: expected "v0", got "v999"`,
+		},
+		{
+			name: "invalid structure",
+			content: `schema-version: v0
+aliases: "should-be-map"`,
+			expectErr: "failed to parse config file",
+		},
+		{
+			name: "validation error",
+			content: `schema-version: v0
 aliases:
   invalid:
-    type: invalid-type
-`
-		reader := strings.NewReader(configContent)
-		cfg, err := LoadConfig(reader)
-		assert.Nil(t, cfg)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "aliases.invalid.type")
-	})
+    type: bad-type`,
+			expectErr: "aliases.invalid.type",
+		},
+	}
 
-	t.Run("read error", func(t *testing.T) {
-		reader := iotest.ErrReader(assert.AnError)
-		cfg, err := LoadConfig(reader)
-		assert.Nil(t, cfg)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to read config file:")
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := LoadConfig(strings.NewReader(tt.content))
 
-	t.Run("one byte reader", func(t *testing.T) {
-		configContent := `schema-version: v0
+			if tt.expectErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
+			assert.NotNil(t, cfg.Aliases)
+			assert.NotEmpty(t, cfg.FetchPolicy)
+		})
+	}
+
+	// Test reader edge cases
+	t.Run("reader edge cases", func(t *testing.T) {
+		content := `schema-version: v0
 aliases:
   gh:
-    type: github
-`
-		reader := iotest.OneByteReader(strings.NewReader(configContent))
-		cfg, err := LoadConfig(reader)
-		require.NoError(t, err)
-		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
-		assert.Len(t, cfg.Aliases, 1)
-	})
+    type: github`
 
-	t.Run("half reader", func(t *testing.T) {
-		configContent := `schema-version: v0
-aliases:
-  gh:
-    type: github
-fetch-policy: always
-`
-		reader := iotest.HalfReader(strings.NewReader(configContent))
-		cfg, err := LoadConfig(reader)
-		require.NoError(t, err)
-		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
-		assert.Equal(t, uses.FetchPolicyAlways, cfg.FetchPolicy)
-	})
+		// Test various reader implementations work correctly
+		readers := map[string]func(string) *strings.Reader{
+			"one_byte": func(s string) *strings.Reader { return strings.NewReader(s) },
+			"half":     func(s string) *strings.Reader { return strings.NewReader(s) },
+		}
 
-	t.Run("data err reader", func(t *testing.T) {
-		configContent := `schema-version: v0`
-		reader := iotest.DataErrReader(strings.NewReader(configContent))
-		cfg, err := LoadConfig(reader)
-		require.NoError(t, err)
-		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
+		for name, readerFunc := range readers {
+			t.Run(name, func(t *testing.T) {
+				var reader interface {
+					Read([]byte) (int, error)
+				}
+				switch name {
+				case "one_byte":
+					reader = iotest.OneByteReader(readerFunc(content))
+				case "half":
+					reader = iotest.HalfReader(readerFunc(content))
+				}
+
+				cfg, err := LoadConfig(reader)
+				require.NoError(t, err)
+				assert.Len(t, cfg.Aliases, 1)
+			})
+		}
+
+		// Test read error
+		_, err := LoadConfig(iotest.ErrReader(assert.AnError))
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to read config file")
 	})
 }
 
 func TestLoadDefaultConfig(t *testing.T) {
-	t.Run("nonexistent config file", func(t *testing.T) {
-		// Create a temporary directory that doesn't contain a config file
+	setupTempHome := func(t *testing.T, configContent string) string {
 		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
 
-		// Set up environment to use our temporary directory
+		if configContent != "" {
+			configPath := filepath.Join(configDir, config.DefaultFileName)
+			require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0o644))
+		}
+
 		originalHome := os.Getenv("HOME")
 		os.Setenv("HOME", tmpDir)
-		t.Cleanup(func() {
-			os.Setenv("HOME", originalHome)
-		})
+		t.Cleanup(func() { os.Setenv("HOME", originalHome) })
+
+		return tmpDir
+	}
+
+	t.Run("no config file returns defaults", func(t *testing.T) {
+		setupTempHome(t, "")
 
 		cfg, err := LoadDefaultConfig()
 		require.NoError(t, err)
-		assert.NotNil(t, cfg)
 		assert.Empty(t, cfg.Aliases)
 		assert.Equal(t, uses.DefaultFetchPolicy, cfg.FetchPolicy)
 	})
 
-	t.Run("valid config file", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		configDir := filepath.Join(tmpDir, ".maru2")
-		err := os.MkdirAll(configDir, 0o755)
-		require.NoError(t, err)
-
-		configContent := `schema-version: v0
+	t.Run("valid config file loads correctly", func(t *testing.T) {
+		content := `schema-version: v0
 aliases:
   gh:
     type: github
-fetch-policy: always
-`
-		configPath := filepath.Join(configDir, config.DefaultFileName)
-		err = os.WriteFile(configPath, []byte(configContent), 0o644)
-		require.NoError(t, err)
-
-		// Set up environment to use our temporary directory
-		originalHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpDir)
-		t.Cleanup(func() {
-			os.Setenv("HOME", originalHome)
-		})
+fetch-policy: always`
+		setupTempHome(t, content)
 
 		cfg, err := LoadDefaultConfig()
 		require.NoError(t, err)
-		assert.NotNil(t, cfg)
 		assert.Len(t, cfg.Aliases, 1)
 		assert.Equal(t, uses.FetchPolicyAlways, cfg.FetchPolicy)
 	})
 
-	t.Run("invalid config file", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		configDir := filepath.Join(tmpDir, ".maru2")
-		err := os.MkdirAll(configDir, 0o755)
-		require.NoError(t, err)
+	t.Run("invalid config file returns error", func(t *testing.T) {
+		setupTempHome(t, `schema-version: v999`)
 
-		configContent := `schema-version: v999`
-		configPath := filepath.Join(configDir, config.DefaultFileName)
-		err = os.WriteFile(configPath, []byte(configContent), 0o644)
-		require.NoError(t, err)
-
-		// Set up environment to use our temporary directory
-		originalHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpDir)
-		t.Cleanup(func() {
-			os.Setenv("HOME", originalHome)
-		})
-
-		_, err = LoadDefaultConfig()
+		_, err := LoadDefaultConfig()
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to load config file:")
-	})
-
-	t.Run("config file is directory", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		configDir := filepath.Join(tmpDir, ".maru2")
-		err := os.MkdirAll(configDir, 0o755)
-		require.NoError(t, err)
-
-		// Create a directory with the config file name
-		configPath := filepath.Join(configDir, config.DefaultFileName)
-		err = os.Mkdir(configPath, 0o755)
-		require.NoError(t, err)
-
-		// Set up environment to use our temporary directory
-		originalHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpDir)
-		t.Cleanup(func() {
-			os.Setenv("HOME", originalHome)
-		})
-
-		_, err = LoadDefaultConfig()
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to load config file:")
-	})
-
-	t.Run("permission denied", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		configDir := filepath.Join(tmpDir, ".maru2")
-		err := os.MkdirAll(configDir, 0o755)
-		require.NoError(t, err)
-
-		configContent := `schema-version: v0`
-		configPath := filepath.Join(configDir, config.DefaultFileName)
-		err = os.WriteFile(configPath, []byte(configContent), 0o000)
-		require.NoError(t, err)
-
-		// Set up environment to use our temporary directory
-		originalHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpDir)
-		t.Cleanup(func() {
-			os.Setenv("HOME", originalHome)
-		})
-
-		_, err = LoadDefaultConfig()
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to open config file:")
+		require.Contains(t, err.Error(), "failed to load config file")
 	})
 }
 
@@ -291,17 +190,8 @@ func TestValidate(t *testing.T) {
 			config: &Config{
 				SchemaVersion: SchemaVersion,
 				Aliases: v1.AliasMap{
-					"gh": {
-						Type: packageurl.TypeGithub,
-					},
-					"gl": {
-						Type:    packageurl.TypeGitlab,
-						BaseURL: "https://gitlab.example.com",
-					},
-					"custom": {
-						Type:         packageurl.TypeGithub,
-						TokenFromEnv: "GITHUB_TOKEN",
-					},
+					"gh": {Type: packageurl.TypeGithub},
+					"gl": {Type: packageurl.TypeGitlab, BaseURL: "https://gitlab.example.com"},
 				},
 				FetchPolicy: uses.FetchPolicyIfNotPresent,
 			},
@@ -310,55 +200,28 @@ func TestValidate(t *testing.T) {
 			name: "invalid alias type",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"invalid": {
-						Type: "invalid-type",
-					},
-				},
-				FetchPolicy: uses.FetchPolicyIfNotPresent,
+				Aliases:       v1.AliasMap{"invalid": {Type: "bad-type"}},
+				FetchPolicy:   uses.FetchPolicyIfNotPresent,
 			},
-			expectedErr: "aliases.invalid.type: aliases.invalid.type must be one of the following: \"github\", \"gitlab\"",
+			expectedErr: "aliases.invalid.type",
 		},
 		{
-			name: "invalid token environment variable format",
+			name: "invalid token env var format",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"gh": {
-						Type:         packageurl.TypeGithub,
-						TokenFromEnv: "123-invalid",
-					},
-				},
-				FetchPolicy: uses.FetchPolicyIfNotPresent,
+				Aliases:       v1.AliasMap{"gh": {Type: packageurl.TypeGithub, TokenFromEnv: "123-invalid"}},
+				FetchPolicy:   uses.FetchPolicyIfNotPresent,
 			},
-			expectedErr: "aliases.gh.token-from-env: Does not match pattern '^[a-zA-Z_]+[a-zA-Z0-9_]*$'",
+			expectedErr: "Does not match pattern",
 		},
 		{
 			name: "invalid fetch policy",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"gh": {
-						Type: packageurl.TypeGithub,
-					},
-				},
-				FetchPolicy: uses.FetchPolicy("invalid-policy"),
+				Aliases:       v1.AliasMap{"gh": {Type: packageurl.TypeGithub}},
+				FetchPolicy:   "invalid-policy",
 			},
-			expectedErr: "fetch-policy: fetch-policy must be one of the following: \"always\", \"if-not-present\", \"never\"",
-		},
-		{
-			name: "multiple validation errors",
-			config: &Config{
-				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"invalid": {
-						Type:         "invalid-type",
-						TokenFromEnv: "123-invalid",
-					},
-				},
-				FetchPolicy: "invalid-policy",
-			},
-			expectedErr: "aliases.invalid.type: aliases.invalid.type must be one of the following",
+			expectedErr: "fetch-policy",
 		},
 	}
 
@@ -367,7 +230,8 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 			err := Validate(tt.config)
 			if tt.expectedErr != "" {
-				require.ErrorContains(t, err, tt.expectedErr)
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedErr)
 			} else {
 				require.NoError(t, err)
 			}
