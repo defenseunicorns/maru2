@@ -6,7 +6,6 @@ package config_test
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/package-url/packageurl-go"
@@ -51,35 +50,33 @@ fetch-policy: always
 		FetchPolicy: uses.FetchPolicyAlways,
 	}
 
-	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
-		t.Setenv("HOME", "")
-		configDir, err := config.DefaultDirectory()
-		assert.Empty(t, configDir)
-		require.EqualError(t, err, "$HOME is not defined")
+	t.Setenv("HOME", "")
+	configDir, err := config.DefaultDirectory()
+	assert.Empty(t, configDir)
+	require.EqualError(t, err, "$HOME is not defined")
 
-		tmpDir := t.TempDir()
-		err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0o755)
-		require.NoError(t, err)
+	tmpDir := t.TempDir()
+	err = os.Mkdir(filepath.Join(tmpDir, ".maru2"), 0o755)
+	require.NoError(t, err)
 
-		err = os.WriteFile(filepath.Join(tmpDir, ".maru2", config.DefaultFileName), []byte(configContent), 0o644)
-		require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(tmpDir, ".maru2", config.DefaultFileName), []byte(configContent), 0o644)
+	require.NoError(t, err)
 
-		t.Setenv("HOME", tmpDir)
-		configDir, err = config.DefaultDirectory()
-		assert.Equal(t, filepath.Join(tmpDir, ".maru2"), configDir)
-		require.NoError(t, err)
-		f, err := os.Open(filepath.Join(configDir, config.DefaultFileName))
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			f.Close()
-		})
+	t.Setenv("HOME", tmpDir)
+	configDir, err = config.DefaultDirectory()
+	assert.Equal(t, filepath.Join(tmpDir, ".maru2"), configDir)
+	require.NoError(t, err)
+	f, err := os.Open(filepath.Join(configDir, config.DefaultFileName))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		f.Close()
+	})
 
-		cfg, err := configv0.LoadConfig(f)
-		require.NoError(t, err)
-		assert.Equal(t, tcfg, cfg)
+	cfg, err := configv0.LoadConfig(f)
+	require.NoError(t, err)
+	assert.Equal(t, tcfg, cfg)
 
-		cfg, err = configv0.LoadDefaultConfig()
-		require.NoError(t, err)
-		assert.Equal(t, tcfg, cfg)
-	}
+	cfg, err = configv0.LoadDefaultConfig()
+	require.NoError(t, err)
+	assert.Equal(t, tcfg, cfg)
 }

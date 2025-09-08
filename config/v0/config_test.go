@@ -161,7 +161,7 @@ fetch-policy: always`,
 		{
 			name:          "invalid config file returns error",
 			configContent: `schema-version: v999`,
-			expectErr:     "failed to load config file",
+			expectErr:     `failed to load config file: unsupported config schema version: expected "v0", got "v999"`,
 		},
 	}
 
