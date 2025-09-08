@@ -171,7 +171,7 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 
 		builtinSchema.If.Properties.Set("uses", &jsonschema.Schema{
 			Type:    "string",
-			Pattern: "^builtin:" + name + "(@.*)?$",
+			Pattern: "^builtin:" + name + "$",
 		})
 
 		withSchema := reflector.Reflect(builtinEmpty)
