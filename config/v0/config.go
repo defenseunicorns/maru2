@@ -12,11 +12,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
-	"github.com/spf13/afero"
 	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/defenseunicorns/maru2/config"
@@ -49,22 +49,13 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 // # It assumes the provided fs's base directory contains a valid configuration file
 //
 // If the configuration file does not exist, this function returns a default valid but "empty" config
-func LoadConfig(fsys afero.Fs) (*Config, error) {
+func LoadConfig(r io.Reader) (*Config, error) {
 	cfg := &Config{
 		Aliases:     v1.AliasMap{},
 		FetchPolicy: uses.DefaultFetchPolicy,
 	}
 
-	f, err := fsys.Open(config.DefaultFileName)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return cfg, nil
-		}
-		return nil, fmt.Errorf("failed to open config file: %w", err)
-	}
-	defer f.Close()
-
-	data, err := io.ReadAll(f)
+	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -84,6 +75,38 @@ func LoadConfig(fsys afero.Fs) (*Config, error) {
 	default:
 		return nil, fmt.Errorf("unsupported config schema version: expected %q, got %q", SchemaVersion, version)
 	}
+}
+
+func LoadDefaultConfig() (*Config, error) {
+	configDir, err := config.DefaultDirectory()
+	if err != nil {
+		return nil, err
+	}
+
+	// the default config, matches flag defaults in cmd/root.go
+	cfg := &Config{
+		Aliases:     v1.AliasMap{},
+		FetchPolicy: uses.DefaultFetchPolicy,
+	}
+
+	f, err := os.Open(filepath.Join(configDir, config.DefaultFileName))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return cfg, nil
+		}
+		return nil, fmt.Errorf("failed to open config file: %w", err)
+	}
+	defer f.Close()
+
+	loaded, err := LoadConfig(f)
+	if err != nil {
+		if os.IsNotExist(err) { // default config is allowed to not exist
+			return cfg, nil
+		}
+		return nil, fmt.Errorf("failed to load config file: %w", err)
+	}
+
+	return loaded, nil
 }
 
 // Since every validation operation leverages the same config, only calculate it once to save some compute cycles

@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/defenseunicorns/maru2"
-	"github.com/defenseunicorns/maru2/config"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	"github.com/defenseunicorns/maru2/schema"
 	"github.com/defenseunicorns/maru2/uses"
@@ -54,18 +53,18 @@ func NewRootCmd() *cobra.Command {
 	loadConfig := func(cmd *cobra.Command) error {
 		switch cmd.Flags().Changed("config") {
 		case true:
-			var err error
-			cfg, err = configv0.LoadConfig(afero.NewOsFs())
+			f, err := os.Open(configPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to open config file: %w", err)
+			}
+			defer f.Close()
+			cfg, err = configv0.LoadConfig(f)
+			if err != nil {
+				return fmt.Errorf("failed to load config file: %w", err)
 			}
 		default:
-			configDir, err := config.DefaultDirectory()
-			if err != nil {
-				return err
-			}
-
-			cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
+			var err error
+			cfg, err = configv0.LoadDefaultConfig()
 			if err != nil {
 				return err
 			}
