@@ -45,8 +45,8 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 }
 
 // LoadConfig loads the configuration from the file system
-// 
-// It assumes the provided fs's base directory contains a valid configuration file
+//
+// # It assumes the provided fs's base directory contains a valid configuration file
 //
 // If the configuration file does not exist, this function returns a default valid but "empty" config
 func LoadConfig(fsys afero.Fs) (*Config, error) {

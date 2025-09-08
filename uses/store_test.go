@@ -161,7 +161,7 @@ func TestLocalStoreFetch(t *testing.T) {
 
 			store := &LocalStore{
 				index: tc.index,
-				fsys:    fs,
+				fsys:  fs,
 			}
 
 			for name, content := range tc.files {
@@ -258,7 +258,7 @@ func TestLocalStoreStore(t *testing.T) {
 
 			store := &LocalStore{
 				index: tc.initialIndex,
-				fsys:    fs,
+				fsys:  fs,
 			}
 
 			err := afero.WriteFile(fs, IndexFileName, []byte("{}"), 0o644)
@@ -380,7 +380,7 @@ func TestLocalStoreExists(t *testing.T) {
 
 			store := &LocalStore{
 				index: tc.index,
-				fsys:    fs,
+				fsys:  fs,
 			}
 
 			for name, content := range tc.files {
