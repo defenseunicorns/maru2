@@ -69,10 +69,3 @@ stdout 'schema-version: v1'
 stdout 'main:'
 stdout 'Starting main task'
 stdout 'Hello from remote'
-
--- tasks.yaml --
-schema-version: v1
-tasks:
-  hello:
-    steps:
-      - uses: $HTTP_BASE_URL/simple.yaml?task=hello
