@@ -70,7 +70,10 @@ func LoadConfig(r io.Reader) (*Config, error) {
 		if err := yaml.Unmarshal(data, cfg); err != nil {
 			return nil, fmt.Errorf("failed to parse config file: %w", err)
 		}
-		return cfg, Validate(cfg)
+		if err := Validate(cfg); err != nil {
+			return nil, err
+		}
+		return cfg, nil
 	// See schema/v1/validate.go for an example on how auto migrations during loading/reading can work for when v1 of config is released
 	default:
 		return nil, fmt.Errorf("unsupported config schema version: expected %q, got %q", SchemaVersion, version)

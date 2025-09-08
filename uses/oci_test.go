@@ -80,7 +80,7 @@ tasks:
 			Client: server.Client(),
 		}
 
-		err = maru2.Publish(ctx, dst, []string{uses.DefaultFileName}, nil)
+		err = maru2.Publish(ctx, dst, []string{uses.DefaultFileName})
 		require.NoError(t, err)
 	}
 

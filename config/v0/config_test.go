@@ -4,13 +4,13 @@
 package v0
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/package-url/packageurl-go"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,8 +19,9 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-func TestFileSystemConfigLoader(t *testing.T) {
-	configContent := `schema-version: v0
+func TestLoadConfig(t *testing.T) {
+	t.Run("valid config", func(t *testing.T) {
+		configContent := `schema-version: v0
 aliases:
   gl:
     type: gitlab
@@ -30,67 +31,52 @@ aliases:
   another:
     type: github
     token-from-env: GITHUB_TOKEN
+fetch-policy: if-not-present
 `
 
-	fsys := afero.NewMemMapFs()
-	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0o644)
-	require.NoError(t, err)
+		tcfg := &Config{
+			SchemaVersion: SchemaVersion,
+			Aliases: v1.AliasMap{
+				"gh": {
+					Type: packageurl.TypeGithub,
+				},
+				"gl": {
+					Type:    packageurl.TypeGitlab,
+					BaseURL: "https://gitlab.example.com",
+				},
+				"another": {
+					Type:         packageurl.TypeGithub,
+					TokenFromEnv: "GITHUB_TOKEN",
+				},
+			},
+			FetchPolicy: uses.FetchPolicyIfNotPresent,
+		}
 
-	cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "etc/maru2"))
-	require.NoError(t, err)
-
-	assert.Len(t, cfg.Aliases, 3)
-
-	glAlias, ok := cfg.Aliases["gl"]
-	assert.True(t, ok)
-	assert.Equal(t, packageurl.TypeGitlab, glAlias.Type)
-	assert.Equal(t, "https://gitlab.example.com", glAlias.BaseURL)
-
-	ghAlias, ok := cfg.Aliases["gh"]
-	assert.True(t, ok)
-	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
-	assert.Empty(t, ghAlias.BaseURL)
-
-	cfg, err = LoadConfig(afero.NewBasePathFs(fsys, "nonexistent-dir"))
-	require.NoError(t, err)
-	assert.NotNil(t, cfg)
-	assert.Empty(t, cfg.Aliases)
-
-	t.Run("invalid config", func(t *testing.T) {
-		fsys = afero.NewMemMapFs()
-		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0o644)
+		reader := strings.NewReader(configContent)
+		cfg, err := LoadConfig(reader)
 		require.NoError(t, err)
-		_, err = LoadConfig(afero.NewBasePathFs(fsys, "invalid"))
-		require.EqualError(t, err, "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
+
+		assert.Equal(t, tcfg, cfg)
 	})
 
-	t.Run("nonexistent config", func(t *testing.T) {
-		cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "nonexistent"))
+	t.Run("empty config", func(t *testing.T) {
+		configContent := `schema-version: v0`
+		reader := strings.NewReader(configContent)
+		cfg, err := LoadConfig(reader)
 		require.NoError(t, err)
-		assert.NotNil(t, cfg)
+
+		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
 		assert.Empty(t, cfg.Aliases)
+		assert.Equal(t, uses.DefaultFetchPolicy, cfg.FetchPolicy)
 	})
 
-	t.Run("read error", func(t *testing.T) {
-		tmpDir := t.TempDir()
-
-		configDir := filepath.Join(tmpDir, config.DefaultFileName)
-		err = os.Mkdir(configDir, 0o755)
-		require.NoError(t, err)
-
-		_, err := LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
-		require.EqualError(t, err, fmt.Sprintf("failed to read config file: read %s: is a directory", configDir))
-	})
-
-	t.Run("open error", func(t *testing.T) {
-		tmpDir := t.TempDir()
-
-		configPath := filepath.Join(tmpDir, config.DefaultFileName)
-		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0o000)
-		require.NoError(t, err)
-
-		_, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
-		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, config.DefaultFileName)))
+	t.Run("invalid yaml", func(t *testing.T) {
+		configContent := `invalid: yaml: content`
+		reader := strings.NewReader(configContent)
+		cfg, err := LoadConfig(reader)
+		assert.Nil(t, cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "mapping value is not allowed in this context")
 	})
 
 	t.Run("unsupported schema version", func(t *testing.T) {
@@ -99,11 +85,9 @@ aliases:
   gh:
     type: github
 `
-		fsys := afero.NewMemMapFs()
-		err := afero.WriteFile(fsys, config.DefaultFileName, []byte(configContent), 0o644)
-		require.NoError(t, err)
-
-		_, err = LoadConfig(fsys)
+		reader := strings.NewReader(configContent)
+		cfg, err := LoadConfig(reader)
+		assert.Nil(t, cfg)
 		require.EqualError(t, err, `unsupported config schema version: expected "v0", got "v999"`)
 	})
 
@@ -112,13 +96,186 @@ aliases:
 aliases: "invalid-type-should-be-map"
 fetch-policy: if-not-present
 `
-		fsys := afero.NewMemMapFs()
-		err := afero.WriteFile(fsys, config.DefaultFileName, []byte(configContent), 0o644)
-		require.NoError(t, err)
-
-		_, err = LoadConfig(fsys)
+		reader := strings.NewReader(configContent)
+		cfg, err := LoadConfig(reader)
+		assert.Nil(t, cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to parse config file:")
+	})
+
+	t.Run("validation error", func(t *testing.T) {
+		configContent := `schema-version: v0
+aliases:
+  invalid:
+    type: invalid-type
+`
+		reader := strings.NewReader(configContent)
+		cfg, err := LoadConfig(reader)
+		assert.Nil(t, cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "aliases.invalid.type")
+	})
+
+	t.Run("read error", func(t *testing.T) {
+		reader := iotest.ErrReader(assert.AnError)
+		cfg, err := LoadConfig(reader)
+		assert.Nil(t, cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to read config file:")
+	})
+
+	t.Run("one byte reader", func(t *testing.T) {
+		configContent := `schema-version: v0
+aliases:
+  gh:
+    type: github
+`
+		reader := iotest.OneByteReader(strings.NewReader(configContent))
+		cfg, err := LoadConfig(reader)
+		require.NoError(t, err)
+		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
+		assert.Len(t, cfg.Aliases, 1)
+	})
+
+	t.Run("half reader", func(t *testing.T) {
+		configContent := `schema-version: v0
+aliases:
+  gh:
+    type: github
+fetch-policy: always
+`
+		reader := iotest.HalfReader(strings.NewReader(configContent))
+		cfg, err := LoadConfig(reader)
+		require.NoError(t, err)
+		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
+		assert.Equal(t, uses.FetchPolicyAlways, cfg.FetchPolicy)
+	})
+
+	t.Run("data err reader", func(t *testing.T) {
+		configContent := `schema-version: v0`
+		reader := iotest.DataErrReader(strings.NewReader(configContent))
+		cfg, err := LoadConfig(reader)
+		require.NoError(t, err)
+		assert.Equal(t, SchemaVersion, cfg.SchemaVersion)
+	})
+}
+
+func TestLoadDefaultConfig(t *testing.T) {
+	t.Run("nonexistent config file", func(t *testing.T) {
+		// Create a temporary directory that doesn't contain a config file
+		tmpDir := t.TempDir()
+
+		// Set up environment to use our temporary directory
+		originalHome := os.Getenv("HOME")
+		os.Setenv("HOME", tmpDir)
+		t.Cleanup(func() {
+			os.Setenv("HOME", originalHome)
+		})
+
+		cfg, err := LoadDefaultConfig()
+		require.NoError(t, err)
+		assert.NotNil(t, cfg)
+		assert.Empty(t, cfg.Aliases)
+		assert.Equal(t, uses.DefaultFetchPolicy, cfg.FetchPolicy)
+	})
+
+	t.Run("valid config file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		err := os.MkdirAll(configDir, 0o755)
+		require.NoError(t, err)
+
+		configContent := `schema-version: v0
+aliases:
+  gh:
+    type: github
+fetch-policy: always
+`
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		err = os.WriteFile(configPath, []byte(configContent), 0o644)
+		require.NoError(t, err)
+
+		// Set up environment to use our temporary directory
+		originalHome := os.Getenv("HOME")
+		os.Setenv("HOME", tmpDir)
+		t.Cleanup(func() {
+			os.Setenv("HOME", originalHome)
+		})
+
+		cfg, err := LoadDefaultConfig()
+		require.NoError(t, err)
+		assert.NotNil(t, cfg)
+		assert.Len(t, cfg.Aliases, 1)
+		assert.Equal(t, uses.FetchPolicyAlways, cfg.FetchPolicy)
+	})
+
+	t.Run("invalid config file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		err := os.MkdirAll(configDir, 0o755)
+		require.NoError(t, err)
+
+		configContent := `schema-version: v999`
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		err = os.WriteFile(configPath, []byte(configContent), 0o644)
+		require.NoError(t, err)
+
+		// Set up environment to use our temporary directory
+		originalHome := os.Getenv("HOME")
+		os.Setenv("HOME", tmpDir)
+		t.Cleanup(func() {
+			os.Setenv("HOME", originalHome)
+		})
+
+		_, err = LoadDefaultConfig()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to load config file:")
+	})
+
+	t.Run("config file is directory", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		err := os.MkdirAll(configDir, 0o755)
+		require.NoError(t, err)
+
+		// Create a directory with the config file name
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		err = os.Mkdir(configPath, 0o755)
+		require.NoError(t, err)
+
+		// Set up environment to use our temporary directory
+		originalHome := os.Getenv("HOME")
+		os.Setenv("HOME", tmpDir)
+		t.Cleanup(func() {
+			os.Setenv("HOME", originalHome)
+		})
+
+		_, err = LoadDefaultConfig()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to load config file:")
+	})
+
+	t.Run("permission denied", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		err := os.MkdirAll(configDir, 0o755)
+		require.NoError(t, err)
+
+		configContent := `schema-version: v0`
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		err = os.WriteFile(configPath, []byte(configContent), 0o000)
+		require.NoError(t, err)
+
+		// Set up environment to use our temporary directory
+		originalHome := os.Getenv("HOME")
+		os.Setenv("HOME", tmpDir)
+		t.Cleanup(func() {
+			os.Setenv("HOME", originalHome)
+		})
+
+		_, err = LoadDefaultConfig()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to open config file:")
 	})
 }
 
