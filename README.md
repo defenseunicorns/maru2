@@ -15,6 +15,13 @@ A simple task runner.
 
 ## Installation
 
+via brew:
+
+```sh
+brew tap defenseunicorns/tap
+brew install maru2
+```
+
 via curl:
 
 ```sh

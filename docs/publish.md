@@ -17,6 +17,10 @@ The `maru2-publish` command packs your workflow file(s) and any `uses:` referenc
 
 ### Installation
 
+Installation of `maru2-publish` is automatically handled when installing `maru2` via brew, curl or wget.
+
+via go install:
+
 ```sh
 go install github.com/defenseunicorns/maru2/cmd/maru2-publish@main
 ```
