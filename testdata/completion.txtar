@@ -18,6 +18,9 @@ exec maru2 __complete --log-level status
 cmp stdout stdout-log-level.txt
 cmp stderr good-stderr.txt
 
+exec maru2 -f workflow-invalid-url-chars.yaml __complete task
+stderr 'Completion ended with directive: ShellCompDirectiveError'
+
 -- stdout.txt --
 default
 bar
@@ -64,3 +67,11 @@ warn
 error
 fatal
 :4
+-- workflow-invalid-url-chars.yaml --
+schema-version: v1
+aliases:
+  invalid:
+    path: "path with\x00control\x01chars.yaml"
+tasks:
+  default:
+    steps: []

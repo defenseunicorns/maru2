@@ -10,6 +10,10 @@ stderr 'string was used where mapping is expected'
 ! exec maru2 -f workflow-absolute-path.yaml --list
 stderr 'cannot be an absolute path'
 
+# invalid URL characters in alias path
+! exec maru2 -f workflow-invalid-url-chars.yaml --list
+stderr 'invalid control character in URL'
+
 # alias resolution functionality
 exec maru2 -f workflow-with-aliases.yaml --list
 stderr 'local-task'
@@ -100,3 +104,12 @@ tasks:
   fails:
     steps:
       - run: exit 1
+
+-- workflow-invalid-url-chars.yaml --
+schema-version: v1
+aliases:
+  invalid:
+    path: "path with\x00control\x01chars.yaml"
+tasks:
+  default:
+    steps: []
