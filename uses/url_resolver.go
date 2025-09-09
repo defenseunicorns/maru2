@@ -208,5 +208,5 @@ func escapeVersion(p string) string {
 
 	escaped := url.PathEscape(sub)
 
-	return strings.Replace(p, "@"+sub, "@"+escaped, 1)
+	return strings.Replace(p, sub, escaped, 1)
 }
