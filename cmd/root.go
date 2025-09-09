@@ -73,7 +73,7 @@ func NewRootCmd() *cobra.Command {
 		// default < cfg < flags
 		if !cmd.Flags().Changed("fetch-policy") && cfg.FetchPolicy != policy {
 			if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
-				return err
+				return err // since config validates and has defaults during loading, this error is basically impossible to trigger, but leaving in case a regression happens in schema validation
 			}
 		}
 
