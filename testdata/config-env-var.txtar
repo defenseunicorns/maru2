@@ -1,0 +1,41 @@
+env MARU2_CONFIG=custom-config.yaml
+exec maru2 --list
+! stderr 'failed to load config file'
+
+env MARU2_CONFIG=custom-config.yaml
+exec maru2 --config flag-config.yaml --list
+! stderr 'failed to load config file'
+
+env MARU2_CONFIG=nonexistent.yaml
+! exec maru2 --list
+stderr 'failed to open config file'
+
+env MARU2_CONFIG=malformed-config.yaml
+! exec maru2 --list
+stderr 'failed to load config file'
+
+env MARU2_CONFIG=malformed-config.yaml
+! exec maru2 --config nonexistent-flag.yaml --list
+stderr 'failed to open config file'
+! stderr 'failed to load config file'
+
+env MARU2_CONFIG=
+exec maru2 --list
+! stderr 'failed to load config file'
+
+-- custom-config.yaml --
+schema-version: v0
+fetch-policy: if-not-present
+
+-- flag-config.yaml --
+schema-version: v0
+fetch-policy: always
+
+-- malformed-config.yaml --
+schema-version: v0
+invalid: "unclosed string
+
+-- tasks.yaml --
+schema-version: v0
+tasks:
+  echo: [run: echo "Hello World!"]

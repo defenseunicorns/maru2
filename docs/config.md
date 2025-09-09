@@ -4,17 +4,21 @@ This document describes how to configure Maru2 using the global configuration fi
 
 ## Configuration File Location
 
-By default, Maru2 looks for the configuration file at:
+Maru2 loads configuration in priority order:
 
-```text
-~/.maru2/config.yaml
+1. `--config` flag (highest priority)
+2. `MARU2_CONFIG` environment variable
+3. `~/.maru2/config.yaml` (default)
+
+```sh
+maru2 --config custom.yaml        # flag
+MARU2_CONFIG=custom.yaml maru2    # env var
+maru2                             # default
 ```
-
-and can also be configured via the [`--config`](./cli.md#config) flag.
 
 ## Creating a New Configuration
 
-To create a new configuration:
+To create a new global configuration:
 
 1. Create the directory if it doesn't exist:
 
