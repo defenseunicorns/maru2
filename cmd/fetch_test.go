@@ -6,6 +6,7 @@ package cmd_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -128,6 +129,12 @@ func TestFetchE2E(t *testing.T) {
 			env.Setenv("NO_COLOR", "true")
 			env.Setenv("HTTP_BASE_URL", httpServer.URL)
 			env.Setenv("HOME", filepath.Join(env.WorkDir, "home"))
+			if ghToken, ok := os.LookupEnv("GITHUB_TOKEN"); ok && ghToken != "" {
+				env.Setenv("GITHUB_TOKEN", ghToken)
+			}
+			if glToken, ok := os.LookupEnv("GITLAB_TOKEN"); ok && glToken != "" {
+				env.Setenv("GITLAB_TOKEN", glToken)
+			}
 			return nil
 		},
 		RequireUniqueNames: true,
