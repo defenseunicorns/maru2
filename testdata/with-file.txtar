@@ -6,6 +6,12 @@ exec maru2 test-priority --with-file params.txt --with name=Alice
 stdout 'name=Alice, age=30'
 cmp stderr stderr-priority.txt
 
+! exec maru2 test-basic --with-file nonexistent.txt
+cmp stderr stderr-open-error.txt
+
+! exec maru2 test-basic --with-file invalid.txt
+cmp stderr stderr-read-error.txt
+
 -- tasks.yaml --
 schema-version: v0
 tasks:
@@ -22,3 +28,11 @@ age=30
 echo "name=John, age=30"
 -- stderr-priority.txt --
 echo "name=Alice, age=30"
+-- stderr-open-error.txt --
+
+ERRO failed opening with-file "nonexistent.txt": open nonexistent.txt: no such file or directory
+-- stderr-read-error.txt --
+
+ERRO failed reading with-file "invalid.txt": invalid syntax: non-delimited multiline value
+-- invalid.txt --
+invalid content without equals sign
