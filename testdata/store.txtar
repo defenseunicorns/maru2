@@ -32,6 +32,7 @@ mkdir home/.maru2/store
 exec maru2 echo
 stdout 'Hello World!'
 exists .maru2/store/index.txt
+! exists home/.maru2/store/index.txt
 
 # --store flag overrides existing .maru2/store
 ! exists override-store
