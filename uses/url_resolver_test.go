@@ -507,6 +507,12 @@ func TestResolveURL(t *testing.T) {
 			},
 			expectedErr: `"2-invalid-task" does not satisfy "^[_a-zA-Z][a-zA-Z0-9_-]*$"`,
 		},
+		{
+			name: "pkg version needs to be escaped",
+			prev: "file:foo.yaml",
+			uri:  "pkg:github/owner1/repo1@foo/bar#dir/foo.yaml",
+			next: "pkg:github/owner1/repo1@foo%2Fbar#dir/foo.yaml",
+		},
 	}
 
 	for _, tc := range tests {
@@ -533,6 +539,7 @@ func TestResolveURL(t *testing.T) {
 }
 
 func TestEscapeVersion(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		input    string
@@ -602,6 +609,7 @@ func TestEscapeVersion(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result := escapeVersion(tc.input)
 			assert.Equal(t, tc.expected, result)
 		})
