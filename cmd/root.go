@@ -51,9 +51,19 @@ func NewRootCmd() *cobra.Command {
 
 	// closure initializer
 	loadConfig := func(cmd *cobra.Command) error {
-		switch cmd.Flags().Changed("config") {
-		case true:
+		switch {
+		case cmd.Flags().Changed("config"):
 			f, err := os.Open(configPath)
+			if err != nil {
+				return fmt.Errorf("failed to open config file: %w", err)
+			}
+			defer f.Close()
+			cfg, err = configv0.LoadConfig(f)
+			if err != nil {
+				return fmt.Errorf("failed to load config file: %w", err)
+			}
+		case os.Getenv("MARU2_CONFIG") != "":
+			f, err := os.Open(os.Getenv("MARU2_CONFIG"))
 			if err != nil {
 				return fmt.Errorf("failed to open config file: %w", err)
 			}
