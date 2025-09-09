@@ -307,6 +307,23 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				with[k] = v
 			}
 
+			for _, p := range withFiles {
+				f, err := fs.Open(p)
+				if err != nil {
+					return fmt.Errorf("failed opening with-file %q: %w", p, err)
+				}
+				outputs, err := maru2.ParseOutput(f)
+				if err != nil {
+					return fmt.Errorf("failed reading with-file %q: %w", p, err)
+				}
+				for k, v := range outputs {
+					_, ok := with[k]
+					if !ok { // CLI --with takes priority
+						with[k] = v
+					}
+				}
+			}
+
 			if len(args) == 0 {
 				args = append(args, schema.DefaultTaskName)
 			}
