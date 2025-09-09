@@ -189,7 +189,7 @@ fetch-policy: always`,
 		cfg, err := LoadDefaultConfig()
 
 		assert.Nil(t, cfg)
-		require.ErrorContains(t, err, "$HOME")
+		require.EqualError(t, err, "$HOME is not defined")
 	})
 
 	t.Run("file permission error", func(t *testing.T) {
@@ -206,9 +206,9 @@ fetch-policy: always`,
 
 		require.NoError(t, os.Chmod(configPath, 0o000))
 
-		defer func() {
+		t.Cleanup(func() {
 			os.Chmod(configPath, 0o644)
-		}()
+		})
 
 		t.Setenv("HOME", tmpDir)
 
@@ -255,6 +255,7 @@ aliases:
 
 		assert.Nil(t, cfg)
 		require.ErrorContains(t, err, "failed to load config file")
+		require.ErrorContains(t, err, "could not find end character of double-quoted text")
 	})
 }
 
