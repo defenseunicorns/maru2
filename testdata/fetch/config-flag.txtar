@@ -1,4 +1,4 @@
-[short] skipping external network-dependent test in short mode
+[short] skip 'skipping external network-dependent test in short mode'
 
 ! exec maru2 --config nonexistent.yaml --list
 stderr 'failed to open config file'

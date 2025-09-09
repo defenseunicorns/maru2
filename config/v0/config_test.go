@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"testing/iotest"
 
@@ -315,6 +316,43 @@ func TestValidate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestValidateSchemaOnce(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupSchema    func() (string, error)
+		expectedErrMsg string
+	}{
+		{
+			name: "schema generation error",
+			setupSchema: func() (string, error) {
+				return "", assert.AnError
+			},
+			expectedErrMsg: assert.AnError.Error(),
+		},
+		{
+			name: "invalid schema loader",
+			setupSchema: func() (string, error) {
+				return `{"type": "invalid-json-schema", "properties": {`, nil
+			},
+			expectedErrMsg: "unexpected EOF",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			originalSchemaOnce := schemaOnce
+			t.Cleanup(func() {
+				schemaOnce = originalSchemaOnce
+			})
+
+			schemaOnce = sync.OnceValues(tt.setupSchema)
+
+			err := Validate(&Config{})
+			require.ErrorContains(t, err, tt.expectedErrMsg)
 		})
 	}
 }
