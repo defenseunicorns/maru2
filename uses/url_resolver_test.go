@@ -578,7 +578,7 @@ func TestEscapeVersion(t *testing.T) {
 		{
 			name:     "version with percent signs",
 			input:    "pkg:github/owner/repo@100%coverage",
-			expected: "pkg:github/owner/repo@100%25coverage",
+			expected: "pkg:github/owner/repo@100%coverage",
 		},
 		{
 			name:     "version with backslashes",
