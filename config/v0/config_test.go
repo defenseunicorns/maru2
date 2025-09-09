@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -181,6 +182,80 @@ fetch-policy: always`,
 			assert.Equal(t, tt.expected, cfg)
 		})
 	}
+
+	t.Run("DefaultDirectory error", func(t *testing.T) {
+		t.Setenv("HOME", "")
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.ErrorContains(t, err, "$HOME")
+	})
+
+	t.Run("file permission error", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping permission test on Windows")
+		}
+
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
+
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		require.NoError(t, os.WriteFile(configPath, []byte("schema-version: v0"), 0o644))
+
+		require.NoError(t, os.Chmod(configPath, 0o000))
+
+		defer func() {
+			os.Chmod(configPath, 0o644)
+		}()
+
+		t.Setenv("HOME", tmpDir)
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.ErrorContains(t, err, "failed to open config file")
+		require.ErrorContains(t, err, "permission denied")
+	})
+
+	t.Run("directory instead of file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
+
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		require.NoError(t, os.MkdirAll(configPath, 0o755))
+
+		t.Setenv("HOME", tmpDir)
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.ErrorContains(t, err, "failed to load config file")
+		require.ErrorContains(t, err, "is a directory")
+	})
+
+	t.Run("malformed yaml in config file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
+
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		malformedYAML := `schema-version: v0
+aliases:
+  gh:
+    type: github
+  invalid: "unclosed string`
+		require.NoError(t, os.WriteFile(configPath, []byte(malformedYAML), 0o644))
+
+		t.Setenv("HOME", tmpDir)
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.ErrorContains(t, err, "failed to load config file")
+	})
 }
 
 func TestValidate(t *testing.T) {
