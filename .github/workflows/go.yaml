@@ -49,6 +49,11 @@ jobs:
           go test -race -covermode=atomic -coverprofile=coverage.out -failfast -timeout 3m ./...
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: failure()
+        run: |
+          curl -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/rate_limit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           go tool cover -func=coverage.out | sort -k3 -n
       - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
