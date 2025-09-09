@@ -1,5 +1,46 @@
-# corrupted store
+# --store flag with non-existing directory
+! exists custom-store
+exec maru2 --store ./custom-store echo
+stdout 'Hello World!'
+exists custom-store
+exists custom-store/index.txt
+
+# nested directory creation
+! exists deeply/nested/store/path
+exec maru2 --store ./deeply/nested/store/path echo
+stdout 'Hello World!'
+exists deeply/nested/store/path/index.txt
+
+# environment variable expansion
+exec maru2 --store $TMPDIR/env-test-store echo
+stdout 'Hello World!'
+exists $TMPDIR/env-test-store/index.txt
+
+# mkdir error handling
+exec touch blocked-path
+! exec maru2 --store ./blocked-path/cannot-create echo
+stderr 'mkdir blocked-path: not a directory'
+
+# existing .maru2/store directory
+mkdir .maru2/store
+exec maru2 echo
+stdout 'Hello World!'
+exists .maru2/store/index.txt
+
+# prefers local .maru2/store over default
 mkdir home/.maru2/store
+exec maru2 echo
+stdout 'Hello World!'
+exists .maru2/store/index.txt
+
+# --store flag overrides existing .maru2/store
+! exists override-store
+exec maru2 --store ./override-store echo
+stdout 'Hello World!'
+exists override-store/index.txt
+
+# corrupted store
+rm .maru2/store
 mv bad/index.txt home/.maru2/store/index.txt
 ! exec maru2
 stderr 'ERRO failed to initialize store: invalid line format'
