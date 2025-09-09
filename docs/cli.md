@@ -147,14 +147,16 @@ This visual indicator helps you identify dynamic parts of your workflow that dep
 
 ## System config
 
-Maru2 has a system [configuration file](./config.md) that affects default flag behavior. When the `--config` flag is set, it takes precedence over the default config.
+Maru2 has a system [configuration file](./config.md) that affects default flag behavior. Configuration loading follows this priority order:
+
+1. `--config` flag (highest priority)
+2. `MARU2_CONFIG` environment variable
+3. `~/.maru2/config.yaml` (default)
 
 ```sh
-$ cat custom.yaml
-schema-version: v0
-fetch-policy: always
-
-$ maru2 --config custom.yaml ...
+$ maru2 --config custom.yaml        # flag
+$ MARU2_CONFIG=custom.yaml maru2    # env var
+$ maru2                             # default
 ```
 
 ## Task Execution
