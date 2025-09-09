@@ -88,6 +88,7 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 		prev.Scheme == "oci" && uri.Scheme == "oci":
 
 		if uri.Scheme == "pkg" {
+			u = escapeVersion(u)
 			pURL, err := packageurl.FromString(u)
 			if err != nil {
 				return nil, err
@@ -182,4 +183,25 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 	}
 
 	return nil, fmt.Errorf("unable to resolve %q to %q", prev, uri)
+}
+
+func escapeVersion(p string) string {
+	start := strings.Index(p, "@")
+	if start == -1 {
+		return p
+	}
+
+	end := len(p) - 1
+	for i := range len(p) - start {
+		char := string(p[start+i])
+		if char == "?" || char == "#" {
+			end = i
+		}
+	}
+
+	sub := p[start:end]
+
+	escaped := url.PathEscape(sub)
+
+	return strings.Replace(p, sub, escaped, 1)
 }
