@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/defenseunicorns/maru2"
-	"github.com/defenseunicorns/maru2/config"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	"github.com/defenseunicorns/maru2/schema"
 	"github.com/defenseunicorns/maru2/uses"
@@ -33,21 +32,57 @@ import (
 // NewRootCmd creates the root command for the maru2 CLI.
 func NewRootCmd() *cobra.Command {
 	var (
-		w        map[string]string
-		level    string
-		ver      bool
-		list     bool
-		from     string
-		policy   = uses.DefaultFetchPolicy // VarP does not allow you to set a default value
-		s        string
-		timeout  time.Duration
-		dry      bool
-		dir      string
-		fetchAll bool
-		gc       bool
+		w          map[string]string
+		level      string
+		ver        bool
+		list       bool
+		from       string
+		policy     = uses.DefaultFetchPolicy // VarP does not allow you to set a default value
+		s          string
+		timeout    time.Duration
+		dry        bool
+		dir        string
+		configPath string
+		fetchAll   bool
+		gc         bool
 	)
 
 	var cfg *configv0.Config // cfg is not set via CLI flag
+
+	// closure initializer
+	loadConfig := func(cmd *cobra.Command) error {
+		switch cmd.Flags().Changed("config") {
+		case true:
+			f, err := os.Open(configPath)
+			if err != nil {
+				return fmt.Errorf("failed to open config file: %w", err)
+			}
+			defer f.Close()
+			cfg, err = configv0.LoadConfig(f)
+			if err != nil {
+				return fmt.Errorf("failed to load config file: %w", err)
+			}
+		default:
+			var err error
+			cfg, err = configv0.LoadDefaultConfig()
+			if err != nil {
+				return err
+			}
+		}
+
+		// default < cfg < flags
+		if !cmd.Flags().Changed("fetch-policy") && cfg.FetchPolicy != policy {
+			if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
+				return err // since config validates and has defaults during loading, this error is basically impossible to trigger, but leaving in case a regression happens in schema validation
+			}
+		}
+
+		if policy == uses.FetchPolicyNever && fetchAll {
+			return fmt.Errorf("cannot fetch all with fetch policy %q", policy)
+		}
+
+		return nil
+	}
 
 	root := &cobra.Command{
 		Use:   "maru2",
@@ -74,28 +109,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 			}
 
-			configDir, err := config.DefaultDirectory()
-			if err != nil {
-				return err
-			}
-
-			cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
-			if err != nil {
-				return err
-			}
-
-			// default < cfg < flags
-			if !cmd.Flags().Changed("fetch-policy") {
-				if err := policy.Set(cfg.FetchPolicy.String()); err != nil {
-					return err
-				}
-			}
-
-			if policy == uses.FetchPolicyNever && fetchAll {
-				return fmt.Errorf("cannot fetch all with fetch policy %q", policy)
-			}
-
-			return nil
+			return loadConfig(cmd)
 		},
 		ValidArgsFunction: func(cmd *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 			svc, err := uses.NewFetcherService(
@@ -110,13 +124,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			// if we are a sub-command, load the cfg as PersistentPreRun isnt run
 			// when performing tab completions on sub-commands
 			if cmd.Parent() != nil {
-				configDir, err := config.DefaultDirectory()
-				if err != nil {
-					return nil, cobra.ShellCompDirectiveError
-				}
-
-				cfg, err = configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
-				if err != nil {
+				if err := loadConfig(cmd); err != nil {
 					return nil, cobra.ShellCompDirectiveError
 				}
 			}
@@ -340,6 +348,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
 	_ = root.MarkFlagDirname("directory")
+	root.Flags().StringVarP(&configPath, "config", "", "${HOME}/.maru2/config.yaml", "Path to maru2 config file") // mirrors config.DefaultDirectory
+	_ = root.MarkFlagFilename("config", "yaml", "yml")
 	root.Flags().VarP(&policy, "fetch-policy", "p", fmt.Sprintf(`Set fetch policy ("%s")`, strings.Join(uses.AvailablePolicies(), `", "`)))
 	_ = root.RegisterFlagCompletionFunc("fetch-policy", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return uses.AvailablePolicies(), cobra.ShellCompDirectiveNoFileComp

@@ -12,11 +12,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/goccy/go-yaml"
 	"github.com/invopop/jsonschema"
-	"github.com/spf13/afero"
 	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/defenseunicorns/maru2/config"
@@ -35,6 +35,15 @@ type Config struct {
 	FetchPolicy   uses.FetchPolicy `json:"fetch-policy"`
 }
 
+// the default config, matches flag defaults in cmd/root.go
+func defaultConfig() *Config {
+	return &Config{
+		SchemaVersion: SchemaVersion,
+		Aliases:       v1.AliasMap{},
+		FetchPolicy:   uses.DefaultFetchPolicy,
+	}
+}
+
 // JSONSchemaExtend extends the JSON schema for a workflow
 func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 	if schemaVersion, ok := schema.Properties.Get("schema-version"); ok && schemaVersion != nil {
@@ -49,22 +58,10 @@ func (Config) JSONSchemaExtend(schema *jsonschema.Schema) {
 // # It assumes the provided fs's base directory contains a valid configuration file
 //
 // If the configuration file does not exist, this function returns a default valid but "empty" config
-func LoadConfig(fsys afero.Fs) (*Config, error) {
-	cfg := &Config{
-		Aliases:     v1.AliasMap{},
-		FetchPolicy: uses.DefaultFetchPolicy,
-	}
+func LoadConfig(r io.Reader) (*Config, error) {
+	cfg := defaultConfig()
 
-	f, err := fsys.Open(config.DefaultFileName)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return cfg, nil
-		}
-		return nil, fmt.Errorf("failed to open config file: %w", err)
-	}
-	defer f.Close()
-
-	data, err := io.ReadAll(f)
+	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -79,11 +76,41 @@ func LoadConfig(fsys afero.Fs) (*Config, error) {
 		if err := yaml.Unmarshal(data, cfg); err != nil {
 			return nil, fmt.Errorf("failed to parse config file: %w", err)
 		}
-		return cfg, Validate(cfg)
+		if err := Validate(cfg); err != nil {
+			return nil, err
+		}
+		return cfg, nil
 	// See schema/v1/validate.go for an example on how auto migrations during loading/reading can work for when v1 of config is released
 	default:
 		return nil, fmt.Errorf("unsupported config schema version: expected %q, got %q", SchemaVersion, version)
 	}
+}
+
+// LoadDefaultConfig loads the config from config.DefaultDirectory
+// if this file does not exist, the default config is returned
+func LoadDefaultConfig() (*Config, error) {
+	configDir, err := config.DefaultDirectory()
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := defaultConfig()
+
+	f, err := os.Open(filepath.Join(configDir, config.DefaultFileName))
+	if err != nil {
+		if os.IsNotExist(err) { // default config is allowed to not exist
+			return cfg, nil
+		}
+		return nil, fmt.Errorf("failed to open config file: %w", err)
+	}
+	defer f.Close()
+
+	loaded, err := LoadConfig(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config file: %w", err)
+	}
+
+	return loaded, nil
 }
 
 // Since every validation operation leverages the same config, only calculate it once to save some compute cycles

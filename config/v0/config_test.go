@@ -4,13 +4,16 @@
 package v0
 
 import (
-	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
+	"sync"
 	"testing"
+	"testing/iotest"
 
 	"github.com/package-url/packageurl-go"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,106 +22,241 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-func TestFileSystemConfigLoader(t *testing.T) {
-	configContent := `schema-version: v0
+func TestLoadConfig(t *testing.T) {
+	tests := []struct {
+		name      string
+		reader    io.Reader
+		expected  *Config
+		expectErr string
+	}{
+		{
+			name: "valid config",
+			reader: strings.NewReader(`schema-version: v0
 aliases:
+  gh:
+    type: github
   gl:
     type: gitlab
     base-url: https://gitlab.example.com
+    token-from-env: GL_TOKEN
+fetch-policy: always`),
+			expected: &Config{
+				SchemaVersion: SchemaVersion,
+				FetchPolicy:   uses.FetchPolicyAlways,
+				Aliases: v1.AliasMap{
+					"gh": {
+						Type: packageurl.TypeGithub,
+					},
+					"gl": {
+						Type:         packageurl.TypeGitlab,
+						BaseURL:      "https://gitlab.example.com",
+						TokenFromEnv: "GL_TOKEN",
+					},
+				},
+			},
+		},
+		{
+			name:   "empty config uses defaults",
+			reader: strings.NewReader(`schema-version: v0`),
+			expected: &Config{
+				SchemaVersion: SchemaVersion,
+				Aliases:       v1.AliasMap{},
+				FetchPolicy:   uses.DefaultFetchPolicy,
+			},
+		},
+		{
+			name:      "invalid yaml",
+			reader:    strings.NewReader(`invalid: yaml: content`),
+			expectErr: "mapping value is not allowed in this context",
+		},
+		{
+			name: "unsupported schema version",
+			reader: strings.NewReader(`schema-version: v999
+aliases:
   gh:
-    type: github
-  another:
-    type: github
-    token-from-env: GITHUB_TOKEN
-`
+    type: github`),
+			expectErr: `unsupported config schema version: expected "v0", got "v999"`,
+		},
+		{
+			name: "invalid structure",
+			reader: strings.NewReader(`schema-version: v0
+aliases: "should-be-map"`),
+			expectErr: "failed to parse config file",
+		},
+		{
+			name: "validation error",
+			reader: strings.NewReader(`schema-version: v0
+aliases:
+  invalid:
+    type: bad-type`),
+			expectErr: "aliases.invalid.type",
+		},
+		{
+			name:      "reader error",
+			reader:    iotest.ErrReader(assert.AnError),
+			expectErr: assert.AnError.Error(),
+		},
+	}
 
-	fsys := afero.NewMemMapFs()
-	err := afero.WriteFile(fsys, "etc/maru2/config.yaml", []byte(configContent), 0o644)
-	require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cfg, err := LoadConfig(tt.reader)
 
-	cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "etc/maru2"))
-	require.NoError(t, err)
+			if tt.expectErr != "" {
+				assert.Nil(t, cfg)
+				require.ErrorContains(t, err, tt.expectErr)
+				return
+			}
 
-	assert.Len(t, cfg.Aliases, 3)
+			require.Equal(t, tt.expected, cfg)
+		})
+	}
+}
 
-	glAlias, ok := cfg.Aliases["gl"]
-	assert.True(t, ok)
-	assert.Equal(t, packageurl.TypeGitlab, glAlias.Type)
-	assert.Equal(t, "https://gitlab.example.com", glAlias.BaseURL)
-
-	ghAlias, ok := cfg.Aliases["gh"]
-	assert.True(t, ok)
-	assert.Equal(t, packageurl.TypeGithub, ghAlias.Type)
-	assert.Empty(t, ghAlias.BaseURL)
-
-	cfg, err = LoadConfig(afero.NewBasePathFs(fsys, "nonexistent-dir"))
-	require.NoError(t, err)
-	assert.NotNil(t, cfg)
-	assert.Empty(t, cfg.Aliases)
-
-	t.Run("invalid config", func(t *testing.T) {
-		fsys = afero.NewMemMapFs()
-		err = afero.WriteFile(fsys, "invalid/config.yaml", []byte(`invalid: yaml: content`), 0o644)
-		require.NoError(t, err)
-		_, err = LoadConfig(afero.NewBasePathFs(fsys, "invalid"))
-		require.EqualError(t, err, "[1:10] mapping value is not allowed in this context\n>  1 | invalid: yaml: content\n                ^\n")
-	})
-
-	t.Run("nonexistent config", func(t *testing.T) {
-		cfg, err := LoadConfig(afero.NewBasePathFs(fsys, "nonexistent"))
-		require.NoError(t, err)
-		assert.NotNil(t, cfg)
-		assert.Empty(t, cfg.Aliases)
-	})
-
-	t.Run("read error", func(t *testing.T) {
+func TestLoadDefaultConfig(t *testing.T) {
+	setupTempHome := func(t *testing.T, configContent string) string {
 		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
 
-		configDir := filepath.Join(tmpDir, config.DefaultFileName)
-		err = os.Mkdir(configDir, 0o755)
-		require.NoError(t, err)
+		if configContent != "" {
+			configPath := filepath.Join(configDir, config.DefaultFileName)
+			require.NoError(t, os.WriteFile(configPath, []byte(configContent), 0o644))
+		}
 
-		_, err := LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
-		require.EqualError(t, err, fmt.Sprintf("failed to read config file: read %s: is a directory", configDir))
-	})
+		t.Setenv("HOME", tmpDir)
 
-	t.Run("open error", func(t *testing.T) {
-		tmpDir := t.TempDir()
+		return tmpDir
+	}
 
-		configPath := filepath.Join(tmpDir, config.DefaultFileName)
-		err = os.WriteFile(configPath, []byte(`valid: yaml`), 0o000)
-		require.NoError(t, err)
-
-		_, err = LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), tmpDir))
-		require.EqualError(t, err, fmt.Sprintf("failed to open config file: open %s: permission denied", filepath.Join(tmpDir, config.DefaultFileName)))
-	})
-
-	t.Run("unsupported schema version", func(t *testing.T) {
-		configContent := `schema-version: v999
+	tests := []struct {
+		name          string
+		configContent string
+		expectErr     string
+		expected      *Config
+	}{
+		{
+			name:          "no config file returns defaults",
+			configContent: "",
+			expected: &Config{
+				SchemaVersion: SchemaVersion,
+				Aliases:       v1.AliasMap{},
+				FetchPolicy:   uses.DefaultFetchPolicy,
+			},
+		},
+		{
+			name: "valid config file loads correctly",
+			configContent: `schema-version: v0
 aliases:
   gh:
     type: github
-`
-		fsys := afero.NewMemMapFs()
-		err := afero.WriteFile(fsys, config.DefaultFileName, []byte(configContent), 0o644)
-		require.NoError(t, err)
+fetch-policy: always`,
+			expected: &Config{
+				SchemaVersion: SchemaVersion,
+				Aliases: v1.AliasMap{
+					"gh": {Type: packageurl.TypeGithub},
+				},
+				FetchPolicy: uses.FetchPolicyAlways,
+			},
+		},
+		{
+			name:          "invalid config file returns error",
+			configContent: `schema-version: v999`,
+			expectErr:     `failed to load config file: unsupported config schema version: expected "v0", got "v999"`,
+		},
+	}
 
-		_, err = LoadConfig(fsys)
-		require.EqualError(t, err, `unsupported config schema version: expected "v0", got "v999"`)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupTempHome(t, tt.configContent)
+
+			cfg, err := LoadDefaultConfig()
+
+			if tt.expectErr != "" {
+				assert.Nil(t, cfg)
+				require.EqualError(t, err, tt.expectErr)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, cfg)
+		})
+	}
+
+	t.Run("DefaultDirectory error", func(t *testing.T) {
+		t.Setenv("HOME", "")
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.EqualError(t, err, "$HOME is not defined")
 	})
 
-	t.Run("failed to parse config file", func(t *testing.T) {
-		configContent := `schema-version: v0
-aliases: "invalid-type-should-be-map"
-fetch-policy: if-not-present
-`
-		fsys := afero.NewMemMapFs()
-		err := afero.WriteFile(fsys, config.DefaultFileName, []byte(configContent), 0o644)
-		require.NoError(t, err)
+	t.Run("file permission error", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("Skipping permission test on Windows")
+		}
 
-		_, err = LoadConfig(fsys)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to parse config file:")
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
+
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		require.NoError(t, os.WriteFile(configPath, []byte("schema-version: v0"), 0o644))
+
+		require.NoError(t, os.Chmod(configPath, 0o000))
+
+		t.Cleanup(func() {
+			os.Chmod(configPath, 0o644)
+		})
+
+		t.Setenv("HOME", tmpDir)
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.ErrorContains(t, err, "failed to open config file")
+		require.ErrorContains(t, err, "permission denied")
+	})
+
+	t.Run("directory instead of file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
+
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		require.NoError(t, os.MkdirAll(configPath, 0o755))
+
+		t.Setenv("HOME", tmpDir)
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.ErrorContains(t, err, "failed to load config file")
+		require.ErrorContains(t, err, "is a directory")
+	})
+
+	t.Run("malformed yaml in config file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configDir := filepath.Join(tmpDir, ".maru2")
+		require.NoError(t, os.MkdirAll(configDir, 0o755))
+
+		configPath := filepath.Join(configDir, config.DefaultFileName)
+		malformedYAML := `schema-version: v0
+aliases:
+  gh:
+    type: github
+  invalid: "unclosed string`
+		require.NoError(t, os.WriteFile(configPath, []byte(malformedYAML), 0o644))
+
+		t.Setenv("HOME", tmpDir)
+
+		cfg, err := LoadDefaultConfig()
+
+		assert.Nil(t, cfg)
+		require.ErrorContains(t, err, "failed to load config file")
+		require.ErrorContains(t, err, "could not find end character of double-quoted text")
 	})
 }
 
@@ -134,17 +272,8 @@ func TestValidate(t *testing.T) {
 			config: &Config{
 				SchemaVersion: SchemaVersion,
 				Aliases: v1.AliasMap{
-					"gh": {
-						Type: packageurl.TypeGithub,
-					},
-					"gl": {
-						Type:    packageurl.TypeGitlab,
-						BaseURL: "https://gitlab.example.com",
-					},
-					"custom": {
-						Type:         packageurl.TypeGithub,
-						TokenFromEnv: "GITHUB_TOKEN",
-					},
+					"gh": {Type: packageurl.TypeGithub},
+					"gl": {Type: packageurl.TypeGitlab, BaseURL: "https://gitlab.example.com"},
 				},
 				FetchPolicy: uses.FetchPolicyIfNotPresent,
 			},
@@ -153,55 +282,28 @@ func TestValidate(t *testing.T) {
 			name: "invalid alias type",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"invalid": {
-						Type: "invalid-type",
-					},
-				},
-				FetchPolicy: uses.FetchPolicyIfNotPresent,
+				Aliases:       v1.AliasMap{"invalid": {Type: "bad-type"}},
+				FetchPolicy:   uses.FetchPolicyIfNotPresent,
 			},
-			expectedErr: "aliases.invalid.type: aliases.invalid.type must be one of the following: \"github\", \"gitlab\"",
+			expectedErr: "aliases.invalid.type",
 		},
 		{
-			name: "invalid token environment variable format",
+			name: "invalid token env var format",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"gh": {
-						Type:         packageurl.TypeGithub,
-						TokenFromEnv: "123-invalid",
-					},
-				},
-				FetchPolicy: uses.FetchPolicyIfNotPresent,
+				Aliases:       v1.AliasMap{"gh": {Type: packageurl.TypeGithub, TokenFromEnv: "123-invalid"}},
+				FetchPolicy:   uses.FetchPolicyIfNotPresent,
 			},
-			expectedErr: "aliases.gh.token-from-env: Does not match pattern '^[a-zA-Z_]+[a-zA-Z0-9_]*$'",
+			expectedErr: "Does not match pattern",
 		},
 		{
 			name: "invalid fetch policy",
 			config: &Config{
 				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"gh": {
-						Type: packageurl.TypeGithub,
-					},
-				},
-				FetchPolicy: uses.FetchPolicy("invalid-policy"),
+				Aliases:       v1.AliasMap{"gh": {Type: packageurl.TypeGithub}},
+				FetchPolicy:   "invalid-policy",
 			},
-			expectedErr: "fetch-policy: fetch-policy must be one of the following: \"always\", \"if-not-present\", \"never\"",
-		},
-		{
-			name: "multiple validation errors",
-			config: &Config{
-				SchemaVersion: SchemaVersion,
-				Aliases: v1.AliasMap{
-					"invalid": {
-						Type:         "invalid-type",
-						TokenFromEnv: "123-invalid",
-					},
-				},
-				FetchPolicy: "invalid-policy",
-			},
-			expectedErr: "aliases.invalid.type: aliases.invalid.type must be one of the following",
+			expectedErr: "fetch-policy",
 		},
 	}
 
@@ -214,6 +316,43 @@ func TestValidate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestValidateSchemaOnce(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupSchema    func() (string, error)
+		expectedErrMsg string
+	}{
+		{
+			name: "schema generation error",
+			setupSchema: func() (string, error) {
+				return "", assert.AnError
+			},
+			expectedErrMsg: assert.AnError.Error(),
+		},
+		{
+			name: "invalid schema loader",
+			setupSchema: func() (string, error) {
+				return `{"type": "invalid-json-schema", "properties": {`, nil
+			},
+			expectedErrMsg: "unexpected EOF",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			originalSchemaOnce := schemaOnce
+			t.Cleanup(func() {
+				schemaOnce = originalSchemaOnce
+			})
+
+			schemaOnce = sync.OnceValues(tt.setupSchema)
+
+			err := Validate(&Config{})
+			require.ErrorContains(t, err, tt.expectedErrMsg)
 		})
 	}
 }

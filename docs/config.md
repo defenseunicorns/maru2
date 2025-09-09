@@ -10,6 +10,8 @@ By default, Maru2 looks for the configuration file at:
 ~/.maru2/config.yaml
 ```
 
+and can also be configured via the [`--config`](./cli.md#config) flag.
+
 ## Creating a New Configuration
 
 To create a new configuration:

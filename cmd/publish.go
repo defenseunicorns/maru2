@@ -13,7 +13,6 @@ import (
 	"syscall"
 
 	"github.com/charmbracelet/log"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"oras.land/oras-go/v2/registry"
 	"oras.land/oras-go/v2/registry/remote"
@@ -22,8 +21,6 @@ import (
 	"oras.land/oras-go/v2/registry/remote/retry"
 
 	"github.com/defenseunicorns/maru2"
-	"github.com/defenseunicorns/maru2/config"
-	configv0 "github.com/defenseunicorns/maru2/config/v0"
 )
 
 // NewPublishCmd creates the root command for the maru2-publish CLI.
@@ -89,16 +86,6 @@ func NewPublishCmd() *cobra.Command {
 				}
 			}
 
-			configDir, err := config.DefaultDirectory()
-			if err != nil {
-				return err
-			}
-
-			cfg, err := configv0.LoadConfig(afero.NewBasePathFs(afero.NewOsFs(), configDir))
-			if err != nil {
-				return err
-			}
-
 			ref, err := registry.ParseReference(args[0])
 			if err != nil {
 				return fmt.Errorf("unable to parse reference: %w", err)
@@ -128,7 +115,7 @@ func NewPublishCmd() *cobra.Command {
 			client.SetUserAgent("maru2-publish")
 			dst.Client = client
 
-			return maru2.Publish(ctx, dst, entrypoints, cfg.Aliases)
+			return maru2.Publish(ctx, dst, entrypoints)
 		},
 	}
 

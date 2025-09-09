@@ -17,15 +17,15 @@ stderr 'ERRO failed to resolve "ssh:foo": unsupported scheme: "ssh" in "ssh:foo"
 mkdir home/.maru2
 mv bad/invalid.yaml home/.maru2/config.yaml
 ! exec maru2
-stderr 'ERRO failed to parse config file: [1:1] string was used where mapping is expected\n> 1 | invalid yaml'
+stderr 'ERRO failed to load config file: [1:1] string was used where mapping is expected\n>  1 | invalid yaml'
 
 mv bad/fetch-policy.yaml home/.maru2/config.yaml
 ! exec maru2
-stderr 'ERRO fetch-policy: fetch-policy must be one of the following: "always", "if-not-present", "never"'
+stderr 'ERRO failed to load config file: fetch-policy: fetch-policy must be one of the following: "always", "if-not-present", "never"'
 
 mv bad/alias.yaml home/.maru2/config.yaml
 ! exec maru2
-stderr 'ERRO aliases.gh: Must validate one and only one schema \(oneOf\)\naliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
+stderr 'ERRO failed to load config file: aliases.gh: Must validate one and only one schema \(oneOf\)\naliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
 
 rm home/.maru2/config.yaml
 

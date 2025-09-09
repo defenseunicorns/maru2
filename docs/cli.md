@@ -42,6 +42,7 @@ maru2 alias-name:task-name
 
 ```text
 Flags:
+      --config string         Path to maru2 config file (default "${HOME}/.maru2/config.yaml")
   -C, --directory string      Change to directory before doing anything
       --dry-run               Don't actually run anything; just print
       --fetch-all             Fetch all tasks
@@ -132,14 +133,6 @@ When you use `--dry-run`, Maru2:
 4. Shows the commands that would run
 5. Doesn't actually execute any commands
 
-### Why Use Dry Run?
-
-- **Verify workflows**: Check that your workflow is correctly structured
-- **Validate inputs**: Confirm all required inputs are properly provided
-- **Inspect remote tasks**: See what remote workflows would do before executing them
-- **Debug templates**: Check how variables and expressions would be evaluated
-- **Security**: Review commands before execution
-
 ### Understanding Template Output in Dry Run
 
 When a template depends on output from previous steps (which aren't actually run in dry run mode), Maru2 shows special formatting:
@@ -151,6 +144,18 @@ echo "The value is ❯ from step-id output-key ❮"
 ```
 
 This visual indicator helps you identify dynamic parts of your workflow that depend on previous step outputs.
+
+## System config
+
+Maru2 has a system [configuration file](./config.md) that affects default flag behavior. When the `--config` flag is set, it takes precedence over the default config.
+
+```sh
+$ cat custom.yaml
+schema-version: v0
+fetch-policy: always
+
+$ maru2 --config custom.yaml ...
+```
 
 ## Task Execution
 

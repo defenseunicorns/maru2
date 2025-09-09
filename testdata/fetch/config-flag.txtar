@@ -1,0 +1,47 @@
+[short] skip 'skipping external network-dependent test in short mode'
+
+! exec maru2 --config nonexistent.yaml --list
+stderr 'failed to open config file'
+
+! exec maru2 --config malformed-config.yaml --list
+stderr 'failed to load config file'
+
+exec maru2 --config custom-config.yaml --dry-run --from 'pkg:gh/defenseunicorns/maru2@main#testdata/simple.yaml' echo
+stderr 'echo "\$INPUT_MESSAGE"'
+
+exec maru2 --config custom-config.yaml --list --from 'pkg:gh/defenseunicorns/maru2@main#testdata/simple.yaml'
+cmp stderr list-stderr.txt
+
+-- custom-config.yaml --
+schema-version: v0
+aliases:
+  gh:
+    type: github
+    base-url: https://api.github.com
+fetch-policy: if-not-present
+
+-- malformed-config.yaml --
+schema-version: v0
+aliases:
+  gh:
+    type: github
+  invalid: "unclosed string
+
+-- tasks.yaml --
+schema-version: v0
+tasks:
+  default:
+    - run: echo "default task"
+
+-- dry-stderr.txt --
+echo "$INPUT_MESSAGE"
+-- list-stderr.txt --
+Available:
+
+- chuck
+- continues
+- echo
+- fails
+- hello-world
+- pwd
+- sleep
