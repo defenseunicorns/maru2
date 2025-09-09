@@ -33,6 +33,7 @@ import (
 func NewRootCmd() *cobra.Command {
 	var (
 		w          map[string]string
+		withFiles  []string
 		level      string
 		ver        bool
 		list       bool
@@ -347,6 +348,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	}
 
 	root.Flags().StringToStringVarP(&w, "with", "w", nil, "Pass key=value pairs to the called task(s)")
+	root.Flags().StringArrayVar(&withFiles, "with-file", nil, "Extra text files to parse as key=value pairs to pass to the called task(s)")
+	_ = root.MarkFlagFilename("with-file", "txt")
 	root.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
 	_ = root.RegisterFlagCompletionFunc("log-level", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(), log.ErrorLevel.String(), log.FatalLevel.String()}, cobra.ShellCompDirectiveNoFileComp
