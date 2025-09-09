@@ -507,6 +507,12 @@ func TestResolveURL(t *testing.T) {
 			},
 			expectedErr: `"2-invalid-task" does not satisfy "^[_a-zA-Z][a-zA-Z0-9_-]*$"`,
 		},
+		{
+			name: "pkg version needs to be escaped",
+			prev: "file:foo.yaml",
+			uri:  "pkg:github/owner1/repo1@foo/bar#dir/foo.yaml",
+			next: "pkg:github/owner1/repo1@foo%2Fbar#dir/foo.yaml",
+		},
 	}
 
 	for _, tc := range tests {
@@ -528,6 +534,89 @@ func TestResolveURL(t *testing.T) {
 				assert.NotEmpty(t, next.Scheme)
 				assert.Equal(t, tc.next, next.String())
 			}
+		})
+	}
+}
+
+func TestEscapeVersion(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no @ symbol",
+			input:    "pkg:github/owner/repo",
+			expected: "pkg:github/owner/repo",
+		},
+		{
+			name:     "simple version",
+			input:    "pkg:github/owner/repo@v1.0.0",
+			expected: "pkg:github/owner/repo@v1.0.0",
+		},
+		{
+			name:     "empty version",
+			input:    "pkg:github/owner/repo@",
+			expected: "pkg:github/owner/repo@",
+		},
+		{
+			name:     "version with spaces",
+			input:    "pkg:github/owner/repo@release 1.0",
+			expected: "pkg:github/owner/repo@release%201.0",
+		},
+		{
+			name:     "version with slashes",
+			input:    "pkg:github/owner/repo@feature/branch-name",
+			expected: "pkg:github/owner/repo@feature%2Fbranch-name",
+		},
+		{
+			name:     "version with unicode",
+			input:    "pkg:github/owner/repo@版本1.0",
+			expected: "pkg:github/owner/repo@%E7%89%88%E6%9C%AC1.0",
+		},
+		{
+			name:     "version with percent signs",
+			input:    "pkg:github/owner/repo@100%coverage",
+			expected: "pkg:github/owner/repo@100%coverage",
+		},
+		{
+			name:     "version with backslashes",
+			input:    "pkg:github/owner/repo@windows\\path",
+			expected: "pkg:github/owner/repo@windows%5Cpath",
+		},
+		{
+			name:     "version stops at hash fragment",
+			input:    "pkg:github/owner/repo@v1.0.0#path/to/file",
+			expected: "pkg:github/owner/repo@v1.0.0#path/to/file",
+		},
+		{
+			name:     "version stops at query param",
+			input:    "pkg:github/owner/repo@v1.0.0?param=value",
+			expected: "pkg:github/owner/repo@v1.0.0?param=value",
+		},
+		{
+			name:     "spaces escaped before delimiter",
+			input:    "pkg:github/owner/repo@release candidate 1.0?test=true",
+			expected: "pkg:github/owner/repo@release%20candidate%201.0?test=true",
+		},
+		{
+			name:     "slashes escaped before delimiter",
+			input:    "pkg:github/owner/repo@feature/branch/name#dir/file.yaml",
+			expected: "pkg:github/owner/repo@feature%2Fbranch%2Fname#dir/file.yaml",
+		},
+		{
+			name:     "already escaped",
+			input:    "pkg:gitlab/noxsios/vai@foo%2Fbar?task=hello-world#vai.yaml",
+			expected: "pkg:gitlab/noxsios/vai@foo%2Fbar?task=hello-world#vai.yaml",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := escapeVersion(tc.input)
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
