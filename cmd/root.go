@@ -348,7 +348,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
 	root.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
 	_ = root.MarkFlagDirname("directory")
-	root.Flags().StringVarP(&configPath, "config", "c", "${HOME}/.maru2/config.yaml", "Path to maru2 config file") // mirrors config.DefaultDirectory
+	root.Flags().StringVarP(&configPath, "config", "", "${HOME}/.maru2/config.yaml", "Path to maru2 config file") // mirrors config.DefaultDirectory
 	_ = root.MarkFlagFilename("config", ".yaml", ".yml")
 	root.Flags().VarP(&policy, "fetch-policy", "p", fmt.Sprintf(`Set fetch policy ("%s")`, strings.Join(uses.AvailablePolicies(), `", "`)))
 	_ = root.RegisterFlagCompletionFunc("fetch-policy", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {

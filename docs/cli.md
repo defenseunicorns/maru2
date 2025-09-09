@@ -42,6 +42,7 @@ maru2 alias-name:task-name
 
 ```text
 Flags:
+      --config string         Path to maru2 config file (default "${HOME}/.maru2/config.yaml")
   -C, --directory string      Change to directory before doing anything
       --dry-run               Don't actually run anything; just print
       --fetch-all             Fetch all tasks
