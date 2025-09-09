@@ -2,3 +2,4 @@ ignore:
   - cmd/maru2/main.go # barebones wrapper, too annoying to get coverage
   - cmd/maru2-publish/main.go # barebones wrapper, too annoying to get coverage
   - cmd/internal/main.go # example / docs code
+  - cmd/maru2-schema/main.go # this is essentially tested each time we run `make maru2.schema.json` and 99% of its functionality is covered by schema_test.go
