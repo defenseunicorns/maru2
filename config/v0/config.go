@@ -98,7 +98,7 @@ func LoadDefaultConfig() (*Config, error) {
 
 	f, err := os.Open(filepath.Join(configDir, config.DefaultFileName))
 	if err != nil {
-		if os.IsNotExist(err) {
+		if os.IsNotExist(err) { // default config is allowed to not exist
 			return cfg, nil
 		}
 		return nil, fmt.Errorf("failed to open config file: %w", err)
@@ -107,9 +107,6 @@ func LoadDefaultConfig() (*Config, error) {
 
 	loaded, err := LoadConfig(f)
 	if err != nil {
-		if os.IsNotExist(err) { // default config is allowed to not exist
-			return cfg, nil
-		}
 		return nil, fmt.Errorf("failed to load config file: %w", err)
 	}
 
