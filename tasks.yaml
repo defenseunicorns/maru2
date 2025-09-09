@@ -18,10 +18,22 @@ tasks:
       short:
         description: Controls whether network tests are run
         default: false
+      ci:
+        description: Am I running in CI?
+        default: false
+        default-from-env: CI
     steps:
       - run: |
           export CGO_ENABLED=1
           go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m -short=${{ input "short" }} ./...
+      - if: input("ci") == true && failure()
+        shell: bash
+        run: |
+          if [[ -n "$GITHUB_TOKEN" ]]; then
+            curl -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/rate_limit
+          else
+            curl https://api.github.com/rate_limit
+          fi
 
   hello-world:
     steps:
