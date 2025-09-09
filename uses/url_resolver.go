@@ -191,11 +191,11 @@ func escapeVersion(p string) string {
 		return p
 	}
 
-	end := len(p) - 1
-	for i := range len(p) - start {
-		char := string(p[start+i])
-		if char == "?" || char == "#" {
-			end = i
+	end := len(p)
+	for i, char := range p[start:] {
+		if char == '?' || char == '#' {
+			end = start + i
+			break
 		}
 	}
 
