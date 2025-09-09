@@ -312,6 +312,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				if err != nil {
 					return fmt.Errorf("failed opening with-file %q: %w", p, err)
 				}
+				defer f.Close()
 				outputs, err := maru2.ParseOutput(f)
 				if err != nil {
 					return fmt.Errorf("failed reading with-file %q: %w", p, err)
