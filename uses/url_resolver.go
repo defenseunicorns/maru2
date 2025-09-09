@@ -193,6 +193,11 @@ func escapeVersion(p string) string {
 
 	end := len(p)
 	for i, char := range p[start:] {
+		if char == '%' {
+			// assume version has already been manually escaped
+			return p
+		}
+
 		if char == '?' || char == '#' {
 			end = start + i
 			break

@@ -605,6 +605,11 @@ func TestEscapeVersion(t *testing.T) {
 			input:    "pkg:github/owner/repo@feature/branch/name#dir/file.yaml",
 			expected: "pkg:github/owner/repo@feature%2Fbranch%2Fname#dir/file.yaml",
 		},
+		{
+			name:     "already escaped",
+			input:    "pkg:gitlab/noxsios/vai@foo%2Fbar?task=hello-world#vai.yaml",
+			expected: "pkg:gitlab/noxsios/vai@foo%2Fbar?task=hello-world#vai.yaml",
+		},
 	}
 
 	for _, tc := range tests {
