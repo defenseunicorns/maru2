@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0 (2025-09-10)
+
+## What's Changed
+* docs: update install instructions by @Noxsios in https://github.com/defenseunicorns/maru2/pull/133
+* chore: improve developer experience by @Noxsios in https://github.com/defenseunicorns/maru2/pull/130
+* feat: config flag by @Noxsios in https://github.com/defenseunicorns/maru2/pull/135
+* test: random cov by @Noxsios in https://github.com/defenseunicorns/maru2/pull/136
+* feat: config env var by @Noxsios in https://github.com/defenseunicorns/maru2/pull/139
+* refactor: url encode pkg version by @Noxsios in https://github.com/defenseunicorns/maru2/pull/138
+* build(deps): bump the go group with 3 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/137
+* feat: --with-file flag by @Noxsios in https://github.com/defenseunicorns/maru2/pull/141
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.5.2...v0.6.0
+
 ## 0.5.2 (2025-09-08)
 
 ## What's Changed
