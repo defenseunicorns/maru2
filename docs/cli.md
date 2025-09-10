@@ -25,6 +25,12 @@ maru2 clean build test
 # Run a task with input parameters
 maru2 deploy --with environment=production --with version=1.2.3
 
+# Run a task with inputs from a file
+maru2 deploy --with-file config.txt
+
+# Combine file inputs with CLI inputs (CLI takes priority)
+maru2 deploy --with-file config.txt --with environment=production
+
 # List all available tasks
 maru2 --list
 
@@ -56,6 +62,7 @@ Flags:
   -t, --timeout duration      Maximum time allowed for execution (default 1h0m0s)
   -V, --version               Print version number and exit
   -w, --with stringToString   Pass key=value pairs to the called task(s) (default [])
+      --with-file string      Extra text file to parse as key=value pairs to pass to the called task(s)
 ```
 
 ## Discovering Tasks
@@ -113,6 +120,42 @@ $ maru2 notify --with channel=releases --with message="New version deployed"
 
 # Using command output
 $ maru2 build --with timestamp=$(date +%s)
+```
+
+### Passing Inputs from Files
+
+Use the `--with-file` flag to load key=value pairs from a text file:
+
+```sh
+# Load inputs from a file
+$ maru2 deploy --with-file config.txt
+```
+
+The file should contain one key=value pair per line:
+
+```text
+environment=staging
+version=1.2.3
+replicas=3
+```
+
+You can combine `--with-file` with `--with` flags. Values from `--with` take priority over file values:
+
+```sh
+# File has environment=staging, but CLI overrides it to production
+$ maru2 deploy --with-file config.txt --with environment=production
+```
+
+The file format supports the same key=value syntax used by the `$MARU2_OUTPUT` environment variable, including multiline values:
+
+```text
+basic-key=simple-value
+multiline-key<<EOF
+Line 1
+Line 2
+Line 3
+EOF
+another-key=another-value
 ```
 
 ## Previewing Execution with Dry Run
