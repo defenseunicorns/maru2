@@ -19,13 +19,13 @@ The following are some lessons learned, and some cool strategies I picked up in 
 
 ## Libraries used
 
-- end-to-end: `github.com/rogpeppe/go-internal/testscript`
-<!-- pause -->
 - unit: `github.com/stretchr/testify`
+<!-- pause -->
+- in-memory HTTP server: `net/http/httptest`
 <!-- pause -->
 - in-memory OCI registry: `github.com/olareg/olareg`
 <!-- pause -->
-- in-memory HTTP server: `net/http/httptest`
+- end-to-end: `github.com/rogpeppe/go-internal/testscript`
 <!-- pause -->
 - network test control flow: `testing.Short()`/`go test -short=true|false`
 <!-- pause -->
