@@ -47,25 +47,17 @@ func TestGitHubFetcher(t *testing.T) {
 ## Types of Tests
 
 - **normal table tests** for pure functions / simple operations
-  - [](if_test.go)
-  - [](log_test.go)
-  - [](output_test.go)
 <!-- pause -->
 - **table tests w/ complex setup and validation** for testing stateful operations
-  - [](uses/store_test.go)
-  - [](uses_test.go)
 <!-- pause -->
 - **f tests** for operations w/ complex setup and behavior that is not condusive to a table test
-  - [](uses/http_test.go)
-  - [](uses/oci_test.go)
 <!-- pause -->
 - **fuzzing** for pattern validation and input generation
-  - [](schema/v0/pattern_test.go)
 <!-- pause -->
 - **simple tests** for operations even too simple for a table test, or so hard to test I only want a vibe check
-  - [](schema_test.go)
 <!-- pause -->
 - **end-to-end tests** for flag parsing, CLI exit status', and logging UX
+  - [](cmd/main_test.go)
   - [](cmd/root_test.go)
   - [](testdata/call-local.txtar)
   - [](testdata/completion.txtar)
