@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"slices"
 
 	"github.com/expr-lang/expr"
 
@@ -53,27 +52,19 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 		new(func() bool),
 	)
 
-	inputKeys := make([]string, 0, len(with))
-	for k := range with {
-		inputKeys = append(inputKeys, k)
-	}
-	slices.Sort(inputKeys)
-
-	// mirrors TemplateString func
 	inputFunc := expr.Function(
 		"input",
 		func(params ...any) (any, error) {
 			in := params[0].(string)
 			v, ok := with[in]
 			if !ok {
-				return nil, fmt.Errorf("input %q does not exist in %s", in, inputKeys)
+				return nil, nil
 			}
 			return v, nil
 		},
-		new(func(string) (any, error)),
+		new(func(string) any),
 	)
 
-	// mirrors TemplateString func
 	fromFunc := expr.Function(
 		"from",
 		func(params ...any) (any, error) {
@@ -81,16 +72,16 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 			id := params[1].(string)
 			stepOutputs, ok := previousOutputs[stepName]
 			if !ok {
-				return "", fmt.Errorf("no outputs from step %q", stepName)
+				return nil, nil
 			}
 
 			v, ok := stepOutputs[id]
 			if ok {
 				return v, nil
 			}
-			return "", fmt.Errorf("no output %q from step %q", id, stepName)
+			return nil, nil
 		},
-		new(func(string, string) (any, error)),
+		new(func(string, string) any),
 	)
 
 	// mirrors TemplateString presets
@@ -121,5 +112,9 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 		return true, nil
 	}
 
-	return out.(bool), nil // this is safe due to expr.AsBool()
+	val, ok := out.(bool)
+	if !ok {
+		return false, fmt.Errorf("expression did not evaluate to a boolean")
+	}
+	return val, nil
 }

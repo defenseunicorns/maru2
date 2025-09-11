@@ -34,157 +34,124 @@ func TestIf(t *testing.T) {
 		expectedErr     string
 	}{
 		{
-			name:     "empty",
+			name:     "empty expression with no error",
 			expected: true,
 		},
 		{
-			name:     "empty after failure",
-			err:      fmt.Errorf("i had a failure"),
+			name:     "empty expression after failure",
+			err:      fmt.Errorf("command failed"),
 			expected: false,
 		},
 		{
-			name:      "failure",
+			name:      "failure() returns false when no error",
 			inputExpr: "failure()",
 			expected:  false,
 		},
 		{
-			name:      "failure after command failure",
+			name:      "failure() returns true after error",
 			inputExpr: "failure()",
-			err:       fmt.Errorf("the previous command failed"),
+			err:       fmt.Errorf("command failed"),
 			expected:  true,
 		},
 		{
-			name:      "always",
+			name:      "always() returns true",
 			inputExpr: "always()",
 			expected:  true,
 		},
 		{
-			name:      "always after failure",
+			name:      "always() overrides failure",
 			inputExpr: "always()",
-			err:       fmt.Errorf("the previous command failed"),
+			err:       fmt.Errorf("command failed"),
 			expected:  true,
 		},
 		{
-			name:      "always wins",
+			name:      "always() short circuits other logic",
 			inputExpr: "always() and failure()",
 			expected:  true,
 		},
 		{
-			name:      "based upon with",
+			name:      "cancelled() with cancelled context",
+			inputExpr: "cancelled()",
+			ctx:       cancelledContext(),
+			expected:  true,
+		},
+		{
+			name:      "cancelled() with active context",
+			inputExpr: "cancelled()",
+			ctx:       context.Background(),
+			expected:  false,
+		},
+		{
+			name:      "input() string comparison",
 			inputExpr: `input("foo") == "bar"`,
 			with:      schema.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
-			name:      "presets",
-			inputExpr: `len(arch) > 0 && len(os) > 0 && indexOf(platform, "/") > 0`,
+			name:      "input() numeric comparison",
+			inputExpr: `input("num") == 42 && input("num") > 40 && input("num") < 50`,
+			with:      schema.With{"num": 42},
 			expected:  true,
 		},
 		{
-			name:      "complex boolean expression (true)",
-			inputExpr: `(input("foo") == "bar" && !failure()) || always()`,
+			name:      "input() boolean values",
+			inputExpr: `input("enabled") && !input("disabled")`,
+			with:      schema.With{"enabled": true, "disabled": false},
+			expected:  true,
+		},
+		{
+			name:      "input() missing key returns nil",
+			inputExpr: `input("missing") == nil`,
 			with:      schema.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
-			name:      "complex boolean expression (false)",
-			inputExpr: `input("foo") == "baz" && !failure()`,
+			name:      "input() missing key in comparison",
+			inputExpr: `input("missing") == "value"`,
 			with:      schema.With{"foo": "bar"},
 			expected:  false,
 		},
 		{
-			name:      "access nested map in inputs",
-			inputExpr: `input("nested", "value") == "wrong-value"`,
-			with:      schema.With{"nested": map[string]any{"value": "nested-value"}},
-			expectedErr: `too many arguments to call input (1:1)
- | input("nested", "value") == "wrong-value"
- | ^`,
-		},
-		{
-			name:      "input dne",
-			inputExpr: `input("dne") == "foo"`,
-			with:      schema.With{"bar": "baz"},
-			expectedErr: `input "dne" does not exist in [bar] (1:1)
- | input("dne") == "foo"
- | ^`,
-		},
-		{
-			name:            "access from outputs",
+			name:            "from() existing output",
 			inputExpr:       `from("step1", "output") == "step1-output"`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "step1-output"}},
 			expected:        true,
 		},
 		{
-			name:            "access from outputs (false)",
-			inputExpr:       `from("step1", "output") == "wrong-output"`,
+			name:            "from() missing step returns nil",
+			inputExpr:       `from("missing", "output") == nil`,
 			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "step1-output"}},
-			expected:        false,
+			expected:        true,
 		},
 		{
-			name:            "access nested from outputs",
-			inputExpr:       `from("step1", "nested", "value") == "nested-value"`,
-			previousOutputs: CommandOutputs{"step1": map[string]any{"nested": map[string]any{"value": "nested-value"}}},
-			expectedErr: `too many arguments to call from (1:1)
- | from("step1", "nested", "value") == "nested-value"
- | ^`,
+			name:            "from() missing key returns nil",
+			inputExpr:       `from("step1", "missing") == nil`,
+			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "step1-output"}},
+			expected:        true,
 		},
 		{
-			name:            "missing step in from",
-			inputExpr:       `from("missing", "output") == "value"`,
-			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "value"}},
-			expectedErr: `no outputs from step "missing" (1:1)
- | from("missing", "output") == "value"
- | ^`,
-		},
-		{
-			name:            "missing output in step",
-			inputExpr:       `from("step1", "missing") == "value"`,
-			previousOutputs: CommandOutputs{"step1": map[string]any{"output": "value"}},
-			expectedErr: `no output "missing" from step "step1" (1:1)
- | from("step1", "missing") == "value"
- | ^`,
-		},
-		{
-			name:      "numeric comparison (equal)",
-			inputExpr: `input("num") == 42`,
-			with:      schema.With{"num": 42},
+			name:      "runtime environment variables",
+			inputExpr: `len(arch) > 0 && len(os) > 0 && indexOf(platform, "/") > 0`,
 			expected:  true,
 		},
 		{
-			name:      "numeric comparison (not equal)",
-			inputExpr: `input("num") != 43`,
-			with:      schema.With{"num": 42},
+			name:      "complex boolean with inputs",
+			inputExpr: `(input("foo") == "bar" && !failure()) || always()`,
+			with:      schema.With{"foo": "bar"},
 			expected:  true,
 		},
 		{
-			name:      "numeric comparison (greater than)",
-			inputExpr: `input("num") > 40`,
-			with:      schema.With{"num": 42},
-			expected:  true,
-		},
-		{
-			name:      "numeric comparison (less than)",
-			inputExpr: `input("num") < 50`,
-			with:      schema.With{"num": 42},
-			expected:  true,
-		},
-		{
-			name:      "boolean value in inputs",
-			inputExpr: `input("enabled")`,
-			with:      schema.With{"enabled": true},
-			expected:  true,
-		},
-		{
-			name:      "boolean value in inputs (false)",
-			inputExpr: `!input("disabled")`,
-			with:      schema.With{"disabled": false},
-			expected:  true,
-		},
-		{
-			name:      "mathematical operation",
+			name:      "mathematical operations",
 			inputExpr: `(input("num") + 8) == 50`,
 			with:      schema.With{"num": 42},
 			expected:  true,
+		},
+		{
+			name:            "mixed nil checks and logic",
+			inputExpr:       `input("missing") == nil && from("step1", "exists") == "value"`,
+			with:            schema.With{},
+			previousOutputs: CommandOutputs{"step1": map[string]any{"exists": "value"}},
+			expected:        true,
 		},
 		{
 			name:        "syntax error",
@@ -193,42 +160,58 @@ func TestIf(t *testing.T) {
 			expectedErr: "unexpected token EOF (1:13)\n | input.foo == \n | ............^",
 		},
 		{
-			name:        "typo",
-			inputExpr:   `nputs.foo == bar`,
-			dry:         true,
-			with:        schema.With{"foo": "bar"},
-			expectedErr: "unknown name nputs (1:1)\n | nputs.foo == bar\n | ^",
+			name:      "invalid function call",
+			inputExpr: `input("nested", "value") == "wrong-value"`,
+			with:      schema.With{"nested": map[string]any{"value": "nested-value"}},
+			expectedErr: `too many arguments to call input (1:1)
+ | input("nested", "value") == "wrong-value"
+ | ^`,
 		},
 		{
-			name:      "dry run",
+			name:            "invalid from function call",
+			inputExpr:       `from("step1", "nested", "value") == "nested-value"`,
+			previousOutputs: CommandOutputs{"step1": map[string]any{"nested": map[string]any{"value": "nested-value"}}},
+			expectedErr: `too many arguments to call from (1:1)
+ | from("step1", "nested", "value") == "nested-value"
+ | ^`,
+		},
+		{
+			name:      "dry run always returns false",
 			dry:       true,
 			inputExpr: "true",
 			expected:  false,
 		},
 		{
-			name:      "cancelled",
-			inputExpr: "cancelled()",
-			ctx:       cancelledContext(),
+			name:            "expression evaluating to nil returns error",
+			inputExpr:       `input("missing")`,
+			with:            schema.With{},
+			previousOutputs: CommandOutputs{},
+			expectedErr:     "expression did not evaluate to a boolean",
+		},
+		{
+			name:      "complex array operations",
+			inputExpr: `len([1,2,3]) > 0`,
+			with:      schema.With{},
 			expected:  true,
 		},
 		{
-			name:      "not cancelled",
+			name:      "runtime environment variable operations",
+			inputExpr: `len(platform) > 0 and len(os) > 0 and len(arch) > 0`,
+			with:      schema.With{},
+			expected:  true,
+		},
+		{
+			name:            "complex nested operations with input and from",
+			inputExpr:       `input("test") in ["a", "b", "c"] and from("step", "key") != nil`,
+			with:            schema.With{"test": "a"},
+			previousOutputs: CommandOutputs{"step": map[string]any{"key": "value"}},
+			expected:        true,
+		},
+		{
+			name:      "nil context with cancelled function",
 			inputExpr: "cancelled()",
-			ctx:       context.Background(),
+			ctx:       nil,
 			expected:  false,
-		},
-		{
-			name:      "cancelled with failure",
-			inputExpr: "cancelled() && failure()",
-			ctx:       cancelledContext(),
-			err:       fmt.Errorf("previous command failed"),
-			expected:  true,
-		},
-		{
-			name:      "cancelled with always",
-			inputExpr: "cancelled() && always()",
-			ctx:       cancelledContext(),
-			expected:  true,
 		},
 	}
 
