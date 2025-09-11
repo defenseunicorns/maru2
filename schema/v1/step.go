@@ -288,7 +288,7 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 		Description: "Additional parameters for the step/task call\n\nSee https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#passing-inputs",
 		MinItems:    &single,
 		PatternProperties: map[string]*jsonschema.Schema{
-			EnvVariablePattern.String(): {
+			InputNamePattern.String(): {
 				OneOf: []*jsonschema.Schema{
 					{
 						Type: "string",
