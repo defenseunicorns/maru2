@@ -119,5 +119,9 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 		return true, nil
 	}
 
-	return out.(bool), nil // this is safe due to expr.AsBool()
+	ok, val := out.(bool)
+	if !ok {
+		return false, fmt.Errorf("expression did not evaluate to a boolean")
+	}
+	return val, nil
 }
