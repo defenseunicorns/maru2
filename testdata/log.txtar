@@ -2,7 +2,7 @@
 stderr 'ERRO invalid level: "dne"'
 
 exec maru2 --log-level warn
-cmp stderr ''
+stderr ''
 cmp stdout stdout.txt
 
 -- stdout.txt --
