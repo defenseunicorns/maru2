@@ -21,6 +21,10 @@ import (
 // Uses chroma for syntax highlighting with adaptive color schemes (light/dark theme support)
 // Falls back to plain text output when NO_COLOR is set or highlighting fails
 func printScript(logger *log.Logger, lang, script string) {
+	if logger.GetLevel() > log.InfoLevel {
+		return
+	}
+
 	script = strings.TrimSpace(script)
 
 	if termenv.EnvNoColor() {
@@ -64,6 +68,10 @@ func printScript(logger *log.Logger, lang, script string) {
 // Marshals the builtin With map as YAML and applies syntax highlighting for better readability
 // Used in dry-run mode to preview builtin task execution without running commands
 func printBuiltin(logger *log.Logger, builtin schema.With) {
+	if logger.GetLevel() > log.InfoLevel {
+		return
+	}
+
 	b, err := yaml.MarshalWithOptions(v1.Step{With: builtin}, yaml.Indent(2), yaml.IndentSequence(true))
 	if err != nil {
 		logger.Debugf("failed to marshal builtin: %v", err)
