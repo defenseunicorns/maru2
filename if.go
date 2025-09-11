@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
-	"slices"
 
 	"github.com/expr-lang/expr"
 
@@ -52,12 +51,6 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 		},
 		new(func() bool),
 	)
-
-	inputKeys := make([]string, 0, len(with))
-	for k := range with {
-		inputKeys = append(inputKeys, k)
-	}
-	slices.Sort(inputKeys)
 
 	inputFunc := expr.Function(
 		"input",
