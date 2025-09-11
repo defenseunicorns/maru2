@@ -194,7 +194,7 @@ func TestRun(t *testing.T) {
 			expectedError: "signal: killed",
 		},
 		{
-			name: "ShouldRun error with no prior error",
+			name: "ShouldRun with missing input returns false",
 			workflow: v1.Workflow{
 				Tasks: v1.TaskMap{
 					"test": v1.Task{
@@ -207,9 +207,8 @@ func TestRun(t *testing.T) {
 					},
 				},
 			},
-			taskName:      "test",
-			with:          schema.With{},
-			expectedError: "input \"nonexistent\" does not exist in [] (1:1)\n | input(\"nonexistent\")\n | ^",
+			taskName: "test",
+			with:     schema.With{},
 		},
 		{
 			name: "ShouldRun error with prior error (logs but continues)",
