@@ -201,7 +201,7 @@ func TestRun(t *testing.T) {
 						Steps: []v1.Step{
 							{
 								Run: "echo hello",
-								If:  "input(\"nonexistent\")",
+								If:  "input(\"nonexistent\") != nil",
 							},
 						},
 					},
@@ -222,7 +222,7 @@ func TestRun(t *testing.T) {
 							},
 							{
 								Run: "echo \"result=handled\" >> $MARU2_OUTPUT",
-								If:  "input(\"nonexistent\")",
+								If:  "input(\"nonexistent\") != nil",
 								ID:  "error-step",
 							},
 							{

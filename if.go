@@ -112,7 +112,7 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 		return true, nil
 	}
 
-	ok, val := out.(bool)
+	val, ok := out.(bool)
 	if !ok {
 		return false, fmt.Errorf("expression did not evaluate to a boolean")
 	}

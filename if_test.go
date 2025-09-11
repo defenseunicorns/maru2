@@ -182,11 +182,36 @@ func TestIf(t *testing.T) {
 			expected:  false,
 		},
 		{
-			name:            "expression evaluating to nil returns false",
+			name:            "expression evaluating to nil returns error",
 			inputExpr:       `input("missing")`,
 			with:            schema.With{},
 			previousOutputs: CommandOutputs{},
-			expected:        false,
+			expectedErr:     "expression did not evaluate to a boolean",
+		},
+		{
+			name:      "complex array operations",
+			inputExpr: `len([1,2,3]) > 0`,
+			with:      schema.With{},
+			expected:  true,
+		},
+		{
+			name:      "runtime environment variable operations",
+			inputExpr: `len(platform) > 0 and len(os) > 0 and len(arch) > 0`,
+			with:      schema.With{},
+			expected:  true,
+		},
+		{
+			name:            "complex nested operations with input and from",
+			inputExpr:       `input("test") in ["a", "b", "c"] and from("step", "key") != nil`,
+			with:            schema.With{"test": "a"},
+			previousOutputs: CommandOutputs{"step": map[string]any{"key": "value"}},
+			expected:        true,
+		},
+		{
+			name:      "nil context with cancelled function",
+			inputExpr: "cancelled()",
+			ctx:       nil,
+			expected:  false,
 		},
 	}
 
