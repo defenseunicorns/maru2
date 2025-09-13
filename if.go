@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/charmbracelet/log"
 	"github.com/expr-lang/expr"
 
 	"github.com/defenseunicorns/maru2/schema"
@@ -96,10 +97,6 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 		return false, err
 	}
 
-	if dry {
-		return false, nil
-	}
-
 	out, err := expr.Run(
 		program,
 		env{OS: runtime.GOOS, Arch: runtime.GOARCH, Platform: fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)},
@@ -116,5 +113,11 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 	if !ok {
 		return false, fmt.Errorf("expression did not evaluate to a boolean")
 	}
+
+	if dry && !val {
+		log.FromContext(ctx).Warnf("step would be skipped (condition '%s' is false) but executing anyway in dry-run mode", expression)
+		return true, nil
+	}
+
 	return val, nil
 }
