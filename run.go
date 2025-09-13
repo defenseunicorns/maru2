@@ -113,7 +113,7 @@ func Run(
 				}
 				return err
 			}
-			if !shouldRun && !dry {
+			if !shouldRun {
 				sub.Debug("completed", "skipped", true)
 				return nil
 			}
