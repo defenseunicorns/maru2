@@ -99,7 +99,6 @@ func Run(
 	defer cancel()
 
 	var taskCancelledLogOnce sync.Once
-	var errFromRun bool
 
 	for i, step := range task.Steps {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
@@ -150,9 +149,6 @@ func Run(
 				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, cwd, environVars, dry)
 			} else if step.Run != "" {
 				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, cwd, environVars, dry)
-				if err != nil {
-					errFromRun = true
-				}
 			}
 
 			if err != nil {
@@ -176,9 +172,6 @@ func Run(
 
 		if err != nil {
 			if firstError == nil {
-				if errFromRun {
-					logger.Error(err)
-				}
 				firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
 			} else {
 				sub.Warn("failure during error handling", "err", err)
