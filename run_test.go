@@ -1187,6 +1187,25 @@ func TestHandleRunStep(t *testing.T) {
 			withDefaults: schema.With{},
 			expectedLog:  "echo \"SET_VAR: '$SET_VAR', UNSET_VAR: '$UNSET_VAR'\" >/dev/null\n",
 		},
+		{
+			name: "show property false - script is hidden",
+			step: v1.Step{
+				Run:  "echo 'hidden script'",
+				Show: func() *bool { b := false; return &b }(),
+			},
+			withDefaults: schema.With{},
+			expectedLog:  "",
+		},
+		{
+			name: "show property false in dry run - script is shown anyway",
+			step: v1.Step{
+				Run:  "echo 'dry run shows script'",
+				Show: func() *bool { b := false; return &b }(),
+			},
+			withDefaults: schema.With{},
+			dry:          true,
+			expectedLog:  "echo 'dry run shows script'\n",
+		},
 	}
 
 	t.Setenv("NO_COLOR", "true")
