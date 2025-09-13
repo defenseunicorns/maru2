@@ -206,7 +206,9 @@ func handleRunStep(
 		return nil, err
 	}
 
-	printScript(logger, step.Shell, script)
+	if dry || step.Show == nil || *step.Show == true {
+		printScript(logger, step.Shell, script)
+	}
 	if dry {
 		return nil, nil
 	}

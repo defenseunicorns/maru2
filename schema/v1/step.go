@@ -39,10 +39,12 @@ type Step struct {
 	Shell string `json:"shell,omitempty"`
 	// Set how long to run the command before timing out
 	Timeout string `json:"timeout,omitempty"`
-	// Mute controls whether the rendered script, STDOUT and STDERR are printed
+	// Mute controls whether the script's STDOUT and STDERR are printed
 	//
 	// it is similar to set +x and 2>&1 >/dev/null
 	Mute bool `json:"mute,omitempty"`
+	// Show controls whether the rendered script is printed
+	Show *bool `json:"show,omitempty"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a step
@@ -130,6 +132,11 @@ See https://pkg.go.dev/time#ParseDuration for more information.`,
 	props.Set("mute", &jsonschema.Schema{
 		Type:        "boolean",
 		Description: "Mute STDOUT and STDERR for the current script. Has no effect on uses.",
+	})
+	props.Set("show", &jsonschema.Schema{
+		Type:        "boolean",
+		Description: "Show the rendered script before execution. Has no effect on uses.",
+		Default:     true,
 	})
 
 	runProps := jsonschema.NewProperties()
