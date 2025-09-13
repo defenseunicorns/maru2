@@ -13,12 +13,14 @@ tasks:
       timeout: 2s
 -- stderr.txt --
 sleep 10
+ERRO signal: killed
 
 ERRO task timed out
 ERRO signal: killed
 ERRO at sleep[0] (file:tasks.yaml)
 -- stderr-shorter.txt --
 sleep 10
+ERRO signal: killed
 
 ERRO signal: killed
   traceback (most recent call first)=
