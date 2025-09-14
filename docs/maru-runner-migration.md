@@ -593,6 +593,7 @@ The token is pulled from the `PEANUT_BUTTER` environment variable automatically.
 | Dry run capability            | ❌                | ✅ ([preview execution](./cli.md#previewing-execution-with-dry-run))               |
 | Environment variable defaults | ❌                | ✅ ([default-from-env](./syntax.md#default-values-from-environment-variables))     |
 | Task-level input scoping      | ~                 | ✅ ([task-level inputs](./syntax.md#defining-input-parameters))                    |
+| Script display control        | ❌                | ✅ ([show property](./syntax.md#controlling-script-display-with-show))             |
 
 ## Enhanced Features in maru2
 
@@ -625,6 +626,10 @@ Validate inputs with regular expressions to ensure they meet specific format req
 ### Schema Validation
 
 Enable real-time validation during editing with JSON Schema support, providing immediate feedback for syntax errors. Learn more about [schema validation](./syntax.md#schema-version).
+
+### Script Display Control
+
+Control whether scripts are displayed before execution with the `show` property, providing cleaner output for production workflows while maintaining full visibility during dry-run development. See [script display control documentation](./syntax.md#controlling-script-display-with-show) for details.
 
 ## Conclusion
 

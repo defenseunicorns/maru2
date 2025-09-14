@@ -173,8 +173,9 @@ When you use `--dry-run`, Maru2:
 1. Parses and validates the workflow file
 2. Resolves all `uses` imports (including remote workflows)
 3. Processes all `with` expressions and templates
-4. Shows the commands that would run
-5. Doesn't actually execute any commands
+4. Shows the commands that would run (regardless of `show` settings)
+5. Executes all steps, even those with `if` conditions that would normally be skipped
+6. Doesn't actually execute any commands
 
 ### Understanding Template Output in Dry Run
 
@@ -187,6 +188,20 @@ echo "The value is ❯ from step-id output-key ❮"
 ```
 
 This visual indicator helps you identify dynamic parts of your workflow that depend on previous step outputs.
+
+### Dry Run and Conditional Steps
+
+In dry-run mode, Maru2 executes all steps to give you a complete preview of the workflow, even those that would normally be skipped due to `if` conditions:
+
+```sh
+$ maru2 conditional-task --dry-run
+
+echo "This always runs"
+WARN step would be skipped (condition 'input("dne") == true' is false) but executing anyway in dry-run mode
+echo "This would be skipped but runs in dry-run"
+```
+
+This behavior helps you understand the full scope of your workflow and verify that all steps are properly configured.
 
 ## System config
 

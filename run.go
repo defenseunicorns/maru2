@@ -173,6 +173,10 @@ func Run(
 		if err != nil {
 			if firstError == nil {
 				firstError = addTrace(err, fmt.Sprintf("at %s[%d] (%s)", taskName, i, origin))
+				// log the first error if it was caused by a command execution
+				if step.Run != "" {
+					logger.Error(err)
+				}
 			} else {
 				sub.Warn("failure during error handling", "err", err)
 			}
@@ -202,7 +206,9 @@ func handleRunStep(
 		return nil, err
 	}
 
-	printScript(logger, step.Shell, script)
+	if dry || step.Show == nil || *step.Show == true {
+		printScript(logger, step.Shell, script)
+	}
 	if dry {
 		return nil, nil
 	}

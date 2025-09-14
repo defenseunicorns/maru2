@@ -476,6 +476,11 @@
                   "type": "boolean",
                   "description": "Mute STDOUT and STDERR for the current script. Has no effect on uses."
                 },
+                "show": {
+                  "type": "boolean",
+                  "description": "Show the rendered script before execution. Has no effect on uses.",
+                  "default": true
+                },
                 "with": {
                   "type": "object"
                 }

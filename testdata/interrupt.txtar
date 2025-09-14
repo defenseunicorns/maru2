@@ -15,6 +15,7 @@ tasks:
     - run: echo "i should not run"
 -- stderr.txt --
 sleep 5
+ERRO signal: killed
 WARN task cancelled step=sleep[1]
 echo "cancelled"
 

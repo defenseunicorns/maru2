@@ -1,0 +1,28 @@
+exec maru2 test-show
+cmp stderr stderr.txt
+cmp stdout stdout.txt
+
+exec maru2 test-show --dry-run
+cmp stderr stderr-dry.txt
+! stdout .
+
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  test-show:
+    steps:
+      - run: echo "Default shows script"
+      - run: echo "Hidden script output"
+        show: false
+      - run: echo "Visible again"
+-- stderr.txt --
+echo "Default shows script"
+echo "Visible again"
+-- stderr-dry.txt --
+echo "Default shows script"
+echo "Hidden script output"
+echo "Visible again"
+-- stdout.txt --
+Default shows script
+Hidden script output
+Visible again

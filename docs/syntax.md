@@ -197,9 +197,43 @@ See [https://pkg.go.dev/time#Duration](https://pkg.go.dev/time#Duration) for mor
 
 When a step times out, the task will fail, and any subsequent steps that do not explicitly handle failures (e.g., with `if: always()` or `if: failure()`) will be skipped.
 
+## Controlling script display with `show`
+
+By default, Maru2 displays the rendered script before executing it. You can control this behavior using the `show` field:
+
+```yaml
+schema-version: v1
+tasks:
+  example:
+    steps:
+      - run: echo "This script will be shown"
+        # show: true (default)
+      - run: echo "This script will be hidden"
+        show: false
+      - run: echo "This script will be shown again"
+```
+
+When `show` is set to `false`, the script content is not displayed before execution, but the command still runs normally and produces output.
+
+> **Note**: In dry-run mode (`--dry-run`), all scripts are shown regardless of the `show` setting to help you preview what would be executed.
+
 ## Muting terminal output with `mute`
 
-You can suppress a step's output using the `mute` field. When `mute` is set to `true`, the step's stdout and stderr will not be displayed, though the step will still execute and can still set outputs.
+You can suppress a step's output using the `mute` field. When `mute` is set to `true`, the step's stdout and stderr will not be displayed, though the step will still execute and can still set outputs. The `mute` field only affects command output, not the script display (use `show: false` to hide the script itself).
+
+```yaml
+schema-version: v1
+tasks:
+  example:
+    steps:
+      - run: echo "Script shown, output hidden"
+        mute: true
+      - run: echo "Script hidden, output shown"
+        show: false
+      - run: echo "Both script and output hidden"
+        show: false
+        mute: true
+```
 
 ## Defining input parameters
 
@@ -714,6 +748,8 @@ Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: th
 > **Note**: The behavior of `input()` and `from()` in `if` expressions differs from their behavior in templates (like `${{ input "name" }}`). In `if` expressions, these functions return `nil` when values don't exist, allowing you to check for missing values gracefully. In templates, missing values cause errors and prevent the step from executing.
 
 By default (without an `if` directive), steps will only run if all previous steps have succeeded.
+
+> **Note**: In dry-run mode, steps with `if` conditions that evaluate to `false` will still be executed (with a warning) to help you preview the complete workflow execution path.
 
 ```yaml
 schema-version: v1

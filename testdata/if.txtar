@@ -30,6 +30,7 @@ tasks:
 echo 0
 echo 2
 exit 1
+ERRO exit status 1
 echo 4
 echo 6
 echo 7

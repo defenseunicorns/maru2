@@ -6,8 +6,10 @@ package maru2
 import (
 	"context"
 	"fmt"
+	"io"
 	"testing"
 
+	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -176,10 +178,40 @@ func TestIf(t *testing.T) {
  | ^`,
 		},
 		{
-			name:      "dry run always returns false",
+			name:      "dry run with true expression returns true",
 			dry:       true,
 			inputExpr: "true",
-			expected:  false,
+			expected:  true,
+		},
+		{
+			name:      "dry run with false expression returns true (override)",
+			dry:       true,
+			inputExpr: "false",
+			expected:  true,
+		},
+		{
+			name:      "dry run with always() returns true",
+			dry:       true,
+			inputExpr: "always()",
+			expected:  true,
+		},
+		{
+			name:      "dry run with failure() after error returns true (override)",
+			dry:       true,
+			inputExpr: "failure()",
+			err:       fmt.Errorf("command failed"),
+			expected:  true,
+		},
+		{
+			name:     "dry run with empty expression and no error returns true",
+			dry:      true,
+			expected: true,
+		},
+		{
+			name:     "dry run with empty expression after failure returns false",
+			dry:      true,
+			err:      fmt.Errorf("command failed"),
+			expected: false,
 		},
 		{
 			name:            "expression evaluating to nil returns error",
@@ -210,14 +242,18 @@ func TestIf(t *testing.T) {
 		{
 			name:      "nil context with cancelled function",
 			inputExpr: "cancelled()",
-			ctx:       nil,
 			expected:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := ShouldRun(tt.ctx, tt.inputExpr, tt.err, tt.with, tt.previousOutputs, tt.dry)
+			ctx := tt.ctx
+			if tt.ctx == nil {
+				ctx = log.WithContext(t.Context(), log.New(io.Discard))
+			}
+
+			actual, err := ShouldRun(ctx, tt.inputExpr, tt.err, tt.with, tt.previousOutputs, tt.dry)
 
 			if tt.expectedErr != "" {
 				require.EqualError(t, err, tt.expectedErr)
