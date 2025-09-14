@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0 (2025-09-14)
+
+## What's Changed
+* fix: wrong regex on with by @Noxsios in https://github.com/defenseunicorns/maru2/pull/143
+* refactor: hide rendered output if --log-level is above info by @Noxsios in https://github.com/defenseunicorns/maru2/pull/145
+* refactor: allow nil values in if evaluation by @Noxsios in https://github.com/defenseunicorns/maru2/pull/144
+* feat: increase terminal clarity by @Noxsios in https://github.com/defenseunicorns/maru2/pull/148
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.6.0...v0.7.0
+
 ## 0.6.0 (2025-09-10)
 
 ## What's Changed
