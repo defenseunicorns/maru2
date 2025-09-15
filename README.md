@@ -11,15 +11,14 @@
 A simple task runner.
 
 > [!CAUTION]
-> This project is still in its early stages. Expect breaking changes.
+> This project is still in its early stages. Some breaking changes are to be expected.
 
 ## Installation
 
 via brew:
 
 ```sh
-brew tap defenseunicorns/tap
-brew install maru2
+brew install defenseunicorns/tap/maru2
 ```
 
 via curl:
