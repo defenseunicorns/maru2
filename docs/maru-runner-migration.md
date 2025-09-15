@@ -150,8 +150,8 @@ Key differences:
 
 - Variables are now defined as [`inputs`](./syntax.md#defining-input-parameters) with more descriptive properties
 - Inputs are by default `required: true` and task scoped
-- Inputs are weak type safe when a `default` is set.
-  - ie. if a default is of type `int`, all callers must pass a value that can be coersed to an `int`
+- Inputs are weakly type safe when a `default` is set.
+  - i.e. if a default is of type `int`, all callers must pass a value that can be coerced to an `int`
 - Inputs can be any primitive type (`string`, `int`, `bool`)
 - Access inputs using [`${{ input "input-name" }}`](./syntax.md#passing-inputs) expression syntax
 - Environment variables can be used as defaults with [`default-from-env: ENV_VAR_NAME`](./syntax.md#default-values-from-environment-variables)

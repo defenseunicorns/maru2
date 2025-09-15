@@ -44,7 +44,7 @@ aliases: {}
 
 [Fetch Policy](./cli.md#fetch-policy) and [Aliases](./syntax.md#package-url-aliases).
 
-Note: aliases configured via the config file only affect `-f/--from` alias resolution.
+Note: Aliases defined in the global configuration file apply only to the `-f`/`--from` flag for resolving the main workflow file. They are not available for `uses:` steps within a workflow. For aliases used in `uses:`, define them within the workflow file's `aliases` block.
 
 ## Future Configuration Options
 
