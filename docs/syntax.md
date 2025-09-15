@@ -57,7 +57,11 @@ schema-version: v1
 
 Currently, `v1` is the recommended version (with `v0` still supported for backwards compatibility). This required property enables schema validation and will support future migrations as the workflow syntax evolves.
 
-## Task names and descriptions
+## Tasks
+
+Tasks are the core building blocks of a Maru2 workflow. They are defined as keys within the top-level `tasks` map.
+
+### Task names and descriptions
 
 Task names must follow the following regex: `^[_a-zA-Z][a-zA-Z0-9_-]*$`.
 
@@ -106,10 +110,14 @@ tasks:
 
 Note that the same naming rules apply to step IDs. This consistency makes it easier to work with both task names and step IDs throughout your workflows.
 
-## `run` vs `uses`
+## Steps
 
-- `run`: runs a shell command/script
-- `uses`: calls another task / executes a builtin
+Steps are the individual commands or actions that make up a task. They are executed sequentially within a task.
+
+### `run` vs `uses`
+
+- `run`: Executes a shell command or script.
+- `uses`: References another task (in the same file, a local file, or a remote source) or a [built-in task](./builtins.md).
 
 Both can be used interchangeably within a task, and interoperate cleanly with `with`.
 
@@ -409,13 +417,10 @@ maru2 hello
 
 ## Run a task from a local file
 
-Calling a task from a local file takes two arguments: the file path (required) and the task name (optional).
+Calling a task from a local file uses the format `file:<relative-filepath>?task=<taskname>`.
 
-`file:<relative filepath>?task=<taskname>`
-
-If the filepath is a directory, `tasks.yaml` is appended to the path.
-
-If the task name is not provided, the `default` task is run.
+- The file path is required and cannot be a directory.
+- If the task name is not provided, the `default` task is run.
 
 ```yaml
 schema-version: v1
@@ -449,7 +454,7 @@ maru2 echo --with message="Hello, World!"
 
 ## Run a task from a remote file
 
-If a `uses` reference is not within the workflow, nor a `file:` reference, it is parsed as a URL, then fetched based upon the URL protocol scheme. If no task is specifed, the `task` query parameter is set to `default`.
+If a `uses` reference is not a local task or a `file:` reference, it is parsed as a URL and fetched based on its protocol scheme. If no task is specified in the URL, the `task` query parameter defaults to `default`.
 
 - `pkg:`: leverages the [package-url spec](https://github.com/package-url/purl-spec) to create authenticated Go clients for GitHub / GitLab. Has access to [aliases](package-url-aliases), by default uses `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables for GitHub / GitLab authentication.
 - `http:/https:`: leverages standard HTTP GET requests for raw content.
@@ -516,21 +521,21 @@ tasks:
 
 The alias `gl` will be resolved to `gitlab` with the base URL qualifier set to `https://gitlab.example.com`.
 
-Maru2 supports two types of aliases:
+Maru2 supports two types of aliases, which can be defined in the global `~/.maru2/config.yaml` file or within a workflow file's `aliases` block.
 
 ### Package URL Aliases
 
-Remote aliases reference external repositories (GitHub, GitLab, etc.) and have the following properties:
+Package URL aliases create shortcuts for remote repositories (e.g., GitHub, GitLab). They have the following properties:
 
-- `type`: The package URL type (github, gitlab, etc.) - **required**
-- `base-url`: (Optional) Base URL for the repository (useful for self-hosted instances)
-- `token-from-env`: (Optional) Environment variable name containing an access token. Environment variable names must start with a letter or underscore, and can contain letters, numbers, and underscores (e.g., `MY_ENV_VAR`, `_ANOTHER_VAR`).
+- `type` (**required**): The package URL type (`github`, `gitlab`, etc.).
+- `base-url` (optional): The base URL for the repository, useful for self-hosted instances.
+- `token-from-env` (optional): The name of an environment variable containing an access token.
 
 ### Local File Aliases
 
-Local file aliases reference workflow files within your project and have the following properties:
+Local file aliases create shortcuts for local workflow files. They have the following properties:
 
-- `path`: Relative path to a local workflow file - **required**
+- `path` (**required**): The relative path to a local workflow file.
 
 Local aliases allow you to create shorthand references to workflow files in your project:
 

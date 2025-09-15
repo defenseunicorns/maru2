@@ -13,7 +13,7 @@ At the very minimum, ./syntax.md MUST be updated to showcase the `oci:` uses syn
 
 ## The `maru2-publish` Command
 
-The `maru2-publish` command packs your workflow file(s) and any `uses:` references into an OCI artifact and pushes it to a registry.
+The `maru2-publish` command is a standalone utility for publishing workflows. It packs your workflow file(s) and any local `uses:` references into an OCI artifact and pushes it to a registry.
 
 ### Installation
 
@@ -68,7 +68,10 @@ tasks:
 To publish this workflow, you would run:
 
 ```sh
+# login to the registry w/ your preferred client
 zarf tools registry login staging.uds.sh/public/my-workflow:latest ...
+
+# publish
 maru2-publish staging.uds.sh/public/my-workflow:latest -e tasks.yaml
 ```
 
