@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1 (2025-09-15)
+
+## What's Changed
+* docs: update and cleanup docs for consistency by @Noxsios in https://github.com/defenseunicorns/maru2/pull/149
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.7.0...v0.7.1
+
 ## 0.7.0 (2025-09-14)
 
 ## What's Changed
