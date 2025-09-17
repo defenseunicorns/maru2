@@ -5,7 +5,7 @@
 
 export CGO_ENABLED=0
 
-all: maru2 maru2-publish maru2-mcp-server maru2-mcp-client ## Build all binaries
+all: maru2 maru2-publish maru2-mcp ## Build all binaries
 
 SCHEMA_DEPS := schema.go schema/*.go builtins/*.go
 
@@ -24,11 +24,8 @@ schema/v1/schema.json: $(SCHEMA_DEPS) schema/v1/*.go
 maru2-publish: ## Build maru2-publish binary
 	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2-publish
 
-maru2-mcp-server: ## Build maru2-mcp-server binary
-	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2-mcp-server
-
-maru2-mcp-client: ## Build maru2-mcp-client binary
-	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2-mcp-client
+maru2-mcp: ## Build maru2-mcp binary
+	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2-mcp
 
 lint: ## Run linters
 	golangci-lint run ./...
