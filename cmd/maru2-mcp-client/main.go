@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
+// Package main provides an MCP client for testing maru2 MCP server functionality.
 package main
 
 import (
@@ -6,8 +10,9 @@ import (
 	"os/exec"
 
 	"github.com/charmbracelet/log"
-	maru2cmd "github.com/defenseunicorns/maru2/cmd"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	maru2cmd "github.com/defenseunicorns/maru2/cmd"
 )
 
 func main() {
