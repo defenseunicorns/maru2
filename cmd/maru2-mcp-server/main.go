@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
+// Package main provides an MCP server that exposes maru2 functionality via the Model Context Protocol.
 package main
 
 import (
@@ -5,9 +9,10 @@ import (
 	"os"
 
 	"github.com/charmbracelet/log"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	maru2cmd "github.com/defenseunicorns/maru2/cmd"
 	mcptools "github.com/defenseunicorns/maru2/mcp-tools"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 func main() {
