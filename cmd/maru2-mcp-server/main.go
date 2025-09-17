@@ -13,6 +13,8 @@ import (
 func main() {
 	logger := log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
+		Prefix:          os.Getenv("MARU2_MCP_SERVER_LOG_PREFIX"),
+		Level:           log.DebugLevel,
 	})
 
 	logger.SetStyles(maru2cmd.DefaultStyles())
