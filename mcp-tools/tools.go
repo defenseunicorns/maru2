@@ -2,7 +2,6 @@ package mcptools
 
 import (
 	"context"
-	"net/url"
 
 	"github.com/charmbracelet/log"
 	"github.com/defenseunicorns/maru2"
@@ -21,26 +20,31 @@ type ValidateSchemaOutput struct {
 
 func ValidateSchema(ctx context.Context, req *mcp.CallToolRequest, input ValidateSchemaInput) (*mcp.CallToolResult, ValidateSchemaOutput, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("validate schema called")
 
-	uri, err := url.Parse(input.Location)
+	uri, err := uses.ResolveRelative(nil, input.Location, nil)
 	if err != nil {
+		logger.Error(err)
 		return nil, ValidateSchemaOutput{}, err
 	}
 
 	svc, err := uses.NewFetcherService(uses.WithFetchPolicy(uses.FetchPolicyAlways))
 	if err != nil {
+		logger.Error(err)
 		return nil, ValidateSchemaOutput{}, err
 	}
 
 	wf, err := maru2.Fetch(ctx, svc, uri)
 	if err != nil {
+		logger.Error(err)
 		return nil, ValidateSchemaOutput{}, err
 	}
 
 	if err := v1.Validate(wf); err != nil {
+		logger.Error(err)
 		return nil, ValidateSchemaOutput{Error: err}, nil
 	}
+
+	logger.Info("valid workflow", "location", uri)
 
 	return nil, ValidateSchemaOutput{}, nil
 }

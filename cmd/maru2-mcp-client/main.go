@@ -13,6 +13,7 @@ import (
 func main() {
 	logger := log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
+		Prefix:          "client", // TODO: remove me prob
 	})
 
 	logger.SetStyles(maru2cmd.DefaultStyles())
@@ -21,7 +22,11 @@ func main() {
 
 	client := mcp.NewClient(&mcp.Implementation{Name: "mcp-client", Version: "v1.0.0"}, nil)
 
-	transport := &mcp.CommandTransport{Command: exec.Command("maru2-mcp-server")}
+	command := exec.Command("maru2-mcp-server")
+	command.Env = append(os.Environ(), "MARU2_MCP_SERVER_LOG_PREFIX=server") // used for pretty'fying the logs
+	command.Stderr = os.Stderr                                               // used for debugging using the logger
+
+	transport := &mcp.CommandTransport{Command: command}
 
 	session, err := client.Connect(ctx, transport, nil)
 	if err != nil {
@@ -42,6 +47,6 @@ func main() {
 		logger.Fatal("tool failed")
 	}
 	for _, c := range res.Content {
-		logger.Print(c.(*mcp.TextContent).Text)
+		logger.Info(c.(*mcp.TextContent).Text)
 	}
 }
