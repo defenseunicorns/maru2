@@ -81,17 +81,22 @@ func main() {
 		// call validate
 		params := &mcp.CallToolParams{
 			Name:      "validate-schema",
-			Arguments: map[string]any{"location": "testdata/simple.yaml"},
+			Arguments: map[string]any{"location": "file:testdata/simple.yaml"},
 		}
 		res, err := session.CallTool(ctx, params)
 		if err != nil {
 			logger.Fatalf("CallTool failed: %v", err)
 		}
 		if res.IsError {
+			for _, c := range res.Content {
+				logger.Error(c.(*mcp.TextContent).Text)
+			}
 			logger.Fatal("tool failed")
 		}
 		for _, c := range res.Content {
-			logger.Info(c.(*mcp.TextContent).Text)
+			// assume its a text content for now
+			tc := c.(*mcp.TextContent)
+			logger.Info(params.Name, "args", params.Arguments, "result", tc.Text)
 		}
 	case "server":
 		impl := &mcp.Implementation{Name: "maru2-mcp-server", Version: "v1.0.0"}
