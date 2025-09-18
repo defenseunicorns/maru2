@@ -6,9 +6,12 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -32,6 +35,12 @@ func main() {
 
 	logger = logger.WithPrefix(mode)
 	ctx := log.WithContext(context.Background(), logger)
+
+	// logger.Warn("this program is currently marked ALPHA and is subject to breaking changes w/o warning")
+
+	impl := &mcp.Implementation{Name: "maru2", Version: "v1.0.0"}
+	server := mcp.NewServer(impl, nil)
+	mcptools.AddAll(server)
 
 	// later do this w/ cobra commands, but let's keep it simple for now
 	switch mode {
@@ -74,11 +83,33 @@ func main() {
 			logger.Info(c.(*mcp.TextContent).Text)
 		}
 	case "server":
-		logger.Fatal("not implemented")
-	case "cli":
-		server := mcp.NewServer(&mcp.Implementation{Name: "maru2", Version: "v1.0.0"}, nil)
+		handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
+			return server
+		}, nil)
 
-		mcp.AddTool(server, &mcp.Tool{Name: "validate-schema", Description: "Used to validate the YAML/JSON schema of a maru2 workflow"}, mcptools.ValidateSchema)
+		srv := &http.Server{
+			Addr:    "0.0.0.0:4371",
+			Handler: handler,
+		}
+
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt)
+
+		go func() {
+			logger.Info("listening", "addr", srv.Addr)
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.Fatalf("ListenAndServe: %v", err)
+			}
+		}()
+
+		<-stop
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			logger.Fatalf("Shutdown error: %v", err)
+		}
+
+	case "cli":
 		if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 			logger.Fatal(err)
 		}

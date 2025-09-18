@@ -15,6 +15,14 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
+// AddAll registeres all of the maru2 specific tools to the given MCP server
+func AddAll(s *mcp.Server) {
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "validate-schema",
+		Description: "Used to validate the YAML/JSON schema of a maru2 workflow",
+	}, ValidateSchema)
+}
+
 // ValidateSchemaInput represents the input parameters for the validate-schema MCP tool.
 type ValidateSchemaInput struct {
 	Location string `json:"location"`
