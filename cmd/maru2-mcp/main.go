@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"net/http"
 	"os"
 	"os/exec"
@@ -45,21 +46,35 @@ func main() {
 	// later do this w/ cobra commands, but let's keep it simple for now
 	switch mode {
 	case "client":
-		client := mcp.NewClient(&mcp.Implementation{Name: "mcp-client", Version: "v1.0.0"}, nil)
+		clientFlags := flag.NewFlagSet("mcp-client", flag.ExitOnError)
 
-		self, err := os.Executable()
-		if err != nil {
+		var s string
+		clientFlags.StringVar(&s, "s", "", "The address and port of the maru2-mcp server (example: http://localhost:4371)")
+
+		if err := clientFlags.Parse(os.Args[2:]); err != nil {
 			logger.Fatal(err)
 		}
-		self, err = filepath.EvalSymlinks(self)
-		if err != nil {
-			logger.Fatal(err)
+
+		client := mcp.NewClient(impl, nil)
+
+		var transport mcp.Transport
+		transport = &mcp.StreamableClientTransport{Endpoint: s}
+
+		if s == "" {
+			self, err := os.Executable()
+			if err != nil {
+				logger.Fatal(err)
+			}
+			self, err = filepath.EvalSymlinks(self)
+			if err != nil {
+				logger.Fatal(err)
+			}
+
+			command := exec.Command(self, "cli")
+			command.Stderr = os.Stderr // used for debugging using the logger
+
+			transport = &mcp.CommandTransport{Command: command}
 		}
-
-		command := exec.Command(self, "cli")
-		command.Stderr = os.Stderr // used for debugging using the logger
-
-		transport := &mcp.CommandTransport{Command: command}
 
 		session, err := client.Connect(ctx, transport, nil)
 		if err != nil {
@@ -83,6 +98,13 @@ func main() {
 			logger.Info(c.(*mcp.TextContent).Text)
 		}
 	case "server":
+		server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
+			return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+				ctx = log.WithContext(ctx, logger)
+				return next(ctx, method, req)
+			}
+		})
+
 		handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 			return server
 		}, nil)
