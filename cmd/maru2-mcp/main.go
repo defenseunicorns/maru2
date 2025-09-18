@@ -110,7 +110,7 @@ func main() {
 			}
 		})
 
-		handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
+		handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
 			return server
 		}, nil)
 
