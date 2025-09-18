@@ -1,3 +1,7 @@
+# using this temporarily to roughly calculate tokens
+# while i think about how to provide info from the docs within the MCP server
+#
+# usage: python3 count.py docs/*.md
 import tiktoken
 import sys
 
@@ -8,5 +12,6 @@ def count_tokens_in_file(filepath, model="gpt-4o-mini"):
     return len(enc.encode(text))
 
 if __name__ == "__main__":
-    filepath = sys.argv[1]
-    print(count_tokens_in_file(filepath))
+    filepaths = sys.argv[1:]
+    for fp in filepaths:
+        print(f"{fp} {count_tokens_in_file(fp)}")

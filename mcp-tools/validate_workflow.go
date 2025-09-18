@@ -16,7 +16,7 @@ import (
 
 // ValidateWorkflowInput represents the input parameters for the validate-workflow MCP tool.
 type ValidateWorkflowInput struct {
-	From string `json:"from"      jsonschema:"Either an absolute path, a relative path from CWD, or a URI detailing the remote location for the workflow"`
+	From string `json:"from" jsonschema:"Either an absolute path, a relative path from CWD, or a URI detailing the remote location for the workflow"`
 }
 
 // ValidateWorkflowOutput represents the output result from the validate-workflow MCP tool.
