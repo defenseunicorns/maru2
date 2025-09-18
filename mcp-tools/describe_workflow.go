@@ -23,12 +23,12 @@ type DescribeWorkflowInput struct {
 
 // DescribeOutput contains the workflow description and task details
 type DescribeOutput struct {
-	WorkflowDescription string            `json:"workflow-description"`
-	Tasks               map[string]string `json:"tasks"`
+	WorkflowDescription string            `json:"workflow-description" jsonschema:"A high-level summary of the workflow including schema version, task count, and aliases"`
+	Tasks               map[string]string `json:"tasks"                jsonschema:"A map of task names to their detailed descriptions including inputs, steps, and execution details"`
 }
 
 // DescribeWorkflow fetches and describes a workflow from the given location
-func DescribeWorkflow(ctx context.Context, _ *mcp.CallToolRequest, input ValidateWorkflowInput) (*mcp.CallToolResult, *DescribeOutput, error) {
+func DescribeWorkflow(ctx context.Context, _ *mcp.CallToolRequest, input DescribeWorkflowInput) (*mcp.CallToolResult, *DescribeOutput, error) {
 	logger := log.FromContext(ctx)
 	uri, err := uses.ResolveRelative(nil, input.From, nil)
 	if err != nil {

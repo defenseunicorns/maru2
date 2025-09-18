@@ -21,7 +21,7 @@ type ValidateWorkflowInput struct {
 
 // ValidateWorkflowOutput represents the output result from the validate-workflow MCP tool.
 type ValidateWorkflowOutput struct {
-	IsValid bool `json:"is-valid" jsonschema:"whether the resolved and fetched worklow conforms to maru2's JSON schema and other misc structural checks"`
+	IsValid bool `json:"is-valid" jsonschema:"Whether the resolved and fetched workflow conforms to maru2's JSON schema and other miscellaneous structural checks"`
 }
 
 // ValidateWorkflow validates a maru2 workflow schema at the specified location.
