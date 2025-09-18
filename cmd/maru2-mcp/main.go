@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,12 +16,26 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/spf13/cobra"
 
 	maru2cmd "github.com/defenseunicorns/maru2/cmd"
 	mcptools "github.com/defenseunicorns/maru2/mcp-tools"
 )
 
 func main() {
+	root := &cobra.Command{
+		Use: "maru2-mcp",
+		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+			logger := log.FromContext(cmd.Context())
+			logger = logger.WithPrefix(cmd.Name())
+			cmd.SetContext(log.WithContext(cmd.Context(), logger))
+		},
+		SilenceUsage:  true,
+		SilenceErrors: true,
+	}
+
+	root.AddCommand(newClientCmd(), newServerCmd(), newCLICmd())
+
 	logger := log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
 		Level:           log.DebugLevel,
@@ -30,126 +43,151 @@ func main() {
 
 	logger.SetStyles(maru2cmd.DefaultStyles())
 
-	mode := ""
-	if len(os.Args) > 1 {
-		mode = os.Args[1]
-	}
-
-	logger = logger.WithPrefix(mode)
 	ctx := log.WithContext(context.Background(), logger)
 
-	// logger.Warn("this program is currently marked ALPHA and is subject to breaking changes w/o warning")
-
-	// later do this w/ cobra commands, but let's keep it simple for now
-	switch mode {
-	case "client":
-		clientFlags := flag.NewFlagSet("mcp-client", flag.ExitOnError)
-
-		var s string
-		clientFlags.StringVar(&s, "s", "", "The address and port of the maru2-mcp server (example: http://localhost:4371)")
-
-		if err := clientFlags.Parse(os.Args[2:]); err != nil {
-			logger.Fatal(err)
-		}
-
-		client := mcp.NewClient(&mcp.Implementation{Name: "maru2-mcp-client", Version: "v1.0.0"}, nil)
-
-		var transport mcp.Transport
-		transport = &mcp.StreamableClientTransport{Endpoint: s}
-
-		if s == "" {
-			self, err := os.Executable()
-			if err != nil {
-				logger.Fatal(err)
-			}
-			self, err = filepath.EvalSymlinks(self)
-			if err != nil {
-				logger.Fatal(err)
-			}
-
-			command := exec.Command(self, "cli")
-			command.Stderr = os.Stderr // used for debugging using the logger
-
-			transport = &mcp.CommandTransport{Command: command}
-		}
-
-		session, err := client.Connect(ctx, transport, nil)
-		if err != nil {
-			logger.Fatal(err)
-		}
-		defer session.Close()
-
-		// TODO: currently hardcoded call for loopback testing purposes, should be abstracted into a cobra command(s)
-		params := &mcp.CallToolParams{
-			Name:      "describe-workflow",
-			Arguments: map[string]any{"from": "file:testdata/simple.yaml"},
-		}
-		res, err := session.CallTool(ctx, params)
-		if err != nil {
-			logger.Fatalf("CallTool failed: %v", err)
-		}
-		if res.IsError {
-			for _, c := range res.Content {
-				logger.Error(c.(*mcp.TextContent).Text)
-			}
-			logger.Fatal("tool failed")
-		}
-		for _, c := range res.Content {
-			// assume its a text content for now
-			tc := c.(*mcp.TextContent)
-			logger.Info(params.Name, "args", params.Arguments)
-			// goes to STDOUT
-			// for best printing, do:
-			// make -j all install
-			// ./bin/maru2-mcp client | jq
-			fmt.Println(tc.Text)
-		}
-	case "server":
-		impl := &mcp.Implementation{Name: "maru2-mcp-server", Version: "v1.0.0"}
-		server := mcp.NewServer(impl, nil)
-		mcptools.AddAll(server)
-
-		server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
-			return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
-				ctx = log.WithContext(ctx, logger)
-				return next(ctx, method, req)
-			}
-		})
-
-		handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
-			return server
-		}, nil)
-
-		srv := &http.Server{
-			Addr:    "0.0.0.0:4371",
-			Handler: handler,
-		}
-
-		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, os.Interrupt)
-
-		go func() {
-			logger.Info("listening", "addr", srv.Addr)
-			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logger.Fatalf("ListenAndServe: %v", err)
-			}
-		}()
-
-		<-stop
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
-			logger.Fatalf("Shutdown error: %v", err)
-		}
-
-	case "cli":
-		impl := &mcp.Implementation{Name: "maru2-mcp-cli", Version: "v1.0.0"}
-		server := mcp.NewServer(impl, nil)
-		mcptools.AddAll(server)
-		if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
-			logger.Fatal(err)
-		}
-	default:
-		logger.Fatal("must specify 'client', 'server', or 'cli' as first argument")
+	if err := root.ExecuteContext(ctx); err != nil {
+		logger.Error(err)
+		os.Exit(1)
 	}
+}
+
+func newClientCmd() *cobra.Command {
+	var s string
+
+	command := &cobra.Command{
+		Use: "client",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			logger := log.FromContext(ctx)
+
+			client := mcp.NewClient(&mcp.Implementation{Name: "maru2-mcp-client", Version: "v1.0.0"}, nil)
+
+			var transport mcp.Transport
+			transport = &mcp.StreamableClientTransport{Endpoint: s}
+
+			if s == "" {
+				self, err := os.Executable()
+				if err != nil {
+					logger.Fatal(err)
+				}
+				self, err = filepath.EvalSymlinks(self)
+				if err != nil {
+					logger.Fatal(err)
+				}
+
+				command := exec.Command(self, "cli")
+				command.Stderr = os.Stderr // used for debugging using the logger
+
+				transport = &mcp.CommandTransport{Command: command}
+			}
+
+			session, err := client.Connect(ctx, transport, nil)
+			if err != nil {
+				logger.Fatal(err)
+			}
+			defer session.Close()
+
+			// TODO: currently hardcoded call for loopback testing purposes, should be abstracted into a cobra command(s)
+			params := &mcp.CallToolParams{
+				Name:      "describe-workflow",
+				Arguments: map[string]any{"from": "file:testdata/simple.yaml"},
+			}
+			res, err := session.CallTool(ctx, params)
+			if err != nil {
+				return fmt.Errorf("CallTool failed: %v", err)
+			}
+			if res.IsError {
+				for _, c := range res.Content {
+					logger.Error(c.(*mcp.TextContent).Text)
+				}
+				return fmt.Errorf("tool failed")
+			}
+			for _, c := range res.Content {
+				// assume its a text content for now
+				tc := c.(*mcp.TextContent)
+				logger.Info(params.Name, "args", params.Arguments)
+				// goes to STDOUT
+				// for best printing, do:
+				// make -j all install
+				// ./bin/maru2-mcp client | jq
+				fmt.Println(tc.Text)
+			}
+			return nil
+		},
+	}
+
+	command.Flags().StringVarP(&s, "server", "s", "", "The scheme, address and port of the maru2-mcp server (example: http://localhost:4371)")
+
+	return command
+}
+
+func newServerCmd() *cobra.Command {
+	var addr string
+
+	command := &cobra.Command{
+		Use: "server",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			logger := log.FromContext(ctx)
+			impl := &mcp.Implementation{Name: "maru2-mcp-server", Version: "v1.0.0"}
+			server := mcp.NewServer(impl, nil)
+			mcptools.AddAll(server)
+
+			server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
+				return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+					ctx = log.WithContext(ctx, logger)
+					return next(ctx, method, req)
+				}
+			})
+
+			handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
+				return server
+			}, nil)
+
+			srv := &http.Server{
+				Addr:    addr,
+				Handler: handler,
+			}
+
+			stop := make(chan os.Signal, 1)
+			signal.Notify(stop, os.Interrupt)
+
+			go func() {
+				logger.Info("listening", "addr", srv.Addr)
+				if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+					logger.Errorf("ListenAndServe: %v", err)
+					os.Exit(1)
+				}
+			}()
+
+			<-stop
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+			if err := srv.Shutdown(ctx); err != nil {
+				return fmt.Errorf("Shutdown error: %v", err)
+			}
+			return nil
+		},
+	}
+
+	command.Flags().StringVarP(&addr, "address", "a", "0.0.0.0:4371", "The address and port of the maru2-mcp server")
+
+	return command
+}
+
+func newCLICmd() *cobra.Command {
+	command := &cobra.Command{
+		Use: "cli",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			impl := &mcp.Implementation{Name: "maru2-mcp-cli", Version: "v1.0.0"}
+			server := mcp.NewServer(impl, nil)
+			mcptools.AddAll(server)
+			if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+	return command
 }
