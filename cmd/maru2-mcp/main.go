@@ -79,7 +79,7 @@ func main() {
 		}
 		defer session.Close()
 
-		// call validate
+		// TODO: currently hardcoded call for loopback testing purposes, should be abstracted into a cobra command(s)
 		params := &mcp.CallToolParams{
 			Name:      "describe-workflow",
 			Arguments: map[string]any{"from": "file:testdata/simple.yaml"},
