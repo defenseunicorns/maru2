@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -80,8 +81,8 @@ func main() {
 
 		// call validate
 		params := &mcp.CallToolParams{
-			Name:      "validate-workflow",
-			Arguments: map[string]any{"location": "file:testdata/simple.yaml"},
+			Name:      "describe-workflow",
+			Arguments: map[string]any{"from": "file:testdata/simple.yaml"},
 		}
 		res, err := session.CallTool(ctx, params)
 		if err != nil {
@@ -96,7 +97,12 @@ func main() {
 		for _, c := range res.Content {
 			// assume its a text content for now
 			tc := c.(*mcp.TextContent)
-			logger.Info(params.Name, "args", params.Arguments, "result", tc.Text)
+			logger.Info(params.Name, "args", params.Arguments)
+			// goes to STDOUT
+			// for best printing, do:
+			// make -j all install
+			// ./bin/maru2-mcp client | jq
+			fmt.Println(tc.Text)
 		}
 	case "server":
 		impl := &mcp.Implementation{Name: "maru2-mcp-server", Version: "v1.0.0"}
