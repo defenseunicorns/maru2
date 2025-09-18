@@ -5,7 +5,6 @@ package mcptools
 
 import (
 	"context"
-	"net/url"
 
 	"github.com/charmbracelet/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -17,8 +16,7 @@ import (
 
 // ValidateWorkflowInput represents the input parameters for the validate-workflow MCP tool.
 type ValidateWorkflowInput struct {
-	ProjectRoot string `json:"cwd,omitempty" jsonschema:"The calling client's project root (usually a file:/// absolute path to a local directory), needed as location can be a relative file location"`
-	Location    string `json:"location"      jsonschema:"Either a relative path, or a URI detailing the remote location for the workflow"`
+	From string `json:"from"      jsonschema:"Either an absolute path, a relative path from CWD, or a URI detailing the remote location for the workflow"`
 }
 
 // ValidateWorkflowOutput represents the output result from the validate-workflow MCP tool.
@@ -30,25 +28,13 @@ type ValidateWorkflowOutput struct {
 func ValidateWorkflow(ctx context.Context, _ *mcp.CallToolRequest, input ValidateWorkflowInput) (*mcp.CallToolResult, *ValidateWorkflowOutput, error) {
 	logger := log.FromContext(ctx)
 
-	var root *url.URL
-
-	if input.ProjectRoot != "" {
-		var err error
-		root, err = url.Parse(input.ProjectRoot)
-		if err != nil {
-			logger.Error(err)
-			return nil, nil, err
-		}
-		// TODO: ensure root is an ABSOLUTE file URL
-	}
-
-	uri, err := uses.ResolveRelative(root, input.Location, nil)
+	uri, err := uses.ResolveRelative(nil, input.From, nil)
 	if err != nil {
 		logger.Error(err)
 		return nil, nil, err
 	}
 
-	svc, err := uses.NewFetcherService(uses.WithFetchPolicy(uses.FetchPolicyAlways))
+	svc, err := uses.NewFetcherService()
 	if err != nil {
 		logger.Error(err)
 		return nil, nil, err
