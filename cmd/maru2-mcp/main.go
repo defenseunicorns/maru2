@@ -39,10 +39,6 @@ func main() {
 
 	// logger.Warn("this program is currently marked ALPHA and is subject to breaking changes w/o warning")
 
-	impl := &mcp.Implementation{Name: "maru2", Version: "v1.0.0"}
-	server := mcp.NewServer(impl, nil)
-	mcptools.AddAll(server)
-
 	// later do this w/ cobra commands, but let's keep it simple for now
 	switch mode {
 	case "client":
@@ -55,7 +51,7 @@ func main() {
 			logger.Fatal(err)
 		}
 
-		client := mcp.NewClient(impl, nil)
+		client := mcp.NewClient(&mcp.Implementation{Name: "maru2-mcp-client", Version: "v1.0.0"}, nil)
 
 		var transport mcp.Transport
 		transport = &mcp.StreamableClientTransport{Endpoint: s}
@@ -98,6 +94,10 @@ func main() {
 			logger.Info(c.(*mcp.TextContent).Text)
 		}
 	case "server":
+		impl := &mcp.Implementation{Name: "maru2-mcp-server", Version: "v1.0.0"}
+		server := mcp.NewServer(impl, nil)
+		mcptools.AddAll(server)
+
 		server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
 			return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
 				ctx = log.WithContext(ctx, logger)
@@ -132,6 +132,9 @@ func main() {
 		}
 
 	case "cli":
+		impl := &mcp.Implementation{Name: "maru2-mcp-cli", Version: "v1.0.0"}
+		server := mcp.NewServer(impl, nil)
+		mcptools.AddAll(server)
 		if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 			logger.Fatal(err)
 		}
