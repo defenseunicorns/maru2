@@ -56,7 +56,7 @@ func newClientCmd() *cobra.Command {
 
 	command := &cobra.Command{
 		Use: "client",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
@@ -183,10 +183,7 @@ func newCLICmd() *cobra.Command {
 			impl := &mcp.Implementation{Name: "maru2-mcp-cli", Version: "v1.0.0"}
 			server := mcp.NewServer(impl, nil)
 			mcptools.AddAll(server)
-			if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
-				return err
-			}
-			return nil
+			return server.Run(ctx, &mcp.StdioTransport{})
 		},
 	}
 	return command
