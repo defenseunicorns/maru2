@@ -80,7 +80,7 @@ func main() {
 
 		// call validate
 		params := &mcp.CallToolParams{
-			Name:      "validate-schema",
+			Name:      "validate-workflow",
 			Arguments: map[string]any{"location": "file:testdata/simple.yaml"},
 		}
 		res, err := session.CallTool(ctx, params)
