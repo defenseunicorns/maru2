@@ -19,11 +19,10 @@ import (
 func main() {
 	logger := log.NewWithOptions(os.Stderr, log.Options{
 		ReportTimestamp: false,
+		Level:           log.DebugLevel,
 	})
 
 	logger.SetStyles(maru2cmd.DefaultStyles())
-
-	ctx := log.WithContext(context.Background(), logger)
 
 	mode := ""
 	if len(os.Args) > 1 {
@@ -31,6 +30,7 @@ func main() {
 	}
 
 	logger = logger.WithPrefix(mode)
+	ctx := log.WithContext(context.Background(), logger)
 
 	// later do this w/ cobra commands, but let's keep it simple for now
 	switch mode {
