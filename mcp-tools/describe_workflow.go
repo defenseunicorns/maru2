@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
 package mcptools
 
 import (
@@ -7,20 +10,24 @@ import (
 	"text/template"
 
 	"github.com/charmbracelet/log"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/defenseunicorns/maru2"
 	"github.com/defenseunicorns/maru2/uses"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+// DescribeWorkflowInput defines the input parameters for describing a workflow
 type DescribeWorkflowInput struct {
-	From string `json:"from"      jsonschema:"Either an absolute path, a relative path from CWD, or a URI detailing the remote location for the workflow"`
+	From string `json:"from" jsonschema:"Either an absolute path, a relative path from CWD, or a URI detailing the remote location for the workflow"`
 }
 
+// DescribeOutput contains the workflow description and task details
 type DescribeOutput struct {
 	WorkflowDescription string            `json:"workflow-description"`
 	Tasks               map[string]string `json:"tasks"`
 }
 
+// DescribeWorkflow fetches and describes a workflow from the given location
 func DescribeWorkflow(ctx context.Context, _ *mcp.CallToolRequest, input ValidateWorkflowInput) (*mcp.CallToolResult, *DescribeOutput, error) {
 	logger := log.FromContext(ctx)
 	uri, err := uses.ResolveRelative(nil, input.From, nil)
