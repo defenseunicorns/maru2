@@ -8,6 +8,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/charmbracelet/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -37,7 +38,16 @@ func main() {
 	case "client":
 		client := mcp.NewClient(&mcp.Implementation{Name: "mcp-client", Version: "v1.0.0"}, nil)
 
-		command := exec.Command("maru2-mcp", "cli")
+		self, err := os.Executable()
+		if err != nil {
+			logger.Fatal(err)
+		}
+		self, err = filepath.EvalSymlinks(self)
+		if err != nil {
+			logger.Fatal(err)
+		}
+
+		command := exec.Command(self, "cli")
 		command.Stderr = os.Stderr // used for debugging using the logger
 
 		transport := &mcp.CommandTransport{Command: command}
