@@ -9,7 +9,7 @@ import "github.com/modelcontextprotocol/go-sdk/mcp"
 // AddAll registers all of the maru2 specific tools to the given MCP server
 func AddAll(s *mcp.Server) {
 	mcp.AddTool(s, &mcp.Tool{
-		Name:        "validate-schema",
-		Description: "Used to validate the YAML/JSON schema of a maru2 workflow",
-	}, ValidateSchema)
+		Name:        "validate-workflow",
+		Description: "Fetch a given location and validate it conforms to maru2's JSON schema and other misc structural checks",
+	}, ValidateWorkflow)
 }

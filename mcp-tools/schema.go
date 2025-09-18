@@ -15,19 +15,19 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
-// ValidateSchemaInput represents the input parameters for the validate-schema MCP tool.
-type ValidateSchemaInput struct {
+// ValidateWorkflowInput represents the input parameters for the validate-workflow MCP tool.
+type ValidateWorkflowInput struct {
 	ProjectRoot string `json:"cwd,omitempty" jsonschema:"The calling client's project root (usually a file:/// absolute path to a local directory), needed as location can be a relative file location"`
 	Location    string `json:"location"      jsonschema:"Either a relative path, or a URI detailing the remote location for the workflow"`
 }
 
-// ValidateSchemaOutput represents the output result from the validate-schema MCP tool.
-type ValidateSchemaOutput struct {
-	IsValid bool `json:"is-valid"`
+// ValidateWorkflowOutput represents the output result from the validate-workflow MCP tool.
+type ValidateWorkflowOutput struct {
+	IsValid bool `json:"is-valid" jsonschema:"whether the resolved and fetched worklow conforms to maru2's JSON schema and other misc structural checks"`
 }
 
-// ValidateSchema validates a maru2 workflow schema at the specified location.
-func ValidateSchema(ctx context.Context, _ *mcp.CallToolRequest, input ValidateSchemaInput) (*mcp.CallToolResult, *ValidateSchemaOutput, error) {
+// ValidateWorkflow validates a maru2 workflow schema at the specified location.
+func ValidateWorkflow(ctx context.Context, _ *mcp.CallToolRequest, input ValidateWorkflowInput) (*mcp.CallToolResult, *ValidateWorkflowOutput, error) {
 	logger := log.FromContext(ctx)
 
 	var root *url.URL
@@ -67,5 +67,5 @@ func ValidateSchema(ctx context.Context, _ *mcp.CallToolRequest, input ValidateS
 
 	logger.Info("valid workflow", "location", uri)
 
-	return nil, &ValidateSchemaOutput{true}, nil
+	return nil, &ValidateWorkflowOutput{true}, nil
 }
