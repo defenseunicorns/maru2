@@ -23,16 +23,29 @@ import (
 )
 
 func main() {
+	var format string
+
 	root := &cobra.Command{
 		Use: "maru2-mcp",
-		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			logger := log.FromContext(cmd.Context())
+			switch format {
+			case "", "text":
+				logger.SetFormatter(log.TextFormatter)
+			case "json":
+				logger.SetFormatter(log.JSONFormatter)
+			default:
+				return fmt.Errorf("invalid output format: %s", format)
+			}
 			logger = logger.WithPrefix(cmd.Name())
 			cmd.SetContext(log.WithContext(cmd.Context(), logger))
+			return nil
 		},
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
+
+	root.PersistentFlags().StringVarP(&format, "output", "o", "text", "output format (text|json)")
 
 	root.AddCommand(newClientCmd(), newServerCmd(), newCLICmd())
 
@@ -75,7 +88,10 @@ func newClientCmd() *cobra.Command {
 					logger.Fatal(err)
 				}
 
-				command := exec.Command(self, "cli")
+				// purposefully ignoring the error here
+				o, _ := cmd.Flags().GetString("output")
+
+				command := exec.Command(self, "cli", "-o", o)
 				command.Stderr = os.Stderr // used for debugging using the logger
 
 				transport = &mcp.CommandTransport{Command: command}
