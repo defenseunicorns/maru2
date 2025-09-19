@@ -3,7 +3,7 @@
 1. Install project dependencies and build all binaries.
 
    ```bash
-   make
+   make -j
    ```
 
 2. Create a new branch on your fork.
