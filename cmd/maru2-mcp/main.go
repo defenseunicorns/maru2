@@ -149,14 +149,16 @@ func newServerCmd() *cobra.Command {
 			server := mcp.NewServer(impl, nil)
 			mcptools.AddAll(server)
 
-			// this middleware only adds the logger onto the request's context
-			server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
-				return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
-					ctx = log.WithContext(ctx, logger)
-					return next(ctx, method, req)
-				}
-			})
-			server.AddReceivingMiddleware(loggingMiddleware)
+			server.AddReceivingMiddleware(
+				// this middleware only adds the logger onto the request's context
+				func(next mcp.MethodHandler) mcp.MethodHandler {
+					return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+						ctx = log.WithContext(ctx, logger)
+						return next(ctx, method, req)
+					}
+				},
+				loggingMiddleware,
+			)
 
 			handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
 				return server
