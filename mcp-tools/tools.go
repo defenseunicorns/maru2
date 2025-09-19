@@ -16,4 +16,8 @@ func AddAll(s *mcp.Server) {
 		Name:        "describe-workflow",
 		Description: "Fetch a given location and describe the workflow",
 	}, DescribeWorkflow)
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "gen-schema",
+		Description: "Returns version-specific JSON schema for v0/v1, or a meta-schema with conditional validation that automatically selects the correct version based on schema-version field",
+	}, GenJSONSchema)
 }
