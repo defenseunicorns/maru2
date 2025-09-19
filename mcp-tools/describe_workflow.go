@@ -9,7 +9,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/charmbracelet/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/defenseunicorns/maru2"
@@ -29,22 +28,18 @@ type DescribeOutput struct {
 
 // DescribeWorkflow fetches and describes a workflow from the given location
 func DescribeWorkflow(ctx context.Context, _ *mcp.CallToolRequest, input DescribeWorkflowInput) (*mcp.CallToolResult, *DescribeOutput, error) {
-	logger := log.FromContext(ctx)
 	uri, err := uses.ResolveRelative(nil, input.From, nil)
 	if err != nil {
-		logger.Error(err)
 		return nil, nil, err
 	}
 
 	svc, err := uses.NewFetcherService()
 	if err != nil {
-		logger.Error(err)
 		return nil, nil, err
 	}
 
 	wf, err := maru2.Fetch(ctx, svc, uri)
 	if err != nil {
-		logger.Error(err)
 		return nil, nil, err
 	}
 

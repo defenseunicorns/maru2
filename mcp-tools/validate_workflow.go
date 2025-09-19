@@ -6,7 +6,6 @@ package mcptools
 import (
 	"context"
 
-	"github.com/charmbracelet/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/defenseunicorns/maru2"
@@ -26,32 +25,24 @@ type ValidateWorkflowOutput struct {
 
 // ValidateWorkflow validates a maru2 workflow schema at the specified location.
 func ValidateWorkflow(ctx context.Context, _ *mcp.CallToolRequest, input ValidateWorkflowInput) (*mcp.CallToolResult, *ValidateWorkflowOutput, error) {
-	logger := log.FromContext(ctx)
-
 	uri, err := uses.ResolveRelative(nil, input.From, nil)
 	if err != nil {
-		logger.Error(err)
 		return nil, nil, err
 	}
 
 	svc, err := uses.NewFetcherService()
 	if err != nil {
-		logger.Error(err)
 		return nil, nil, err
 	}
 
 	wf, err := maru2.Fetch(ctx, svc, uri)
 	if err != nil {
-		logger.Error(err)
 		return nil, nil, err
 	}
 
 	if err := v1.Validate(wf); err != nil {
-		logger.Error(err)
 		return nil, nil, err
 	}
-
-	logger.Info("valid workflow", "location", uri)
 
 	return nil, &ValidateWorkflowOutput{true}, nil
 }

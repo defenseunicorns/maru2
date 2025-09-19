@@ -133,12 +133,14 @@ func newServerCmd() *cobra.Command {
 			server := mcp.NewServer(impl, nil)
 			mcptools.AddAll(server)
 
+			// this middleware only adds the logger onto the request's context
 			server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
 				return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
 					ctx = log.WithContext(ctx, logger)
 					return next(ctx, method, req)
 				}
 			})
+			server.AddReceivingMiddleware(loggingMiddleware)
 
 			handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
 				return server
@@ -183,8 +185,61 @@ func newCLICmd() *cobra.Command {
 			impl := &mcp.Implementation{Name: "maru2-mcp-cli", Version: "v1.0.0"}
 			server := mcp.NewServer(impl, nil)
 			mcptools.AddAll(server)
+			server.AddReceivingMiddleware(loggingMiddleware)
 			return server.Run(ctx, &mcp.StdioTransport{})
 		},
 	}
 	return command
+}
+
+func loggingMiddleware(next mcp.MethodHandler) mcp.MethodHandler {
+	return func(
+		ctx context.Context,
+		method string,
+		req mcp.Request,
+	) (mcp.Result, error) {
+		logger := log.FromContext(ctx)
+
+		msg := []any{
+			"method", method,
+			"session-id", req.GetSession().ID(),
+			"has-params", req.GetParams() != nil,
+		}
+
+		var toolName string
+		if ctr, ok := req.(*mcp.CallToolRequest); ok {
+			toolName = ctr.Params.Name
+			msg = append(msg, "tool-name", toolName)
+		}
+
+		logger.Info("start", msg...)
+
+		start := time.Now()
+
+		result, err := next(ctx, method, req)
+
+		duration := time.Since(start)
+
+		if err != nil {
+			logger.Error("failed",
+				"method", method,
+				"session-id", req.GetSession().ID(),
+				"duration-ms", duration.Milliseconds(),
+				"err", err,
+			)
+		} else {
+			msg := []any{
+				"method", method,
+				"session-id", req.GetSession().ID(),
+				"duration-ms", duration.Milliseconds(),
+			}
+			if ctr, ok := result.(*mcp.CallToolResult); ok {
+				msg = append(msg, "tool-name", toolName)
+				msg = append(msg, "isError", ctr.IsError)
+			}
+			logger.Info("completed", msg...)
+		}
+
+		return result, err
+	}
 }
