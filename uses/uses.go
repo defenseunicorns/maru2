@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-// Package uses provides clients for retrieving remote workflows.
+// Package uses provides a cache+clients for storing and retrieving remote workflows.
 package uses
 
 import (

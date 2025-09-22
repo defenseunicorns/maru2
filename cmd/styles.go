@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2025-Present Defense Unicorns
 
-// Package cmd provides the root command for the maru2 CLI.
 package cmd
 
 import (
