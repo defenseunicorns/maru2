@@ -27,6 +27,19 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
+const (
+	GITHUB_ACTIONS_ENV_VAR = "GITHUB_ACTIONS"
+	GITLAB_CI_ENV_VAR      = "GITLAB_CI"
+)
+
+var isGitHubActions = sync.OnceValue(func() bool {
+	return os.Getenv(GITHUB_ACTIONS_ENV_VAR) == "true"
+})
+
+var isGitLabCI = sync.OnceValue(func() bool {
+	return os.Getenv(GITLAB_CI_ENV_VAR) == "true"
+})
+
 /*
 Run is the main event loop in maru2
 
