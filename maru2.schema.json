@@ -81,6 +81,14 @@
       "tasks": {
         "additionalProperties": {
           "properties": {
+            "description": {
+              "type": "string",
+              "description": "Human-readable description of the task"
+            },
+            "collapse": {
+              "type": "boolean",
+              "description": "Group task output in CI environments (GitHub Actions, GitLab CI)"
+            },
             "inputs": {
               "additionalProperties": {
                 "properties": {

@@ -89,6 +89,12 @@ func Run(
 	var lastStepOutput map[string]any
 
 	start := time.Now()
+
+	if task.Collapse {
+		closeGroup := printGroup(os.Stdout, taskName, task.Description)
+		defer closeGroup()
+	}
+
 	logger.Debug("run", "task", taskName, "from", origin, "dry-run", dry)
 	defer func() {
 		logger.Debug("ran", "task", taskName, "from", origin, "duration", time.Since(start))
