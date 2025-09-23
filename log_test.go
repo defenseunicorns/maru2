@@ -5,9 +5,7 @@ package maru2
 
 import (
 	"fmt"
-	"os"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/alecthomas/chroma/v2"
@@ -266,82 +264,4 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 
 	output := buf.String()
 	assert.Contains(t, output, "failed to marshal builtin")
-}
-
-func TestCIEnvironmentDetection(t *testing.T) {
-	tests := []struct {
-		name     string
-		envValue string
-		expected bool
-	}{
-		{"true", "true", true},
-		{"false", "false", false},
-		{"empty", "", false},
-		{"case sensitive", "True", false},
-	}
-
-	t.Run("GitHub Actions", func(t *testing.T) {
-		for _, tc := range tests {
-			t.Run(tc.name, func(t *testing.T) {
-				original := os.Getenv(GITHUB_ACTIONS_ENV_VAR)
-				defer func() {
-					if original == "" {
-						os.Unsetenv(GITHUB_ACTIONS_ENV_VAR)
-					} else {
-						os.Setenv(GITHUB_ACTIONS_ENV_VAR, original)
-					}
-				}()
-
-				if tc.envValue == "" {
-					os.Unsetenv(GITHUB_ACTIONS_ENV_VAR)
-				} else {
-					os.Setenv(GITHUB_ACTIONS_ENV_VAR, tc.envValue)
-				}
-
-				result := os.Getenv(GITHUB_ACTIONS_ENV_VAR) == "true"
-				assert.Equal(t, tc.expected, result)
-			})
-		}
-	})
-
-	t.Run("GitLab CI", func(t *testing.T) {
-		for _, tc := range tests {
-			t.Run(tc.name, func(t *testing.T) {
-				original := os.Getenv(GITLAB_CI_ENV_VAR)
-				defer func() {
-					if original == "" {
-						os.Unsetenv(GITLAB_CI_ENV_VAR)
-					} else {
-						os.Setenv(GITLAB_CI_ENV_VAR, original)
-					}
-				}()
-
-				if tc.envValue == "" {
-					os.Unsetenv(GITLAB_CI_ENV_VAR)
-				} else {
-					os.Setenv(GITLAB_CI_ENV_VAR, tc.envValue)
-				}
-
-				result := os.Getenv(GITLAB_CI_ENV_VAR) == "true"
-				assert.Equal(t, tc.expected, result)
-			})
-		}
-	})
-}
-
-func TestSyncOnceValueBehavior(t *testing.T) {
-	// Test that sync.OnceValue caches the first result
-	testFunc := sync.OnceValue(func() bool {
-		return os.Getenv("TEST_ONCE_VALUE") == "true"
-	})
-
-	os.Setenv("TEST_ONCE_VALUE", "true")
-	result1 := testFunc()
-	assert.True(t, result1)
-
-	os.Setenv("TEST_ONCE_VALUE", "false")
-	result2 := testFunc()
-	assert.True(t, result2, "sync.OnceValue should cache the first result")
-
-	os.Unsetenv("TEST_ONCE_VALUE")
 }
