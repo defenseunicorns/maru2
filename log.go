@@ -4,7 +4,12 @@
 package maru2
 
 import (
+	"fmt"
+	"io"
+	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/lipgloss"
@@ -15,6 +20,19 @@ import (
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
+
+const (
+	GITHUB_ACTIONS_ENV_VAR = "GITHUB_ACTIONS"
+	GITLAB_CI_ENV_VAR      = "GITLAB_CI"
+)
+
+var isGitHubActions = sync.OnceValue(func() bool {
+	return os.Getenv(GITHUB_ACTIONS_ENV_VAR) == "true"
+})
+
+var isGitLabCI = sync.OnceValue(func() bool {
+	return os.Getenv(GITLAB_CI_ENV_VAR) == "true"
+})
 
 // printScript renders shell script content with syntax highlighting
 //
@@ -97,4 +115,24 @@ func printBuiltin(logger *log.Logger, builtin schema.With) {
 	}
 
 	logger.Printf("%s", strings.TrimSpace(buf.String()))
+}
+
+func printGroup(wr io.Writer, taskName string, header string) func() {
+	isGitHub := isGitHubActions()
+	isGitLab := isGitLabCI()
+
+	// https://docs.gitlab.com/ci/jobs/job_logs/#expand-and-collapse-job-log-sections
+	if isGitLab {
+		_, _ = fmt.Fprintf(wr, `\e[0Ksection_start:%d:%s[collapsed=true]\r\e[0K%s`, time.Now().Unix(), taskName, header)
+		return func() {
+			_, _ = fmt.Fprintf(wr, `\e[0Ksection_end:%d:%s\r\e[0K`, time.Now().Unix(), taskName)
+		}
+	}
+
+	if isGitHub {
+
+	}
+
+	// no-op that prevents nil reference
+	return func() {}
 }
