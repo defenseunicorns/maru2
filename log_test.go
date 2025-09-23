@@ -302,9 +302,11 @@ func TestPrintGroup(t *testing.T) {
 
 		// regular execution
 		close := printGroup(&buf, "default", "description")
-		assert.Equal(t, "", buf.String())
+		assert.Equal(t, "::group::default: description\n", buf.String())
 		close()
-		assert.Equal(t, "", buf.String())
+		assert.Equal(t, "::group::default: description\n::endgroup::\n", buf.String())
+
+		buf.Reset()
 
 		// does not error if a nil writer is provided
 		close = printGroup(nil, "default", "description")
@@ -320,17 +322,11 @@ func TestPrintGroup(t *testing.T) {
 		t.Cleanup(restore)
 
 		close := printGroup(&buf, "default", "")
-		assert.Equal(t, "", buf.String())
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault$`, buf.String())
 		close()
-		assert.Equal(t, "", buf.String())
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, buf.String())
 
 		buf.Reset()
-
-		// no description
-		close = printGroup(&buf, "default", "")
-		assert.Equal(t, "", buf.String())
-		close()
-		assert.Equal(t, "", buf.String())
 
 		// does not error if a nil writer is provided
 		close = printGroup(nil, "default", "description")

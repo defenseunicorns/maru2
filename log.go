@@ -139,7 +139,7 @@ func printGroup(wr io.Writer, taskName string, header string) func() {
 
 	// https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines
 	if isGitHub {
-		_, _ = fmt.Fprintf(wr, `::group::%s: %s\n`, taskName, header)
+		_, _ = fmt.Fprintf(wr, "::group::%s: %s\n", taskName, header)
 		return func() {
 			_, _ = fmt.Fprintln(wr, `::endgroup::`)
 		}
