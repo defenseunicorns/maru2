@@ -285,13 +285,13 @@ func TestPrintGroup(t *testing.T) {
 
 	t.Run("default", func(t *testing.T) {
 		// no task name
-		close := printGroup(nil, "", "")
-		assert.NotNil(t, close)
-		assert.NotPanics(t, close)
+		closeGroup := printGroup(nil, "", "")
+		assert.NotNil(t, closeGroup)
+		assert.NotPanics(t, closeGroup)
 
-		close = printGroup(nil, "default", "")
-		assert.NotNil(t, close)
-		assert.NotPanics(t, close)
+		closeGroup = printGroup(nil, "default", "")
+		assert.NotNil(t, closeGroup)
+		assert.NotPanics(t, closeGroup)
 	})
 
 	t.Run("github", func(t *testing.T) {
@@ -301,25 +301,25 @@ func TestPrintGroup(t *testing.T) {
 		t.Cleanup(restore)
 
 		// regular execution with header
-		close := printGroup(&buf, "default", "description")
+		closeGroup := printGroup(&buf, "default", "description")
 		assert.Equal(t, "::group::default: description\n", buf.String())
-		close()
+		closeGroup()
 		assert.Equal(t, "::group::default: description\n::endgroup::\n", buf.String())
 
 		buf.Reset()
 
 		// execution without header
-		close = printGroup(&buf, "default", "")
+		closeGroup = printGroup(&buf, "default", "")
 		assert.Equal(t, "::group::default\n", buf.String())
-		close()
+		closeGroup()
 		assert.Equal(t, "::group::default\n::endgroup::\n", buf.String())
 
 		buf.Reset()
 
 		// does not error if a nil writer is provided
-		close = printGroup(nil, "default", "description")
+		closeGroup = printGroup(nil, "default", "description")
 		assert.Equal(t, "", buf.String())
-		close()
+		closeGroup()
 		assert.Equal(t, "", buf.String())
 	})
 
@@ -330,25 +330,25 @@ func TestPrintGroup(t *testing.T) {
 		t.Cleanup(restore)
 
 		// execution without header (header gets set to taskName)
-		close := printGroup(&buf, "default", "")
+		closeGroup := printGroup(&buf, "default", "")
 		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault$`, buf.String())
-		close()
+		closeGroup()
 		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, buf.String())
 
 		buf.Reset()
 
 		// execution with header (header is not changed)
-		close = printGroup(&buf, "default", "description")
+		closeGroup = printGroup(&buf, "default", "description")
 		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription$`, buf.String())
-		close()
+		closeGroup()
 		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, buf.String())
 
 		buf.Reset()
 
 		// does not error if a nil writer is provided
-		close = printGroup(nil, "default", "description")
+		closeGroup = printGroup(nil, "default", "description")
 		assert.Equal(t, "", buf.String())
-		close()
+		closeGroup()
 		assert.Equal(t, "", buf.String())
 	})
 }

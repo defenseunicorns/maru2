@@ -21,17 +21,22 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
+// Environment variables used to determine what CI environment (if any) maru2 is in
+//
+// https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+//
+// https://docs.gitlab.com/ci/variables/predefined_variables/
 const (
-	GITHUB_ACTIONS_ENV_VAR = "GITHUB_ACTIONS"
-	GITLAB_CI_ENV_VAR      = "GITLAB_CI"
+	GitHubActionsEnvVar = "GITHUB_ACTIONS"
+	GitLabCIEnvVar      = "GITLAB_CI"
 )
 
 var isGitHubActions = sync.OnceValue(func() bool {
-	return os.Getenv(GITHUB_ACTIONS_ENV_VAR) == "true"
+	return os.Getenv(GitHubActionsEnvVar) == "true"
 })
 
 var isGitLabCI = sync.OnceValue(func() bool {
-	return os.Getenv(GITLAB_CI_ENV_VAR) == "true"
+	return os.Getenv(GitLabCIEnvVar) == "true"
 })
 
 // printScript renders shell script content with syntax highlighting
