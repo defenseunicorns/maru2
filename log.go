@@ -118,6 +118,11 @@ func printBuiltin(logger *log.Logger, builtin schema.With) {
 }
 
 func printGroup(wr io.Writer, taskName string, header string) func() {
+	if taskName == "" || wr == nil { // printing functions are best effort styled in order to not get in the way of true execution which should be catching these cases
+		// no-op that prevents nil reference
+		return func() {}
+	}
+
 	isGitHub := isGitHubActions()
 	isGitLab := isGitLabCI()
 

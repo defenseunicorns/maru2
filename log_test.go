@@ -6,6 +6,7 @@ package maru2
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/alecthomas/chroma/v2"
@@ -264,4 +265,77 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 
 	output := buf.String()
 	assert.Contains(t, output, "failed to marshal builtin")
+}
+
+func TestPrintGroup(t *testing.T) {
+	syncTrue := func() func() bool {
+		return sync.OnceValue(func() bool {
+			return true
+		})
+	}
+	currIsGitHubActions := isGitHubActions
+	currIsGitLabCI := isGitLabCI
+
+	restore := func() {
+		isGitHubActions = currIsGitHubActions
+		isGitLabCI = currIsGitLabCI
+	}
+
+	t.Cleanup(restore)
+
+	t.Run("default", func(t *testing.T) {
+		// no task name
+		close := printGroup(nil, "", "")
+		assert.NotNil(t, close)
+		assert.NotPanics(t, close)
+
+		close = printGroup(nil, "default", "")
+		assert.NotNil(t, close)
+		assert.NotPanics(t, close)
+	})
+
+	t.Run("github", func(t *testing.T) {
+		var buf strings.Builder
+
+		isGitHubActions = syncTrue()
+		t.Cleanup(restore)
+
+		// regular execution
+		close := printGroup(&buf, "default", "description")
+		assert.Equal(t, "", buf.String())
+		close()
+		assert.Equal(t, "", buf.String())
+
+		// does not error if a nil writer is provided
+		close = printGroup(nil, "default", "description")
+		assert.Equal(t, "", buf.String())
+		close()
+		assert.Equal(t, "", buf.String())
+	})
+
+	t.Run("gitlab", func(t *testing.T) {
+		var buf strings.Builder
+
+		isGitLabCI = syncTrue()
+		t.Cleanup(restore)
+
+		close := printGroup(&buf, "default", "")
+		assert.Equal(t, "", buf.String())
+		close()
+		assert.Equal(t, "", buf.String())
+
+		buf.Reset()
+
+		// no description
+		close = printGroup(&buf, "default", "")
+		assert.Equal(t, "", buf.String())
+		close()
+		assert.Equal(t, "", buf.String())
+
+		// does not error if a nil writer is provided
+		close = printGroup(nil, "default", "description")
+		assert.Equal(t, "", buf.String())
+		close()
+		assert.Equal(t, "", buf.String())
+	})
 }
