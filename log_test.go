@@ -300,11 +300,19 @@ func TestPrintGroup(t *testing.T) {
 		isGitHubActions = syncTrue()
 		t.Cleanup(restore)
 
-		// regular execution
+		// regular execution with header
 		close := printGroup(&buf, "default", "description")
 		assert.Equal(t, "::group::default: description\n", buf.String())
 		close()
 		assert.Equal(t, "::group::default: description\n::endgroup::\n", buf.String())
+
+		buf.Reset()
+
+		// execution without header
+		close = printGroup(&buf, "default", "")
+		assert.Equal(t, "::group::default\n", buf.String())
+		close()
+		assert.Equal(t, "::group::default\n::endgroup::\n", buf.String())
 
 		buf.Reset()
 
@@ -321,10 +329,19 @@ func TestPrintGroup(t *testing.T) {
 		isGitLabCI = syncTrue()
 		t.Cleanup(restore)
 
+		// execution without header (header gets set to taskName)
 		close := printGroup(&buf, "default", "")
 		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault$`, buf.String())
 		close()
 		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, buf.String())
+
+		buf.Reset()
+
+		// execution with header (header is not changed)
+		close = printGroup(&buf, "default", "description")
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription$`, buf.String())
+		close()
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, buf.String())
 
 		buf.Reset()
 
