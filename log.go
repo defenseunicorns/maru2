@@ -128,11 +128,8 @@ func printGroup(wr io.Writer, taskName string, header string) func() {
 		return func() {}
 	}
 
-	isGitHub := isGitHubActions()
-	isGitLab := isGitLabCI()
-
 	// https://docs.gitlab.com/ci/jobs/job_logs/#expand-and-collapse-job-log-sections
-	if isGitLab {
+	if isGitLabCI() {
 		if header == "" {
 			header = taskName
 		}
@@ -145,7 +142,7 @@ func printGroup(wr io.Writer, taskName string, header string) func() {
 	}
 
 	// https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines
-	if isGitHub {
+	if isGitHubActions() {
 		_, _ = fmt.Fprint(wr, "::group::")
 		_, _ = fmt.Fprint(wr, taskName)
 		if header != "" {
