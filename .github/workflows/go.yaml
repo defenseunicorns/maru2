@@ -31,7 +31,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache-dependency-path: go.sum
-      - run: make clean all
+      - run: make clean && make -j all
       - run: |
           if ! git diff --exit-code maru2.schema.json; then
             echo "maru2.schema.json is dirty. Please run 'make' and commit the changes"

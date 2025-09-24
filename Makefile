@@ -5,7 +5,7 @@
 
 export CGO_ENABLED=0
 
-all: maru2 maru2-publish ## Build all binaries
+all: maru2 maru2-publish maru2-mcp ## Build all binaries
 
 SCHEMA_DEPS := schema.go schema/*.go builtins/*.go
 
@@ -23,6 +23,9 @@ schema/v1/schema.json: $(SCHEMA_DEPS) schema/v1/*.go
 
 maru2-publish: ## Build maru2-publish binary
 	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2-publish
+
+maru2-mcp: ## Build maru2-mcp binary
+	go build -o bin/ -ldflags="-s -w" -trimpath ./cmd/maru2-mcp
 
 lint: ## Run linters
 	golangci-lint run ./...
@@ -45,10 +48,12 @@ ARGS ?=
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
-	@echo ''
+	@echo
 	@echo 'Available targets:'
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@echo ''
+	@echo
+	@echo 'For the fastest compilation: make -j all'
+	@echo
 	@echo 'Special targets:'
 	@echo '  <task-name>     Run any maru2 task via: make <task-name> [ARGS="--flag"]'
 
