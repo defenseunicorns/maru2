@@ -328,7 +328,7 @@ func TestRun(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, "", nil, tc.dry)
+			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, RuntimeOptions{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -400,7 +400,7 @@ func TestRun_PrintGroup(t *testing.T) {
 
 		stdout := captureStdout(t, func() {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			out, err := Run(ctx, nil, wf, "", nil, nil, "", nil, false)
+			out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{})
 			require.NoError(t, err)
 			assert.Nil(t, out)
 		})
@@ -421,7 +421,7 @@ func TestRun_PrintGroup(t *testing.T) {
 
 		stdout := captureStdout(t, func() {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			out, err := Run(ctx, nil, wf, "", nil, nil, "", nil, false)
+			out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{})
 			require.NoError(t, err)
 			assert.Nil(t, out)
 		})
@@ -671,7 +671,7 @@ func TestRunContext(t *testing.T) {
 				}()
 			}
 
-			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, schema.With{}, nil, "", nil, false)
+			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, schema.With{}, nil, RuntimeOptions{})
 
 			if tc.expectedError != "" {
 				require.ErrorContains(t, err, tc.expectedError)
@@ -1309,7 +1309,7 @@ func TestHandleRunStep(t *testing.T) {
 				Level: log.InfoLevel,
 			}))
 
-			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, "", nil, tc.dry)
+			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, RuntimeOptions{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -1586,7 +1586,7 @@ func TestHandleUsesStep(t *testing.T) {
 			origin, err := url.Parse(tc.origin)
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, "", nil, tc.dry)
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, RuntimeOptions{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

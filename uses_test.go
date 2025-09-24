@@ -795,10 +795,10 @@ func TestExecuteUses(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.expectedErr == "" {
-				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, "", nil, false)
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, RuntimeOptions{})
 				require.NoError(t, err)
 			} else {
-				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, "", nil, false)
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, RuntimeOptions{})
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})
@@ -898,9 +898,10 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 				tt.withInputs,
 				nil,
 				origin,
-				"",
-				tt.environ,
-				true, // dry run to avoid actual execution
+				RuntimeOptions{
+					Env: tt.environ,
+					Dry: true, // dry run to avoid actual execution
+				},
 			)
 
 			if tt.expectedErr != "" {
@@ -940,7 +941,7 @@ func TestUsesEnvironmentVariablesExecution(t *testing.T) {
 	// Execute a simple task to verify environment variables are accessible
 	// This doesn't test the specific environment variable passing but confirms
 	// the basic uses functionality works with environment context
-	result, err := Run(ctx, svc, wf, "default", schema.With{}, origin, "", environ, false)
+	result, err := Run(ctx, svc, wf, "default", schema.With{}, origin, RuntimeOptions{Env: environ})
 	require.NoError(t, err)
 
 	// For this simple test, we just verify no error occurred

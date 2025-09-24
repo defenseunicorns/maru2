@@ -27,6 +27,22 @@ import (
 	"github.com/defenseunicorns/maru2/uses"
 )
 
+// RuntimeOptions are configurations whereupon the default empty/nil value is an acceptable case
+// and are not a requirement for a valid runtime execution
+//
+// Leave this type as a concrete instance vs a pointer type as this object will be mutated along the runtime pipeline,
+// and copy by value is the desired behavior versus copy by reference
+type RuntimeOptions struct {
+	// The CWD to start the execution from, passed to the exec.Command in run blocks, leave blank for current process' PWD
+	CWD string
+	// Environment variables passed to the exec.Command in run blocks, usually initialized w/ os.Environ()
+	Env []string
+	// Whether this execution is a dry run or not
+	Dry bool
+	// Whether this execution is already inside a collapsible section in CI, disables nested collapsible sections if true
+	Collapsed bool
+}
+
 /*
 Run is the main event loop in maru2
 
@@ -65,9 +81,7 @@ func Run(
 	taskName string,
 	outer schema.With,
 	origin *url.URL,
-	cwd string,
-	environVars []string,
-	dry bool,
+	ro RuntimeOptions,
 ) (map[string]any, error) {
 	if taskName == "" {
 		taskName = schema.DefaultTaskName
@@ -90,12 +104,13 @@ func Run(
 
 	start := time.Now()
 
-	if task.Collapse {
+	if task.Collapse && !ro.Collapsed {
 		closeGroup := printGroup(os.Stdout, taskName, task.Description)
 		defer closeGroup()
+		ro.Collapsed = true
 	}
 
-	logger.Debug("run", "task", taskName, "from", origin, "dry-run", dry)
+	logger.Debug("run", "task", taskName, "from", origin, "dry-run", ro.Dry)
 	defer func() {
 		logger.Debug("ran", "task", taskName, "from", origin, "duration", time.Since(start))
 	}()
@@ -108,7 +123,7 @@ func Run(
 	for i, step := range task.Steps {
 		sub := logger.With("step", fmt.Sprintf("%s[%d]", taskName, i))
 		err := func(ctx context.Context) error {
-			shouldRun, err := ShouldRun(ctx, step.If, firstError, withDefaults, outputs, dry)
+			shouldRun, err := ShouldRun(ctx, step.If, firstError, withDefaults, outputs, ro.Dry)
 			if err != nil {
 				if firstError != nil {
 					// if there was an error calculating if we should run during the error path
@@ -151,9 +166,9 @@ func Run(
 			var stepResult map[string]any
 
 			if step.Uses != "" {
-				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, cwd, environVars, dry)
+				stepResult, err = handleUsesStep(ctx, svc, step, wf, withDefaults, outputs, origin, ro)
 			} else if step.Run != "" {
-				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, cwd, environVars, dry)
+				stepResult, err = handleRunStep(ctx, step, withDefaults, outputs, ro)
 			}
 
 			if err != nil {
@@ -196,25 +211,23 @@ func handleRunStep(
 	step v1.Step,
 	withDefaults schema.With,
 	outputs CommandOutputs,
-	cwd string,
-	environVars []string,
-	dry bool,
+	ro RuntimeOptions,
 ) (map[string]any, error) {
 
 	logger := log.FromContext(ctx)
 
-	script, err := TemplateString(ctx, step.Run, withDefaults, outputs, dry)
+	script, err := TemplateString(ctx, step.Run, withDefaults, outputs, ro.Dry)
 	if err != nil {
-		if dry {
+		if ro.Dry {
 			printScript(logger, step.Shell, script)
 		}
 		return nil, err
 	}
 
-	if dry || step.Show == nil || *step.Show {
+	if ro.Dry || step.Show == nil || *step.Show {
 		printScript(logger, step.Shell, script)
 	}
-	if dry {
+	if ro.Dry {
 		return nil, nil
 	}
 
@@ -227,12 +240,12 @@ func handleRunStep(
 		os.Remove(outFile.Name())
 	}()
 
-	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, dry)
+	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, ro.Dry)
 	if err != nil {
 		return nil, err
 	}
 
-	env, err := prepareEnvironment(environVars, withDefaults, outFile.Name(), templatedEnv)
+	env, err := prepareEnvironment(ro.Env, withDefaults, outFile.Name(), templatedEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +268,7 @@ func handleRunStep(
 
 	cmd := exec.CommandContext(ctx, shell, args...)
 	cmd.Env = env
-	cmd.Dir = filepath.Join(cwd, step.Dir)
+	cmd.Dir = filepath.Join(ro.CWD, step.Dir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
