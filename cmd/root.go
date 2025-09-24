@@ -19,6 +19,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -150,7 +152,10 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			names := wf.Tasks.OrderedTaskNames()
+			names := make([]string, 0, len(wf.Tasks))
+			for _, name := range wf.Tasks.OrderedTaskNames() {
+				names = append(names, strings.Join([]string{name, wf.Tasks[name].Description}, "\t"))
+			}
 
 			for name, alias := range wf.Aliases {
 				if alias.Path != "" {
@@ -163,7 +168,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 						return nil, cobra.ShellCompDirectiveError
 					}
 					for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
-						names = append(names, fmt.Sprintf("%s:%s", name, n))
+						names = append(names, strings.Join([]string{fmt.Sprintf("%s:%s", name, n), wf.Tasks[name].Description}, "\t"))
 					}
 				}
 			}
@@ -262,12 +267,29 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if list {
-				names := wf.Tasks.OrderedTaskNames()
-
-				logger.Print("Available:\n")
-				for _, n := range names {
-					logger.Printf("- %s", n)
+				ds := DefaultStyles()
+				t := table.New().Border(lipgloss.HiddenBorder()).StyleFunc(func(_, col int) lipgloss.Style {
+					switch col {
+					case 1:
+						return lipgloss.NewStyle().Inherit(ds.Levels[log.InfoLevel]).Transform(func(s string) string {
+							switch s {
+							case "":
+								return s
+							default:
+								return "# " + s
+							}
+						}).UnsetBold().UnsetMargins().UnsetPadding()
+					default:
+						return lipgloss.NewStyle().MarginLeft(3)
+					}
+				})
+				for _, name := range wf.Tasks.OrderedTaskNames() {
+					t.Row(name, wf.Tasks[name].Description)
 				}
+
+				logger.Printf("Available tasks:%s", t)
+
+				t.ClearRows()
 
 				for name, alias := range wf.Aliases {
 					if alias.Path != "" {
@@ -280,10 +302,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 							return err
 						}
 						for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
-							logger.Printf("- %s:%s", name, n)
+							t.Row(fmt.Sprintf("%s:%s", name, n), aliasedWF.Tasks[name].Description)
 						}
 					}
 				}
+				logger.Print(t)
 
 				return nil
 			}

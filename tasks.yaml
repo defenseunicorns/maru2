@@ -3,6 +3,7 @@ schema-version: v1
 
 tasks:
   echo:
+    description: some descrption 12345 2
     inputs:
       text:
         description: Text to echo
