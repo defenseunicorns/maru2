@@ -1,0 +1,21 @@
+env GITHUB_ACTIONS=true
+env GITLAB_CI=
+exec maru2
+cmp stdout github-stdout.txt
+
+env GITLAB_CI=true
+env GITHUB_ACTIONS=
+exec maru2
+stdout '\\e\[0Ksection_start:[0-9]+:default\[collapsed=true\]\\r\\e\[0Kdefault\nHello World!\n\\e\[0Ksection_end:[0-9]+:default\\r\\e\[0K\n'
+
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  default:
+    collapse: true
+    steps:
+      - run: echo "Hello World!"
+-- github-stdout.txt --
+::group::default
+Hello World!
+::endgroup::
