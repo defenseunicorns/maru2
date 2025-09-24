@@ -329,7 +329,10 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				args = append(args, schema.DefaultTaskName)
 			}
 
-			environ := os.Environ()
+			opts := maru2.RuntimeOptions{
+				Dry: dry,
+				Env: os.Environ(),
+			}
 
 			for _, call := range args {
 				parts := strings.SplitN(call, ":", 2)
@@ -344,14 +347,14 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 						return err
 					}
 
-					_, err = maru2.Run(ctx, svc, nextWf, parts[1], with, next, "", environ, dry)
+					_, err = maru2.Run(ctx, svc, nextWf, parts[1], with, next, opts)
 					if err != nil {
 						return err
 					}
 					continue
 				}
 
-				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, "", environ, dry)
+				_, err := maru2.Run(ctx, svc, wf, call, with, resolved, opts)
 				if err != nil {
 					return err
 				}

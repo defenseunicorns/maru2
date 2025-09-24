@@ -4,7 +4,12 @@
 package maru2
 
 import (
+	"fmt"
+	"io"
+	"os"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/lipgloss"
@@ -15,6 +20,24 @@ import (
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
+
+// Environment variables used to determine what CI environment (if any) maru2 is in
+//
+// https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+//
+// https://docs.gitlab.com/ci/variables/predefined_variables/
+const (
+	GitHubActionsEnvVar = "GITHUB_ACTIONS"
+	GitLabCIEnvVar      = "GITLAB_CI"
+)
+
+var isGitHubActions = sync.OnceValue(func() bool {
+	return os.Getenv(GitHubActionsEnvVar) == "true"
+})
+
+var isGitLabCI = sync.OnceValue(func() bool {
+	return os.Getenv(GitLabCIEnvVar) == "true"
+})
 
 // printScript renders shell script content with syntax highlighting
 //
@@ -97,4 +120,40 @@ func printBuiltin(logger *log.Logger, builtin schema.With) {
 	}
 
 	logger.Printf("%s", strings.TrimSpace(buf.String()))
+}
+
+func printGroup(wr io.Writer, taskName string, header string) func() {
+	if taskName == "" || wr == nil { // printing functions are best effort styled in order to not get in the way of true execution which should be catching these cases
+		// no-op that prevents nil reference
+		return func() {}
+	}
+
+	// https://docs.gitlab.com/ci/jobs/job_logs/#expand-and-collapse-job-log-sections
+	if isGitLabCI() {
+		if header == "" {
+			header = taskName
+		}
+		_, _ = fmt.Fprintf(wr, `\e[0Ksection_start:%d:%s[collapsed=true]\r\e[0K%s`, time.Now().Unix(), taskName, header)
+		_, _ = fmt.Fprintln(wr)
+		return func() {
+			_, _ = fmt.Fprintf(wr, `\e[0Ksection_end:%d:%s\r\e[0K`, time.Now().Unix(), taskName)
+			_, _ = fmt.Fprintln(wr)
+		}
+	}
+
+	// https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#grouping-log-lines
+	if isGitHubActions() {
+		_, _ = fmt.Fprint(wr, "::group::")
+		_, _ = fmt.Fprint(wr, taskName)
+		if header != "" {
+			_, _ = fmt.Fprintf(wr, ": %s", header)
+		}
+		_, _ = fmt.Fprintln(wr)
+		return func() {
+			_, _ = fmt.Fprintln(wr, `::endgroup::`)
+		}
+	}
+
+	// no-op that prevents nil reference
+	return func() {}
 }

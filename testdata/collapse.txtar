@@ -1,0 +1,35 @@
+env GITHUB_ACTIONS=true
+env GITLAB_CI=
+exec maru2
+cmp stdout github-stdout.txt
+exec maru2 nested
+cmp stdout github-stdout-nested.txt
+
+env GITLAB_CI=true
+env GITHUB_ACTIONS=
+exec maru2
+stdout '\\e\[0Ksection_start:[0-9]+:default\[collapsed=true\]\\r\\e\[0Kdefault\nHello World!\n\\e\[0Ksection_end:[0-9]+:default\\r\\e\[0K\n'
+exec maru2 nested
+stdout '\\e\[0Ksection_start:[0-9]+:nested\[collapsed=true\]\\r\\e\[0Knested\nHello from nested task!\nHello World!\n\\e\[0Ksection_end:[0-9]+:nested\\r\\e\[0K\n'
+
+-- tasks.yaml --
+schema-version: v1
+tasks:
+  default:
+    collapse: true
+    steps:
+      - run: echo "Hello World!"
+  nested:
+    collapse: true
+    steps:
+      - run: echo "Hello from nested task!"
+      - uses: default
+-- github-stdout.txt --
+::group::default
+Hello World!
+::endgroup::
+-- github-stdout-nested.txt --
+::group::nested
+Hello from nested task!
+Hello World!
+::endgroup::

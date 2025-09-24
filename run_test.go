@@ -10,8 +10,10 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -326,7 +328,7 @@ func TestRun(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, "", nil, tc.dry)
+			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, RuntimeOptions{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -337,6 +339,95 @@ func TestRun(t *testing.T) {
 			assert.Equal(t, tc.expectedOut, result)
 		})
 	}
+}
+
+func captureStdout(t *testing.T, f func()) string {
+	t.Helper()
+	old := os.Stdout
+	t.Cleanup(func() {
+		os.Stdout = old
+	})
+
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = w
+
+	f()
+
+	err = w.Close()
+	require.NoError(t, err)
+
+	var buf strings.Builder
+	_, err = io.Copy(&buf, r)
+	require.NoError(t, err)
+
+	return buf.String()
+}
+
+func TestRun_PrintGroup(t *testing.T) {
+	syncTrue := func() bool {
+		return true
+	}
+	syncFalse := func() bool {
+		return false
+	}
+
+	// set both to false so that this runs the same local and in GitHub CI
+	isGitHubActions = syncFalse
+	isGitLabCI = syncFalse
+
+	// reset state of checks to be "blank" after tests are done, these functions must EXACTLY match their counterparts
+	t.Cleanup(func() {
+		isGitHubActions = sync.OnceValue(func() bool {
+			return os.Getenv(GitHubActionsEnvVar) == "true"
+		})
+		isGitLabCI = sync.OnceValue(func() bool {
+			return os.Getenv(GitLabCIEnvVar) == "true"
+		})
+	})
+
+	t.Run("github", func(t *testing.T) {
+		isGitHubActions = syncTrue
+
+		wf := v1.Workflow{
+			Tasks: v1.TaskMap{
+				"default": v1.Task{
+					Collapse: true,
+					Steps:    []v1.Step{{Run: "echo 'foo'"}},
+				},
+			},
+		}
+
+		stdout := captureStdout(t, func() {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{})
+			require.NoError(t, err)
+			assert.Nil(t, out)
+		})
+
+		assert.Equal(t, "::group::default\nfoo\n::endgroup::\n", stdout)
+	})
+
+	t.Run("gitlab", func(t *testing.T) {
+		isGitLabCI = syncTrue
+		wf := v1.Workflow{
+			Tasks: v1.TaskMap{
+				"default": v1.Task{
+					Collapse: true,
+					Steps:    []v1.Step{{Run: "echo 'foo'"}},
+				},
+			},
+		}
+
+		stdout := captureStdout(t, func() {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{})
+			require.NoError(t, err)
+			assert.Nil(t, out)
+		})
+
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\nfoo\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, stdout)
+	})
 }
 
 func TestRunContext(t *testing.T) {
@@ -580,7 +671,7 @@ func TestRunContext(t *testing.T) {
 				}()
 			}
 
-			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, schema.With{}, nil, "", nil, false)
+			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, schema.With{}, nil, RuntimeOptions{})
 
 			if tc.expectedError != "" {
 				require.ErrorContains(t, err, tc.expectedError)
@@ -1218,7 +1309,7 @@ func TestHandleRunStep(t *testing.T) {
 				Level: log.InfoLevel,
 			}))
 
-			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, "", nil, tc.dry)
+			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, RuntimeOptions{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -1495,7 +1586,7 @@ func TestHandleUsesStep(t *testing.T) {
 			origin, err := url.Parse(tc.origin)
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, "", nil, tc.dry)
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, RuntimeOptions{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

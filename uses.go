@@ -31,39 +31,38 @@ func handleUsesStep(
 	withDefaults schema.With,
 	outputs CommandOutputs,
 	origin *url.URL,
-	cwd string,
-	environVars []string,
-	dry bool,
+	ro RuntimeOptions,
 ) (map[string]any, error) {
-	cwd = filepath.Join(cwd, step.Dir)
+	ro.WorkingDir = filepath.Join(ro.WorkingDir, step.Dir)
 
 	if strings.HasPrefix(step.Uses, "builtin:") {
-		return ExecuteBuiltin(ctx, step, withDefaults, outputs, dry)
+		return ExecuteBuiltin(ctx, step, withDefaults, outputs, ro.Dry)
 	}
 
 	logger := log.FromContext(ctx)
 
 	logger.Debug("templating", "input", withDefaults, "local", step.With)
 
-	templatedWith, err := TemplateWithMap(ctx, step.With, withDefaults, outputs, dry)
+	templatedWith, err := TemplateWithMap(ctx, step.With, withDefaults, outputs, ro.Dry)
 	if err != nil {
 		return nil, err
 	}
 
 	logger.Debug("templated", "result", templatedWith)
 
-	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, dry)
+	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, ro.Dry)
 	if err != nil {
 		return nil, err
 	}
 
-	env, err := prepareEnvironment(environVars, nil, "", templatedEnv)
+	env, err := prepareEnvironment(ro.Env, nil, "", templatedEnv)
 	if err != nil {
 		return nil, err
 	}
+	ro.Env = env
 
 	if _, ok := wf.Tasks.Find(step.Uses); ok {
-		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, cwd, env, dry)
+		return Run(ctx, svc, wf, step.Uses, templatedWith, origin, ro)
 	}
 
 	next, err := uses.ResolveRelative(origin, step.Uses, wf.Aliases)
@@ -78,7 +77,7 @@ func handleUsesStep(
 
 	taskName := next.Query().Get(uses.QualifierTask)
 
-	return Run(ctx, svc, nextWf, taskName, templatedWith, next, cwd, env, dry)
+	return Run(ctx, svc, nextWf, taskName, templatedWith, next, ro)
 }
 
 // Fetch downloads and validates a workflow from a remote or local source

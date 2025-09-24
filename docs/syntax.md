@@ -17,13 +17,13 @@ Checkout the comparison below:
 .DEFAULT_GOAL := build
 
 build:
-	CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
+  CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
 
 test:
-	go test -v -race -cover -failfast -timeout 3m ./...
+  go test -v -race -cover -failfast -timeout 3m ./...
 
 clean:
-	rm -rf bin/
+  @rm -rf bin/
 ```
 
 ```yaml
@@ -35,8 +35,9 @@ tasks:
 
   build:
     steps:
-      - run: |
-          CGO_ENABLED=0 go build -o bin/ -ldflags="-s -w" ./cmd/maru2
+      - run: go build -o bin/ -ldflags="-s -w" ./cmd/maru2
+        env:
+          CGO_ENABLED: 0
 
   test:
     steps:
@@ -45,6 +46,7 @@ tasks:
   clean:
     steps:
       - run: rm -rf bin/
+        show: false
 ```
 
 ## Schema Version
@@ -787,3 +789,45 @@ echo "This step always runs, regardless of previous failures"
 ERRO exit status 1
 ERRO at example[1] (file:tasks.yaml)
 ```
+
+## CI Environment Integration
+
+Maru2 provides optional enhanced output formatting when running in CI environments to improve log readability and organization.
+
+### Output Grouping with `collapse`
+
+When the `collapse` property is set to `true` on a task, Maru2 automatically groups the task's output in supported CI environments.
+No other configuration is required - the output grouping feature activates automatically when these environments are detected.
+
+- GitHub Actions (`GITHUB_ACTIONS=true`): Uses `::group::` and `::endgroup::` commands to create collapsible log sections
+- GitLab CI (`GITLAB_CI=true`): Uses section markers to create collapsible log sections
+
+```yaml
+schema-version: v1
+tasks:
+  build:
+    description: "Build the application"
+    collapse: true
+    steps:
+      - run: echo "Installing dependencies..."
+      - run: npm install
+      - run: echo "Building application..."
+      - run: npm run build
+```
+
+In GitHub Actions, this produces:
+
+```text
+::group::build: Build the application
+Installing dependencies...
+npm install output...
+Building application...
+npm run build output...
+::endgroup::
+```
+
+In local/non-CI environments, the `collapse` property has no effect and output is displayed normally.
+
+Nested tasks with their own `collapse: true` property will not create additional nested groups within an already collapsed section.
+
+While this is supported in GitLab, it is not in GitHub and consistency is better in this case. If this behavior is desired, it can always be added later in a non-breaking fasion.

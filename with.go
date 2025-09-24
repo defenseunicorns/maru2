@@ -29,13 +29,11 @@ import (
 var shortcuts = sync.Map{}
 
 // RegisterWhichShortcut registers a key-value pair to be expanded during the "which" text template function
-func RegisterWhichShortcut(key, value string) {
-	shortcuts.Store(key, value)
+func RegisterWhichShortcut(short, long string) {
+	shortcuts.Store(short, long)
 }
 
 // TemplateString expands templates in str using Go's text/template engine
-//
-// Templates leverage Go's `text/template` engine
 //
 // In dry run mode, missing inputs and outputs are rendered with special markers
 func TemplateString(ctx context.Context, str string, with schema.With, previousOutputs CommandOutputs, dry bool) (string, error) {

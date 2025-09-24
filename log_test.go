@@ -5,7 +5,9 @@ package maru2
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/alecthomas/chroma/v2"
@@ -264,4 +266,118 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 
 	output := buf.String()
 	assert.Contains(t, output, "failed to marshal builtin")
+}
+
+func TestPrintGroup(t *testing.T) {
+	syncTrue := func() bool {
+		return true
+	}
+	syncFalse := func() bool {
+		return false
+	}
+
+	// reset state of checks to be "blank" after tests are done, these functions must EXACTLY match their counterparts
+	t.Cleanup(func() {
+		isGitHubActions = sync.OnceValue(func() bool {
+			return os.Getenv(GitHubActionsEnvVar) == "true"
+		})
+		isGitLabCI = sync.OnceValue(func() bool {
+			return os.Getenv(GitLabCIEnvVar) == "true"
+		})
+	})
+
+	t.Run("env vars", func(t *testing.T) {
+		t.Setenv(GitHubActionsEnvVar, "true")
+		assert.True(t, isGitHubActions())
+		t.Setenv(GitHubActionsEnvVar, "false")
+		assert.True(t, isGitHubActions())
+
+		t.Setenv(GitLabCIEnvVar, "true")
+		assert.True(t, isGitLabCI())
+		t.Setenv(GitLabCIEnvVar, "false")
+		assert.True(t, isGitLabCI())
+	})
+
+	// set both to false so that this runs the same local and in GitHub CI
+	isGitHubActions = syncFalse
+	isGitLabCI = syncFalse
+
+	t.Run("default", func(t *testing.T) {
+		// no task name
+		closeGroup := printGroup(nil, "", "")
+		assert.NotNil(t, closeGroup)
+		assert.NotPanics(t, closeGroup)
+
+		closeGroup = printGroup(nil, "default", "")
+		assert.NotNil(t, closeGroup)
+		assert.NotPanics(t, closeGroup)
+
+		var buf strings.Builder
+		closeGroup = printGroup(&buf, "default", "")
+		assert.Equal(t, "", buf.String())
+		closeGroup()
+		assert.Equal(t, "", buf.String())
+	})
+
+	t.Run("github", func(t *testing.T) {
+		var buf strings.Builder
+
+		isGitHubActions = syncTrue
+		t.Cleanup(func() {
+			isGitHubActions = syncFalse
+		})
+
+		// regular execution with header
+		closeGroup := printGroup(&buf, "default", "description")
+		assert.Equal(t, "::group::default: description\n", buf.String())
+		closeGroup()
+		assert.Equal(t, "::group::default: description\n::endgroup::\n", buf.String())
+
+		buf.Reset()
+
+		// execution without header
+		closeGroup = printGroup(&buf, "default", "")
+		assert.Equal(t, "::group::default\n", buf.String())
+		closeGroup()
+		assert.Equal(t, "::group::default\n::endgroup::\n", buf.String())
+
+		buf.Reset()
+
+		// does not error if a nil writer is provided
+		closeGroup = printGroup(nil, "default", "description")
+		assert.Equal(t, "", buf.String())
+		closeGroup()
+		assert.Equal(t, "", buf.String())
+	})
+
+	t.Run("gitlab", func(t *testing.T) {
+		var buf strings.Builder
+
+		isGitLabCI = syncTrue
+		t.Cleanup(func() {
+			isGitLabCI = syncFalse
+		})
+
+		// execution without header (header gets set to taskName)
+		closeGroup := printGroup(&buf, "default", "")
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\n$`, buf.String())
+		closeGroup()
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, buf.String())
+
+		buf.Reset()
+
+		// execution with header (header is not changed)
+		closeGroup = printGroup(&buf, "default", "description")
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription\n$`, buf.String())
+		closeGroup()
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, buf.String())
+
+		buf.Reset()
+
+		// does not error if a nil writer is provided
+		closeGroup = printGroup(nil, "default", "description")
+		assert.Equal(t, "", buf.String())
+		closeGroup()
+		assert.Equal(t, "", buf.String())
+	})
 }

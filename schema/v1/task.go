@@ -14,13 +14,23 @@ import (
 
 // Task is a list of steps and input parameters
 type Task struct {
-	Inputs InputMap `json:"inputs,omitempty"`
-	Steps  []Step   `json:"steps"`
+	Description string   `json:"description,omitempty"`
+	Collapse    bool     `json:"collapse,omitempty"`
+	Inputs      InputMap `json:"inputs,omitempty"`
+	Steps       []Step   `json:"steps"`
 }
 
 // JSONSchemaExtend extends the JSON schema for a task
 func (Task) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Description = "A task definition, aka a collection of steps"
+
+	if desc, ok := schema.Properties.Get("description"); ok && desc != nil {
+		desc.Description = "Human-readable description of the task"
+	}
+
+	if collapse, ok := schema.Properties.Get("collapse"); ok && collapse != nil {
+		collapse.Description = "Group task output in CI environments (GitHub Actions, GitLab CI)"
+	}
 
 	if inputs, ok := schema.Properties.Get("inputs"); ok && inputs != nil {
 		inputs.Description = "Input parameters for the task"
