@@ -21,8 +21,9 @@ tasks:
         default: false
     steps:
       - run: |
-          export CGO_ENABLED=1
           go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m -short=${{ input "short" }} ./...
+        env:
+          CGO_ENABLED: 1
 
   hello-world:
     steps:

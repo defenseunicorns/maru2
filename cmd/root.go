@@ -268,26 +268,24 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			if list {
 				ds := DefaultStyles()
-				t := table.New().BorderTop(false).BorderRight(false).BorderBottom(false).BorderLeft(false).BorderColumn(false).BorderHeader(false).BorderRow(false).StyleFunc(func(_, col int) lipgloss.Style {
+				t := table.New().Border(lipgloss.HiddenBorder()).BorderLeft(false).BorderBottom(false).BorderTop(false).BorderRight(false).StyleFunc(func(_, col int) lipgloss.Style {
 					switch col {
 					case 1:
 						return lipgloss.NewStyle().Foreground(ds.Levels[log.InfoLevel].GetForeground())
+					case 0:
+						return lipgloss.NewStyle().MarginLeft(3)
 					default:
-						return lipgloss.NewStyle().MarginLeft(4)
+						return lipgloss.NewStyle()
 					}
 				})
 				for _, name := range wf.Tasks.OrderedTaskNames() {
+					var comment string
 					if desc := wf.Tasks[name].Description; desc != "" {
-						t.Row(name, "# "+desc)
-						continue
+						comment = "# " + desc
 					}
-					t.Row(name)
+
+					t = t.Row(name, comment)
 				}
-
-				logger.Printf("Available tasks:")
-				logger.Print(t)
-
-				t.ClearRows()
 
 				for name, alias := range wf.Aliases {
 					if alias.Path != "" {
@@ -300,19 +298,18 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 							return err
 						}
 						for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
-							entry := fmt.Sprintf("%s:%s", name, n)
-
-							if desc := aliasedWF.Tasks[name].Description; desc != "" {
-								t.Row(entry, "# "+desc)
-								continue
+							var comment string
+							if desc := aliasedWF.Tasks[n].Description; desc != "" {
+								comment = "# " + desc
 							}
-							t.Row(entry)
+
+							t = t.Row(fmt.Sprintf("%s:%s", name, n), comment)
 						}
 					}
 				}
-				if rest := t.String(); rest != "" {
-					logger.Print(rest)
-				}
+
+				logger.Printf("Available tasks:")
+				logger.Print(t)
 
 				return nil
 			}
