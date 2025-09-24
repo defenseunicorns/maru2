@@ -36,3 +36,12 @@ func DefaultStyles() *log.Styles {
 
 	return styles
 }
+
+var (
+	FaintStyle = lipgloss.NewStyle().Faint(true)
+
+	Green = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{
+		Light: "#587539", // tokyonight-day green
+		Dark:  "#9ece6a", // tokyonight green
+	})
+)

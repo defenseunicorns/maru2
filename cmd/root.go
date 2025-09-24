@@ -23,6 +23,7 @@ import (
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	"github.com/defenseunicorns/maru2"
@@ -284,7 +285,34 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 						comment = "# " + desc
 					}
 
-					t = t.Row(name, comment)
+					msg := strings.Builder{}
+					msg.WriteString(name) // not really caring about errors
+
+					faint := lipgloss.NewStyle().Faint(true)
+					blue := lipgloss.NewStyle().Foreground(ds.Levels[log.DebugLevel].GetForeground())
+					amber := lipgloss.NewStyle().Foreground(ds.Levels[log.WarnLevel].GetForeground())
+					for n, input := range wf.Tasks[name].Inputs {
+						msg.WriteString(faint.Render(" -w "))
+						if input.Default != nil {
+							msg.WriteString(blue.Render(n))
+							msg.WriteString("=")
+
+							if input.DefaultFromEnv != "" {
+								msg.WriteString(Green.Render(fmt.Sprintf("\"${%s:-%s}\"", input.DefaultFromEnv, cast.ToString(input.Default))))
+							} else {
+								msg.WriteString(Green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
+							}
+							continue
+						}
+						if input.Required != nil && !*input.Required {
+							continue
+						}
+						msg.WriteString(amber.Render(n))
+						msg.WriteString("=")
+						msg.WriteString(amber.Render("''"))
+					}
+
+					t = t.Row(msg.String(), comment)
 				}
 
 				for name, alias := range wf.Aliases {
