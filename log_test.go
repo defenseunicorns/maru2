@@ -292,6 +292,12 @@ func TestPrintGroup(t *testing.T) {
 		closeGroup = printGroup(nil, "default", "")
 		assert.NotNil(t, closeGroup)
 		assert.NotPanics(t, closeGroup)
+
+		var buf strings.Builder
+		closeGroup = printGroup(&buf, "default", "")
+		assert.Equal(t, "", buf.String())
+		closeGroup()
+		assert.Equal(t, "", buf.String())
 	})
 
 	t.Run("github", func(t *testing.T) {
