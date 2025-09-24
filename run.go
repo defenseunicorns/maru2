@@ -211,7 +211,7 @@ func handleRunStep(
 		return nil, err
 	}
 
-	if dry || step.Show == nil || *step.Show == true {
+	if dry || step.Show == nil || *step.Show {
 		printScript(logger, step.Shell, script)
 	}
 	if dry {
