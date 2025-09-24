@@ -268,26 +268,24 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 
 			if list {
 				ds := DefaultStyles()
-				t := table.New().Border(lipgloss.HiddenBorder()).StyleFunc(func(_, col int) lipgloss.Style {
+				t := table.New().BorderTop(false).BorderRight(false).BorderBottom(false).BorderLeft(false).BorderColumn(false).BorderHeader(false).BorderRow(false).StyleFunc(func(_, col int) lipgloss.Style {
 					switch col {
 					case 1:
-						return lipgloss.NewStyle().Inherit(ds.Levels[log.InfoLevel]).Transform(func(s string) string {
-							switch s {
-							case "":
-								return s
-							default:
-								return "# " + s
-							}
-						}).UnsetBold().UnsetMargins().UnsetPadding()
+						return lipgloss.NewStyle().Foreground(ds.Levels[log.InfoLevel].GetForeground())
 					default:
-						return lipgloss.NewStyle().MarginLeft(3)
+						return lipgloss.NewStyle().MarginLeft(4)
 					}
 				})
 				for _, name := range wf.Tasks.OrderedTaskNames() {
-					t.Row(name, wf.Tasks[name].Description)
+					if desc := wf.Tasks[name].Description; desc != "" {
+						t.Row(name, "# "+desc)
+						continue
+					}
+					t.Row(name)
 				}
 
-				logger.Printf("Available tasks:%s", t)
+				logger.Printf("Available tasks:")
+				logger.Print(t)
 
 				t.ClearRows()
 
@@ -302,11 +300,19 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 							return err
 						}
 						for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
-							t.Row(fmt.Sprintf("%s:%s", name, n), aliasedWF.Tasks[name].Description)
+							entry := fmt.Sprintf("%s:%s", name, n)
+
+							if desc := aliasedWF.Tasks[name].Description; desc != "" {
+								t.Row(entry, "# "+desc)
+								continue
+							}
+							t.Row(entry)
 						}
 					}
 				}
-				logger.Print(t)
+				if rest := t.String(); rest != "" {
+					logger.Print(rest)
+				}
 
 				return nil
 			}
