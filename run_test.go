@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -337,6 +338,99 @@ func TestRun(t *testing.T) {
 			assert.Equal(t, tc.expectedOut, result)
 		})
 	}
+}
+
+func captureStdout(t *testing.T, f func()) string {
+	t.Helper()
+	old := os.Stdout
+
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = w
+
+	f()
+
+	err = w.Close()
+	require.NoError(t, err)
+	os.Stdout = old
+
+	var buf strings.Builder
+	_, err = io.Copy(&buf, r)
+	require.NoError(t, err)
+
+	return buf.String()
+}
+
+func TestRun_PrintGroup(t *testing.T) {
+	syncTrue := func() bool {
+		return true
+	}
+	syncFalse := func() bool {
+		return false
+	}
+
+	currIsGitHubActions := isGitHubActions
+	currIsGitLabCI := isGitLabCI
+
+	restore := func() {
+		isGitHubActions = currIsGitHubActions
+		isGitLabCI = currIsGitLabCI
+	}
+
+	// set both to false so that this runs the same local and in GitHub CI
+	isGitHubActions = syncFalse
+	isGitLabCI = syncFalse
+
+	t.Cleanup(restore)
+
+	t.Run("github", func(t *testing.T) {
+		isGitHubActions = syncTrue
+		t.Cleanup(func() {
+			isGitHubActions = syncFalse
+		})
+
+		wf := v1.Workflow{
+			Tasks: v1.TaskMap{
+				"default": v1.Task{
+					Collapse: true,
+					Steps:    []v1.Step{{Run: "echo 'foo'"}},
+				},
+			},
+		}
+
+		stdout := captureStdout(t, func() {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			out, err := Run(ctx, nil, wf, "", nil, nil, "", nil, false)
+			require.NoError(t, err)
+			assert.Nil(t, out)
+		})
+
+		assert.Equal(t, "::group::default\nfoo\n::endgroup::\n", stdout)
+	})
+
+	t.Run("gitlab", func(t *testing.T) {
+		isGitLabCI = syncTrue
+		t.Cleanup(func() {
+			isGitLabCI = syncFalse
+		})
+		wf := v1.Workflow{
+			Tasks: v1.TaskMap{
+				"default": v1.Task{
+					Collapse: true,
+					Steps:    []v1.Step{{Run: "echo 'foo'"}},
+				},
+			},
+		}
+
+		stdout := captureStdout(t, func() {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			out, err := Run(ctx, nil, wf, "", nil, nil, "", nil, false)
+			require.NoError(t, err)
+			assert.Nil(t, out)
+		})
+
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefaultfoo\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, stdout)
+	})
 }
 
 func TestRunContext(t *testing.T) {

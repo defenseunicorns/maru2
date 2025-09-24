@@ -6,7 +6,6 @@ package maru2
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/alecthomas/chroma/v2"
@@ -268,11 +267,13 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 }
 
 func TestPrintGroup(t *testing.T) {
-	syncTrue := func() func() bool {
-		return sync.OnceValue(func() bool {
-			return true
-		})
+	syncTrue := func() bool {
+		return true
 	}
+	syncFalse := func() bool {
+		return false
+	}
+
 	currIsGitHubActions := isGitHubActions
 	currIsGitLabCI := isGitLabCI
 
@@ -280,6 +281,10 @@ func TestPrintGroup(t *testing.T) {
 		isGitHubActions = currIsGitHubActions
 		isGitLabCI = currIsGitLabCI
 	}
+
+	// set both to false so that this runs the same local and in GitHub CI
+	isGitHubActions = syncFalse
+	isGitLabCI = syncFalse
 
 	t.Cleanup(restore)
 
@@ -303,8 +308,10 @@ func TestPrintGroup(t *testing.T) {
 	t.Run("github", func(t *testing.T) {
 		var buf strings.Builder
 
-		isGitHubActions = syncTrue()
-		t.Cleanup(restore)
+		isGitHubActions = syncTrue
+		t.Cleanup(func() {
+			isGitHubActions = syncFalse
+		})
 
 		// regular execution with header
 		closeGroup := printGroup(&buf, "default", "description")
@@ -332,8 +339,10 @@ func TestPrintGroup(t *testing.T) {
 	t.Run("gitlab", func(t *testing.T) {
 		var buf strings.Builder
 
-		isGitLabCI = syncTrue()
-		t.Cleanup(restore)
+		isGitLabCI = syncTrue
+		t.Cleanup(func() {
+			isGitLabCI = syncFalse
+		})
 
 		// execution without header (header gets set to taskName)
 		closeGroup := printGroup(&buf, "default", "")
