@@ -55,7 +55,6 @@ validate: execute `maru2 --list -f tasks.yaml` to list all tasks, then execute `
 - [Directory and Shell Control](#directory-and-shell-control)
 - [Timeouts and Retries](#timeouts-and-retries)
 - [Includes to Uses](#includes-to-uses)
-- [Task Inputs and Reusable Tasks](#task-inputs-and-reusable-tasks)
 - [Command Line Usage](#command-line-usage)
 - [Complete Example](#complete-example)
 - [Enhanced Features in maru2](#enhanced-features-in-maru2)
