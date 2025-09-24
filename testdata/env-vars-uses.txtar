@@ -2,7 +2,7 @@ env PARENT_ENV=parent-value
 exec maru2 test-env-with-uses
 cmp stderr stderr.txt
 stdout 'Parent env: parent-value'
-stdout 'Message input: "from parent"'
+stdout 'Message input: from parent'
 stdout 'Step level var: step-level-value'
 stdout 'Subtask env: subtask-local'
 
