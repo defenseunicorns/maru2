@@ -5,7 +5,9 @@ package maru2
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/alecthomas/chroma/v2"
@@ -274,19 +276,31 @@ func TestPrintGroup(t *testing.T) {
 		return false
 	}
 
-	currIsGitHubActions := isGitHubActions
-	currIsGitLabCI := isGitLabCI
+	// reset state of checks to be "blank" after tests are done, these functions must EXACTLY match their counterparts
+	t.Cleanup(func() {
+		isGitHubActions = sync.OnceValue(func() bool {
+			return os.Getenv(GitHubActionsEnvVar) == "true"
+		})
+		isGitLabCI = sync.OnceValue(func() bool {
+			return os.Getenv(GitLabCIEnvVar) == "true"
+		})
+	})
 
-	restore := func() {
-		isGitHubActions = currIsGitHubActions
-		isGitLabCI = currIsGitLabCI
-	}
+	t.Run("env vars", func(t *testing.T) {
+		t.Setenv(GitHubActionsEnvVar, "true")
+		assert.True(t, isGitHubActions())
+		t.Setenv(GitHubActionsEnvVar, "false")
+		assert.True(t, isGitHubActions())
+
+		t.Setenv(GitLabCIEnvVar, "true")
+		assert.True(t, isGitLabCI())
+		t.Setenv(GitLabCIEnvVar, "false")
+		assert.True(t, isGitLabCI())
+	})
 
 	// set both to false so that this runs the same local and in GitHub CI
 	isGitHubActions = syncFalse
 	isGitLabCI = syncFalse
-
-	t.Cleanup(restore)
 
 	t.Run("default", func(t *testing.T) {
 		// no task name

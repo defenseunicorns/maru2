@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -371,25 +372,22 @@ func TestRun_PrintGroup(t *testing.T) {
 		return false
 	}
 
-	currIsGitHubActions := isGitHubActions
-	currIsGitLabCI := isGitLabCI
-
-	restore := func() {
-		isGitHubActions = currIsGitHubActions
-		isGitLabCI = currIsGitLabCI
-	}
-
 	// set both to false so that this runs the same local and in GitHub CI
 	isGitHubActions = syncFalse
 	isGitLabCI = syncFalse
 
-	t.Cleanup(restore)
+	// reset state of checks to be "blank" after tests are done, these functions must EXACTLY match their counterparts
+	t.Cleanup(func() {
+		isGitHubActions = sync.OnceValue(func() bool {
+			return os.Getenv(GitHubActionsEnvVar) == "true"
+		})
+		isGitLabCI = sync.OnceValue(func() bool {
+			return os.Getenv(GitLabCIEnvVar) == "true"
+		})
+	})
 
 	t.Run("github", func(t *testing.T) {
 		isGitHubActions = syncTrue
-		t.Cleanup(func() {
-			isGitHubActions = syncFalse
-		})
 
 		wf := v1.Workflow{
 			Tasks: v1.TaskMap{
@@ -412,9 +410,6 @@ func TestRun_PrintGroup(t *testing.T) {
 
 	t.Run("gitlab", func(t *testing.T) {
 		isGitLabCI = syncTrue
-		t.Cleanup(func() {
-			isGitLabCI = syncFalse
-		})
 		wf := v1.Workflow{
 			Tasks: v1.TaskMap{
 				"default": v1.Task{
