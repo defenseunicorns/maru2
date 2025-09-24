@@ -15,7 +15,7 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/go-github/v62 v62.0.0
 	github.com/invopop/jsonschema v0.13.0
-	github.com/modelcontextprotocol/go-sdk v0.5.0
+	github.com/modelcontextprotocol/go-sdk v0.6.0
 	github.com/muesli/termenv v0.16.0
 	github.com/olareg/olareg v0.1.2
 	github.com/opencontainers/image-spec v1.1.1

@@ -20,4 +20,8 @@ func AddAll(s *mcp.Server) {
 		Name:        "gen-schema",
 		Description: "Returns version-specific JSON schema for v0/v1, or a meta-schema with conditional validation that automatically selects the correct version based on schema-version field",
 	}, GenJSONSchema)
+
+	for prompt, handler := range prompts {
+		s.AddPrompt(prompt, handler)
+	}
 }
