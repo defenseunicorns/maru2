@@ -830,4 +830,4 @@ In local/non-CI environments, the `collapse` property has no effect and output i
 
 Nested tasks with their own `collapse: true` property will not create additional nested groups within an already collapsed section.
 
-While this is supported in GitLab, it is not in GitHub and consistency is better in this case.
+While this is supported in GitLab, it is not in GitHub and consistency is better in this case. If this behavior is desired, it can always be added later in a non-breaking fasion.

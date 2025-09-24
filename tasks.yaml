@@ -49,6 +49,7 @@ tasks:
           echo "got: ${{ from "foo" "bar" }}"
 
   release-nightly:
+    collapse: true
     inputs:
       uds-registry:
         description: Registry location to publish nightly to
