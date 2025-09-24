@@ -33,8 +33,7 @@ func handleUsesStep(
 	origin *url.URL,
 	ro RuntimeOptions,
 ) (map[string]any, error) {
-	cwd := filepath.Join(ro.CWD, step.Dir)
-	ro.CWD = cwd
+	ro.WorkingDir = filepath.Join(ro.WorkingDir, step.Dir)
 
 	if strings.HasPrefix(step.Uses, "builtin:") {
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, ro.Dry)

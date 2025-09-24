@@ -33,8 +33,8 @@ import (
 // Leave this type as a concrete instance vs a pointer type as this object will be mutated along the runtime pipeline,
 // and copy by value is the desired behavior versus copy by reference
 type RuntimeOptions struct {
-	// The CWD to start the execution from, passed to the exec.Command in run blocks, leave blank for current process' PWD
-	CWD string
+	// The WorkingDir to start the execution from, passed to the exec.Command in run blocks, leave blank for current process' PWD
+	WorkingDir string
 	// Environment variables passed to the exec.Command in run blocks, usually initialized w/ os.Environ()
 	Env []string
 	// Whether this execution is a dry run or not
@@ -268,7 +268,7 @@ func handleRunStep(
 
 	cmd := exec.CommandContext(ctx, shell, args...)
 	cmd.Env = env
-	cmd.Dir = filepath.Join(ro.CWD, step.Dir)
+	cmd.Dir = filepath.Join(ro.WorkingDir, step.Dir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
