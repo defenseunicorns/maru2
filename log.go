@@ -137,8 +137,10 @@ func printGroup(wr io.Writer, taskName string, header string) func() {
 			header = taskName
 		}
 		_, _ = fmt.Fprintf(wr, `\e[0Ksection_start:%d:%s[collapsed=true]\r\e[0K%s`, time.Now().Unix(), taskName, header)
+		_, _ = fmt.Fprintln(wr)
 		return func() {
 			_, _ = fmt.Fprintf(wr, `\e[0Ksection_end:%d:%s\r\e[0K`, time.Now().Unix(), taskName)
+			_, _ = fmt.Fprintln(wr)
 		}
 	}
 

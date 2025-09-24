@@ -343,6 +343,9 @@ func TestRun(t *testing.T) {
 func captureStdout(t *testing.T, f func()) string {
 	t.Helper()
 	old := os.Stdout
+	t.Cleanup(func() {
+		os.Stdout = old
+	})
 
 	r, w, err := os.Pipe()
 	require.NoError(t, err)
@@ -352,7 +355,6 @@ func captureStdout(t *testing.T, f func()) string {
 
 	err = w.Close()
 	require.NoError(t, err)
-	os.Stdout = old
 
 	var buf strings.Builder
 	_, err = io.Copy(&buf, r)
@@ -429,7 +431,7 @@ func TestRun_PrintGroup(t *testing.T) {
 			assert.Nil(t, out)
 		})
 
-		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefaultfoo\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, stdout)
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\nfoo\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, stdout)
 	})
 }
 

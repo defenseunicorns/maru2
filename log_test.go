@@ -346,17 +346,17 @@ func TestPrintGroup(t *testing.T) {
 
 		// execution without header (header gets set to taskName)
 		closeGroup := printGroup(&buf, "default", "")
-		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault$`, buf.String())
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\n$`, buf.String())
 		closeGroup()
-		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, buf.String())
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, buf.String())
 
 		buf.Reset()
 
 		// execution with header (header is not changed)
 		closeGroup = printGroup(&buf, "default", "description")
-		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription$`, buf.String())
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription\n$`, buf.String())
 		closeGroup()
-		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription\\e\[0Ksection_end:\d+:default\\r\\e\[0K$`, buf.String())
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdescription\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, buf.String())
 
 		buf.Reset()
 
