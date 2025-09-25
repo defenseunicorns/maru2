@@ -141,6 +141,7 @@ func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
 	blue := lipgloss.NewStyle().Foreground(DebugColor)
 	amber := lipgloss.NewStyle().Foreground(WarnColor)
 	green := lipgloss.NewStyle().Foreground(GreenColor)
+	gray := lipgloss.NewStyle().Foreground(GrayColor)
 
 	for n, input := range inputs.OrderedSeq() {
 		w.WriteString(faint.Render(" -w "))
@@ -156,6 +157,8 @@ func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
 			continue
 		}
 		if input.Required != nil && !*input.Required {
+			w.WriteString(gray.Render(n))
+			w.WriteString("=")
 			continue
 		}
 		w.WriteString(amber.Render(n))

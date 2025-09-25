@@ -4,8 +4,8 @@
 package maru2
 
 import (
-	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"strings"
@@ -15,6 +15,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/charmbracelet/log"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -388,290 +389,385 @@ func TestPrintGroup(t *testing.T) {
 }
 
 func TestDetailedTaskList(t *testing.T) {
-	ctx := context.Background()
+	t.Setenv("NO_COLOR", "true") // format matters more than ensuring colors are correct
 
-	t.Run("basic workflow with tasks", func(t *testing.T) {
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"default": v1.Task{
-					Description: "Default task",
-					Steps:       []v1.Step{{Run: "echo hello"}},
-				},
-				"test": v1.Task{
-					Description: "Test task",
-					Steps:       []v1.Step{{Run: "echo test"}},
-				},
-			},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
-
-		// Render the table to check its content
-		rendered := table.String()
-		assert.Contains(t, rendered, "default")
-		assert.Contains(t, rendered, "test")
-		assert.Contains(t, rendered, "# Default task")
-		assert.Contains(t, rendered, "# Test task")
-	})
-
-	t.Run("workflow with inputs", func(t *testing.T) {
-		defaultVal := "default-value"
-		required := true
-		notRequired := false
-
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"echo": v1.Task{
-					Description: "Echo task with inputs",
-					Inputs: v1.InputMap{
-						"text": v1.InputParameter{
-							Description: "Text to echo",
-							Default:     &defaultVal,
-						},
-						"required-param": v1.InputParameter{
-							Description: "Required parameter",
-							Required:    &required,
-						},
-						"optional-param": v1.InputParameter{
-							Description: "Optional parameter",
-							Required:    &notRequired,
-						},
+	testCases := []struct {
+		name     string
+		workflow v1.Workflow
+		expected string
+	}{
+		{
+			name: "basic workflow with tasks",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Description: "Default task",
+						Steps:       []v1.Step{{Run: "echo hello"}},
 					},
-					Steps: []v1.Step{{Run: "echo ${{ input \"text\" }}"}},
-				},
-			},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
-
-		rendered := table.String()
-		assert.Contains(t, rendered, "echo")
-		assert.Contains(t, rendered, "# Echo task with inputs")
-		assert.Contains(t, rendered, "-w")
-		assert.Contains(t, rendered, "text")
-		assert.Contains(t, rendered, "required-param")
-		// optional-param should not be rendered when required is false
-		assert.NotContains(t, rendered, "optional-param")
-	})
-
-	t.Run("workflow with aliases and paths", func(t *testing.T) {
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"default": v1.Task{
-					Description: "Main task",
-					Steps:       []v1.Step{{Run: "echo main"}},
-				},
-			},
-			Aliases: v1.AliasMap{
-				"local": v1.Alias{
-					Path: "other-tasks.yaml",
-				},
-			},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		// This should return an error because we can't actually fetch the alias
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		// We expect an error when trying to resolve the relative path
-		assert.Error(t, err)
-		assert.Nil(t, table)
-	})
-
-	t.Run("empty workflow", func(t *testing.T) {
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
-
-		rendered := table.String()
-		// Should be empty or minimal content
-		assert.NotContains(t, rendered, "default")
-	})
-
-	t.Run("workflow with default from env", func(t *testing.T) {
-		defaultVal := "fallback"
-
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"env-task": v1.Task{
-					Description: "Task with env default",
-					Inputs: v1.InputMap{
-						"value": v1.InputParameter{
-							Description:    "Value from env",
-							Default:        &defaultVal,
-							DefaultFromEnv: "MY_ENV_VAR",
-						},
+					"test": v1.Task{
+						Description: "Test task",
+						Steps:       []v1.Step{{Run: "echo test"}},
 					},
-					Steps: []v1.Step{{Run: "echo ${{ input \"value\" }}"}},
 				},
 			},
-		}
+			expected: "   default # Default task\n   test    # Test task   ",
+		},
+		{
+			name: "workflow with inputs",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"echo": v1.Task{
+						Description: "Echo task with inputs",
+						Inputs: v1.InputMap{
+							"text": v1.InputParameter{
+								Default: "default-value",
+							},
+							"required-param": v1.InputParameter{
+								Required: func() *bool { b := true; return &b }(),
+							},
+							"optional-param": v1.InputParameter{
+								Required: func() *bool { b := false; return &b }(),
+							},
+						},
+						Steps: []v1.Step{{Run: "echo ${{ input \"text\" }}"}},
+					},
+				},
+			},
+			expected: "   echo -w optional-param= -w required-param= -w text='default-value' # Echo task with inputs",
+		},
+		{
+			name: "empty workflow",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{},
+			},
+			expected: "",
+		},
+		{
+			name: "workflow with env defaults",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"env-task": v1.Task{
+						Description: "Task with env default",
+						Inputs: v1.InputMap{
+							"value": v1.InputParameter{
+								Default:        "fallback",
+								DefaultFromEnv: "MY_ENV_VAR",
+							},
+						},
+						Steps: []v1.Step{{Run: "echo ${{ input \"value\" }}"}},
+					},
+				},
+			},
+			expected: "   env-task -w value=\"${MY_ENV_VAR:-fallback}\" # Task with env default",
+		},
+		{
+			name: "task ordering",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"zzz-last": v1.Task{
+						Description: "Should appear after default",
+						Steps:       []v1.Step{{Run: "echo last"}},
+					},
+					"default": v1.Task{
+						Description: "Default task should be first",
+						Steps:       []v1.Step{{Run: "echo default"}},
+					},
+					"aaa-first": v1.Task{
+						Description: "Should appear after default but before zzz",
+						Steps:       []v1.Step{{Run: "echo first"}},
+					},
+				},
+			},
+			expected: "   default   # Default task should be first              \n   aaa-first # Should appear after default but before zzz\n   zzz-last  # Should appear after default               ",
+		},
+		{
+			name: "tasks without descriptions",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"no-desc": v1.Task{
+						Steps: []v1.Step{{Run: "echo no description"}},
+					},
+					"with-desc": v1.Task{
+						Description: "Has description",
+						Steps:       []v1.Step{{Run: "echo with description"}},
+					},
+				},
+			},
+			expected: "   no-desc                    \n   with-desc # Has description",
+		},
+		{
+			name: "nil and empty inputs",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"nil-inputs": v1.Task{
+						Description: "Task with nil inputs",
+						Inputs:      nil,
+						Steps:       []v1.Step{{Run: "echo test"}},
+					},
+					"empty-inputs": v1.Task{
+						Description: "Task with empty inputs",
+						Inputs:      v1.InputMap{},
+						Steps:       []v1.Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expected: "   empty-inputs # Task with empty inputs\n   nil-inputs   # Task with nil inputs  ",
+		},
+		{
+			name: "input ordering",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"ordered-test": v1.Task{
+						Description: "Test ordering",
+						Inputs: v1.InputMap{
+							"zebra": v1.InputParameter{Default: "z"},
+							"alpha": v1.InputParameter{Default: "a"},
+							"beta":  v1.InputParameter{Default: "b"},
+						},
+						Steps: []v1.Step{{Run: "echo test"}},
+					},
+				},
+			},
+			expected: "   ordered-test -w alpha='a' -w beta='b' -w zebra='z' # Test ordering",
+		},
+	}
 
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			table, err := DetailedTaskList(ctx, nil, nil, tc.workflow)
 
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
+			require.NoError(t, err)
+			assert.NotNil(t, table)
 
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
+			assert.Equal(t, tc.expected, table.String())
+		})
+	}
+}
 
-		rendered := table.String()
-		assert.Contains(t, rendered, "env-task")
-		assert.Contains(t, rendered, "-w")
-		assert.Contains(t, rendered, "value")
-		assert.Contains(t, rendered, "${MY_ENV_VAR:-fallback}")
-	})
+func TestDetailedTaskListWithAliases(t *testing.T) {
+	testCases := []struct {
+		name      string
+		workflow  v1.Workflow
+		expectErr bool
+		contains  []string
+	}{
+		{
+			name: "workflow with path aliases (error case)",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Description: "Main task",
+						Steps:       []v1.Step{{Run: "echo main"}},
+					},
+				},
+				Aliases: v1.AliasMap{
+					"local": v1.Alias{
+						Path: "other-tasks.yaml",
+					},
+				},
+			},
+			expectErr: true,
+		},
+		{
+			name: "workflow with non-path aliases",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"main": v1.Task{
+						Description: "Main task",
+						Steps:       []v1.Step{{Run: "echo main"}},
+					},
+				},
+				Aliases: v1.AliasMap{
+					"remote": v1.Alias{
+						Type: "github",
+					},
+				},
+			},
+			contains: []string{"main", "# Main task"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fs := afero.NewMemMapFs()
+			svc, err := uses.NewFetcherService(uses.WithFS(fs))
+			require.NoError(t, err)
+			origin, _ := url.Parse("file:///test/tasks.yaml")
+
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
+			table, err := DetailedTaskList(ctx, svc, origin, tc.workflow)
+
+			if tc.expectErr {
+				assert.Error(t, err)
+				assert.Nil(t, table)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotNil(t, table)
+
+			rendered := table.String()
+			for _, expected := range tc.contains {
+				assert.Contains(t, rendered, expected)
+			}
+		})
+	}
 }
 
 func TestRenderInputMap(t *testing.T) {
 	testCases := []struct {
-		name        string
-		inputs      v1.InputMap
-		expected    []string
-		notExpected []string
+		name     string
+		inputs   v1.InputMap
+		expected string
 	}{
 		{
-			name:        "empty input map",
-			inputs:      v1.InputMap{},
-			expected:    []string{},
-			notExpected: []string{"-w"},
+			name:     "empty input map",
+			inputs:   v1.InputMap{},
+			expected: "",
 		},
 		{
-			name: "input with string default",
+			name: "string default",
 			inputs: v1.InputMap{
-				"text": v1.InputParameter{
-					Description: "Text parameter",
-					Default:     "hello world",
-				},
+				"text": v1.InputParameter{Default: "hello world"},
 			},
-			expected: []string{"-w", "text=", "'hello world'"},
+			expected: " -w text='hello world'",
 		},
 		{
-			name: "input with boolean default",
+			name: "boolean default",
 			inputs: v1.InputMap{
-				"enabled": v1.InputParameter{
-					Description: "Boolean parameter",
-					Default:     true,
-				},
+				"enabled": v1.InputParameter{Default: true},
 			},
-			expected: []string{"-w", "enabled=", "'true'"},
+			expected: " -w enabled='true'",
 		},
 		{
-			name: "input with integer default",
+			name: "integer default",
 			inputs: v1.InputMap{
-				"count": v1.InputParameter{
-					Description: "Integer parameter",
-					Default:     42,
-				},
+				"count": v1.InputParameter{Default: 42},
 			},
-			expected: []string{"-w", "count=", "'42'"},
+			expected: " -w count='42'",
 		},
 		{
-			name: "input with default from env",
+			name: "default from env",
 			inputs: v1.InputMap{
 				"token": v1.InputParameter{
-					Description:    "Token from environment",
 					Default:        "default-token",
 					DefaultFromEnv: "API_TOKEN",
 				},
 			},
-			expected: []string{"-w", "token=", "${API_TOKEN:-default-token}"},
+			expected: " -w token=\"${API_TOKEN:-default-token}\"",
 		},
 		{
-			name: "required input without default",
+			name: "required without default",
 			inputs: v1.InputMap{
 				"required": v1.InputParameter{
-					Description: "Required parameter",
-					Required:    func() *bool { b := true; return &b }(),
+					Required: func() *bool { b := true; return &b }(),
 				},
 			},
-			expected: []string{"-w", "required=", "''"},
+			expected: " -w required=",
 		},
 		{
-			name: "explicitly required input without default",
-			inputs: v1.InputMap{
-				"explicit": v1.InputParameter{
-					Description: "Explicitly required parameter",
-					Required:    func() *bool { b := true; return &b }(),
-				},
-			},
-			expected: []string{"-w", "explicit=", "''"},
-		},
-		{
-			name: "optional input without default",
+			name: "optional without default",
 			inputs: v1.InputMap{
 				"optional": v1.InputParameter{
-					Description: "Optional parameter",
-					Required:    func() *bool { b := false; return &b }(),
+					Required: func() *bool { b := false; return &b }(),
 				},
 			},
-			expected:    []string{},
-			notExpected: []string{"optional"},
+			expected: " -w optional=",
 		},
 		{
-			name: "mixed inputs",
+			name: "nil default treated as required",
 			inputs: v1.InputMap{
-				"default-val": v1.InputParameter{
-					Description: "Has default",
-					Default:     "test",
-				},
+				"nil-default": v1.InputParameter{Default: nil},
+			},
+			expected: " -w nil-default=",
+		},
+		{
+			name: "zero and false values render",
+			inputs: v1.InputMap{
+				"zero":  v1.InputParameter{Default: 0},
+				"false": v1.InputParameter{Default: false},
+			},
+			expected: " -w false='false' -w zero='0'",
+		},
+		{
+			name: "env var without default",
+			inputs: v1.InputMap{
+				"env-only": v1.InputParameter{DefaultFromEnv: "MY_VAR"},
+			},
+			expected: " -w env-only=",
+		},
+		{
+			name: "alphabetical ordering",
+			inputs: v1.InputMap{
+				"z-param": v1.InputParameter{Default: "z"},
+				"a-param": v1.InputParameter{Default: "a"},
+				"m-param": v1.InputParameter{Default: "m"},
+			},
+			expected: " -w a-param='a' -w m-param='m' -w z-param='z'",
+		},
+		{
+			name: "special characters and whitespace",
+			inputs: v1.InputMap{
+				"quotes": v1.InputParameter{Default: "hello 'world' \"test\""},
+				"empty":  v1.InputParameter{Default: ""},
+				"spaces": v1.InputParameter{Default: "   "},
+			},
+			expected: " -w empty='' -w quotes='hello 'world' \"test\"' -w spaces='   '",
+		},
+		{
+			name: "mixed input types",
+			inputs: v1.InputMap{
+				"default-val": v1.InputParameter{Default: "test"},
 				"required-val": v1.InputParameter{
-					Description: "Required",
-					Required:    func() *bool { b := true; return &b }(),
+					Required: func() *bool { b := true; return &b }(),
 				},
 				"optional-val": v1.InputParameter{
-					Description: "Optional",
-					Required:    func() *bool { b := false; return &b }(),
+					Required: func() *bool { b := false; return &b }(),
 				},
 				"env-val": v1.InputParameter{
-					Description:    "From env",
 					Default:        "fallback",
 					DefaultFromEnv: "ENV_VAR",
 				},
 			},
-			expected: []string{
-				"-w", "default-val=", "'test'",
-				"-w", "required-val=", "''",
-				"-w", "env-val=", "${ENV_VAR:-fallback}",
-			},
-			notExpected: []string{"optional-val"},
+			expected: " -w default-val='test' -w env-val=\"${ENV_VAR:-fallback}\" -w optional-val= -w required-val=",
 		},
 		{
-			name: "input with nil default (should be treated as required)",
+			name: "comprehensive combinations",
 			inputs: v1.InputMap{
-				"nil-default": v1.InputParameter{
-					Description: "Nil default parameter",
-					Default:     nil,
+				"z-string": v1.InputParameter{Default: "value"},
+				"y-int":    v1.InputParameter{Default: 42},
+				"x-bool":   v1.InputParameter{Default: false},
+				"w-env": v1.InputParameter{
+					Default:        "fallback",
+					DefaultFromEnv: "TEST_VAR",
+				},
+				"v-required": v1.InputParameter{
+					Required: func() *bool { b := true; return &b }(),
+				},
+				"u-optional": v1.InputParameter{
+					Required: func() *bool { b := false; return &b }(),
 				},
 			},
-			expected: []string{"-w", "nil-default=", "''"},
+			expected: " -w u-optional= -w v-required= -w w-env=\"${TEST_VAR:-fallback}\" -w x-bool='false' -w y-int='42' -w z-string='value'",
+		},
+		{
+			name: "ordering consistency check",
+			inputs: v1.InputMap{
+				"third":  v1.InputParameter{Default: 3},
+				"first":  v1.InputParameter{Default: 1},
+				"second": v1.InputParameter{Default: 2},
+			},
+			expected: " -w first='1' -w second='2' -w third='3'",
+		},
+		{
+			name: "numeric string sorting",
+			inputs: v1.InputMap{
+				"param-10": v1.InputParameter{Default: "ten"},
+				"param-2":  v1.InputParameter{Default: "two"},
+				"param-1":  v1.InputParameter{Default: "one"},
+			},
+			expected: " -w param-1='one' -w param-10='ten' -w param-2='two'",
 		},
 	}
 
@@ -679,311 +775,7 @@ func TestRenderInputMap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf strings.Builder
 			renderInputMap(&buf, tc.inputs)
-
-			result := buf.String()
-
-			for _, expected := range tc.expected {
-				assert.Contains(t, result, expected, "Expected to find %q in result %q", expected, result)
-			}
-
-			for _, notExpected := range tc.notExpected {
-				assert.NotContains(t, result, notExpected, "Did not expect to find %q in result %q", notExpected, result)
-			}
+			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
-
-	t.Run("multiple inputs rendered correctly", func(t *testing.T) {
-		inputs := v1.InputMap{
-			"z-param": v1.InputParameter{Default: "z"},
-			"a-param": v1.InputParameter{Default: "a"},
-			"m-param": v1.InputParameter{Default: "m"},
-		}
-
-		var buf strings.Builder
-		renderInputMap(&buf, inputs)
-
-		// Should contain all parameters (order may vary due to Go map iteration)
-		result := buf.String()
-		assert.Contains(t, result, "z-param='z'")
-		assert.Contains(t, result, "a-param='a'")
-		assert.Contains(t, result, "m-param='m'")
-		// Should contain exactly 3 -w flags for the 3 parameters
-		assert.Equal(t, 3, strings.Count(result, "-w"))
-	})
-
-	t.Run("special characters in default values", func(t *testing.T) {
-		inputs := v1.InputMap{
-			"special": v1.InputParameter{
-				Description: "Special characters",
-				Default:     "hello 'world' \"test\"",
-			},
-		}
-
-		var buf strings.Builder
-		renderInputMap(&buf, inputs)
-
-		result := buf.String()
-		assert.Contains(t, result, "special=")
-		assert.Contains(t, result, "'hello 'world' \"test\"'")
-	})
-
-	t.Run("edge cases and nil values", func(t *testing.T) {
-		testCases := []struct {
-			name        string
-			inputs      v1.InputMap
-			expected    []string
-			notExpected []string
-		}{
-			{
-				name: "nil required field defaults to true",
-				inputs: v1.InputMap{
-					"implicit-required": v1.InputParameter{
-						Description: "Implicitly required parameter",
-						// Required is nil, should default to true behavior
-					},
-				},
-				expected: []string{"-w", "implicit-required=", "''"},
-			},
-			{
-				name: "default value of zero/false should still render",
-				inputs: v1.InputMap{
-					"zero-int": v1.InputParameter{
-						Description: "Zero integer",
-						Default:     0,
-					},
-					"false-bool": v1.InputParameter{
-						Description: "False boolean",
-						Default:     false,
-					},
-					"empty-string": v1.InputParameter{
-						Description: "Empty string",
-						Default:     "",
-					},
-				},
-				expected: []string{
-					"-w", "zero-int=", "'0'",
-					"-w", "false-bool=", "'false'",
-					"-w", "empty-string=", "''",
-				},
-			},
-			{
-				name: "default from env without default value",
-				inputs: v1.InputMap{
-					"env-only": v1.InputParameter{
-						Description:    "Environment only",
-						DefaultFromEnv: "MY_VAR",
-						// No Default field set
-					},
-				},
-				expected: []string{"-w", "env-only=", "''"},
-			},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				var buf strings.Builder
-				renderInputMap(&buf, tc.inputs)
-
-				result := buf.String()
-
-				for _, expected := range tc.expected {
-					assert.Contains(t, result, expected, "Expected to find %q in result %q", expected, result)
-				}
-
-				for _, notExpected := range tc.notExpected {
-					assert.NotContains(t, result, notExpected, "Did not expect to find %q in result %q", notExpected, result)
-				}
-			})
-		}
-	})
-
-	t.Run("stress test with many parameters", func(t *testing.T) {
-		inputs := v1.InputMap{}
-
-		// Add 50 parameters with various configurations
-		for i := 0; i < 50; i++ {
-			paramName := fmt.Sprintf("param-%d", i)
-			param := v1.InputParameter{
-				Description: fmt.Sprintf("Parameter %d", i),
-			}
-
-			switch i % 4 {
-			case 0:
-				param.Default = fmt.Sprintf("default-%d", i)
-			case 1:
-				required := true
-				param.Required = &required
-			case 2:
-				required := false
-				param.Required = &required
-			case 3:
-				param.Default = fmt.Sprintf("env-default-%d", i)
-				param.DefaultFromEnv = fmt.Sprintf("ENV_%d", i)
-			}
-
-			inputs[paramName] = param
-		}
-
-		var buf strings.Builder
-		renderInputMap(&buf, inputs)
-
-		result := buf.String()
-
-		// All parameters get a -w prefix, even optional ones that don't get fully rendered
-		expectedCount := 50
-		actualCount := strings.Count(result, "-w")
-		assert.Equal(t, expectedCount, actualCount, "Expected %d -w flags but got %d", expectedCount, actualCount)
-
-		// Should contain parameters with defaults or that are required
-		assert.Contains(t, result, "param-0=") // Has default
-		assert.Contains(t, result, "param-1=") // Required
-		// param-2 is optional, so it has -w but no content after
-		assert.Contains(t, result, "param-3=") // Has env default
-
-		// Optional parameters should have -w but no parameter name= part
-		// We can't easily test for this without complex parsing, so just ensure count is right
-	})
-}
-
-func TestDetailedTaskListEdgeCases(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("workflow with complex task ordering", func(t *testing.T) {
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"zzz-last": v1.Task{
-					Description: "Should appear after default",
-					Steps:       []v1.Step{{Run: "echo last"}},
-				},
-				"default": v1.Task{
-					Description: "Default task should be first",
-					Steps:       []v1.Step{{Run: "echo default"}},
-				},
-				"aaa-first": v1.Task{
-					Description: "Should appear after default but before zzz",
-					Steps:       []v1.Step{{Run: "echo first"}},
-				},
-			},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
-
-		rendered := table.String()
-
-		// Check that all tasks are present
-		assert.Contains(t, rendered, "default")
-		assert.Contains(t, rendered, "aaa-first")
-		assert.Contains(t, rendered, "zzz-last")
-
-		// Default should appear first due to OrderedTaskNames implementation
-		defaultPos := strings.Index(rendered, "default")
-		aaaPos := strings.Index(rendered, "aaa-first")
-		zzzPos := strings.Index(rendered, "zzz-last")
-
-		assert.True(t, defaultPos >= 0, "default task should be present")
-		assert.True(t, aaaPos >= 0, "aaa-first task should be present")
-		assert.True(t, zzzPos >= 0, "zzz-last task should be present")
-		assert.True(t, defaultPos < aaaPos, "default should come before aaa-first")
-	})
-
-	t.Run("workflow with no description tasks", func(t *testing.T) {
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"no-desc": v1.Task{
-					Steps: []v1.Step{{Run: "echo no description"}},
-					// Description is empty
-				},
-				"with-desc": v1.Task{
-					Description: "Has description",
-					Steps:       []v1.Step{{Run: "echo with description"}},
-				},
-			},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
-
-		rendered := table.String()
-		assert.Contains(t, rendered, "no-desc")
-		assert.Contains(t, rendered, "with-desc")
-		assert.Contains(t, rendered, "# Has description")
-		// Task with no description should not have a comment
-		assert.NotContains(t, rendered, "# no-desc")
-	})
-
-	t.Run("nil inputs handling", func(t *testing.T) {
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"nil-inputs": v1.Task{
-					Description: "Task with nil inputs",
-					Inputs:      nil,
-					Steps:       []v1.Step{{Run: "echo test"}},
-				},
-				"empty-inputs": v1.Task{
-					Description: "Task with empty inputs",
-					Inputs:      v1.InputMap{},
-					Steps:       []v1.Step{{Run: "echo test"}},
-				},
-			},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
-
-		rendered := table.String()
-		assert.Contains(t, rendered, "nil-inputs")
-		assert.Contains(t, rendered, "empty-inputs")
-		// Should not contain any -w flags since there are no inputs
-		assert.NotContains(t, rendered, "-w")
-	})
-
-	t.Run("workflow with aliases without path resolution", func(t *testing.T) {
-		wf := v1.Workflow{
-			Tasks: v1.TaskMap{
-				"main": v1.Task{
-					Description: "Main task",
-					Steps:       []v1.Step{{Run: "echo main"}},
-				},
-			},
-			Aliases: v1.AliasMap{
-				"remote": v1.Alias{
-					Type: "github",
-				},
-			},
-		}
-
-		svc, err := uses.NewFetcherService()
-		require.NoError(t, err)
-		origin, _ := url.Parse("file:///test/tasks.yaml")
-
-		table, err := DetailedTaskList(ctx, svc, origin, wf)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, table)
-
-		rendered := table.String()
-		assert.Contains(t, rendered, "main")
-		assert.Contains(t, rendered, "# Main task")
-		// Should only show the main task, not try to resolve remote alias
-		assert.NotContains(t, rendered, "remote:")
-	})
 }
