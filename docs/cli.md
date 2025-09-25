@@ -71,14 +71,12 @@ The `--list` flag shows you all available tasks in a workflow file.
 
 ```sh
 $ maru2 --list
-
-Available:
-
-- default
-- build
-- test
-- local-alias:setup
-- local-alias:deploy
+Available tasks:
+    default
+    build -w prod='false'      # Build the project
+    test -w short='false'      # Run tests
+    local-alias:setup -w ctx=  # Setup cluster
+    local-alias:deploy -w ctx= # Deploy to prod
 ```
 
 If a `default` task is defined, it's listed first. Otherwise, tasks are displayed in alphabetical order. Tasks from local file aliases are also shown in the format `alias:task-name`.
