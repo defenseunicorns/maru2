@@ -23,6 +23,7 @@ func (AliasMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 	}
 }
 
+// OrderedSeq returns an iterator over alias names and values in alphabetical order by name
 func (am AliasMap) OrderedSeq() iter.Seq2[string, Alias] {
 	names := make([]string, 0, len(am))
 	for name := range am {

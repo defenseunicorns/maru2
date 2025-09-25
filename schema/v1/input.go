@@ -25,6 +25,7 @@ func (InputMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 	}
 }
 
+// OrderedSeq returns an iterator over input parameter names and values in alphabetical order by name
 func (im InputMap) OrderedSeq() iter.Seq2[string, InputParameter] {
 	names := make([]string, 0, len(im))
 	for name := range im {

@@ -79,6 +79,8 @@ func (tm TaskMap) OrderedTaskNames() []string {
 	return names
 }
 
+// OrderedSeq returns an iterator over task names and values in alphabetical order by name
+// The default task is always first if present
 func (tm TaskMap) OrderedSeq() iter.Seq2[string, Task] {
 	names := tm.OrderedTaskNames()
 	return func(yield func(string, Task) bool) {
