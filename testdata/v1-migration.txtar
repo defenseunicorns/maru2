@@ -1,9 +1,9 @@
 # schema migration and validation
 exec maru2 -f tasks-v0.yaml --list
-stderr 'echo-task'
+stdout 'echo-task'
 
 exec maru2 -f tasks-v1.yaml --list
-stderr 'echo-task'
+stdout 'echo-task'
 
 exec maru2 -f tasks-v1.yaml echo-task -w message='v1 migration test'
 stdout 'v1 migration test'

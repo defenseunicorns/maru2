@@ -11,7 +11,7 @@ stderr 'cannot be an absolute path'
 stderr 'invalid control character in URL'
 
 exec maru2 -f workflow-with-aliases.yaml --list
-cmp stderr list.txt
+cmp stdout list.txt
 
 exec maru2 -f workflow-with-aliases.yaml local-task
 stdout 'Local alias resolved successfully'
@@ -104,7 +104,7 @@ tasks:
     steps: []
 -- list.txt --
 Available tasks:
-   local-task                                                             
-   remote-task -w message='hello from remote' # I am a remote task        
-   local:echo-local                                                       
-   local:fails                                # This task is going to fail
+    local-task                                                             
+    remote-task -w message='hello from remote' # I am a remote task        
+    local:echo-local                                                       
+    local:fails                                # This task is going to fail

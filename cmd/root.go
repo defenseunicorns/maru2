@@ -270,8 +270,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					return err
 				}
 
-				logger.Printf("Available tasks:")
-				logger.Print(t)
+				fmt.Fprintln(os.Stdout, "Available tasks:")
+				fmt.Fprintln(os.Stdout, t)
 
 				return nil
 			}

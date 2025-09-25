@@ -10,7 +10,7 @@ exec maru2 --config custom-config.yaml --dry-run --from 'pkg:gh/defenseunicorns/
 stderr 'echo "\$INPUT_MESSAGE"'
 
 exec maru2 --config custom-config.yaml --list --from 'pkg:gh/defenseunicorns/maru2@main#testdata/simple.yaml'
-cmp stderr list-stderr.txt
+cmp stdout list-stdout.txt
 
 -- custom-config.yaml --
 schema-version: v0
@@ -35,12 +35,12 @@ tasks:
 
 -- dry-stderr.txt --
 echo "$INPUT_MESSAGE"
--- list-stderr.txt --
+-- list-stdout.txt --
 Available tasks:
-   chuck            
-   continues        
-   echo -w message= 
-   fails            
-   hello-world      
-   pwd              
-   sleep            
+    chuck            
+    continues        
+    echo -w message= 
+    fails            
+    hello-world      
+    pwd              
+    sleep            

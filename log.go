@@ -87,7 +87,7 @@ func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url
 		case 1:
 			return lipgloss.NewStyle().Foreground(InfoColor)
 		case 0:
-			return lipgloss.NewStyle().MarginLeft(3)
+			return lipgloss.NewStyle().MarginLeft(4)
 		default:
 			return lipgloss.NewStyle() // there's only two columns, so this codepath will never get called, but leaving here for future
 		}
@@ -156,6 +156,14 @@ func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
 			}
 			continue
 		}
+
+		if input.DefaultFromEnv != "" {
+			w.WriteString(blue.Render(n))
+			w.WriteString("=")
+			w.WriteString(green.Render(fmt.Sprintf(`"$%s"`, input.DefaultFromEnv)))
+			continue
+		}
+
 		if input.Required != nil && !*input.Required {
 			w.WriteString(gray.Render(n))
 			w.WriteString("=")

@@ -411,8 +411,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   default # Default task",
-				"   test    # Test task   ",
+				"    default # Default task",
+				"    test    # Test task   ",
 			},
 		},
 		{
@@ -437,7 +437,7 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   echo -w optional-param= -w required-param= -w text='default-value' # Echo task with inputs",
+				"    echo -w optional-param= -w required-param= -w text='default-value' # Echo task with inputs",
 			},
 		},
 		{
@@ -464,7 +464,7 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   env-task -w value=\"${MY_ENV_VAR:-fallback}\" # Task with env default",
+				"    env-task -w value=\"${MY_ENV_VAR:-fallback}\" # Task with env default",
 			},
 		},
 		{
@@ -486,9 +486,9 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   default   # Default task should be first              ",
-				"   aaa-first # Should appear after default but before zzz",
-				"   zzz-last  # Should appear after default               ",
+				"    default   # Default task should be first              ",
+				"    aaa-first # Should appear after default but before zzz",
+				"    zzz-last  # Should appear after default               ",
 			},
 		},
 		{
@@ -505,8 +505,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   no-desc                    ",
-				"   with-desc # Has description",
+				"    no-desc                    ",
+				"    with-desc # Has description",
 			},
 		},
 		{
@@ -526,8 +526,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   empty-inputs # Task with empty inputs",
-				"   nil-inputs   # Task with nil inputs  ",
+				"    empty-inputs # Task with empty inputs",
+				"    nil-inputs   # Task with nil inputs  ",
 			},
 		},
 		{
@@ -546,7 +546,7 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   ordered-test -w alpha='a' -w beta='b' -w zebra='z' # Test ordering",
+				"    ordered-test -w alpha='a' -w beta='b' -w zebra='z' # Test ordering",
 			},
 		},
 	}
@@ -608,7 +608,7 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   main # Main task",
+				"    main # Main task",
 			},
 		},
 		{
@@ -634,8 +634,8 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   another    # Another task",
-				"   local-task # Local task  ",
+				"    another    # Another task",
+				"    local-task # Local task  ",
 			},
 		},
 		{
@@ -649,7 +649,7 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"   standalone # Standalone task",
+				"    standalone # Standalone task",
 			},
 		},
 		{
@@ -693,9 +693,9 @@ tasks:
 `),
 			},
 			expected: []string{
-				"   main           # Main task        ",
-				"   external:build # Build the project",
-				"   external:test  # Test the project ",
+				"    main           # Main task        ",
+				"    external:build # Build the project",
+				"    external:test  # Test the project ",
 			},
 		},
 		{
@@ -825,7 +825,7 @@ func TestRenderInputMap(t *testing.T) {
 			inputs: v1.InputMap{
 				"env-only": v1.InputParameter{DefaultFromEnv: "MY_VAR"},
 			},
-			expected: " -w env-only=",
+			expected: " -w env-only=\"$MY_VAR\"",
 		},
 		{
 			name: "alphabetical ordering",
@@ -861,6 +861,35 @@ func TestRenderInputMap(t *testing.T) {
 				},
 			},
 			expected: " -w default-val='test' -w env-val=\"${ENV_VAR:-fallback}\" -w optional-val= -w required-val=",
+		},
+		{
+			name: "multiple env vars without defaults",
+			inputs: v1.InputMap{
+				"token":    v1.InputParameter{DefaultFromEnv: "API_TOKEN"},
+				"username": v1.InputParameter{DefaultFromEnv: "USER"},
+				"host":     v1.InputParameter{DefaultFromEnv: "HOST"},
+			},
+			expected: " -w host=\"$HOST\" -w token=\"$API_TOKEN\" -w username=\"$USER\"",
+		},
+		{
+			name: "env var with empty string default",
+			inputs: v1.InputMap{
+				"empty-env": v1.InputParameter{
+					Default:        "",
+					DefaultFromEnv: "EMPTY_VAR",
+				},
+			},
+			expected: " -w empty-env=\"${EMPTY_VAR:-}\"",
+		},
+		{
+			name: "mixed env vars with and without defaults",
+			inputs: v1.InputMap{
+				"with-default":    v1.InputParameter{Default: "fallback", DefaultFromEnv: "WITH_DEFAULT"},
+				"without-default": v1.InputParameter{DefaultFromEnv: "WITHOUT_DEFAULT"},
+				"plain-default":   v1.InputParameter{Default: "plain"},
+				"required":        v1.InputParameter{Required: func() *bool { b := true; return &b }()},
+			},
+			expected: " -w plain-default='plain' -w required= -w with-default=\"${WITH_DEFAULT:-fallback}\" -w without-default=\"$WITHOUT_DEFAULT\"",
 		},
 		{
 			name: "comprehensive combinations",
