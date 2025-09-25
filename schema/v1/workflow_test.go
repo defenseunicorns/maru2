@@ -150,4 +150,24 @@ func TestOrderedTasks(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
+
+	t.Run("partial iteration", func(t *testing.T) {
+		tasks := TaskMap{
+			"zebra":   Task{},
+			"default": Task{},
+			"alpha":   Task{},
+			"gamma":   Task{},
+		}
+
+		got := make([]string, 0)
+		for name := range tasks.OrderedSeq() {
+			got = append(got, name)
+			if len(got) == 2 {
+				break
+			}
+		}
+
+		expected := []string{"default", "alpha"}
+		assert.Equal(t, expected, got)
+	})
 }

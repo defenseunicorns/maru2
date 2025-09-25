@@ -61,4 +61,24 @@ func TestOrderedInputs(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
+
+	t.Run("partial iteration", func(t *testing.T) {
+		inputs := InputMap{
+			"zebra": InputParameter{},
+			"alpha": InputParameter{},
+			"beta":  InputParameter{},
+			"gamma": InputParameter{},
+		}
+
+		got := make([]string, 0)
+		for name := range inputs.OrderedSeq() {
+			got = append(got, name)
+			if len(got) == 2 {
+				break
+			}
+		}
+
+		expected := []string{"alpha", "beta"}
+		assert.Equal(t, expected, got)
+	})
 }
