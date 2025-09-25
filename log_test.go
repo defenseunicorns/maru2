@@ -393,7 +393,7 @@ func TestDetailedTaskList(t *testing.T) {
 	testCases := []struct {
 		name     string
 		workflow v1.Workflow
-		expected string
+		expected []string
 	}{
 		{
 			name: "basic workflow with tasks",
@@ -409,7 +409,10 @@ func TestDetailedTaskList(t *testing.T) {
 					},
 				},
 			},
-			expected: "   default # Default task\n   test    # Test task   ",
+			expected: []string{
+				"   default # Default task",
+				"   test    # Test task   ",
+			},
 		},
 		{
 			name: "workflow with inputs",
@@ -432,14 +435,16 @@ func TestDetailedTaskList(t *testing.T) {
 					},
 				},
 			},
-			expected: "   echo -w optional-param= -w required-param= -w text='default-value' # Echo task with inputs",
+			expected: []string{
+				"   echo -w optional-param= -w required-param= -w text='default-value' # Echo task with inputs",
+			},
 		},
 		{
 			name: "empty workflow",
 			workflow: v1.Workflow{
 				Tasks: v1.TaskMap{},
 			},
-			expected: "",
+			expected: []string{},
 		},
 		{
 			name: "workflow with env defaults",
@@ -457,7 +462,9 @@ func TestDetailedTaskList(t *testing.T) {
 					},
 				},
 			},
-			expected: "   env-task -w value=\"${MY_ENV_VAR:-fallback}\" # Task with env default",
+			expected: []string{
+				"   env-task -w value=\"${MY_ENV_VAR:-fallback}\" # Task with env default",
+			},
 		},
 		{
 			name: "task ordering",
@@ -477,7 +484,11 @@ func TestDetailedTaskList(t *testing.T) {
 					},
 				},
 			},
-			expected: "   default   # Default task should be first              \n   aaa-first # Should appear after default but before zzz\n   zzz-last  # Should appear after default               ",
+			expected: []string{
+				"   default   # Default task should be first              ",
+				"   aaa-first # Should appear after default but before zzz",
+				"   zzz-last  # Should appear after default               ",
+			},
 		},
 		{
 			name: "tasks without descriptions",
@@ -492,7 +503,10 @@ func TestDetailedTaskList(t *testing.T) {
 					},
 				},
 			},
-			expected: "   no-desc                    \n   with-desc # Has description",
+			expected: []string{
+				"   no-desc                    ",
+				"   with-desc # Has description",
+			},
 		},
 		{
 			name: "nil and empty inputs",
@@ -510,7 +524,10 @@ func TestDetailedTaskList(t *testing.T) {
 					},
 				},
 			},
-			expected: "   empty-inputs # Task with empty inputs\n   nil-inputs   # Task with nil inputs  ",
+			expected: []string{
+				"   empty-inputs # Task with empty inputs",
+				"   nil-inputs   # Task with nil inputs  ",
+			},
 		},
 		{
 			name: "input ordering",
@@ -527,7 +544,9 @@ func TestDetailedTaskList(t *testing.T) {
 					},
 				},
 			},
-			expected: "   ordered-test -w alpha='a' -w beta='b' -w zebra='z' # Test ordering",
+			expected: []string{
+				"   ordered-test -w alpha='a' -w beta='b' -w zebra='z' # Test ordering",
+			},
 		},
 	}
 
@@ -539,19 +558,145 @@ func TestDetailedTaskList(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotNil(t, table)
 
-			assert.Equal(t, tc.expected, table.String())
+			assert.Equal(t, strings.Join(tc.expected, "\n"), table.String())
 		})
 	}
 }
 
 func TestDetailedTaskListWithAliases(t *testing.T) {
+	t.Setenv("NO_COLOR", "true") // format matters more than ensuring colors are correct
+
 	testCases := []struct {
 		name      string
 		workflow  v1.Workflow
 		files     map[string][]byte
 		expectErr string
-		expected  string
-	}{}
+		expected  []string
+	}{
+		{
+			name: "alias path does not exist",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"default": v1.Task{
+						Description: "Main task",
+						Steps:       []v1.Step{{Run: "echo main"}},
+					},
+				},
+				Aliases: v1.AliasMap{
+					"local": v1.Alias{
+						Path: "other-tasks.yaml",
+					},
+				},
+			},
+			expectErr: "file does not exist",
+		},
+		{
+			name: "non-path aliases",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"main": v1.Task{
+						Description: "Main task",
+						Steps:       []v1.Step{{Run: "echo main"}},
+					},
+				},
+				Aliases: v1.AliasMap{
+					"remote": v1.Alias{
+						Type: "github",
+					},
+				},
+			},
+			expected: []string{
+				"   main # Main task",
+			},
+		},
+		{
+			name: "multiple non-path aliases",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"local-task": v1.Task{
+						Description: "Local task",
+						Steps:       []v1.Step{{Run: "echo local"}},
+					},
+					"another": v1.Task{
+						Description: "Another task",
+						Steps:       []v1.Step{{Run: "echo another"}},
+					},
+				},
+				Aliases: v1.AliasMap{
+					"github-alias": v1.Alias{
+						Type: "github",
+					},
+					"gitlab-alias": v1.Alias{
+						Type: "gitlab",
+					},
+				},
+			},
+			expected: []string{
+				"   another    # Another task",
+				"   local-task # Local task  ",
+			},
+		},
+		{
+			name: "no aliases",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"standalone": v1.Task{
+						Description: "Standalone task",
+						Steps:       []v1.Step{{Run: "echo standalone"}},
+					},
+				},
+			},
+			expected: []string{
+				"   standalone # Standalone task",
+			},
+		},
+		{
+			name: "empty workflow with aliases",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{},
+				Aliases: v1.AliasMap{
+					"remote": v1.Alias{
+						Type: "github",
+					},
+				},
+			},
+			expected: []string{},
+		},
+		{
+			name: "alias path exists with tasks",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"main": v1.Task{
+						Description: "Main task",
+						Steps:       []v1.Step{{Run: "echo main"}},
+					},
+				},
+				Aliases: v1.AliasMap{
+					"external": v1.Alias{
+						Path: "external-tasks.yaml",
+					},
+				},
+			},
+			files: map[string][]byte{
+				"external-tasks.yaml": []byte(`schema-version: v1
+tasks:
+  build:
+    description: "Build the project"
+    steps:
+      - run: echo building
+  test:
+    description: "Test the project"
+    steps:
+      - run: echo testing
+`),
+			},
+			expected: []string{
+				"   main           # Main task        ",
+				"   external:build # Build the project",
+				"   external:test  # Test the project ",
+			},
+		},
+	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -575,7 +720,7 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotNil(t, table)
 
-			assert.Equal(t, tc.expected, table.String())
+			assert.Equal(t, strings.Join(tc.expected, "\n"), table.String())
 		})
 	}
 }
