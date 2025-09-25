@@ -310,6 +310,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 								comment = "# " + desc
 							}
 
+							msg := strings.Builder{}
+							msg.WriteString((fmt.Sprintf("%s:%s", name, n)))
+
+							renderInputs(&msg, wf.Tasks[n].Inputs)
+
 							t = t.Row(fmt.Sprintf("%s:%s", name, n), comment)
 						}
 					}
@@ -511,7 +516,7 @@ func renderInputs(w *strings.Builder, inputs v1.InputMap) {
 			w.WriteString("=")
 
 			if input.DefaultFromEnv != "" {
-				w.WriteString(green.Render(fmt.Sprintf("\"${%s:-%s}\"", input.DefaultFromEnv, cast.ToString(input.Default))))
+				w.WriteString(green.Render(fmt.Sprintf(`"${%s:-%s}"`, input.DefaultFromEnv, cast.ToString(input.Default))))
 			} else {
 				w.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
 			}
