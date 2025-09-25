@@ -19,17 +19,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	"github.com/defenseunicorns/maru2"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	"github.com/defenseunicorns/maru2/schema"
-	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -269,55 +265,9 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if list {
-				ds := DefaultStyles()
-				t := table.New().Border(lipgloss.HiddenBorder()).BorderLeft(false).BorderBottom(false).BorderTop(false).BorderRight(false).StyleFunc(func(_, col int) lipgloss.Style {
-					switch col {
-					case 1:
-						return lipgloss.NewStyle().Foreground(ds.Levels[log.InfoLevel].GetForeground())
-					case 0:
-						return lipgloss.NewStyle().MarginLeft(3)
-					default:
-						return lipgloss.NewStyle()
-					}
-				})
-				for _, name := range wf.Tasks.OrderedTaskNames() {
-					var comment string
-					if desc := wf.Tasks[name].Description; desc != "" {
-						comment = "# " + desc
-					}
-
-					msg := strings.Builder{}
-					msg.WriteString(name)
-
-					renderInputs(&msg, wf.Tasks[name].Inputs)
-
-					t = t.Row(msg.String(), comment)
-				}
-
-				for name, alias := range wf.Aliases {
-					if alias.Path != "" {
-						next, err := uses.ResolveRelative(resolved, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
-						if err != nil {
-							return err
-						}
-						aliasedWF, err := maru2.Fetch(ctx, svc, next)
-						if err != nil {
-							return err
-						}
-						for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
-							var comment string
-							if desc := aliasedWF.Tasks[n].Description; desc != "" {
-								comment = "# " + desc
-							}
-
-							msg := strings.Builder{}
-							msg.WriteString((fmt.Sprintf("%s:%s", name, n)))
-
-							renderInputs(&msg, wf.Tasks[n].Inputs)
-
-							t = t.Row(fmt.Sprintf("%s:%s", name, n), comment)
-						}
-					}
+				t, err := maru2.DetailedTaskList(ctx, svc, resolved, wf)
+				if err != nil {
+					return err
 				}
 
 				logger.Printf("Available tasks:")
@@ -501,32 +451,4 @@ func ParseExitCode(err error) int {
 		}
 	}
 	return 1
-}
-
-func renderInputs(w *strings.Builder, inputs v1.InputMap) {
-	faint := lipgloss.NewStyle().Faint(true)
-	blue := lipgloss.NewStyle().Foreground(DebugColor)
-	amber := lipgloss.NewStyle().Foreground(WarnColor)
-	green := lipgloss.NewStyle().Foreground(GreenColor)
-
-	for n, input := range inputs {
-		w.WriteString(faint.Render(" -w "))
-		if input.Default != nil {
-			w.WriteString(blue.Render(n))
-			w.WriteString("=")
-
-			if input.DefaultFromEnv != "" {
-				w.WriteString(green.Render(fmt.Sprintf(`"${%s:-%s}"`, input.DefaultFromEnv, cast.ToString(input.Default))))
-			} else {
-				w.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
-			}
-			continue
-		}
-		if input.Required != nil && !*input.Required {
-			continue
-		}
-		w.WriteString(amber.Render(n))
-		w.WriteString("=")
-		w.WriteString(amber.Render("''"))
-	}
 }
