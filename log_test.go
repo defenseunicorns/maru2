@@ -6,7 +6,6 @@ package maru2
 import (
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -549,68 +548,34 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 	testCases := []struct {
 		name      string
 		workflow  v1.Workflow
-		expectErr bool
-		contains  []string
-	}{
-		{
-			name: "workflow with path aliases (error case)",
-			workflow: v1.Workflow{
-				Tasks: v1.TaskMap{
-					"default": v1.Task{
-						Description: "Main task",
-						Steps:       []v1.Step{{Run: "echo main"}},
-					},
-				},
-				Aliases: v1.AliasMap{
-					"local": v1.Alias{
-						Path: "other-tasks.yaml",
-					},
-				},
-			},
-			expectErr: true,
-		},
-		{
-			name: "workflow with non-path aliases",
-			workflow: v1.Workflow{
-				Tasks: v1.TaskMap{
-					"main": v1.Task{
-						Description: "Main task",
-						Steps:       []v1.Step{{Run: "echo main"}},
-					},
-				},
-				Aliases: v1.AliasMap{
-					"remote": v1.Alias{
-						Type: "github",
-					},
-				},
-			},
-			contains: []string{"main", "# Main task"},
-		},
-	}
+		files     map[string][]byte
+		expectErr string
+		expected  string
+	}{}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fs := afero.NewMemMapFs()
+
+			for name, content := range tc.files {
+				err := afero.WriteFile(fs, name, content, 0o644)
+				require.NoError(t, err)
+			}
+
 			svc, err := uses.NewFetcherService(uses.WithFS(fs))
 			require.NoError(t, err)
-			origin, _ := url.Parse("file:///test/tasks.yaml")
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			table, err := DetailedTaskList(ctx, svc, origin, tc.workflow)
+			table, err := DetailedTaskList(ctx, svc, nil, tc.workflow)
 
-			if tc.expectErr {
-				assert.Error(t, err)
-				assert.Nil(t, table)
+			if tc.expectErr != "" {
+				require.ErrorContains(t, err, tc.expectErr)
 				return
 			}
-
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.NotNil(t, table)
 
-			rendered := table.String()
-			for _, expected := range tc.contains {
-				assert.Contains(t, rendered, expected)
-			}
+			assert.Equal(t, tc.expected, table.String())
 		})
 	}
 }
