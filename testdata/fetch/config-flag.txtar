@@ -36,12 +36,11 @@ tasks:
 -- dry-stderr.txt --
 echo "$INPUT_MESSAGE"
 -- list-stderr.txt --
-Available:
-
-- chuck
-- continues
-- echo
-- fails
-- hello-world
-- pwd
-- sleep
+Available tasks:
+   chuck            
+   continues        
+   echo -w message= 
+   fails            
+   hello-world      
+   pwd              
+   sleep            
