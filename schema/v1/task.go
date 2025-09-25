@@ -5,6 +5,7 @@ package v1
 
 import (
 	"cmp"
+	"iter"
 	"slices"
 
 	"github.com/invopop/jsonschema"
@@ -76,4 +77,16 @@ func (tm TaskMap) OrderedTaskNames() []string {
 		return cmp.Compare(a, b)
 	})
 	return names
+}
+
+func (tm TaskMap) OrderedSeq() iter.Seq2[string, Task] {
+	names := tm.OrderedTaskNames()
+	return func(yield func(string, Task) bool) {
+		for _, name := range names {
+			task := tm[name]
+			if !yield(name, task) {
+				return
+			}
+		}
+	}
 }

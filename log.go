@@ -93,21 +93,21 @@ func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url
 		}
 	})
 
-	for _, name := range wf.Tasks.OrderedTaskNames() {
+	for name, task := range wf.Tasks.OrderedSeq() {
 		var comment string
-		if desc := wf.Tasks[name].Description; desc != "" {
+		if desc := task.Description; desc != "" {
 			comment = "# " + desc
 		}
 
 		msg := strings.Builder{}
 		msg.WriteString(name)
 
-		renderInputMap(&msg, wf.Tasks[name].Inputs)
+		renderInputMap(&msg, task.Inputs)
 
 		t = t.Row(msg.String(), comment)
 	}
 
-	for name, alias := range wf.Aliases {
+	for name, alias := range wf.Aliases.OrderedSeq() {
 		if alias.Path != "" {
 			next, err := uses.ResolveRelative(origin, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
 			if err != nil {
@@ -117,16 +117,16 @@ func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url
 			if err != nil {
 				return nil, err
 			}
-			for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
+			for n, task := range aliasedWF.Tasks.OrderedSeq() {
 				var comment string
-				if desc := aliasedWF.Tasks[n].Description; desc != "" {
+				if desc := task.Description; desc != "" {
 					comment = "# " + desc
 				}
 
 				msg := strings.Builder{}
 				msg.WriteString((fmt.Sprintf("%s:%s", name, n)))
 
-				renderInputMap(&msg, wf.Tasks[n].Inputs)
+				renderInputMap(&msg, task.Inputs)
 
 				t = t.Row(msg.String(), comment)
 			}
@@ -142,7 +142,7 @@ func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
 	amber := lipgloss.NewStyle().Foreground(WarnColor)
 	green := lipgloss.NewStyle().Foreground(GreenColor)
 
-	for n, input := range inputs {
+	for n, input := range inputs.OrderedSeq() {
 		w.WriteString(faint.Render(" -w "))
 		if input.Default != nil {
 			w.WriteString(blue.Render(n))
@@ -160,7 +160,6 @@ func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
 		}
 		w.WriteString(amber.Render(n))
 		w.WriteString("=")
-		w.WriteString(amber.Render("''"))
 	}
 }
 
