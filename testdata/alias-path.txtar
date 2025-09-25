@@ -104,7 +104,7 @@ tasks:
     steps: []
 -- list.txt --
 Available tasks:
-   local-task                                   
-   remote-task      # I am a remote task        
-   local:echo-local                             
-   local:fails      # This task is going to fail
+   local-task                                                             
+   remote-task -w message='hello from remote' # I am a remote task        
+   local:echo-local                                                       
+   local:fails                                # This task is going to fail

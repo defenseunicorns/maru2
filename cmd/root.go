@@ -29,6 +29,7 @@ import (
 	"github.com/defenseunicorns/maru2"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	"github.com/defenseunicorns/maru2/schema"
+	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -286,31 +287,9 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					}
 
 					msg := strings.Builder{}
-					msg.WriteString(name) // not really caring about errors
+					msg.WriteString(name)
 
-					faint := lipgloss.NewStyle().Faint(true)
-					blue := lipgloss.NewStyle().Foreground(ds.Levels[log.DebugLevel].GetForeground())
-					amber := lipgloss.NewStyle().Foreground(ds.Levels[log.WarnLevel].GetForeground())
-					for n, input := range wf.Tasks[name].Inputs {
-						msg.WriteString(faint.Render(" -w "))
-						if input.Default != nil {
-							msg.WriteString(blue.Render(n))
-							msg.WriteString("=")
-
-							if input.DefaultFromEnv != "" {
-								msg.WriteString(Green.Render(fmt.Sprintf("\"${%s:-%s}\"", input.DefaultFromEnv, cast.ToString(input.Default))))
-							} else {
-								msg.WriteString(Green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
-							}
-							continue
-						}
-						if input.Required != nil && !*input.Required {
-							continue
-						}
-						msg.WriteString(amber.Render(n))
-						msg.WriteString("=")
-						msg.WriteString(amber.Render("''"))
-					}
+					renderInputs(&msg, wf.Tasks[name].Inputs)
 
 					t = t.Row(msg.String(), comment)
 				}
@@ -517,4 +496,32 @@ func ParseExitCode(err error) int {
 		}
 	}
 	return 1
+}
+
+func renderInputs(w *strings.Builder, inputs v1.InputMap) {
+	faint := lipgloss.NewStyle().Faint(true)
+	blue := lipgloss.NewStyle().Foreground(DebugColor)
+	amber := lipgloss.NewStyle().Foreground(WarnColor)
+	green := lipgloss.NewStyle().Foreground(GreenColor)
+
+	for n, input := range inputs {
+		w.WriteString(faint.Render(" -w "))
+		if input.Default != nil {
+			w.WriteString(blue.Render(n))
+			w.WriteString("=")
+
+			if input.DefaultFromEnv != "" {
+				w.WriteString(green.Render(fmt.Sprintf("\"${%s:-%s}\"", input.DefaultFromEnv, cast.ToString(input.Default))))
+			} else {
+				w.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
+			}
+			continue
+		}
+		if input.Required != nil && !*input.Required {
+			continue
+		}
+		w.WriteString(amber.Render(n))
+		w.WriteString("=")
+		w.WriteString(amber.Render("''"))
+	}
 }
