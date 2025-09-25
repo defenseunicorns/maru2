@@ -6,6 +6,7 @@ package maru2
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -570,6 +571,7 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 		name      string
 		workflow  v1.Workflow
 		files     map[string][]byte
+		origin    *url.URL
 		expectErr string
 		expected  []string
 	}{
@@ -696,6 +698,24 @@ tasks:
 				"   external:test  # Test the project ",
 			},
 		},
+		{
+			name: "alias with unsupported scheme triggers ResolveRelative error",
+			workflow: v1.Workflow{
+				Tasks: v1.TaskMap{
+					"main": v1.Task{
+						Description: "Main task",
+						Steps:       []v1.Step{{Run: "echo main"}},
+					},
+				},
+				Aliases: v1.AliasMap{
+					"local": v1.Alias{
+						Path: "tasks.yaml",
+					},
+				},
+			},
+			origin:    &url.URL{Scheme: "ftp", Host: "test", Path: "/tasks.yaml"},
+			expectErr: "unsupported scheme",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -711,7 +731,7 @@ tasks:
 			require.NoError(t, err)
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			table, err := DetailedTaskList(ctx, svc, nil, tc.workflow)
+			table, err := DetailedTaskList(ctx, svc, tc.origin, tc.workflow)
 
 			if tc.expectErr != "" {
 				require.ErrorContains(t, err, tc.expectErr)

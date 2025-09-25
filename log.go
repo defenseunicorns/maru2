@@ -89,7 +89,7 @@ func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url
 		case 0:
 			return lipgloss.NewStyle().MarginLeft(3)
 		default:
-			return lipgloss.NewStyle()
+			return lipgloss.NewStyle() // there's only two columns, so this codepath will never get called, but leaving here for future
 		}
 	})
 
