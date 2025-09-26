@@ -5,6 +5,7 @@ package v1
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/invopop/jsonschema"
@@ -75,38 +76,17 @@ func (wf Workflow) Explain(taskNames ...string) string {
 	// Tasks section
 	explanation.WriteString("## Tasks\n\n")
 
-	// Determine which tasks to explain
-	var tasksToExplain []string
-	if len(taskNames) > 0 {
-		// Filter to only requested tasks
-		for _, taskName := range taskNames {
-			if _, exists := wf.Tasks[taskName]; exists {
-				tasksToExplain = append(tasksToExplain, taskName)
-			}
-		}
-	} else {
-		// Explain all tasks in order
-		tasksToExplain = wf.Tasks.OrderedTaskNames()
-	}
-
-	if len(tasksToExplain) == 0 {
-		explanation.WriteString("No tasks found.\n")
-		return explanation.String()
-	}
-
 	// Explain each task
-	for i, taskName := range tasksToExplain {
-		if i > 0 {
-			explanation.WriteString("\n---\n\n")
+	for name, task := range wf.Tasks.OrderedSeq() {
+		if len(taskNames) > 0 && !slices.Contains(taskNames, name) {
+			continue
 		}
-
-		task := wf.Tasks[taskName]
 
 		// Task header
-		if taskName == "default" {
+		if name == "default" {
 			explanation.WriteString("### `default` (Default Task)\n\n")
 		} else {
-			explanation.WriteString(fmt.Sprintf("### `%s`\n\n", taskName))
+			explanation.WriteString(fmt.Sprintf("### `%s`\n\n", name))
 		}
 
 		// Task description
@@ -164,96 +144,21 @@ func (wf Workflow) Explain(taskNames ...string) string {
 			explanation.WriteString("\n")
 		}
 
-		// Steps
-		explanation.WriteString("**Steps:**\n\n")
-		if len(task.Steps) == 0 {
-			explanation.WriteString("No steps defined.\n\n")
-			continue
+		uses := []string{}
+		for _, step := range task.Steps {
+			if step.Uses != "" {
+				uses = append(uses, step.Uses)
+			}
 		}
+		uses = slices.Compact(uses)
 
-		for stepIdx, step := range task.Steps {
-			stepNum := stepIdx + 1
-
-			// Step header with optional name and ID
-			stepHeader := fmt.Sprintf("%d.", stepNum)
-			if step.Name != "" {
-				stepHeader += fmt.Sprintf(" **%s**", step.Name)
+		if len(uses) > 0 {
+			explanation.WriteString("**Uses:**\n\n")
+			for _, u := range uses {
+				explanation.WriteString(fmt.Sprintf("- `%s`", u))
 			}
-			if step.ID != "" {
-				stepHeader += fmt.Sprintf(" (`%s`)", step.ID)
-			}
-			explanation.WriteString(stepHeader + "\n")
-
-			// Step action (run vs uses)
-			if step.Run != "" {
-				// Shell command
-				explanation.WriteString("   ```")
-				if step.Shell != "" && step.Shell != "sh" {
-					explanation.WriteString(step.Shell)
-				} else {
-					explanation.WriteString("sh")
-				}
-				explanation.WriteString("\n   " + step.Run + "\n   ```\n")
-			} else if step.Uses != "" {
-				// Task reference
-				explanation.WriteString(fmt.Sprintf("   Uses: `%s`\n", step.Uses))
-
-				// With parameters
-				if len(step.With) > 0 {
-					explanation.WriteString("   With:\n")
-					for key, value := range step.With {
-						explanation.WriteString(fmt.Sprintf("   - `%s`: `%v`\n", key, value))
-					}
-				}
-			}
-
-			// Step configuration details
-			var stepDetails []string
-
-			if step.Dir != "" {
-				stepDetails = append(stepDetails, fmt.Sprintf("Working directory: `%s`", step.Dir))
-			}
-
-			if step.If != "" {
-				stepDetails = append(stepDetails, fmt.Sprintf("Condition: `%s`", step.If))
-			}
-
-			if step.Timeout != "" {
-				stepDetails = append(stepDetails, fmt.Sprintf("Timeout: `%s`", step.Timeout))
-			}
-
-			if step.Mute {
-				stepDetails = append(stepDetails, "Output muted")
-			}
-
-			if step.Show != nil && !*step.Show {
-				stepDetails = append(stepDetails, "Script hidden")
-			}
-
-			if len(step.Env) > 0 {
-				stepDetails = append(stepDetails, fmt.Sprintf("Environment variables: %d set", len(step.Env)))
-			}
-
-			if len(stepDetails) > 0 {
-				explanation.WriteString("   \n   *Configuration:* " + strings.Join(stepDetails, " • ") + "\n")
-			}
-
-			explanation.WriteString("\n")
+			explanation.WriteString("\n\n")
 		}
-	}
-
-	// Usage instructions
-	if len(taskNames) == 0 {
-		explanation.WriteString("---\n\n")
-		explanation.WriteString("## Usage\n\n")
-		explanation.WriteString("Run tasks using:\n")
-		explanation.WriteString("```sh\n")
-		if _, hasDefault := wf.Tasks["default"]; hasDefault {
-			explanation.WriteString("maru2                    # Run default task\n")
-		}
-		explanation.WriteString("maru2 <task-name>        # Run specific task\n")
-		explanation.WriteString("maru2 <task> --with key=value  # Pass input parameters\n")
-		explanation.WriteString("```\n")
 	}
 
 	return explanation.String()

@@ -19,9 +19,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/defenseunicorns/maru2"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
@@ -278,11 +281,25 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if explain {
-				md, err := maru2.Explain(wf, args...)
-				if err != nil {
-					return err
+
+				isTerminal := term.IsTerminal(int(os.Stdout.Fd()))
+				if isTerminal {
+					renderer, err := glamour.NewTermRenderer(glamour.WithStyles(styles.TokyoNightStyleConfig))
+					if err != nil {
+						return err
+					}
+					defer renderer.Close()
+
+					out, err := renderer.Render(wf.Explain(args...))
+					if err != nil {
+						return err
+					}
+
+					fmt.Fprintln(os.Stdout, out)
+					return nil
 				}
-				fmt.Fprintln(os.Stdout, md)
+
+				fmt.Fprintln(os.Stdout, wf.Explain(args...))
 				return nil
 			}
 
