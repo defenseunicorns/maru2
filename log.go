@@ -14,12 +14,15 @@ import (
 	"time"
 
 	"github.com/alecthomas/chroma/v2/quick"
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/goccy/go-yaml"
 	"github.com/muesli/termenv"
 	"github.com/spf13/cast"
+	"golang.org/x/term"
 
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
@@ -114,6 +117,24 @@ func (tl *TaskList) String() string {
 	}
 
 	return sb.String()
+}
+
+func Explain(wf v1.Workflow, taskNames ...string) (string, error) {
+	style := styles.TokyoNightStyleConfig
+
+	isTerminal := term.IsTerminal(int(os.Stdout.Fd()))
+	if !isTerminal {
+		style = styles.NoTTYStyleConfig
+		style.Document.Margin = new(uint)
+	}
+
+	renderer, err := glamour.NewTermRenderer(glamour.WithStyles(style))
+	if err != nil {
+		return "", err
+	}
+	defer renderer.Close()
+
+	return renderer.Render(wf.Explain(taskNames...))
 }
 
 // NewDetailedTaskList renders a table detailing a workflow and all aliased workflows tasks

@@ -37,6 +37,7 @@ func NewRootCmd() *cobra.Command {
 		level      string
 		ver        bool
 		list       bool
+		explain    bool
 		from       string
 		policy     = uses.DefaultFetchPolicy // VarP does not allow you to set a default value
 		s          string
@@ -276,6 +277,15 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil
 			}
 
+			if explain {
+				md, err := maru2.Explain(wf, args...)
+				if err != nil {
+					return err
+				}
+				fmt.Fprintln(os.Stdout, md)
+				return nil
+			}
+
 			if fetchAll {
 				logger.Debug("fetching all", "tasks", wf.Tasks.OrderedTaskNames(), "from", resolved)
 				if err := maru2.FetchAll(ctx, svc, wf, resolved); err != nil {
@@ -365,6 +375,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	})
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
+	root.Flags().BoolVar(&explain, "explain", false, "Print explanation of workflow/task(s) and exit")
 	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")

@@ -171,3 +171,192 @@ func TestOrderedTasks(t *testing.T) {
 		assert.Equal(t, expected, got)
 	})
 }
+
+func TestWorkflowExplain(t *testing.T) {
+	boolPtr := func(b bool) *bool { return &b }
+
+	// Complex workflow with all features
+	complexWorkflow := Workflow{
+		SchemaVersion: SchemaVersion,
+		Aliases: AliasMap{
+			"gh": Alias{
+				Type:         "github",
+				BaseURL:      "https://api.github.com",
+				TokenFromEnv: "GITHUB_TOKEN",
+			},
+			"local": Alias{
+				Path: "common/tasks.yaml",
+			},
+		},
+		Tasks: TaskMap{
+			"default": Task{
+				Description: "Default build task",
+				Collapse:    true,
+				Inputs: InputMap{
+					"version": InputParameter{
+						Description:    "Version to build",
+						Required:       boolPtr(true),
+						Default:        "latest",
+						DefaultFromEnv: "BUILD_VERSION",
+						Validate:       `^v?\d+\.\d+\.\d+$`,
+					},
+					"debug": InputParameter{
+						Description:       "Enable debug mode",
+						Required:          boolPtr(false),
+						Default:           false,
+						DeprecatedMessage: "Use --verbose instead",
+					},
+				},
+				Steps: []Step{
+					{
+						Name: "Setup environment",
+						ID:   "setup",
+						Run:  "export PATH=$PATH:/usr/local/bin",
+						Env: map[string]any{
+							"NODE_ENV": "production",
+							"DEBUG":    "${{ input \"debug\" }}",
+						},
+						Dir:     "src",
+						Shell:   "bash",
+						Timeout: "30s",
+						Show:    boolPtr(false),
+					},
+					{
+						Uses: "gh:defenseunicorns/maru2@main?task=build",
+						With: map[string]any{
+							"version": "${{ input \"version\" }}",
+							"target":  "linux",
+						},
+						If:   "input(\"debug\") == false",
+						Mute: true,
+					},
+					{
+						Run: "echo 'Build completed'",
+					},
+				},
+			},
+			"test": Task{
+				Steps: []Step{
+					{Run: "go test ./..."},
+				},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		workflow    Workflow
+		taskNames   []string
+		contains    []string
+		notContains []string
+	}{
+		{
+			name:     "simple workflow - all tasks",
+			workflow: helloWorldWorkflow,
+			contains: []string{
+				"# Workflow (v1)",
+				"## Tasks",
+				"### `default` (Default Task)",
+				"### `a-task`",
+				"### `task-b`",
+				"echo 'Hello World!'",
+				"echo 'task a'",
+				"echo 'task b'",
+				"## Usage",
+				"maru2                    # Run default task",
+			},
+		},
+		{
+			name:      "simple workflow - specific task",
+			workflow:  helloWorldWorkflow,
+			taskNames: []string{"default"},
+			contains: []string{
+				"# Workflow (v1)",
+				"## Tasks",
+				"### `default` (Default Task)",
+				"echo 'Hello World!'",
+			},
+			notContains: []string{
+				"### `a-task`",
+				"### `task-b`",
+				"## Usage",
+			},
+		},
+		{
+			name:     "complex workflow with all features",
+			workflow: complexWorkflow,
+			contains: []string{
+				"# Workflow (v1)",
+				"## Aliases",
+				"| Name | Type | Details |",
+				"|------|------|----------|",
+				"| `gh` | Package URL | github at `https://api.github.com` (auth: `$GITHUB_TOKEN`) |",
+				"| `local` | Local File | `common/tasks.yaml` |",
+				"## Tasks",
+				"### `default` (Default Task)",
+				"Default build task",
+				"*Output will be grouped in CI environments (GitHub Actions, GitLab CI)*",
+				"**Input Parameters:**",
+				"| Name | Description | Required | Default | Validation | Notes |",
+				"|------|-------------|----------|---------|------------|-------|",
+				"| `debug` | Enable debug mode | No | `false` | - | ⚠️ **Deprecated**: Use --verbose instead |",
+				"| `version` | Version to build | Yes | `latest` | `^v?\\d+\\.\\d+\\.\\d+$` | - |",
+				"**Steps:**",
+				"1. **Setup environment** (`setup`)",
+				"```bash",
+				"export PATH=$PATH:/usr/local/bin",
+				"Uses: `gh:defenseunicorns/maru2@main?task=build`",
+				"- `version`: `${{ input \"version\" }}`",
+				"- `target`: `linux`",
+				"*Configuration:* Working directory: `src` • Timeout: `30s` • Script hidden • Environment variables: 2 set",
+				"*Configuration:* Condition: `input(\"debug\") == false` • Output muted",
+				"### `test`",
+				"go test ./...",
+			},
+		},
+		{
+			name:      "non-existent task",
+			workflow:  helloWorldWorkflow,
+			taskNames: []string{"non-existent"},
+			contains: []string{
+				"# Workflow (v1)",
+				"## Tasks",
+				"No tasks found.",
+			},
+			notContains: []string{
+				"### `default`",
+				"## Usage",
+			},
+		},
+		{
+			name: "empty workflow",
+			workflow: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks:         TaskMap{},
+			},
+			contains: []string{
+				"# Workflow (v1)",
+				"## Tasks",
+				"No tasks found.",
+			},
+			notContains: []string{
+				"## Aliases",
+				"## Usage",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.workflow.Explain(tc.taskNames...)
+
+			for _, expected := range tc.contains {
+				assert.Contains(t, result, expected, "Expected to find: %s", expected)
+			}
+
+			for _, unexpected := range tc.notContains {
+				assert.NotContains(t, result, unexpected, "Expected NOT to find: %s", unexpected)
+			}
+		})
+	}
+}
