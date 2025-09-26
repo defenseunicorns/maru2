@@ -554,12 +554,12 @@ func TestDetailedTaskList(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			table, err := DetailedTaskList(ctx, nil, nil, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, nil, nil, tc.workflow)
 
 			require.NoError(t, err)
-			assert.NotNil(t, table)
+			assert.NotNil(t, tl)
 
-			assert.Equal(t, strings.Join(tc.expected, "\n"), table.String())
+			assert.Equal(t, strings.Join(tc.expected, "\n"), tl.String())
 		})
 	}
 }
@@ -731,16 +731,16 @@ tasks:
 			require.NoError(t, err)
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			table, err := DetailedTaskList(ctx, svc, tc.origin, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, svc, tc.origin, tc.workflow)
 
 			if tc.expectErr != "" {
 				require.ErrorContains(t, err, tc.expectErr)
 				return
 			}
 			require.NoError(t, err)
-			assert.NotNil(t, table)
+			assert.NotNil(t, tl)
 
-			assert.Equal(t, strings.Join(tc.expected, "\n"), table.String())
+			assert.Equal(t, strings.Join(tc.expected, "\n"), tl.String())
 		})
 	}
 }

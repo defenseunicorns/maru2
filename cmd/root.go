@@ -265,7 +265,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if list {
-				t, err := maru2.DetailedTaskList(ctx, svc, resolved, wf)
+				t, err := maru2.NewDetailedTaskList(ctx, svc, resolved, wf)
 				if err != nil {
 					return err
 				}
