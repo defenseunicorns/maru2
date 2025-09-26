@@ -14,6 +14,9 @@ import (
 // SchemaVersion is the current schema version for workflows
 const SchemaVersion = "v1"
 
+// SchemaURL is the URL to the generated schema on GitHub
+const SchemaURL = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json"
+
 // Workflow represents a "tasks.yaml" file
 type Workflow struct {
 	SchemaVersion string   `json:"schema-version"`
@@ -47,7 +50,7 @@ func (wf Workflow) Explain(taskNames ...string) string {
 	if len(taskNames) == 0 {
 		explanation.WriteString(fmt.Sprintf("> for schema version %s\n", wf.SchemaVersion))
 		explanation.WriteString(">\n")
-		explanation.WriteString(fmt.Sprintf("> %s\n\n", "<https://TODO GRAB URL FROM SCHEMA CONST>"))
+		explanation.WriteString(fmt.Sprintf("> <%s>\n\n", SchemaURL))
 
 		if len(wf.Aliases) > 0 {
 			explanation.WriteString("## Aliases\n\n")
@@ -158,7 +161,7 @@ func WorkFlowSchema() *jsonschema.Schema {
 	reflector := jsonschema.Reflector{DoNotReference: true, ExpandedStruct: true}
 	schema := reflector.Reflect(&Workflow{})
 
-	schema.ID = "https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json"
+	schema.ID = SchemaURL
 
 	return schema
 }
