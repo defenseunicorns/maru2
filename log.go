@@ -83,39 +83,6 @@ type TaskList struct {
 	rows    [][2]string
 }
 
-// Row appends a row to the list
-func (tl *TaskList) Row(col0, col1 string) {
-	tl.col0max = max(tl.col0max, ansi.StringWidth(col0))
-
-	tl.rows = append(tl.rows, [2]string{col0, col1})
-}
-
-// String implements fmt.Stringers
-func (tl *TaskList) String() string {
-	sb := strings.Builder{}
-
-	cutoff := 50
-
-	for _, row := range tl.rows {
-		col0, col1 := row[0], row[1]
-
-		col0len := ansi.StringWidth(col0)
-		text0 := lipgloss.NewStyle().MarginLeft(4).Render(col0)
-		text1 := lipgloss.NewStyle().Foreground(InfoColor).Render(col1)
-
-		sb.WriteString(text0)
-
-		if col0len > cutoff {
-			sb.WriteString(text1 + "\n")
-		} else {
-			numspaces := min(50-col0len, tl.col0max-col0len)
-			sb.WriteString(strings.Repeat(" ", numspaces) + text1 + "\n")
-		}
-	}
-
-	return sb.String()
-}
-
 // NewDetailedTaskList renders a table detailing a workflow and all aliased workflows tasks
 //
 // The formatting is inspired by `just --list`
@@ -162,6 +129,39 @@ func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *
 	}
 
 	return t, nil
+}
+
+// Row appends a row to the list
+func (tl *TaskList) Row(col0, col1 string) {
+	tl.col0max = max(tl.col0max, ansi.StringWidth(col0))
+
+	tl.rows = append(tl.rows, [2]string{col0, col1})
+}
+
+// String implements fmt.Stringers
+func (tl *TaskList) String() string {
+	sb := strings.Builder{}
+
+	cutoff := 50
+
+	for _, row := range tl.rows {
+		col0, col1 := row[0], row[1]
+
+		col0len := ansi.StringWidth(col0)
+		text0 := lipgloss.NewStyle().MarginLeft(4).Render(col0)
+		text1 := lipgloss.NewStyle().Foreground(InfoColor).Render(col1)
+
+		sb.WriteString(text0)
+
+		if col0len > cutoff {
+			sb.WriteString(text1 + "\n")
+		} else {
+			numspaces := min(50-col0len, tl.col0max-col0len)
+			sb.WriteString(strings.Repeat(" ", numspaces) + text1 + "\n")
+		}
+	}
+
+	return sb.String()
 }
 
 func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
