@@ -188,6 +188,14 @@ func TestWorkflowExplain(t *testing.T) {
 			"local": Alias{
 				Path: "common/tasks.yaml",
 			},
+			"custom": Alias{
+				Type:    "gitlab",
+				BaseURL: "https://api.custom.com",
+			},
+			"secure": Alias{
+				Type:         "bitbucket",
+				TokenFromEnv: "BITBUCKET_TOKEN",
+			},
 		},
 		Tasks: TaskMap{
 			"default": Task{
@@ -206,6 +214,11 @@ func TestWorkflowExplain(t *testing.T) {
 						Required:          boolPtr(false),
 						Default:           false,
 						DeprecatedMessage: "Use --verbose instead",
+					},
+					"token": InputParameter{
+						Description:    "API token",
+						Required:       boolPtr(true),
+						DefaultFromEnv: "API_TOKEN",
 					},
 				},
 				Steps: []Step{
@@ -240,6 +253,9 @@ func TestWorkflowExplain(t *testing.T) {
 				Steps: []Step{
 					{Run: "go test ./..."},
 				},
+			},
+			"empty": Task{
+				Description: "Empty task with no steps",
 			},
 		},
 	}
@@ -293,8 +309,10 @@ func TestWorkflowExplain(t *testing.T) {
 				"",
 				"| Name | Type | Details |",
 				"|------|------|----------|",
+				"| `custom` | Package URL | gitlab at `https://api.custom.com` |",
 				"| `gh` | Package URL | github at `https://api.github.com` (auth: `$GITHUB_TOKEN`) |",
 				"| `local` | Local File | `common/tasks.yaml` |",
+				"| `secure` | Package URL | bitbucket (auth: `$BITBUCKET_TOKEN`) |",
 				"",
 				"## Tasks",
 				"",
@@ -309,11 +327,16 @@ func TestWorkflowExplain(t *testing.T) {
 				"| Name | Description | Required | Default | Validation | Notes |",
 				"|------|-------------|----------|---------|------------|-------|",
 				"| `debug` | Enable debug mode | No | `false` | - | ⚠️ **Deprecated**: Use --verbose instead |",
+				"| `token` | API token | Yes | `$API_TOKEN` | - | - |",
 				"| `version` | Version to build | Yes | `latest` | `^v?\\d+\\.\\d+\\.\\d+$` | - |",
 				"",
 				"**Uses:**",
 				"",
 				"- `gh:defenseunicorns/maru2@main?task=build`",
+				"",
+				"### `empty`",
+				"",
+				"Empty task with no steps",
 				"",
 				"### `test`",
 				"",
