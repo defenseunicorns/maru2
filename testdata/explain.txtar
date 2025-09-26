@@ -1,0 +1,104 @@
+# Test basic explain functionality (all tasks)
+exec maru2 --explain
+cmp stdout explain-all.txt
+
+# Test explain for specific task
+exec maru2 --explain echo
+cmp stdout explain-echo.txt
+
+# Test explain for non-existent task (should not error, just not show it)
+exec maru2 --explain nonexistent
+cmp stdout explain-empty.txt
+
+-- tasks.yaml --
+schema-version: v1
+
+aliases:
+  local:
+    path: ./local.yaml
+  remote:
+    type: github
+    base-url: https://api.github.com
+    token-from-env: GITHUB_TOKEN
+
+tasks:
+  default:
+    description: Default task with all features
+    collapse: true
+    inputs:
+      required-param:
+        description: A required parameter
+        required: true
+      optional-param:
+        description: An optional parameter
+        required: false
+        default: "default-value"
+      env-param:
+        description: Parameter with env default
+        required: false
+        default-from-env: HOME
+      validated-param:
+        description: Parameter with validation
+        required: false
+        validate: "^[a-z]+$"
+      deprecated-param:
+        description: Old parameter
+        required: false
+        deprecated-message: Use required-param instead
+    steps:
+      - uses: echo
+      - uses: builtin:fetch
+        with:
+          url: https://example.com
+
+  echo:
+    steps:
+      - run: echo "hello"
+
+-- explain-all.txt --
+> for schema version v1
+>
+> <https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json>
+
+## Aliases
+
+Shortcuts for referencing remote repositories and local files:
+
+| Name | Type | Details |
+|------|------|----------|
+| `local` | Local File | `./local.yaml` |
+| `remote` | Package URL | github at `https://api.github.com` (auth: `$GITHUB_TOKEN`) |
+
+## Tasks
+
+### `default` (Default Task)
+
+Default task with all features
+
+*Output will be grouped in CI environments (GitHub Actions, GitLab CI)*
+
+**Input Parameters:**
+
+| Name | Description | Required | Default | Validation | Notes |
+|------|-------------|----------|---------|------------|-------|
+| `deprecated-param` | Old parameter | No | - | - | ⚠️ **Deprecated**: Use required-param instead |
+| `env-param` | Parameter with env default | No | `$HOME` | - | - |
+| `optional-param` | An optional parameter | No | `default-value` | - | - |
+| `required-param` | A required parameter | Yes | - | - | - |
+| `validated-param` | Parameter with validation | No | - | `^[a-z]+$` | - |
+
+**Uses:**
+
+- `echo`
+- `builtin:fetch`
+
+
+### `echo`
+
+
+-- explain-echo.txt --
+### `echo`
+
+
+-- explain-empty.txt --
+

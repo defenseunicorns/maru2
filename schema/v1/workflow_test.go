@@ -176,7 +176,6 @@ func TestOrderedTasks(t *testing.T) {
 func TestWorkflowExplain(t *testing.T) {
 	boolPtr := func(b bool) *bool { return &b }
 
-	// Complex workflow with all features
 	complexWorkflow := Workflow{
 		SchemaVersion: SchemaVersion,
 		Aliases: AliasMap{
@@ -333,6 +332,7 @@ func TestWorkflowExplain(t *testing.T) {
 				"**Uses:**",
 				"",
 				"- `gh:defenseunicorns/maru2@main?task=build`",
+				"",
 				"",
 				"### `empty`",
 				"",

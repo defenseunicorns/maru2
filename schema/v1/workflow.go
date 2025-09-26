@@ -147,7 +147,7 @@ func (wf Workflow) Explain(taskNames ...string) string {
 		if len(uses) > 0 {
 			explanation.WriteString("**Uses:**\n\n")
 			for _, u := range uses {
-				explanation.WriteString(fmt.Sprintf("- `%s`", u))
+				explanation.WriteString(fmt.Sprintf("- `%s`\n", u))
 			}
 			explanation.WriteString("\n\n")
 		}
