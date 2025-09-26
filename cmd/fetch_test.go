@@ -138,6 +138,6 @@ func TestFetchE2E(t *testing.T) {
 			return nil
 		},
 		RequireUniqueNames: true,
-		// UpdateScripts:      true,
+		UpdateScripts:      os.Getenv("UPDATE_SCRIPTS") == "true",
 	})
 }

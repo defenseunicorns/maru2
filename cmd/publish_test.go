@@ -6,6 +6,7 @@ package cmd_test
 import (
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -39,6 +40,6 @@ func TestPublishE2E(t *testing.T) {
 			return nil
 		},
 		RequireUniqueNames: true,
-		// UpdateScripts:      true,
+		UpdateScripts:      os.Getenv("UPDATE_SCRIPTS") == "true",
 	})
 }

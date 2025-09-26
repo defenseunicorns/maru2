@@ -3,32 +3,39 @@ schema-version: v1
 
 tasks:
   echo:
+    description: A simple hello world
     inputs:
       text:
         description: Text to echo
         default: "Hello, world!"
-        required: true
     steps:
       # experiment w/ https://github.com/harrydowning/vscode-yaml-embedded-languages
       # yaml-embedded-languages: shell
       - run: echo "${{ input "text" }}"
 
   test:
+    description: Run maru2 test suite with coverage
     inputs:
       short:
         description: Controls whether network tests are run
+        default: false
+      update-scripts:
+        description: Whether to update the expected string contents in the cmp checks in testdata/
         default: false
     steps:
       - run: |
           go test -race -cover -coverprofile=coverage.out -failfast -timeout 3m -short=${{ input "short" }} ./...
         env:
           CGO_ENABLED: 1
+          UPDATE_SCRIPTS: ${{ input "update-scripts" }}
 
   hello-world:
+    description: Used by the benchmark task
     steps:
       - run: echo "Hello, World!"
 
   benchmark:
+    description: Benchmark maru2 vs make, mostly as a double check no huge init slowdowns have been introduced
     steps:
       - run: hyperfine './bin/maru2 hello-world' 'make hello-world' -N --warmup 10
 

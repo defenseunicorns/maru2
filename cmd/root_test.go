@@ -5,6 +5,7 @@ package cmd_test
 
 import (
 	"errors"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -24,7 +25,7 @@ func TestE2E(t *testing.T) {
 			return nil
 		},
 		RequireUniqueNames: true,
-		// UpdateScripts:      true,
+		UpdateScripts:      os.Getenv("UPDATE_SCRIPTS") == "true",
 	})
 }
 
