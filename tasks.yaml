@@ -62,6 +62,7 @@ tasks:
       uds-registry:
         description: Registry location to publish nightly to
         default: localhost:5005
+        default-from-env: UDS_REGISTRY
     steps:
       - run: |
           rm -rf dist
@@ -117,6 +118,7 @@ tasks:
       uds-registry:
         description: Registry location to download nightly from
         default: localhost:5005
+        default-from-env: UDS_REGISTRY
     steps:
       - run: |
           version=$(go tool oras repo tags ${{ input "uds-registry" }}/ops/maru2-nightly | tail -n 1)
