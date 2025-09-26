@@ -43,38 +43,40 @@ See https://github.com/defenseunicorns/maru2/blob/main/docs/syntax.md#local-file
 func (wf Workflow) Explain(taskNames ...string) string {
 	var explanation strings.Builder
 
-	explanation.WriteString(fmt.Sprintf("> for schema version %s\n", wf.SchemaVersion))
-	explanation.WriteString(">\n")
-	explanation.WriteString(fmt.Sprintf("> %s\n\n", "<https://TODO GRAB URL FROM SCHEMA CONST>"))
+	if len(taskNames) == 0 {
+		explanation.WriteString(fmt.Sprintf("> for schema version %s\n", wf.SchemaVersion))
+		explanation.WriteString(">\n")
+		explanation.WriteString(fmt.Sprintf("> %s\n\n", "<https://TODO GRAB URL FROM SCHEMA CONST>"))
 
-	// Aliases section if present
-	if len(wf.Aliases) > 0 {
-		explanation.WriteString("## Aliases\n\n")
-		explanation.WriteString("Shortcuts for referencing remote repositories and local files:\n\n")
-		explanation.WriteString("| Name | Type | Details |\n")
-		explanation.WriteString("|------|------|----------|\n")
+		// Aliases section if present
+		if len(wf.Aliases) > 0 {
+			explanation.WriteString("## Aliases\n\n")
+			explanation.WriteString("Shortcuts for referencing remote repositories and local files:\n\n")
+			explanation.WriteString("| Name | Type | Details |\n")
+			explanation.WriteString("|------|------|----------|\n")
 
-		for aliasName, alias := range wf.Aliases.OrderedSeq() {
-			if alias.Path != "" {
-				// Local file alias
-				explanation.WriteString(fmt.Sprintf("| `%s` | Local File | `%s` |\n", aliasName, alias.Path))
-			} else {
-				// Package URL alias
-				details := alias.Type
-				if alias.BaseURL != "" {
-					details += fmt.Sprintf(" at `%s`", alias.BaseURL)
+			for aliasName, alias := range wf.Aliases.OrderedSeq() {
+				if alias.Path != "" {
+					// Local file alias
+					explanation.WriteString(fmt.Sprintf("| `%s` | Local File | `%s` |\n", aliasName, alias.Path))
+				} else {
+					// Package URL alias
+					details := alias.Type
+					if alias.BaseURL != "" {
+						details += fmt.Sprintf(" at `%s`", alias.BaseURL)
+					}
+					if alias.TokenFromEnv != "" {
+						details += fmt.Sprintf(" (auth: `$%s`)", alias.TokenFromEnv)
+					}
+					explanation.WriteString(fmt.Sprintf("| `%s` | Package URL | %s |\n", aliasName, details))
 				}
-				if alias.TokenFromEnv != "" {
-					details += fmt.Sprintf(" (auth: `$%s`)", alias.TokenFromEnv)
-				}
-				explanation.WriteString(fmt.Sprintf("| `%s` | Package URL | %s |\n", aliasName, details))
 			}
+			explanation.WriteString("\n")
 		}
-		explanation.WriteString("\n")
-	}
 
-	// Tasks section
-	explanation.WriteString("## Tasks\n\n")
+		// Tasks section
+		explanation.WriteString("## Tasks\n\n")
+	}
 
 	// Explain each task
 	for name, task := range wf.Tasks.OrderedSeq() {

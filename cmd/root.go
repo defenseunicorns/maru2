@@ -281,10 +281,9 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if explain {
-
 				isTerminal := term.IsTerminal(int(os.Stdout.Fd()))
 				if isTerminal {
-					renderer, err := glamour.NewTermRenderer(glamour.WithStyles(styles.TokyoNightStyleConfig))
+					renderer, err := glamour.NewTermRenderer(glamour.WithStyles(styles.TokyoNightStyleConfig), glamour.WithWordWrap(120))
 					if err != nil {
 						return err
 					}
