@@ -6,6 +6,7 @@ package v1
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -243,90 +244,87 @@ func TestWorkflowExplain(t *testing.T) {
 		},
 	}
 
-	testCases := []struct {
-		name        string
-		workflow    Workflow
-		taskNames   []string
-		contains    []string
-		notContains []string
+	tests := []struct {
+		name      string
+		workflow  Workflow
+		taskNames []string
+		expected  []string
 	}{
 		{
 			name:     "simple workflow - all tasks",
 			workflow: helloWorldWorkflow,
-			contains: []string{
-				"# Workflow (v1)",
+			expected: []string{
+				"> for schema version v1",
+				">",
+				"> <https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json>",
+				"",
 				"## Tasks",
+				"",
 				"### `default` (Default Task)",
+				"",
 				"### `a-task`",
+				"",
 				"### `task-b`",
-				"echo 'Hello World!'",
-				"echo 'task a'",
-				"echo 'task b'",
-				"## Usage",
-				"maru2                    # Run default task",
+				"",
+				"",
 			},
 		},
 		{
 			name:      "simple workflow - specific task",
 			workflow:  helloWorldWorkflow,
 			taskNames: []string{"default"},
-			contains: []string{
-				"# Workflow (v1)",
-				"## Tasks",
+			expected: []string{
 				"### `default` (Default Task)",
-				"echo 'Hello World!'",
-			},
-			notContains: []string{
-				"### `a-task`",
-				"### `task-b`",
-				"## Usage",
+				"",
+				"",
 			},
 		},
 		{
 			name:     "complex workflow with all features",
 			workflow: complexWorkflow,
-			contains: []string{
-				"# Workflow (v1)",
+			expected: []string{
+				"> for schema version v1",
+				">",
+				"> <https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json>",
+				"",
 				"## Aliases",
+				"",
+				"Shortcuts for referencing remote repositories and local files:",
+				"",
 				"| Name | Type | Details |",
 				"|------|------|----------|",
 				"| `gh` | Package URL | github at `https://api.github.com` (auth: `$GITHUB_TOKEN`) |",
 				"| `local` | Local File | `common/tasks.yaml` |",
+				"",
 				"## Tasks",
+				"",
 				"### `default` (Default Task)",
+				"",
 				"Default build task",
+				"",
 				"*Output will be grouped in CI environments (GitHub Actions, GitLab CI)*",
+				"",
 				"**Input Parameters:**",
+				"",
 				"| Name | Description | Required | Default | Validation | Notes |",
 				"|------|-------------|----------|---------|------------|-------|",
 				"| `debug` | Enable debug mode | No | `false` | - | ⚠️ **Deprecated**: Use --verbose instead |",
 				"| `version` | Version to build | Yes | `latest` | `^v?\\d+\\.\\d+\\.\\d+$` | - |",
-				"**Steps:**",
-				"1. **Setup environment** (`setup`)",
-				"```bash",
-				"export PATH=$PATH:/usr/local/bin",
-				"Uses: `gh:defenseunicorns/maru2@main?task=build`",
-				"- `version`: `${{ input \"version\" }}`",
-				"- `target`: `linux`",
-				"*Configuration:* Working directory: `src` • Timeout: `30s` • Script hidden • Environment variables: 2 set",
-				"*Configuration:* Condition: `input(\"debug\") == false` • Output muted",
+				"",
+				"**Uses:**",
+				"",
+				"- `gh:defenseunicorns/maru2@main?task=build`",
+				"",
 				"### `test`",
-				"go test ./...",
+				"",
+				"",
 			},
 		},
 		{
 			name:      "non-existent task",
 			workflow:  helloWorldWorkflow,
 			taskNames: []string{"non-existent"},
-			contains: []string{
-				"# Workflow (v1)",
-				"## Tasks",
-				"No tasks found.",
-			},
-			notContains: []string{
-				"### `default`",
-				"## Usage",
-			},
+			expected:  []string{},
 		},
 		{
 			name: "empty workflow",
@@ -334,29 +332,23 @@ func TestWorkflowExplain(t *testing.T) {
 				SchemaVersion: SchemaVersion,
 				Tasks:         TaskMap{},
 			},
-			contains: []string{
-				"# Workflow (v1)",
+			expected: []string{
+				"> for schema version v1",
+				">",
+				"> <https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json>",
+				"",
 				"## Tasks",
-				"No tasks found.",
-			},
-			notContains: []string{
-				"## Aliases",
-				"## Usage",
+				"",
+				"",
 			},
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := tc.workflow.Explain(tc.taskNames...)
-
-			for _, expected := range tc.contains {
-				assert.Contains(t, result, expected, "Expected to find: %s", expected)
-			}
-
-			for _, unexpected := range tc.notContains {
-				assert.NotContains(t, result, unexpected, "Expected NOT to find: %s", unexpected)
-			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.workflow.Explain(tt.taskNames...)
+			expected := strings.Join(tt.expected, "\n")
+			assert.Equal(t, expected, result)
 		})
 	}
 }
