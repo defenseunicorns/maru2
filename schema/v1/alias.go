@@ -4,6 +4,10 @@
 package v1
 
 import (
+	"cmp"
+	"iter"
+	"slices"
+
 	"github.com/invopop/jsonschema"
 	"github.com/package-url/packageurl-go"
 )
@@ -16,6 +20,23 @@ func (AliasMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.PropertyNames = &jsonschema.Schema{
 		// TODO: figure out if there is a better pattern to use here
 		Pattern: InputNamePattern.String(),
+	}
+}
+
+// OrderedSeq returns an iterator over alias names and values in alphabetical order by name
+func (am AliasMap) OrderedSeq() iter.Seq2[string, Alias] {
+	names := make([]string, 0, len(am))
+	for name := range am {
+		names = append(names, name)
+	}
+	slices.SortStableFunc(names, cmp.Compare)
+	return func(yield func(string, Alias) bool) {
+		for _, name := range names {
+			alias := am[name]
+			if !yield(name, alias) {
+				return
+			}
+		}
 	}
 }
 

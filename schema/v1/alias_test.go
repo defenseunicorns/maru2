@@ -39,3 +39,84 @@ func TestAliasSchema(t *testing.T) {
 
 	assert.JSONEq(t, string(b), string(b2))
 }
+
+func TestOrderedAliases(t *testing.T) {
+	testCases := []struct {
+		name     string
+		aliases  AliasMap
+		expected []string
+	}{
+		{
+			name:     "nil",
+			aliases:  nil,
+			expected: []string{},
+		},
+		{
+			name:     "empty",
+			aliases:  AliasMap{},
+			expected: []string{},
+		},
+		{
+			name: "single alias - local",
+			aliases: AliasMap{
+				"local": Alias{},
+			},
+			expected: []string{"local"},
+		},
+		{
+			name: "single alias - remote",
+			aliases: AliasMap{
+				"gh": Alias{},
+			},
+			expected: []string{"gh"},
+		},
+		{
+			name: "multiple aliases - sorted order",
+			aliases: AliasMap{
+				"zebra": Alias{},
+				"alpha": Alias{},
+				"beta":  Alias{},
+			},
+			expected: []string{"alpha", "beta", "zebra"},
+		},
+		{
+			name: "aliases with similar names",
+			aliases: AliasMap{
+				"task-2":  Alias{},
+				"task-10": Alias{},
+				"task-1":  Alias{},
+			},
+			expected: []string{"task-1", "task-10", "task-2"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := make([]string, 0)
+			for name := range tc.aliases.OrderedSeq() {
+				got = append(got, name)
+			}
+			assert.Equal(t, tc.expected, got)
+		})
+	}
+
+	t.Run("partial iteration", func(t *testing.T) {
+		aliases := AliasMap{
+			"zebra": Alias{},
+			"alpha": Alias{},
+			"beta":  Alias{},
+			"gamma": Alias{},
+		}
+
+		got := make([]string, 0)
+		for name := range aliases.OrderedSeq() {
+			got = append(got, name)
+			if len(got) == 2 {
+				break
+			}
+		}
+
+		expected := []string{"alpha", "beta"}
+		assert.Equal(t, expected, got)
+	})
+}

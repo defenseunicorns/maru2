@@ -4,21 +4,27 @@
 package maru2
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/charmbracelet/lipgloss/table"
 
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/goccy/go-yaml"
 	"github.com/muesli/termenv"
+	"github.com/spf13/cast"
 
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/uses"
 )
 
 // Environment variables used to determine what CI environment (if any) maru2 is in
@@ -38,6 +44,135 @@ var isGitHubActions = sync.OnceValue(func() bool {
 var isGitLabCI = sync.OnceValue(func() bool {
 	return os.Getenv(GitLabCIEnvVar) == "true"
 })
+
+// The terminal colors maru2 uses, derived from
+// https://github.com/charmbracelet/vhs/blob/main/themes.json
+var (
+	DebugColor = lipgloss.AdaptiveColor{
+		Light: "#2e7de9", // tokyonight-day blue
+		Dark:  "#7aa2f7", // tokyonight blue
+	}
+	InfoColor = lipgloss.AdaptiveColor{
+		Light: "#007197", // tokyonight-day cyan
+		Dark:  "#7dcfff", // tokyonight cyan
+	}
+	WarnColor = lipgloss.AdaptiveColor{
+		Light: "#8c6c3e", // tokyonight-day amber/yellow
+		Dark:  "#e0af68", // tokyonight amber/yellow
+	}
+	ErrorColor = lipgloss.AdaptiveColor{
+		Light: "#f52a65", // tokyonight-day red
+		Dark:  "#f7768e", // tokyonight red
+	}
+	FatalColor = lipgloss.AdaptiveColor{
+		Light: "#9854f1", // tokyonight-day magenta (deep red alternative)
+		Dark:  "#bb9af7", // tokyonight magenta (deep red alternative)
+	}
+	GreenColor = lipgloss.AdaptiveColor{
+		Light: "#587539", // tokyonight-day green
+		Dark:  "#9ece6a", // tokyonight green
+	}
+	GrayColor = lipgloss.AdaptiveColor{
+		Light: "#c5c6bC",
+		Dark:  "#3a3943",
+	}
+)
+
+// DetailedTaskList renders a table detailing a workflow and all aliased workflows tasks
+//
+// The formatting is inspired by `just --list`
+func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*table.Table, error) {
+	t := table.New().Border(lipgloss.HiddenBorder()).BorderLeft(false).BorderBottom(false).BorderTop(false).BorderRight(false).StyleFunc(func(_, col int) lipgloss.Style {
+		switch col {
+		case 1:
+			return lipgloss.NewStyle().Foreground(InfoColor)
+		case 0:
+			return lipgloss.NewStyle().MarginLeft(4)
+		default:
+			return lipgloss.NewStyle() // there's only two columns, so this codepath will never get called, but leaving here for future
+		}
+	})
+
+	for name, task := range wf.Tasks.OrderedSeq() {
+		var comment string
+		if desc := task.Description; desc != "" {
+			comment = "# " + desc
+		}
+
+		msg := strings.Builder{}
+		msg.WriteString(name)
+
+		renderInputMap(&msg, task.Inputs)
+
+		t = t.Row(msg.String(), comment)
+	}
+
+	for name, alias := range wf.Aliases.OrderedSeq() {
+		if alias.Path != "" {
+			next, err := uses.ResolveRelative(origin, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
+			if err != nil {
+				return nil, err
+			}
+			aliasedWF, err := Fetch(ctx, svc, next)
+			if err != nil {
+				return nil, err
+			}
+			for n, task := range aliasedWF.Tasks.OrderedSeq() {
+				var comment string
+				if desc := task.Description; desc != "" {
+					comment = "# " + desc
+				}
+
+				msg := strings.Builder{}
+				msg.WriteString((fmt.Sprintf("%s:%s", name, n)))
+
+				renderInputMap(&msg, task.Inputs)
+
+				t = t.Row(msg.String(), comment)
+			}
+		}
+	}
+
+	return t, nil
+}
+
+func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
+	faint := lipgloss.NewStyle().Faint(true)
+	blue := lipgloss.NewStyle().Foreground(DebugColor)
+	amber := lipgloss.NewStyle().Foreground(WarnColor)
+	green := lipgloss.NewStyle().Foreground(GreenColor)
+	gray := lipgloss.NewStyle().Foreground(GrayColor)
+
+	for n, input := range inputs.OrderedSeq() {
+		w.WriteString(faint.Render(" -w "))
+		if input.Default != nil {
+			w.WriteString(blue.Render(n))
+			w.WriteString("=")
+
+			if input.DefaultFromEnv != "" {
+				w.WriteString(green.Render(fmt.Sprintf(`"${%s:-%s}"`, input.DefaultFromEnv, cast.ToString(input.Default))))
+			} else {
+				w.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
+			}
+			continue
+		}
+
+		if input.DefaultFromEnv != "" {
+			w.WriteString(blue.Render(n))
+			w.WriteString("=")
+			w.WriteString(green.Render(fmt.Sprintf(`"$%s"`, input.DefaultFromEnv)))
+			continue
+		}
+
+		if input.Required != nil && !*input.Required {
+			w.WriteString(gray.Render(n))
+			w.WriteString("=")
+			continue
+		}
+		w.WriteString(amber.Render(n))
+		w.WriteString("=")
+	}
+}
 
 // printScript renders shell script content with syntax highlighting
 //
@@ -73,11 +208,7 @@ func printScript(logger *log.Logger, lang, script string) {
 		return
 	}
 
-	color := lipgloss.AdaptiveColor{
-		Light: "#c5c6bC",
-		Dark:  "#3a3943",
-	}
-	gray := lipgloss.NewStyle().Background(color)
+	gray := lipgloss.NewStyle().Background(GrayColor)
 
 	prefix := gray.Render(" ")
 

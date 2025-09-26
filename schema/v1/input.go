@@ -3,7 +3,13 @@
 
 package v1
 
-import "github.com/invopop/jsonschema"
+import (
+	"cmp"
+	"iter"
+	"slices"
+
+	"github.com/invopop/jsonschema"
+)
 
 // InputMap defines input parameters for task execution
 //
@@ -16,6 +22,23 @@ type InputMap map[string]InputParameter
 func (InputMap) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.PropertyNames = &jsonschema.Schema{
 		Pattern: InputNamePattern.String(),
+	}
+}
+
+// OrderedSeq returns an iterator over input parameter names and values in alphabetical order by name
+func (im InputMap) OrderedSeq() iter.Seq2[string, InputParameter] {
+	names := make([]string, 0, len(im))
+	for name := range im {
+		names = append(names, name)
+	}
+	slices.SortStableFunc(names, cmp.Compare)
+	return func(yield func(string, InputParameter) bool) {
+		for _, name := range names {
+			input := im[name]
+			if !yield(name, input) {
+				return
+			}
+		}
 	}
 }
 

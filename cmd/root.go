@@ -150,7 +150,10 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return nil, cobra.ShellCompDirectiveError
 			}
 
-			names := wf.Tasks.OrderedTaskNames()
+			names := make([]string, 0, len(wf.Tasks))
+			for _, name := range wf.Tasks.OrderedTaskNames() {
+				names = append(names, strings.Join([]string{name, wf.Tasks[name].Description}, "\t"))
+			}
 
 			for name, alias := range wf.Aliases {
 				if alias.Path != "" {
@@ -163,7 +166,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 						return nil, cobra.ShellCompDirectiveError
 					}
 					for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
-						names = append(names, fmt.Sprintf("%s:%s", name, n))
+						names = append(names, strings.Join([]string{fmt.Sprintf("%s:%s", name, n), wf.Tasks[name].Description}, "\t"))
 					}
 				}
 			}
@@ -262,28 +265,13 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if list {
-				names := wf.Tasks.OrderedTaskNames()
-
-				logger.Print("Available:\n")
-				for _, n := range names {
-					logger.Printf("- %s", n)
+				t, err := maru2.DetailedTaskList(ctx, svc, resolved, wf)
+				if err != nil {
+					return err
 				}
 
-				for name, alias := range wf.Aliases {
-					if alias.Path != "" {
-						next, err := uses.ResolveRelative(resolved, strings.Join([]string{"file", alias.Path}, ":"), wf.Aliases)
-						if err != nil {
-							return err
-						}
-						aliasedWF, err := maru2.Fetch(ctx, svc, next)
-						if err != nil {
-							return err
-						}
-						for _, n := range aliasedWF.Tasks.OrderedTaskNames() {
-							logger.Printf("- %s:%s", name, n)
-						}
-					}
-				}
+				fmt.Fprintln(os.Stdout, "Available tasks:")
+				fmt.Fprintln(os.Stdout, t)
 
 				return nil
 			}

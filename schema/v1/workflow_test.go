@@ -81,3 +81,93 @@ func TestWorkflowSchemaGen(t *testing.T) {
 
 	assert.JSONEq(t, string(current), string(b))
 }
+
+func TestOrderedTasks(t *testing.T) {
+	testCases := []struct {
+		name     string
+		tasks    TaskMap
+		expected []string
+	}{
+		{
+			name:     "nil",
+			tasks:    nil,
+			expected: []string{},
+		},
+		{
+			name:     "empty",
+			tasks:    TaskMap{},
+			expected: []string{},
+		},
+		{
+			name: "single task",
+			tasks: TaskMap{
+				"build": Task{},
+			},
+			expected: []string{"build"},
+		},
+		{
+			name: "single default task",
+			tasks: TaskMap{
+				"default": Task{},
+			},
+			expected: []string{"default"},
+		},
+		{
+			name: "multiple tasks - sorted order",
+			tasks: TaskMap{
+				"zebra": Task{},
+				"alpha": Task{},
+				"beta":  Task{},
+			},
+			expected: []string{"alpha", "beta", "zebra"},
+		},
+		{
+			name: "multiple tasks with default - default first",
+			tasks: TaskMap{
+				"zebra":   Task{},
+				"default": Task{},
+				"alpha":   Task{},
+			},
+			expected: []string{"default", "alpha", "zebra"},
+		},
+		{
+			name: "tasks with similar names",
+			tasks: TaskMap{
+				"task-2":  Task{},
+				"task-10": Task{},
+				"task-1":  Task{},
+			},
+			expected: []string{"task-1", "task-10", "task-2"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := make([]string, 0)
+			for name := range tc.tasks.OrderedSeq() {
+				got = append(got, name)
+			}
+			assert.Equal(t, tc.expected, got)
+		})
+	}
+
+	t.Run("partial iteration", func(t *testing.T) {
+		tasks := TaskMap{
+			"zebra":   Task{},
+			"default": Task{},
+			"alpha":   Task{},
+			"gamma":   Task{},
+		}
+
+		got := make([]string, 0)
+		for name := range tasks.OrderedSeq() {
+			got = append(got, name)
+			if len(got) == 2 {
+				break
+			}
+		}
+
+		expected := []string{"default", "alpha"}
+		assert.Equal(t, expected, got)
+	})
+}
