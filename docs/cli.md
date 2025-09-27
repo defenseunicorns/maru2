@@ -10,6 +10,16 @@ maru2 [task] [flags]
 
 Without any arguments, Maru2 runs the `default` task from the `tasks.yaml` file in the current directory.
 
+To explore available tasks and understand workflow structure, use:
+
+```sh
+# List available tasks
+maru2 --list
+
+# Generate detailed task documentation
+maru2 --explain
+```
+
 ## Common Examples
 
 ```sh
@@ -34,6 +44,12 @@ maru2 deploy --with-file config.txt --with environment=production
 # List all available tasks
 maru2 --list
 
+# Explain the workflow and all its tasks
+maru2 --explain
+
+# Explain a specific task
+maru2 --explain build
+
 # Use a different workflow file
 maru2 --from other-tasks.yaml build
 
@@ -51,6 +67,7 @@ Flags:
       --config string         Path to maru2 config file (default "${HOME}/.maru2/config.yaml")
   -C, --directory string      Change to directory before doing anything
       --dry-run               Don't actually run anything; just print
+      --explain               Print explanation of workflow/task(s) and exit
       --fetch-all             Fetch all tasks
   -p, --fetch-policy string   Set fetch policy ("always", "if-not-present", "never") (default "if-not-present")
   -f, --from string           Read location as workflow definition (default "file:tasks.yaml")
@@ -66,6 +83,8 @@ Flags:
 ```
 
 ## Discovering Tasks
+
+### Listing Available Tasks
 
 The `--list` flag shows you all available tasks in a workflow file.
 
@@ -86,6 +105,32 @@ You can also list tasks from a specific file or remote workflow:
 ```sh
 maru2 --from custom-tasks.yaml --list
 maru2 --from "pkg:github/defenseunicorns/maru2@main#examples/web-app.yaml" --list
+```
+
+### Explaining Tasks and Workflows
+
+The `--explain` flag provides detailed information about workflows and their tasks, including input parameters, descriptions, validation rules, and task dependencies.
+
+```sh
+# Explain the entire workflow
+$ maru2 --explain
+```
+
+You can also explain specific tasks by providing their names:
+
+```sh
+# Explain a specific task
+$ maru2 --explain build
+```
+
+**Output Formatting**: When running in a terminal, the output is formatted with syntax highlighting, colors, and improved readability using [`glamour`](https://github.com/charmbracelet/glamour). In non-terminal environments (like CI pipelines or when redirecting output), the output is plain markdown that can be saved to files or processed by other tools.
+
+```sh
+# Terminal output: styled and colored
+maru2 --explain
+
+# Plain markdown output: redirect to file
+maru2 --explain > workflow-docs.md
 ```
 
 ## Passing Inputs to Tasks
