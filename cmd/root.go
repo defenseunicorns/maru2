@@ -479,6 +479,7 @@ func ParseExitCode(err error) int {
 	return 1
 }
 
+// IsTerminal is a slim wrapper around term.IsTerminal, exported just so that E2E tests can mock
 var IsTerminal = func(fd int) bool {
 	return term.IsTerminal(fd)
 }
