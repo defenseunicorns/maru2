@@ -4,6 +4,7 @@
 package uses
 
 import (
+	"context"
 	"io"
 	"net/url"
 	"strings"
@@ -94,4 +95,15 @@ func TestLocalFetcher(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("context is pre-cancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		fetcher := NewLocalFetcher(afero.NewMemMapFs())
+
+		rc, err := fetcher.Fetch(ctx, &url.URL{})
+		assert.Nil(t, rc)
+		require.ErrorIs(t, err, context.Canceled)
+	})
 }

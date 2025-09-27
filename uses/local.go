@@ -24,9 +24,17 @@ func NewLocalFetcher(fsys afero.Fs) *LocalFetcher {
 }
 
 // Fetch opens a file handle at the given location
-func (f *LocalFetcher) Fetch(_ context.Context, uri *url.URL) (io.ReadCloser, error) {
+func (f *LocalFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, error) {
 	if uri == nil {
 		return nil, fmt.Errorf("uri is nil")
+	}
+
+	if ctx != nil {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
 	}
 
 	clone := *uri

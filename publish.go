@@ -43,7 +43,14 @@ func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string) 
 		return err
 	}
 
-	store, err := uses.NewLocalStore(afero.NewBasePathFs(afero.NewOsFs(), tmp))
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	fs := afero.NewOsFs()
+
+	store, err := uses.NewLocalStore(afero.NewBasePathFs(fs, tmp))
 	if err != nil {
 		return err
 	}
@@ -58,7 +65,6 @@ func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string) 
 
 	localPaths := []string{}
 
-	fs := afero.NewOsFs()
 	for _, point := range entrypoints {
 		src, err := uses.ResolveRelative(nil, point, nil)
 		if err != nil {
@@ -101,11 +107,6 @@ func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string) 
 			return err
 		}
 		layers = append(layers, desc)
-	}
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
 	}
 
 	for _, localPath := range localPaths {

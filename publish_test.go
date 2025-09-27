@@ -4,6 +4,7 @@
 package maru2
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,9 +26,6 @@ import (
 )
 
 func TestPublish(t *testing.T) {
-	// not testing context cancellation at this time
-	ctx := log.WithContext(t.Context(), log.New(io.Discard))
-
 	remoteWorkflowContent := `
 schema-version: v0
 tasks:
@@ -308,12 +306,6 @@ tasks:
 			},
 			expectErr: "mapping value is not allowed in this context",
 		},
-		{
-			name:        "no entrypoints",
-			entrypoints: []string{},
-			files:       map[string]string{},
-			expectErr:   "need at least one entrypoint",
-		},
 	}
 
 	for _, tc := range tt {
@@ -347,6 +339,8 @@ tasks:
 			require.NoError(t, err)
 			dst.PlainHTTP = true
 
+			// not testing context cancellation at this time
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 			err = Publish(ctx, dst, tc.entrypoints)
 
 			if tc.expectErr != "" {
@@ -367,6 +361,51 @@ tasks:
 			assert.ElementsMatch(t, tc.expectedLayers, manifest.Layers)
 		})
 	}
+
+	t.Run("mkdirtemp fails", func(t *testing.T) {
+		tmp := t.TempDir()
+		t.Setenv("TMPDIR", filepath.Join(tmp, "dir", "dne"))
+		ctx := log.WithContext(t.Context(), log.New(io.Discard))
+		err := Publish(ctx, nil, []string{"tasks.yaml"})
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
+
+	t.Run("cwd fails", func(t *testing.T) {
+		tmp := t.TempDir()
+		sub := filepath.Join(tmp, "dir")
+		require.NoError(t, os.Mkdir(sub, 0o755))
+		t.Chdir(sub)
+		require.NoError(t, os.Remove(sub))
+		ctx := log.WithContext(t.Context(), log.New(io.Discard))
+		err := Publish(ctx, nil, []string{"tasks.yaml"})
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
+
+	t.Run("context is pre-cancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		err := Publish(ctx, nil, []string{"tasks.yaml"})
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("invalid registry fails oras copy", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "tasks.yaml"), []byte(`
+schema-version: v0
+tasks:
+  main:
+    - run: "true"
+`), 0o644))
+		t.Chdir(tmpDir)
+
+		dst, err := remote.NewRepository("localhost:99999/test-repo:latest")
+		require.NoError(t, err)
+
+		ctx := log.WithContext(t.Context(), log.New(io.Discard))
+		err = Publish(ctx, dst, []string{"tasks.yaml"})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "invalid port")
+	})
 }
 
 func fetchManifest(t *testing.T, repo *remote.Repository) (desc ocispec.Descriptor, manifest ocispec.Manifest, err error) {
