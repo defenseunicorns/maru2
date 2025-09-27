@@ -11,13 +11,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/defenseunicorns/maru2/cmd"
 	"github.com/olareg/olareg"
 	olaregcfg "github.com/olareg/olareg/config"
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/cmd"
 )
 
 func TestPublishE2E(t *testing.T) {
