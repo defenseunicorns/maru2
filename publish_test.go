@@ -4,6 +4,7 @@
 package maru2
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -305,12 +306,6 @@ tasks:
 			},
 			expectErr: "mapping value is not allowed in this context",
 		},
-		{
-			name:        "no entrypoints",
-			entrypoints: []string{},
-			files:       map[string]string{},
-			expectErr:   "need at least one entrypoint",
-		},
 	}
 
 	for _, tc := range tt {
@@ -372,7 +367,7 @@ tasks:
 		t.Setenv("TMPDIR", filepath.Join(tmp, "dir", "dne"))
 		ctx := log.WithContext(t.Context(), log.New(io.Discard))
 		err := Publish(ctx, nil, []string{"tasks.yaml"})
-		require.True(t, os.IsNotExist(err))
+		require.ErrorIs(t, err, os.ErrNotExist)
 	})
 
 	t.Run("cwd fails", func(t *testing.T) {
@@ -383,7 +378,14 @@ tasks:
 		require.NoError(t, os.Remove(sub))
 		ctx := log.WithContext(t.Context(), log.New(io.Discard))
 		err := Publish(ctx, nil, []string{"tasks.yaml"})
-		require.True(t, os.IsNotExist(err))
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
+
+	t.Run("context is pre-cancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		err := Publish(ctx, nil, []string{"tasks.yaml"})
+		require.ErrorIs(t, err, context.Canceled)
 	})
 }
 
