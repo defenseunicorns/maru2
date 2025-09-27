@@ -5,6 +5,8 @@ package maru2
 
 import (
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -106,4 +108,15 @@ c=d`),
 			}
 		})
 	}
+
+	t.Run("output hits size limit", func(t *testing.T) {
+		tmp := t.TempDir()
+		f, err := os.Create(filepath.Join(tmp, "output.txt"))
+		require.NoError(t, err)
+		err = f.Truncate(51 << 20) // sparse 50+ MB
+		require.NoError(t, err)
+		outputs, err := ParseOutput(f)
+		require.Nil(t, outputs)
+		require.EqualError(t, err, "output file too large")
+	})
 }

@@ -30,8 +30,6 @@ stdout '(devel)'
 maru2-publish -V
 stdout '(devel)'
 
-
-
 # home contains an invalid docker config
 mkdir home/.docker
 mv bad/docker-config.json home/.docker/config.json
@@ -43,7 +41,6 @@ rm home/.docker/config.json
 env HOME=
 ! maru2-publish localhost:5000/test:latest
 stderr 'ERRO failed to get user home directory: \$HOME is not defined'
-
 
 -- bad/docker-config.json --
 i'm not JSON
