@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.8.0 (2025-09-27)
+
+## What's Changed
+* fix: singular package comments by @Noxsios in https://github.com/defenseunicorns/maru2/pull/154
+* ci(deps): bump actions/create-github-app-token from 2.1.1 to 2.1.4 in the github-actions group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/151
+* refactor: remove magic quoting of env vars by @Noxsios in https://github.com/defenseunicorns/maru2/pull/157
+* feat: collapsible sections by @Noxsios in https://github.com/defenseunicorns/maru2/pull/156
+* feat: descriptive --list by @Noxsios in https://github.com/defenseunicorns/maru2/pull/158
+* build(deps): bump gitlab.com/gitlab-org/api/client-go from 0.143.3 to 0.144.1 in the go group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/152
+* feat: --explain flag by @Noxsios in https://github.com/defenseunicorns/maru2/pull/159
+* test: increase publish coverage by @Noxsios in https://github.com/defenseunicorns/maru2/pull/160
+* refactor: use width of 100 versus 120 by @Noxsios in https://github.com/defenseunicorns/maru2/pull/161
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.7.1...v0.8.0
+
 ## 0.7.1 (2025-09-15)
 
 ## What's Changed
