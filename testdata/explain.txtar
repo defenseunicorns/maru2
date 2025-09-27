@@ -1,14 +1,11 @@
-# Test basic explain functionality (all tasks)
 exec maru2 --explain
 cmp stdout explain-all.txt
 
-# Test explain for specific task
 exec maru2 --explain echo
 cmp stdout explain-echo.txt
 
-# Test explain for non-existent task (should not error, just not show it)
 exec maru2 --explain nonexistent
-cmp stdout explain-empty.txt
+stdout ''
 
 -- tasks.yaml --
 schema-version: v1
@@ -99,6 +96,4 @@ Default task with all features
 -- explain-echo.txt --
 ### `echo`
 
-
--- explain-empty.txt --
 

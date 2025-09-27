@@ -200,11 +200,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 				switch bi.Main.Path {
 				case "github.com/defenseunicorns/maru2":
-					fmt.Fprintln(os.Stdout, bi.Main.Version)
+					fmt.Fprintln(cmd.OutOrStdout(), bi.Main.Version)
 				default:
 					for _, dep := range bi.Deps {
 						if dep.Path == "github.com/defenseunicorns/maru2" {
-							fmt.Fprintln(os.Stdout, dep.Version)
+							fmt.Fprintln(cmd.OutOrStdout(), dep.Version)
 							break
 						}
 					}
@@ -274,15 +274,14 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 					return err
 				}
 
-				fmt.Fprintln(os.Stdout, "Available tasks:")
-				fmt.Fprintln(os.Stdout, t)
+				fmt.Fprintln(cmd.OutOrStdout(), "Available tasks:")
+				fmt.Fprintln(cmd.OutOrStdout(), t)
 
 				return nil
 			}
 
 			if explain {
-				isTerminal := term.IsTerminal(int(os.Stdout.Fd()))
-				if isTerminal {
+				if IsTerminal(int(os.Stdout.Fd())) {
 					renderer, err := glamour.NewTermRenderer(glamour.WithStyles(styles.TokyoNightStyleConfig), glamour.WithWordWrap(120))
 					if err != nil {
 						return err
@@ -294,11 +293,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 						return err
 					}
 
-					fmt.Fprintln(os.Stdout, out)
+					fmt.Fprintln(cmd.OutOrStdout(), out)
 					return nil
 				}
 
-				fmt.Fprintln(os.Stdout, wf.Explain(args...))
+				fmt.Fprintln(cmd.OutOrStdout(), wf.Explain(args...))
 				return nil
 			}
 
@@ -478,4 +477,8 @@ func ParseExitCode(err error) int {
 		}
 	}
 	return 1
+}
+
+var IsTerminal = func(fd int) bool {
+	return term.IsTerminal(fd)
 }

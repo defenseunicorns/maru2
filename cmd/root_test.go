@@ -8,10 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/defenseunicorns/maru2/cmd"
 )
@@ -27,6 +30,122 @@ func TestE2E(t *testing.T) {
 		RequireUniqueNames: true,
 		UpdateScripts:      os.Getenv("UPDATE_SCRIPTS") == "true",
 	})
+}
+
+func TestExplainRedirect(t *testing.T) {
+	tmp := t.TempDir()
+
+	tasksYamlPath := filepath.Join(tmp, "tasks.yaml")
+	content := `schema-version: v1
+
+aliases:
+  local:
+    path: ./local.yaml
+  remote:
+    type: github
+    base-url: https://api.github.com
+    token-from-env: GITHUB_TOKEN
+
+tasks:
+  default:
+    description: Default task with all features
+    collapse: true
+    inputs:
+      required-param:
+        description: A required parameter
+        required: true
+      optional-param:
+        description: An optional parameter
+        required: false
+        default: "default-value"
+      env-param:
+        description: Parameter with env default
+        required: false
+        default-from-env: HOME
+      validated-param:
+        description: Parameter with validation
+        required: false
+        validate: "^[a-z]+$"
+      deprecated-param:
+        description: Old parameter
+        required: false
+        deprecated-message: Use required-param instead
+    steps:
+      - uses: echo
+      - uses: builtin:fetch
+        with:
+          url: https://example.com
+
+  echo:
+    steps:
+      - run: echo "hello"
+`
+	err := os.WriteFile(tasksYamlPath, []byte(content), 0o755)
+	require.NoError(t, err)
+
+	root := cmd.NewRootCmd()
+	root.SetArgs([]string{"--from", tasksYamlPath, "--explain"})
+	// temporarily always say yes
+	curr := cmd.IsTerminal
+	t.Cleanup(func() {
+		cmd.IsTerminal = curr
+	})
+	cmd.IsTerminal = func(int) bool {
+		return true
+	}
+
+	sb := strings.Builder{}
+	root.SetOut(&sb)
+	err = root.Execute()
+	require.NoError(t, err)
+
+	expected := []string{
+		"",
+		"                                                                                                                      ",
+		"  │ for schema version v1                                                                                             ",
+		"  │                                                                                                                   ",
+		"  │ https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json                                ",
+		"                                                                                                                      ",
+		"  ## Aliases                                                                                                          ",
+		"                                                                                                                      ",
+		"  Shortcuts for referencing remote repositories and local files:                                                      ",
+		"                                                                                                                      ",
+		"   Name                       │ Type                       │ Details                                                  ",
+		"  ────────────────────────────┼────────────────────────────┼────────────────────────────────────────────────────────  ",
+		"   local                      │ Local File                 │ ./local.yaml                                             ",
+		"   remote                     │ Package URL                │ github at https://api.github.com (auth: $GITHUB_TOKEN)   ",
+		"                                                                                                                      ",
+		"  ## Tasks                                                                                                            ",
+		"                                                                                                                      ",
+		"  ### default (Default Task)                                                                                          ",
+		"                                                                                                                      ",
+		"  Default task with all features                                                                                      ",
+		"                                                                                                                      ",
+		"  Output will be grouped in CI environments (GitHub Actions, GitLab CI)                                               ",
+		"                                                                                                                      ",
+		"  Input Parameters:                                                                                                   ",
+		"                                                                                                                      ",
+		"   Name             │ Description                │ Required │ Default       │ Validation │ Notes                      ",
+		"  ──────────────────┼────────────────────────────┼──────────┼───────────────┼────────────┼──────────────────────────  ",
+		"   deprecated-param │ Old parameter              │ No       │ -             │ -          │ ⚠️ Deprecated: Use         ",
+		"                    │                            │          │               │            │ required-param instead     ",
+		"   env-param        │ Parameter with env default │ No       │ $HOME         │ -          │ -                          ",
+		"   optional-param   │ An optional parameter      │ No       │ default-value │ -          │ -                          ",
+		"   required-param   │ A required parameter       │ Yes      │ -             │ -          │ -                          ",
+		"   validated-param  │ Parameter with validation  │ No       │ -             │ ^[a-z]+$   │ -                          ",
+		"                                                                                                                      ",
+		"  Uses:                                                                                                               ",
+		"                                                                                                                      ",
+		"  • echo                                                                                                              ",
+		"  • builtin:fetch                                                                                                     ",
+		"                                                                                                                      ",
+		"  ### echo                                                                                                            ",
+		"",
+		"",
+		"",
+	}
+
+	require.Equal(t, strings.Join(expected, "\n"), ansi.Strip(sb.String()))
 }
 
 func TestParseExitCode(t *testing.T) {
