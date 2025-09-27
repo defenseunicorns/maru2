@@ -26,5 +26,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprint(os.Stdout, string(b))
+	fmt.Fprintln(os.Stdout, string(b))
 }

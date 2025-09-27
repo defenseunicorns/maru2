@@ -73,6 +73,32 @@ This means:
 2. After the first character, task names can contain letters, numbers, underscores, and hyphens
 3. Task names cannot contain spaces or other special characters
 
+### Task Documentation with `description`
+
+Tasks can include a `description` field to provide human-readable documentation:
+
+```yaml
+schema-version: v1
+tasks:
+  build:
+    description: "Build the application with optimized settings"
+    steps:
+      - run: go build -o bin/ -ldflags="-s -w" ./cmd/app
+
+  test:
+    description: "Run the full test suite with coverage"
+    steps:
+      - run: go test -v -race -cover -failfast -timeout 3m ./...
+```
+
+Task descriptions are displayed in several contexts:
+
+- When using `maru2 --list` to show available tasks
+- When using `maru2 --explain` to generate detailed workflow documentation
+- In shell completion hints when tab-completing task names
+
+The `description` field is optional but recommended for better workflow documentation and discoverability.
+
 Valid task names:
 
 ```yaml

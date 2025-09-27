@@ -19,9 +19,10 @@ tasks:
     - run: echo "Another task"
 -- list.txt --
 Available tasks:
-    default      
-    another-task 
-    hello-world  
+    default     
+    another-task
+    hello-world 
+
 -- stderr2.txt --
 
 ERRO failed to fetch "file:tasks.yaml": unsupported schema version: expected oneof ["v1", "v0"], got ""

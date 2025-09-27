@@ -13,11 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/lipgloss/table"
-
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/goccy/go-yaml"
 	"github.com/muesli/termenv"
 	"github.com/spf13/cast"
@@ -78,21 +77,17 @@ var (
 	}
 )
 
-// DetailedTaskList renders a table detailing a workflow and all aliased workflows tasks
+// TaskList is a prettier way to display a workflow's entrypoints from a CLI's perspective
+type TaskList struct {
+	col0max int
+	rows    [][2]string
+}
+
+// NewDetailedTaskList renders a table detailing a workflow and all aliased workflows tasks
 //
 // The formatting is inspired by `just --list`
-func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*table.Table, error) {
-	t := table.New().Border(lipgloss.HiddenBorder()).BorderLeft(false).BorderBottom(false).BorderTop(false).BorderRight(false).StyleFunc(func(_, col int) lipgloss.Style {
-		switch col {
-		case 1:
-			return lipgloss.NewStyle().Foreground(InfoColor)
-		case 0:
-			return lipgloss.NewStyle().MarginLeft(4)
-		default:
-			return lipgloss.NewStyle() // there's only two columns, so this codepath will never get called, but leaving here for future
-		}
-	})
-
+func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*TaskList, error) {
+	t := &TaskList{}
 	for name, task := range wf.Tasks.OrderedSeq() {
 		var comment string
 		if desc := task.Description; desc != "" {
@@ -104,7 +99,7 @@ func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url
 
 		renderInputMap(&msg, task.Inputs)
 
-		t = t.Row(msg.String(), comment)
+		t.Row(msg.String(), comment)
 	}
 
 	for name, alias := range wf.Aliases.OrderedSeq() {
@@ -128,12 +123,45 @@ func DetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url
 
 				renderInputMap(&msg, task.Inputs)
 
-				t = t.Row(msg.String(), comment)
+				t.Row(msg.String(), comment)
 			}
 		}
 	}
 
 	return t, nil
+}
+
+// Row appends a row to the list
+func (tl *TaskList) Row(col0, col1 string) {
+	tl.col0max = max(tl.col0max, ansi.StringWidth(col0))
+
+	tl.rows = append(tl.rows, [2]string{col0, col1})
+}
+
+// String implements fmt.Stringers
+func (tl *TaskList) String() string {
+	sb := strings.Builder{}
+
+	cutoff := 50
+
+	for _, row := range tl.rows {
+		col0, col1 := row[0], row[1]
+
+		col0len := ansi.StringWidth(col0)
+		text0 := lipgloss.NewStyle().MarginLeft(4).Render(col0)
+		text1 := lipgloss.NewStyle().Foreground(InfoColor).Render(col1)
+
+		sb.WriteString(text0)
+
+		if col0len > cutoff {
+			sb.WriteString(text1 + "\n")
+		} else {
+			numspaces := min(50-col0len, tl.col0max-col0len)
+			sb.WriteString(strings.Repeat(" ", numspaces) + text1 + "\n")
+		}
+	}
+
+	return sb.String()
 }
 
 func renderInputMap(w *strings.Builder, inputs v1.InputMap) {

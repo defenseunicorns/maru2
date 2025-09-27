@@ -66,11 +66,11 @@ func NewPublishCmd() *cobra.Command {
 				}
 				switch bi.Main.Path {
 				case "github.com/defenseunicorns/maru2":
-					fmt.Fprintln(os.Stdout, bi.Main.Version)
+					fmt.Fprintln(cmd.OutOrStdout(), bi.Main.Version)
 				default:
 					for _, dep := range bi.Deps {
 						if dep.Path == "github.com/defenseunicorns/maru2" {
-							fmt.Fprintln(os.Stdout, dep.Version)
+							fmt.Fprintln(cmd.OutOrStdout(), dep.Version)
 							break
 						}
 					}

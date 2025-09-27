@@ -6,6 +6,7 @@ package v1
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -170,4 +171,207 @@ func TestOrderedTasks(t *testing.T) {
 		expected := []string{"default", "alpha"}
 		assert.Equal(t, expected, got)
 	})
+}
+
+func TestWorkflowExplain(t *testing.T) {
+	boolPtr := func(b bool) *bool { return &b }
+
+	complexWorkflow := Workflow{
+		SchemaVersion: SchemaVersion,
+		Aliases: AliasMap{
+			"gh": Alias{
+				Type:         "github",
+				BaseURL:      "https://api.github.com",
+				TokenFromEnv: "GITHUB_TOKEN",
+			},
+			"local": Alias{
+				Path: "common/tasks.yaml",
+			},
+			"custom": Alias{
+				Type:    "gitlab",
+				BaseURL: "https://api.custom.com",
+			},
+			"secure": Alias{
+				Type:         "bitbucket",
+				TokenFromEnv: "BITBUCKET_TOKEN",
+			},
+		},
+		Tasks: TaskMap{
+			"default": Task{
+				Description: "Default build task",
+				Collapse:    true,
+				Inputs: InputMap{
+					"version": InputParameter{
+						Description:    "Version to build",
+						Required:       boolPtr(true),
+						Default:        "latest",
+						DefaultFromEnv: "BUILD_VERSION",
+						Validate:       `^v?\d+\.\d+\.\d+$`,
+					},
+					"debug": InputParameter{
+						Description:       "Enable debug mode",
+						Required:          boolPtr(false),
+						Default:           false,
+						DeprecatedMessage: "Use --verbose instead",
+					},
+					"token": InputParameter{
+						Description:    "API token",
+						Required:       boolPtr(true),
+						DefaultFromEnv: "API_TOKEN",
+					},
+				},
+				Steps: []Step{
+					{
+						Name: "Setup environment",
+						ID:   "setup",
+						Run:  "export PATH=$PATH:/usr/local/bin",
+						Env: map[string]any{
+							"NODE_ENV": "production",
+							"DEBUG":    "${{ input \"debug\" }}",
+						},
+						Dir:     "src",
+						Shell:   "bash",
+						Timeout: "30s",
+						Show:    boolPtr(false),
+					},
+					{
+						Uses: "gh:defenseunicorns/maru2@main?task=build",
+						With: map[string]any{
+							"version": "${{ input \"version\" }}",
+							"target":  "linux",
+						},
+						If:   "input(\"debug\") == false",
+						Mute: true,
+					},
+					{
+						Run: "echo 'Build completed'",
+					},
+				},
+			},
+			"test": Task{
+				Steps: []Step{
+					{Run: "go test ./..."},
+				},
+			},
+			"empty": Task{
+				Description: "Empty task with no steps",
+			},
+		},
+	}
+
+	tests := []struct {
+		name      string
+		workflow  Workflow
+		taskNames []string
+		expected  []string
+	}{
+		{
+			name:     "simple workflow - all tasks",
+			workflow: helloWorldWorkflow,
+			expected: []string{
+				"> for schema version v1",
+				">",
+				"> <https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json>",
+				"",
+				"## Tasks",
+				"",
+				"### `default` (Default Task)",
+				"",
+				"### `a-task`",
+				"",
+				"### `task-b`",
+				"",
+				"",
+			},
+		},
+		{
+			name:      "simple workflow - specific task",
+			workflow:  helloWorldWorkflow,
+			taskNames: []string{"default"},
+			expected: []string{
+				"### `default` (Default Task)",
+				"",
+				"",
+			},
+		},
+		{
+			name:     "complex workflow with all features",
+			workflow: complexWorkflow,
+			expected: []string{
+				"> for schema version v1",
+				">",
+				"> <https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json>",
+				"",
+				"## Aliases",
+				"",
+				"Shortcuts for referencing remote repositories and local files:",
+				"",
+				"| Name | Type | Details |",
+				"|------|------|----------|",
+				"| `custom` | Package URL | gitlab at `https://api.custom.com` |",
+				"| `gh` | Package URL | github at `https://api.github.com` (auth: `$GITHUB_TOKEN`) |",
+				"| `local` | Local File | `common/tasks.yaml` |",
+				"| `secure` | Package URL | bitbucket (auth: `$BITBUCKET_TOKEN`) |",
+				"",
+				"## Tasks",
+				"",
+				"### `default` (Default Task)",
+				"",
+				"Default build task",
+				"",
+				"*Output will be grouped in CI environments (GitHub Actions, GitLab CI)*",
+				"",
+				"**Input Parameters:**",
+				"",
+				"| Name | Description | Required | Default | Validation | Notes |",
+				"|------|-------------|----------|---------|------------|-------|",
+				"| `debug` | Enable debug mode | No | `false` | - | ⚠️ **Deprecated**: Use --verbose instead |",
+				"| `token` | API token | Yes | `$API_TOKEN` | - | - |",
+				"| `version` | Version to build | Yes | `latest` | `^v?\\d+\\.\\d+\\.\\d+$` | - |",
+				"",
+				"**Uses:**",
+				"",
+				"- `gh:defenseunicorns/maru2@main?task=build`",
+				"",
+				"",
+				"### `empty`",
+				"",
+				"Empty task with no steps",
+				"",
+				"### `test`",
+				"",
+				"",
+			},
+		},
+		{
+			name:      "non-existent task",
+			workflow:  helloWorldWorkflow,
+			taskNames: []string{"non-existent"},
+			expected:  []string{},
+		},
+		{
+			name: "empty workflow",
+			workflow: Workflow{
+				SchemaVersion: SchemaVersion,
+				Tasks:         TaskMap{},
+			},
+			expected: []string{
+				"> for schema version v1",
+				">",
+				"> <https://raw.githubusercontent.com/defenseunicorns/maru2/main/schema/v1/schema.json>",
+				"",
+				"## Tasks",
+				"",
+				"",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.workflow.Explain(tt.taskNames...)
+			expected := strings.Join(tt.expected, "\n")
+			assert.Equal(t, expected, result)
+		})
+	}
 }

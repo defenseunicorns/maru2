@@ -411,8 +411,9 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    default # Default task",
-				"    test    # Test task   ",
+				"    default# Default task",
+				"    test   # Test task",
+				"",
 			},
 		},
 		{
@@ -437,7 +438,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    echo -w optional-param= -w required-param= -w text='default-value' # Echo task with inputs",
+				"    echo -w optional-param= -w required-param= -w text='default-value'# Echo task with inputs",
+				"",
 			},
 		},
 		{
@@ -464,7 +466,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    env-task -w value=\"${MY_ENV_VAR:-fallback}\" # Task with env default",
+				"    env-task -w value=\"${MY_ENV_VAR:-fallback}\"# Task with env default",
+				"",
 			},
 		},
 		{
@@ -486,9 +489,10 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    default   # Default task should be first              ",
-				"    aaa-first # Should appear after default but before zzz",
-				"    zzz-last  # Should appear after default               ",
+				"    default  # Default task should be first",
+				"    aaa-first# Should appear after default but before zzz",
+				"    zzz-last # Should appear after default",
+				"",
 			},
 		},
 		{
@@ -505,8 +509,9 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    no-desc                    ",
-				"    with-desc # Has description",
+				"    no-desc  ",
+				"    with-desc# Has description",
+				"",
 			},
 		},
 		{
@@ -526,8 +531,9 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    empty-inputs # Task with empty inputs",
-				"    nil-inputs   # Task with nil inputs  ",
+				"    empty-inputs# Task with empty inputs",
+				"    nil-inputs  # Task with nil inputs",
+				"",
 			},
 		},
 		{
@@ -546,7 +552,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    ordered-test -w alpha='a' -w beta='b' -w zebra='z' # Test ordering",
+				"    ordered-test -w alpha='a' -w beta='b' -w zebra='z'# Test ordering",
+				"",
 			},
 		},
 	}
@@ -554,12 +561,12 @@ func TestDetailedTaskList(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			table, err := DetailedTaskList(ctx, nil, nil, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, nil, nil, tc.workflow)
 
 			require.NoError(t, err)
-			assert.NotNil(t, table)
+			assert.NotNil(t, tl)
 
-			assert.Equal(t, strings.Join(tc.expected, "\n"), table.String())
+			assert.Equal(t, strings.Join(tc.expected, "\n"), tl.String())
 		})
 	}
 }
@@ -608,7 +615,8 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    main # Main task",
+				"    main# Main task",
+				"",
 			},
 		},
 		{
@@ -634,8 +642,9 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    another    # Another task",
-				"    local-task # Local task  ",
+				"    another   # Another task",
+				"    local-task# Local task",
+				"",
 			},
 		},
 		{
@@ -649,7 +658,8 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    standalone # Standalone task",
+				"    standalone# Standalone task",
+				"",
 			},
 		},
 		{
@@ -693,9 +703,10 @@ tasks:
 `),
 			},
 			expected: []string{
-				"    main           # Main task        ",
-				"    external:build # Build the project",
-				"    external:test  # Test the project ",
+				"    main          # Main task",
+				"    external:build# Build the project",
+				"    external:test # Test the project",
+				"",
 			},
 		},
 		{
@@ -731,16 +742,16 @@ tasks:
 			require.NoError(t, err)
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			table, err := DetailedTaskList(ctx, svc, tc.origin, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, svc, tc.origin, tc.workflow)
 
 			if tc.expectErr != "" {
 				require.ErrorContains(t, err, tc.expectErr)
 				return
 			}
 			require.NoError(t, err)
-			assert.NotNil(t, table)
+			assert.NotNil(t, tl)
 
-			assert.Equal(t, strings.Join(tc.expected, "\n"), table.String())
+			assert.Equal(t, strings.Join(tc.expected, "\n"), tl.String())
 		})
 	}
 }

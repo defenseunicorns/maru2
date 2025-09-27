@@ -19,9 +19,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/styles"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/defenseunicorns/maru2"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
@@ -37,6 +40,7 @@ func NewRootCmd() *cobra.Command {
 		level      string
 		ver        bool
 		list       bool
+		explain    bool
 		from       string
 		policy     = uses.DefaultFetchPolicy // VarP does not allow you to set a default value
 		s          string
@@ -196,11 +200,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				}
 				switch bi.Main.Path {
 				case "github.com/defenseunicorns/maru2":
-					fmt.Fprintln(os.Stdout, bi.Main.Version)
+					fmt.Fprintln(cmd.OutOrStdout(), bi.Main.Version)
 				default:
 					for _, dep := range bi.Deps {
 						if dep.Path == "github.com/defenseunicorns/maru2" {
-							fmt.Fprintln(os.Stdout, dep.Version)
+							fmt.Fprintln(cmd.OutOrStdout(), dep.Version)
 							break
 						}
 					}
@@ -265,14 +269,35 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if list {
-				t, err := maru2.DetailedTaskList(ctx, svc, resolved, wf)
+				t, err := maru2.NewDetailedTaskList(ctx, svc, resolved, wf)
 				if err != nil {
 					return err
 				}
 
-				fmt.Fprintln(os.Stdout, "Available tasks:")
-				fmt.Fprintln(os.Stdout, t)
+				fmt.Fprintln(cmd.OutOrStdout(), "Available tasks:")
+				fmt.Fprintln(cmd.OutOrStdout(), t)
 
+				return nil
+			}
+
+			if explain {
+				if IsTerminal(int(os.Stdout.Fd())) {
+					renderer, err := glamour.NewTermRenderer(glamour.WithStyles(styles.TokyoNightStyleConfig), glamour.WithWordWrap(120))
+					if err != nil {
+						return err
+					}
+					defer renderer.Close()
+
+					out, err := renderer.Render(wf.Explain(args...))
+					if err != nil {
+						return err
+					}
+
+					fmt.Fprintln(cmd.OutOrStdout(), out)
+					return nil
+				}
+
+				fmt.Fprintln(cmd.OutOrStdout(), wf.Explain(args...))
 				return nil
 			}
 
@@ -365,6 +390,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	})
 	root.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
 	root.Flags().BoolVar(&list, "list", false, "Print list of available tasks and exit")
+	root.Flags().BoolVar(&explain, "explain", false, "Print explanation of workflow/task(s) and exit")
 	root.Flags().StringVarP(&from, "from", "f", "file:"+uses.DefaultFileName, "Read location as workflow definition")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", time.Hour, "Maximum time allowed for execution")
 	root.Flags().BoolVar(&dry, "dry-run", false, "Don't actually run anything; just print")
@@ -451,4 +477,9 @@ func ParseExitCode(err error) int {
 		}
 	}
 	return 1
+}
+
+// IsTerminal is a slim wrapper around term.IsTerminal, exported just so that E2E tests can mock
+var IsTerminal = func(fd int) bool {
+	return term.IsTerminal(fd)
 }

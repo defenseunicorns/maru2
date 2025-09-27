@@ -157,6 +157,44 @@ maru2 greet --with message="Specific greeting"
 maru2 common:cleanup
 ```
 
+## Exploring Workflows
+
+Maru2 provides powerful tools for understanding and documenting your workflows:
+
+### Discovering Available Tasks
+
+```sh
+# List all available tasks in the current workflow
+maru2 --list
+
+# List tasks from a specific workflow file
+maru2 --from other-tasks.yaml --list
+
+# List tasks from a remote workflow
+maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
+```
+
+### Understanding Workflow Structure
+
+```sh
+# Generate detailed explanation of all tasks and their parameters
+maru2 --explain
+
+# Explain specific tasks
+maru2 --explain greet
+
+# Explain tasks from a different workflow
+maru2 --from workflows/deploy.yaml --explain production-deploy
+```
+
+The `--explain` command generates comprehensive documentation including:
+
+- Task descriptions and input parameters
+- Default values and validation rules
+- Task dependencies and relationships
+- Alias definitions for remote repositories
+- Schema version information
+
 ## Advanced Features
 
 Maru2 includes powerful features for complex workflows:
@@ -169,6 +207,7 @@ Maru2 includes powerful features for complex workflows:
 - **Package URL aliases** - Create shortcuts for remote repositories and local workflow files
 - **Local file aliases** - Reference local workflow files with short aliases
 - **Aliased task execution** - Run tasks from aliased workflows using `alias:task` syntax
+- **Workflow explanation** - Generate detailed documentation of tasks and their parameters with `--explain`
 
 ## Next Steps
 
