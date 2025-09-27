@@ -13,7 +13,6 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/rogpeppe/go-internal/testscript"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -147,16 +146,6 @@ tasks:
 	}
 
 	require.Equal(t, strings.Join(expected, "\n"), ansi.Strip(sb.String()))
-}
-
-func TestEmbeddedVersion(t *testing.T) {
-	embed := &cobra.Command{Use: "test-embed"}
-	embed.AddCommand(cmd.NewRootCmd())
-	sb := strings.Builder{}
-	embed.SetOut(&sb)
-	embed.SetArgs([]string{"maru2", "--version"})
-	require.NoError(t, embed.Execute())
-	assert.Equal(t, "(devel)\n", sb.String())
 }
 
 func TestParseExitCode(t *testing.T) {

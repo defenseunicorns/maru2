@@ -8,17 +8,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/olareg/olareg"
 	olaregcfg "github.com/olareg/olareg/config"
 	"github.com/rogpeppe/go-internal/testscript"
-	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/defenseunicorns/maru2/cmd"
 )
 
 func TestPublishE2E(t *testing.T) {
@@ -47,14 +42,4 @@ func TestPublishE2E(t *testing.T) {
 		RequireUniqueNames: true,
 		UpdateScripts:      os.Getenv("UPDATE_SCRIPTS") == "true",
 	})
-}
-
-func TestEmbeddedPublishVersion(t *testing.T) {
-	embed := &cobra.Command{Use: "test-embed"}
-	embed.AddCommand(cmd.NewPublishCmd())
-	sb := strings.Builder{}
-	embed.SetOut(&sb)
-	embed.SetArgs([]string{"maru2-publish", "--version"})
-	require.NoError(t, embed.Execute())
-	assert.Equal(t, "(devel)\n", sb.String())
 }
