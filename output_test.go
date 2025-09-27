@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
 
@@ -109,14 +110,47 @@ c=d`),
 		})
 	}
 
+	t.Run("output dne", func(t *testing.T) {
+		tmp := t.TempDir()
+		f, err := os.Create(filepath.Join(tmp, "output.txt"))
+		t.Cleanup(func() {
+			_ = f.Close()
+		})
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+		err = os.Remove(filepath.Join(tmp, "output.txt"))
+		require.NoError(t, err)
+		outputs, err := ParseOutput(f)
+		require.Nil(t, outputs)
+		require.ErrorIs(t, err, os.ErrClosed)
+	})
+
 	t.Run("output hits size limit", func(t *testing.T) {
 		tmp := t.TempDir()
 		f, err := os.Create(filepath.Join(tmp, "output.txt"))
+		t.Cleanup(func() {
+			_ = f.Close()
+		})
 		require.NoError(t, err)
 		err = f.Truncate(51 << 20) // sparse 50+ MB
 		require.NoError(t, err)
 		outputs, err := ParseOutput(f)
 		require.Nil(t, outputs)
 		require.EqualError(t, err, "output file too large")
+	})
+
+	t.Run("fail to seek", func(t *testing.T) {
+		fsys := afero.NewMemMapFs()
+		f, err := fsys.Create("output.txt")
+		t.Cleanup(func() {
+			_ = f.Close()
+		})
+		require.NoError(t, err)
+		// deliberately close
+		require.NoError(t, f.Close())
+
+		outputs, err := ParseOutput(f)
+		require.Nil(t, outputs)
+		require.ErrorContains(t, err, afero.ErrFileClosed.Error())
 	})
 }
