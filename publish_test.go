@@ -25,9 +25,6 @@ import (
 )
 
 func TestPublish(t *testing.T) {
-	// not testing context cancellation at this time
-	ctx := log.WithContext(t.Context(), log.New(io.Discard))
-
 	remoteWorkflowContent := `
 schema-version: v0
 tasks:
@@ -347,6 +344,8 @@ tasks:
 			require.NoError(t, err)
 			dst.PlainHTTP = true
 
+			// not testing context cancellation at this time
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 			err = Publish(ctx, dst, tc.entrypoints)
 
 			if tc.expectErr != "" {
@@ -367,6 +366,25 @@ tasks:
 			assert.ElementsMatch(t, tc.expectedLayers, manifest.Layers)
 		})
 	}
+
+	t.Run("mkdirtemp fails", func(t *testing.T) {
+		tmp := t.TempDir()
+		t.Setenv("TMPDIR", filepath.Join(tmp, "dir", "dne"))
+		ctx := log.WithContext(t.Context(), log.New(io.Discard))
+		err := Publish(ctx, nil, []string{"tasks.yaml"})
+		require.True(t, os.IsNotExist(err))
+	})
+
+	t.Run("cwd fails", func(t *testing.T) {
+		tmp := t.TempDir()
+		sub := filepath.Join(tmp, "dir")
+		require.NoError(t, os.Mkdir(sub, 0o755))
+		t.Chdir(sub)
+		require.NoError(t, os.Remove(sub))
+		ctx := log.WithContext(t.Context(), log.New(io.Discard))
+		err := Publish(ctx, nil, []string{"tasks.yaml"})
+		require.True(t, os.IsNotExist(err))
+	})
 }
 
 func fetchManifest(t *testing.T, repo *remote.Repository) (desc ocispec.Descriptor, manifest ocispec.Manifest, err error) {
