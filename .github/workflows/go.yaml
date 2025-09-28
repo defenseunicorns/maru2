@@ -33,16 +33,8 @@ jobs:
           cache-dependency-path: go.sum
       - run: make clean all
       - run: |
-          if ! git diff --exit-code maru2.schema.json; then
-            echo "maru2.schema.json is dirty. Please run 'make' and commit the changes"
-            exit 1
-          fi
-          if ! git diff --exit-code schema/v0/schema.json; then
-            echo "schema/v0/schema.json is dirty. Please run 'make' and commit the changes"
-            exit 1
-          fi
-          if ! git diff --exit-code schema/v1/schema.json; then
-            echo "schema/v1/schema.json is dirty. Please run 'make' and commit the changes"
+          if ! git diff --exit-code maru2.schema.json schema/*/schema.json; then
+            echo "Schema files are dirty. Please run 'make' and commit the changes"
             exit 1
           fi
       - run: |
@@ -60,10 +52,11 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - run: |
-          go test ./schema/v0 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=5s
-          go test ./schema/v0 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=5s
-          go test ./schema/v1 -run=^$ -fuzz=FuzzTaskNamePattern -fuzztime=5s
-          go test ./schema/v1 -run=^$ -fuzz=FuzzEnvVariablePattern -fuzztime=5s
+          for v in schema/*; do
+            for f in FuzzTaskNamePattern FuzzEnvVariablePattern; do
+              go test $v -run=^$ -fuzz=$f -fuzztime=5s
+            done
+          done
 
   golangci:
     name: lint
