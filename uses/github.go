@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/go-github/v62/github"
+	"github.com/google/go-github/v75/github"
 	"github.com/package-url/packageurl-go"
 )
 

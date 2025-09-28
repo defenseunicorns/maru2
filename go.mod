@@ -13,7 +13,7 @@ require (
 	github.com/expr-lang/expr v1.17.6
 	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/goccy/go-yaml v1.18.0
-	github.com/google/go-github/v62 v62.0.0
+	github.com/google/go-github/v75 v75.0.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/muesli/termenv v0.16.0
 	github.com/olareg/olareg v0.1.2
