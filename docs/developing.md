@@ -17,6 +17,8 @@ make clean
 make -j all
 ```
 
+If you are looking for Go docs, the best way to view them is `go doc -http`, `go doc -all . | grep -C 10 <your query>`, or reading the relevant source code.
+
 ## Dependency Updates
 
 Dependabot || Renovate should take care of dependency updates.

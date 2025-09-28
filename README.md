@@ -50,6 +50,7 @@ or checkout the latest [release artifacts](https://github.com/defenseunicorns/ma
 ## Documentation
 
 - [Getting Started](docs/README.md)
+- [Developing Maru2](docs/developing.md)
 - [CLI Reference](docs/cli.md)
 - [Workflow Syntax](docs/syntax.md)
 - [Publishing Workflows](docs/publish.md)
