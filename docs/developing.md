@@ -50,6 +50,10 @@ Release-Please handles the Git tag, GitHub release and CHANGELOG; GoReleaser han
 1. Note that only the schema is versioned, the runtime is _not_. Take care that any new behavior works well in the old system (prefer building opt-in enhancements versus replacing behavior).
 1. The top-level Go files in this project (`run.go`, `with.go`, etc...) are the core runtime files. Any changes made to these files should be done with the utmost scrutiny and test coverage.
 
+## Creating more builtins
+
+Read [the builtins guide](../builtins/README.md).
+
 ## Things that are (mostly) set and forget
 
 - `install.sh`: the convenience script will probably never need to be updated aside from adding / removing CLIs using the `BINARIES` variable.
