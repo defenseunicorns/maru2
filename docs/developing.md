@@ -6,6 +6,17 @@
 >
 > The [copilot instructions](../.github/copilot-instructions.md) are also a good read on repo structure. Be sure to keep this file up-to-date so the LLMs can stay sane.
 
+## Building
+
+The [`Makefile`](../Makefile) has all of the necessary targets. Run `make help` / read the Makefile to see what you need to do in order to build and run maru2.
+
+The quickest way to start fresh and then compile everything fully:
+
+```bash
+make clean
+make -j all
+```
+
 ## Dependency Updates
 
 Dependabot || Renovate should take care of dependency updates.
