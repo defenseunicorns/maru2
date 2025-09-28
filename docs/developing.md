@@ -46,6 +46,12 @@ To unstick the Release-Please release PR, add and remove the PR from the `Unstic
 
 Release-Please handles the Git tag, GitHub release and CHANGELOG; GoReleaser handles building and publishing the binaries and creating the PR on the [Defense Unicorns Homebrew Tap repository](https://github.com/defenseunicorns/homebrew-tap). Releases are not fully finished until the generated PR is approved and merged on that repository.
 
+When debugging GoReleaser I found the following useful:
+
+```bash
+goreleaser release --snapshot --clean --skip=publish
+```
+
 ## Testing
 
 Run individual tests w/ your preferred flavor of `go test -run ...`.
@@ -94,3 +100,11 @@ Read [the builtins guide](../builtins/README.md).
 
 - `install.sh`: the convenience script will probably never need to be updated aside from adding / removing CLIs using the `BINARIES` variable.
 - `**/main.go`: all of the `main.go`s are extrememely minimal and will probably never need changes.
+
+## Being kind to embedders
+
+As you make changes to the `*Main()` functions in `cmd`, be sure to keep [`cmd/internal/main.go`](../cmd/internal/main.go) up to date with the latest and most preferred way to embed Maru2 as a Cobra CLI. Other Unicorns will most certainly appreciate that.
+
+## Thanks
+
+Thanks for choosing to develop / contribute to Maru2!
