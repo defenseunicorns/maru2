@@ -6,6 +6,13 @@
 >
 > The [copilot instructions](../.github/copilot-instructions.md) are also a good read on repo structure. Be sure to keep this file up-to-date so the LLMs can stay sane.
 
+## Core design principles:
+
+1. [Rob Pike's 5 Rules of Programming](https://users.ece.utexas.edu/~adnan/pike.html)
+1. "Simple things should be simple, complex things should be possible" ~ Alan Kay
+1. Take in `interface`s, return `struct`s.
+1. Build upon existing, well defined systems versus defining replacements.
+
 ## Building
 
 The [`Makefile`](../Makefile) has all of the necessary targets. Run `make help` / read the Makefile to see what you need to do in order to build and run maru2.
@@ -39,6 +46,26 @@ To unstick the Release-Please release PR, add and remove the PR from the `Unstic
 
 Release-Please handles the Git tag, GitHub release and CHANGELOG; GoReleaser handles building and publishing the binaries and creating the PR on the [Defense Unicorns Homebrew Tap repository](https://github.com/defenseunicorns/homebrew-tap). Releases are not fully finished until the generated PR is approved and merged on that repository.
 
+## Testing
+
+Run individual tests w/ your preferred flavor of `go test -run ...`.
+
+When running the entire suite, most of the time use the following:
+
+```bash
+make test ARGS="-w short=true"
+# or
+maru2 test -w short=true
+```
+
+This skips tests that call the GitHub and GitLab APIs, keeping you from 1. running into auth/429 errors, and 2: speeds up the test suite a little.
+
+If you _do_ run w/o `short=true`, ensure your `GITHUB_TOKEN`/`GITLAB_TOKEN` are set so you don't run into said 429s.
+
+Read [the E2E testing guide](../testdata/README.md) for information on adding / updating E2E tests.
+
+After running `make test`/`maru2 test`, check coverage using `go tool cover -html=coverage.out` or `go tool -func=coverage.out`.
+
 ## Creating a new major schema
 
 1. `cp -r schema/v1 schema/v2`
@@ -51,6 +78,13 @@ Release-Please handles the Git tag, GitHub release and CHANGELOG; GoReleaser han
 1. Start modifying the schema to your heart's desire!
 1. Note that only the schema is versioned, the runtime is _not_. Take care that any new behavior works well in the old system (prefer building opt-in enhancements versus replacing behavior).
 1. The top-level Go files in this project (`run.go`, `with.go`, etc...) are the core runtime files. Any changes made to these files should be done with the utmost scrutiny and test coverage.
+
+## Adding a new property to the schema
+
+1. Add the new property to the relevant type, include the `json` struct tag
+1. Update the `JSONSchemaExtend` method to include the new property in the generated schema, match the type to the Go type as needed. Schema configuration exists in this method versus struct tags due to sometimes requiring `fmt.Sprintf` or other programmatic configurations.
+1. Run `make`, the Makefile auto tracks all relevant files to re-generate the schemas.
+1. Commit the changes.
 
 ## Creating more builtins
 
