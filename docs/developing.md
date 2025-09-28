@@ -96,6 +96,22 @@ After running `make test`/`maru2 test`, check coverage using `go tool cover -htm
 
 Read [the builtins guide](../builtins/README.md).
 
+## Updating the docs
+
+When you feel good about your feature / change, the follow prompt has been useful for me to auto-update the docs using your preferred agent/LLM of choice (for documentation I have found `gemini-cli` w/ 2.5 Pro the best).
+
+```plaintext
+run `git diff main` to see what has changed, read those relevant files, then update @docs, follow the existing style and format
+```
+
+or more surgically (example):
+
+```plaintext
+using the e2e tests @testdata/explain.txtar, and @cmd/root_test.go, and @cmd/root.go, and @schema/v1/workflow.go, update the @docs
+```
+
+This will get you a semi decent, but very robotic documentation update, take over from there and update / remove prose as you see fit. This is a good time to see if the LLM's understanding of the feature matches yours. I've found if the LLM can't do a semi-decent job of generating the docs from the diff, my code is usually not clear enough. If the LLM does not automatically format the markdown, use `npx prettier --write docs`.
+
 ## Things that are (mostly) set and forget
 
 - `install.sh`: the convenience script will probably never need to be updated aside from adding / removing CLIs using the `BINARIES` variable.
