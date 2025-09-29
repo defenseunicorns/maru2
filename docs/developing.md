@@ -13,6 +13,30 @@
 1. Take in `interface`s, return `struct`s.
 1. Build upon existing, well defined systems versus defining replacements.
 
+## Code Tour
+
+Here is a brief overview of the key directories:
+
+- [`/`](../): The root of the project contains the core runtime logic for maru2 ([`run.go`](../run.go), [`if.go`](../if.go), [`with.go`](../with.go), etc.). These files define the maru2 workflow execution loop and lifecycle.
+- [`/cmd`](../cmd): Contains the Cobra CLI application. The [`root.go`](../cmd/root.go) file is the main entrypoint for the CLI. Each subcommand is typically in its own file.
+- [`/schema`](../schema): Defines the structure of maru2 workflow files ([`workflow.go`](../schema/v1/workflow.go), [`task.go`](../schema/v1/task.go), [`step.go`](../schema/v1/step.go)). This is where you'll go to add new properties or understand the shape of the YAML files. It is versioned to allow for backward compatibility.
+- [`/uses`](../uses): Handles the logic for resolving `uses:` clauses in workflows. This includes fetching from local paths, Git repositories (GitHub, GitLab), HTTP URLs, and OCI registries.
+- [`/builtins`](../builtins): Contains the built-in tasks that ship with maru2, such as `echo`. See the [README](../builtins/README.md) in this directory for instructions on adding more.
+- [`/testdata`](../testdata): Contains the end-to-end tests for the CLI. These are script-based tests that assert on the behavior of the compiled binary.
+- [`/.github/workflows`](../.github/workflows): Contains the CI/CD pipelines.
+
+## Commit Conventions
+
+This project follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. This is enforced by the [`commitlint.yaml`](../.github/workflows/commitlint.yaml) workflow. Please ensure your commit messages are in this format (e.g., `feat: add new flux capacitor widget`). This allows for automated changelog generation and predictable version bumping.
+
+## CI/CD Pipeline
+
+Our CI/CD is handled by GitHub Actions. Here are the key workflows:
+
+- [`go.yaml`](../.github/workflows/go.yaml): This is the main CI workflow. It runs on every push and pull request. It builds the project, runs linters (`golangci-lint`), and executes the unit and end-to-end tests.
+- [`release.yaml`](../.github/workflows/release.yaml): This workflow handles the release process. It is triggered when a commit with a `release-as` footer is pushed to the `main` branch. It uses `release-please` to create a release PR, and `goreleaser` to build and publish the binaries once the release PR is merged.
+- [`commitlint.yaml`](../.github/workflows/commitlint.yaml): This workflow ensures that all commit messages on pull requests follow the Conventional Commits specification.
+
 ## Building
 
 The [`Makefile`](../Makefile) has all of the necessary targets. Run `make help` / read the Makefile to see what you need to do in order to build and run maru2.
