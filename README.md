@@ -8,6 +8,13 @@
 [![codecov](https://codecov.io/gh/defenseunicorns/maru2/graph/badge.svg?token=IQMK40GAOK)](https://codecov.io/gh/defenseunicorns/maru2)
 ![CI Status](https://github.com/defenseunicorns/maru2/actions/workflows/go.yaml/badge.svg)
 
+> [!IMPORTANT]
+> Until this callout is removed, `maru2` is in maintenance mode while other efforts take priority.
+>
+> Dependency and security updates will still continue to be performed as needed.
+>
+> Issues and Pull Requests are welcome, the CLI team may just take longer to respond.
+
 A simple task runner.
 
 > [!CAUTION]
