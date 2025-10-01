@@ -2,7 +2,11 @@
 
 This directory defines E2E test files for `maru2` leveraging <https://pkg.go.dev/github.com/rogpeppe/go-internal/testscript>.
 
-All tests are run via [`cmd/root_test.go` `TestE2E`](../cmd/root_test.go).
+Regular E2E tests are run via [`cmd/root_test.go` `TestE2E`](../cmd/root_test.go).
+
+E2E tests the fetch "external" resources are run via [`cmd/fetch_test.go` `TestFetchE2E`](../cmd/fetch_test.go).
+
+E2E tests for `maru2-publish` are run via [`cmd/publish_test.go` `TestPublishE2E`](../cmd/publish_test.go).
 
 To run individual tests:
 
@@ -17,10 +21,10 @@ go test ./cmd/ -run TestE2E/version -v # <- add -v if you want extra verbosity /
 
 E2E tests _should_ primarily concern themselves w/ flag parsing, exit codes, logging and general CLI UX.
 
-To update the "golden files" embedded in the tests automatically, uncomment:
+To update the "golden files" embedded in the tests automatically, use:
 
-```go
-// UpdateScripts:      true,
+```sh
+maru2 test -w update-scripts=true
 ```
 
-in `cmd/root_test.go` and run the above `go test` command, then commit the changes.
+then commit the changes.

@@ -1,6 +1,7 @@
-# Built-in Tasks
+# Built-in tasks
 
-Maru2 provides several built-in tasks that can be used in your workflows. These are referenced using the `builtin:` prefix in the `uses` field.
+Maru2 provides several built-in tasks that you can use in your workflows.
+Reference these using the `builtin:` prefix in the `uses` field.
 
 ## Echo
 
@@ -24,7 +25,7 @@ Hello, World!
 
 Outputs:
 
-- `stdout`: The text that was echoed
+- `stdout`: The echoed text
 
 ## Fetch
 

@@ -8,6 +8,15 @@
 [![codecov](https://codecov.io/gh/defenseunicorns/maru2/graph/badge.svg?token=IQMK40GAOK)](https://codecov.io/gh/defenseunicorns/maru2)
 ![CI Status](https://github.com/defenseunicorns/maru2/actions/workflows/go.yaml/badge.svg)
 
+> [!IMPORTANT]
+> Until this callout is removed, `maru2` is in maintenance mode while other efforts take priority.
+>
+> The current API is considered stable and any breaking changes will be done in a backwards compatible manner.
+>
+> Dependency and security updates will still continue to be performed as needed.
+>
+> Issues and Pull Requests are welcome, the CLI team may just take longer to respond.
+
 A simple task runner.
 
 > [!CAUTION]
@@ -50,6 +59,7 @@ or checkout the latest [release artifacts](https://github.com/defenseunicorns/ma
 ## Documentation
 
 - [Getting Started](docs/README.md)
+- [Developing Maru2](docs/developing.md)
 - [CLI Reference](docs/cli.md)
 - [Workflow Syntax](docs/syntax.md)
 - [Publishing Workflows](docs/publish.md)
@@ -61,7 +71,7 @@ If you are coming from `maru-runner` / `uds run` and looking to transition, chec
 
 If you are looking to embed maru2 into another Cobra CLI, take a look at the example in [`cmd/internal`](./cmd/internal/main.go).
 
-If you are looking for developer docs, the best way to view them is `go doc -http` or visit [pkg.go.dev](https://pkg.go.dev/github.com/defenseunicorns/maru2).
+If you are looking for Go docs, the best way to view them is `go doc -http` or visit [pkg.go.dev](https://pkg.go.dev/github.com/defenseunicorns/maru2).
 
 ## Contributing
 

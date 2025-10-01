@@ -1,13 +1,13 @@
 # maru-runner migration guide
 
-This guide will help you migrate your existing `maru-runner` tasks to the new `maru2` format. While both tools serve similar purposes, `maru2` has a more modern, GitHub Actions-like syntax with improved capabilities.
+This guide helps you migrate your existing `maru-runner` tasks to the new `maru2` format. While both tools serve similar purposes, `maru2` has a more modern, GitHub Actions-like syntax with improved capabilities.
 
 > [!NOTE]
 > This migration guide is for migrating from `maru-runner` to `maru2`'s `v1` schema.
 >
 > This guide is a living document and _may_ not be 100% accurate in all situations.
 >
-> Contributions are most welcome!
+> Contributions are most welcome.
 
 ## Why no migration tool?
 
@@ -15,7 +15,7 @@ Migrating from `maru-runner` to `maru2` is no small task, and one that should be
 
 Additionally, the migration gives workflow authors a chance to redefine the patterns they have been using and complete sweeping/breaking changes to their comfort level; a migration tool would stymie that creativity.
 
-Lastly, this will be the last such time that a pure migration guide will be provided. Since `maru2` has versioned schemas, there will be schema migrations that happen automatically during runtime, as well as schema migrations that can be accomplished via a future migration CLI (probably something like `go run github.com/maru2/cmd/maru2-migrate@main tasks.yaml`).
+Lastly, this is the last such time that a pure migration guide is provided. Since `maru2` has versioned schemas, there are schema migrations that happen automatically during runtime, as well as schema migrations that can be accomplished via a future migration command-line tool (probably something like `go run github.com/maru2/cmd/maru2-migrate@main tasks.yaml`).
 
 ## Using AI to migrate
 
@@ -150,7 +150,7 @@ Key differences:
 - Variables are now defined as [`inputs`](./syntax.md#defining-input-parameters) with more descriptive properties
 - Inputs are by default `required: true` and task scoped
 - Inputs are weakly type safe when a `default` is set.
-  - i.e. if a default is of type `int`, all callers must pass a value that can be coerced to an `int`
+  - that is, if a default is of type `int`, all callers must pass a value that can be coerced to an `int`
 - Inputs can be any primitive type (`string`, `int`, `bool`)
 - Access inputs using [`${{ input "input-name" }}`](./syntax.md#passing-inputs) expression syntax
 - Environment variables can be used as defaults with [`default-from-env: ENV_VAR_NAME`](./syntax.md#default-values-from-environment-variables)
@@ -371,8 +371,8 @@ tasks:
 Key differences:
 
 - `maru-runner`'s `maxRetries` property is not currently implemented in maru2, if this is a requirement, please open an issue
-- `maxTotalSeconds` becomes [`timeout`](./syntax.md#step-timeout-with-timeout) with duration string format (e.g., "30s", "1m", "1h")
-- `maru-runner`'s `wait` functionality for network and cluster resources is not yet implemented in maru2
+- `maxTotalSeconds` becomes [`timeout`](./syntax.md#step-timeout-with-timeout) with duration string format (for example, "30s", "1m", "1h")
+- `maru-runner`'s `wait` feature for network and cluster resources is not yet implemented in maru2
 
 ## Includes to Uses
 
@@ -420,7 +420,6 @@ Key differences:
 - Instead of defining `includes` and using prefixes, `maru2` uses [URL-style references](./syntax.md#run-a-task-from-a-remote-file)
 - Format is `protocol:path?task=task-name` (similar to package URLs)
 - Supported protocols: [`file:`](./syntax.md#run-a-task-from-a-local-file), [`http:`, `https:`, `pkg:github`, `pkg:gitlab`](./syntax.md#run-a-task-from-a-remote-file), [`builtin:`](./builtins.md), [`oci:`](./publish.md)
-- Built-in tasks like `builtin:echo` and `builtin:fetch` provide common functionality
 - Support for local path [`aliases`](./syntax.md#local-file-aliases)
 
 ## Command Line Usage
@@ -640,7 +639,7 @@ Migrating from `maru-runner` to `maru2` involves restructuring your tasks file, 
 4. [Built-in tasks](./builtins.md) for common operations
 5. More flexible [remote task inclusion system](./syntax.md#run-a-task-from-a-remote-file)
 6. [Schema validation](./syntax.md#schema-version) for better error detection
-7. [Command line interface](./cli.md) improvements
+7. [CLI](./cli.md) improvements
 8. Better typing system with input validation
 
-Note that some features from `maru-runner` such as the `wait` functionality are not yet implemented in `maru2`. If you require these features, please open an issue on the project repository.
+Note that some features from `maru-runner` such as the `wait` feature are not yet implemented in `maru2`. If you require these features, please open an issue on the project repository.
