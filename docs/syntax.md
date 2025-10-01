@@ -227,8 +227,6 @@ tasks:
       - run: echo "This message will not be displayed if the previous step times out"
 ```
 
-The `timeout` value is a string representing a duration, such as "30 s" for 30 seconds, "1 m" for 1 minute, or "1 h 30 m" for 1 hour and 30 minutes.
-
 See [https://pkg.go.dev/time#Duration](https://pkg.go.dev/time#Duration) for more information on supported duration units.
 
 When a step times out, the task will fail, and any subsequent steps that do not explicitly handle failures (for example, with `if: always()` or `if: failure()`) will be skipped.

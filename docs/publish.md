@@ -77,7 +77,7 @@ maru2-publish staging.uds.sh/public/my-workflow:latest -e tasks.yaml
 
 ### Using published workflows
 
-Once published, you can use the workflow in another project with the Open Container Initiative (OCI) scheme:
+Once published, you can use the workflow in another project with the `oci` scheme:
 
 ```yaml
 schema-version: v1
@@ -95,7 +95,7 @@ To specify another path use the URL hash:
 uses: oci:staging.uds.sh/public/my-workflow#file:tasks/helper.yaml
 ```
 
-The following query parameters support:
+Supported query parameters:
 
 - `plain-http`: pull via plain HTTP (default: `false`)
 - `insecure-skip-tls-verify`: skip Transport Layer Security (TLS) checking (default: `false`)

@@ -18,7 +18,7 @@
 Here is a brief overview of the key directories:
 
 - [`/`](../): The root of the project contains the core runtime logic for maru2 ([`run.go`](../run.go), [`if.go`](../if.go), [`with.go`](../with.go), etc.). These files define the maru2 workflow execution loop and lifecycle.
-- [`/cmd`](../cmd): Contains the Cobra command-line tool application. The [`root.go`](../cmd/root.go) file is the main entrypoint for the command-line tool. Each subcommand is typically in its own file.
+- [`/cmd`](../cmd): Contains the Cobra CLI. The [`root.go`](../cmd/root.go) file is the main entrypoint for the CLI. Each subcommand is typically in its own file.
 - [`/config`](../config): Defines the structure for maru2's configuration files (for example `~/.maru2/config.yaml`).
 - [`/docs`](../docs): Contains the documentation for the project.
 - [`/schema`](../schema): Defines the structure of maru2 workflow files ([`workflow.go`](../schema/v1/workflow.go), [`task.go`](../schema/v1/task.go), [`step.go`](../schema/v1/step.go)). This is where you'll go to add new properties or understand the shape of the YAML files. It's versioned to allow for backward compatibility.
@@ -140,12 +140,12 @@ This will get you a semi decent, but very robotic documentation update, take ove
 
 ## Things that are (mostly) set and forget
 
-- `install.sh`: the convenience script probably never needs to be updated aside from adding / removing command-line tools using the `BINARIES` variable.
+- `install.sh`: the convenience script probably never needs to be updated aside from adding / removing CLI tools using the `BINARIES` variable.
 - `**/main.go`: all of the `main.go`s are extremely minimal and probably never need changes.
 
 ## Being kind to embedders
 
-As you make changes to the `*Main()` functions in `cmd`, be sure to keep [`cmd/internal/main.go`](../cmd/internal/main.go) up to date with the latest and most preferred way to embed Maru2 as a Cobra command-line tool. Other Unicorns most certainly appreciate that.
+As you make changes to the `*Main()` functions in `cmd`, be sure to keep [`cmd/internal/main.go`](../cmd/internal/main.go) up to date with the latest and most preferred way to embed Maru2 as a Cobra CLI. Other Unicorns most certainly appreciate that.
 
 ## Thanks
 

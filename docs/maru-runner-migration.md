@@ -371,7 +371,7 @@ tasks:
 Key differences:
 
 - `maru-runner`'s `maxRetries` property is not currently implemented in maru2, if this is a requirement, please open an issue
-- `maxTotalSeconds` becomes [`timeout`](./syntax.md#step-timeout-with-timeout) with duration string format (for example, "30 s", "1 m", "1 h")
+- `maxTotalSeconds` becomes [`timeout`](./syntax.md#step-timeout-with-timeout) with duration string format (for example, "30s", "1m", "1h")
 - `maru-runner`'s `wait` feature for network and cluster resources is not yet implemented in maru2
 
 ## Includes to Uses
@@ -639,7 +639,7 @@ Migrating from `maru-runner` to `maru2` involves restructuring your tasks file, 
 4. [Built-in tasks](./builtins.md) for common operations
 5. More flexible [remote task inclusion system](./syntax.md#run-a-task-from-a-remote-file)
 6. [Schema validation](./syntax.md#schema-version) for better error detection
-7. [Command line interface](./cli.md) improvements
+7. [CLI](./cli.md) improvements
 8. Better typing system with input validation
 
 Note that some features from `maru-runner` such as the `wait` feature are not yet implemented in `maru2`. If you require these features, please open an issue on the project repository.

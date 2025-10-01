@@ -32,14 +32,14 @@ Maru2 is a simple, powerful task runner designed to make workflow automation eas
    maru2
    ```
 
-   That's it. You've just run your first Maru2 task.
+   That's it! You've just run your first Maru2 task.
 
 ## Documentation navigation
 
 - **[Core Concepts](#core-concepts)**: Understand the fundamental concepts of Maru2.
 - **[Example Workflow](#example-workflow)**: See a complete example with explanations.
 - **[Workflow Syntax](syntax.md)**: Learn the syntax for defining tasks and workflows.
-- **[Command-line tool Documentation](cli.md)**: Master the Maru2 command line interface.
+- **[CLI Documentation](cli.md)**: Master the Maru2 command line interface.
 - **[Built-in Tasks](builtins.md)**: Explore the built-in tasks provided by Maru2.
 - **[Publishing Workflows](publish.md)**: Learn how to publish workflows as Open Container Initiative (OCI) artifacts.
 - **[Configuration](config.md)**: Configure Maru2 with global settings.
@@ -213,6 +213,6 @@ Maru2 includes powerful features for complex workflows:
 
 Ready to dive deeper? Continue with:
 
-- [Command-line tool Documentation](cli.md) to learn all the command line options
+- [CLI Documentation](cli.md) to learn all the command line options
 - [Workflow Syntax](syntax.md) for detailed information on defining tasks
 - [Built-in Tasks](builtins.md) to discover pre-defined tasks you can use
