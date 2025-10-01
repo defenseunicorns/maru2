@@ -72,7 +72,7 @@ Maru2 builds around these simple concepts:
          - uses: notify # Reference to another task
    ```
 
-3. **Inputs** - Parameters that can pass to tasks
+3. **Inputs** - Parameters that can be passed to tasks
 
    ```yaml
    schema-version: v1
@@ -86,7 +86,7 @@ Maru2 builds around these simple concepts:
          - run: echo "Deploying to ${{ input "environment" }}"
    ```
 
-4. **Outputs** - Values that can pass between steps
+4. **Outputs** - Values that can be passed between steps
 
    ```yaml
    schema-version: v1
