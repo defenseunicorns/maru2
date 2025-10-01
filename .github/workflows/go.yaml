@@ -52,9 +52,9 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - run: |
-          for v in schema/*; do
+          for v in ./schema/*; do
             for f in FuzzTaskNamePattern FuzzEnvVariablePattern; do
-              go test $v -run=^$ -fuzz=$f -fuzztime=5s
+              go test "$v" -run=^$ -fuzz="$f" -fuzztime=5s
             done
           done
 
