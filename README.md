@@ -19,9 +19,6 @@
 
 A simple task runner.
 
-> [!CAUTION]
-> This project is still in its early stages. Some breaking changes are to be expected.
-
 ## Installation
 
 via brew:
