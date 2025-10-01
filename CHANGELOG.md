@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.1 (2025-10-01)
+
+## What's Changed
+* build(deps): bump the go group with 3 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/162
+* ci(deps): bump actions/dependency-review-action from 4.7.3 to 4.8.0 in the github-actions group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/163
+* docs: add developer docs by @Noxsios in https://github.com/defenseunicorns/maru2/pull/166
+* build(deps): bump github.com/charmbracelet/x/ansi from 0.10.1 to 0.10.2 in the go group by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/165
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.8.0...v0.8.1
+
 ## 0.8.0 (2025-09-27)
 
 ## What's Changed
