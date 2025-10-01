@@ -227,11 +227,11 @@ tasks:
       - run: echo "This message will not be displayed if the previous step times out"
 ```
 
-The `timeout` value should be a string representing a duration, such as "30s" for 30 seconds, "1m" for 1 minute, or "1h30m" for 1 hour and 30 minutes.
+The `timeout` value is a string representing a duration, such as "30 s" for 30 seconds, "1 m" for 1 minute, or "1 h 30 m" for 1 hour and 30 minutes.
 
 See [https://pkg.go.dev/time#Duration](https://pkg.go.dev/time#Duration) for more information on supported duration units.
 
-When a step times out, the task will fail, and any subsequent steps that do not explicitly handle failures (e.g., with `if: always()` or `if: failure()`) will be skipped.
+When a step times out, the task will fail, and any subsequent steps that do not explicitly handle failures (for example, with `if: always()` or `if: failure()`) will be skipped.
 
 ## Controlling script display with `show`
 
@@ -303,7 +303,7 @@ Input parameters have the following properties:
 - `description`: A description of the parameter (required)
 - `required`: Whether the parameter is required (defaults to `true`)
 - `default`: A default value for the parameter
-- `default-from-env`: An environment variable to use as the default value. Environment variable names must start with a letter or underscore, and can contain letters, numbers, and underscores (e.g., `MY_ENV_VAR`, `_ANOTHER_VAR`).
+- `default-from-env`: An environment variable to use as the default value. Environment variable names must start with a letter or underscore, and can contain letters, numbers, and underscores (for example, `MY_ENV_VAR`, `_ANOTHER_VAR`).
 - `validate`: A regular expression to validate the parameter value
 - `deprecated-message`: A warning message to display when the parameter is used (for deprecated parameters)
 
@@ -772,7 +772,7 @@ Maru2 supports conditional execution of steps using `if`. `if` statements are [e
 
 - `failure()`: Run this step only if a previous step has failed (from timeout, script failure, syntax errors, `SIGINT`, etc...)
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
-- `cancelled()`: Run this step _only_ if the task was cancelled (e.g., via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the task entirely).
+- `cancelled()`: Run this step _only_ if the task was cancelled (for example, via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the task entirely).
 - `input("name")`: Access an input value by name. Only one argument is allowed. Returns the value of the input (which may be a string, number, or boolean), or `nil` if the input doesn't exist.
 - `from("step-id", "output-key")`: Access an output from a previous step. Only two arguments are allowed: the step ID and the output key. Returns the output value, or `nil` if the step or output key doesn't exist.
 

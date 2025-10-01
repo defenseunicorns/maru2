@@ -371,8 +371,8 @@ tasks:
 Key differences:
 
 - `maru-runner`'s `maxRetries` property is not currently implemented in maru2, if this is a requirement, please open an issue
-- `maxTotalSeconds` becomes [`timeout`](./syntax.md#step-timeout-with-timeout) with duration string format (for example, "30s", "1m", "1h")
-- `maru-runner`'s `wait` functionality for network and cluster resources is not yet implemented in maru2
+- `maxTotalSeconds` becomes [`timeout`](./syntax.md#step-timeout-with-timeout) with duration string format (for example, "30 s", "1 m", "1 h")
+- `maru-runner`'s `wait` feature for network and cluster resources is not yet implemented in maru2
 
 ## Includes to Uses
 
@@ -420,7 +420,6 @@ Key differences:
 - Instead of defining `includes` and using prefixes, `maru2` uses [URL-style references](./syntax.md#run-a-task-from-a-remote-file)
 - Format is `protocol:path?task=task-name` (similar to package URLs)
 - Supported protocols: [`file:`](./syntax.md#run-a-task-from-a-local-file), [`http:`, `https:`, `pkg:github`, `pkg:gitlab`](./syntax.md#run-a-task-from-a-remote-file), [`builtin:`](./builtins.md), [`oci:`](./publish.md)
-- Built-in tasks like `builtin:echo` and `builtin:fetch` provide common functionality
 - Support for local path [`aliases`](./syntax.md#local-file-aliases)
 
 ## Command Line Usage
@@ -643,4 +642,4 @@ Migrating from `maru-runner` to `maru2` involves restructuring your tasks file, 
 7. [Command line interface](./cli.md) improvements
 8. Better typing system with input validation
 
-Note that some features from `maru-runner` such as the `wait` functionality are not yet implemented in `maru2`. If you require these features, please open an issue on the project repository.
+Note that some features from `maru-runner` such as the `wait` feature are not yet implemented in `maru2`. If you require these features, please open an issue on the project repository.

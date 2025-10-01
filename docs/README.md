@@ -200,7 +200,7 @@ The `--explain` command generates comprehensive documentation including:
 Maru2 includes powerful features for complex workflows:
 
 - **Conditional execution** - Control step execution with `if` directives
-- **Error handling and traceback** - Get detailed information about errors
+- **Error handling and tracebacks** - Get detailed information about errors
 - **Environment variable integration** - Use environment variables as input defaults
 - **Remote task execution** - Execute tasks from remote repositories
 - **Input validation** - Validate inputs using regular expressions

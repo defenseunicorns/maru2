@@ -1,9 +1,9 @@
 # Publishing workflows
 
-Maru2 provides a command to publish your workflows as Open Container Initiative (OCI) artifacts to Universal Deployment System (UDS) Registry (or any Open Container Initiative (OCI) compliant registry for that matter).
+Maru2 provides a command to publish your workflows as Open Container Initiative (OCI) artifacts to [UDS Registry](https://registry.defenseunicorns.com/) or any OCI-compliant registry.
 
 > [!WARNING]
-> The `maru2-publish` command is currently in **alpha release**. Expect frequent breaking changes.
+> The `maru2-publish` command is currently in **alpha** status. Expect frequent breaking changes.
 
 <!--
 TODO: once out of ALPHA, this doc MAY be merged into ./syntax.md.
