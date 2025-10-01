@@ -1,6 +1,6 @@
 # Contributing to `defenseunicorns/maru2`
 
-> Read [the developers guide to Maru2](../docs/developing.md) for some good information to know when developing Maru2.
+> Read [the developer's guide to Maru2](../docs/developing.md) for some good information to know when developing Maru2.
 
 1. Install project dependencies and build all binaries.
 

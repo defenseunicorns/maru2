@@ -1,11 +1,11 @@
-# Maru2 Documentation
+# Maru2 documentation
 
 Maru2 is a simple, powerful task runner designed to make workflow automation easy and intuitive. Inspired by the simplicity of Makefiles but with modern features like GitHub Actions, Maru2 helps you define, organize, and execute tasks with minimal configuration.
 
-## Quick Start
+## Quick start
 
 > [!NOTE]
-> Use `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables to pull task files from remote GitHub and GitLab destinations using the [package-url spec](https://github.com/package-url/purl-spec).
+> Use `GITHUB_TOKEN` and `GITLAB_TOKEN` environment variables to pull task files from remote GitHub and GitLab destinations using the [package URL spec](https://github.com/package-url/purl-spec).
 >
 > Example:
 >
@@ -32,22 +32,22 @@ Maru2 is a simple, powerful task runner designed to make workflow automation eas
    maru2
    ```
 
-   That's it! You've just run your first Maru2 task.
+   That's it. You've just run your first Maru2 task.
 
-## Documentation Navigation
+## Documentation navigation
 
 - **[Core Concepts](#core-concepts)**: Understand the fundamental concepts of Maru2.
 - **[Example Workflow](#example-workflow)**: See a complete example with explanations.
 - **[Workflow Syntax](syntax.md)**: Learn the syntax for defining tasks and workflows.
-- **[CLI Documentation](cli.md)**: Master the Maru2 command line interface.
+- **[Command-line tool Documentation](cli.md)**: Master the Maru2 command line interface.
 - **[Built-in Tasks](builtins.md)**: Explore the built-in tasks provided by Maru2.
-- **[Publishing Workflows](publish.md)**: Learn how to publish workflows as OCI artifacts.
+- **[Publishing Workflows](publish.md)**: Learn how to publish workflows as Open Container Initiative (OCI) artifacts.
 - **[Configuration](config.md)**: Configure Maru2 with global settings.
 - **[Migrating from maru-runner](maru-runner-migration.md)**: Follow the guide for migrating from `maru-runner` to `maru2`.
 
-## Core Concepts
+## Core concepts
 
-Maru2 is built around these simple concepts:
+Maru2 builds around these simple concepts:
 
 1. **Tasks** - The basic unit of work in Maru2, defined as a series of steps
 
@@ -72,7 +72,7 @@ Maru2 is built around these simple concepts:
          - uses: notify # Reference to another task
    ```
 
-3. **Inputs** - Parameters that can be passed to tasks
+3. **Inputs** - Parameters that can pass to tasks
 
    ```yaml
    schema-version: v1
@@ -86,7 +86,7 @@ Maru2 is built around these simple concepts:
          - run: echo "Deploying to ${{ input "environment" }}"
    ```
 
-4. **Outputs** - Values that can be passed between steps
+4. **Outputs** - Values that can pass between steps
 
    ```yaml
    schema-version: v1
@@ -99,7 +99,7 @@ Maru2 is built around these simple concepts:
          - run: echo "Version is ${{ from "version-step" "version" }}"
    ```
 
-## Example Workflow
+## Example workflow
 
 This example demonstrates inputs, task references, and output passing:
 
@@ -157,11 +157,11 @@ maru2 greet --with message="Specific greeting"
 maru2 common:cleanup
 ```
 
-## Exploring Workflows
+## Exploring workflows
 
 Maru2 provides powerful tools for understanding and documenting your workflows:
 
-### Discovering Available Tasks
+### Discovering available tasks
 
 ```sh
 # List all available tasks in the current workflow
@@ -174,7 +174,7 @@ maru2 --from other-tasks.yaml --list
 maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
 ```
 
-### Understanding Workflow Structure
+### Understanding workflow structure
 
 ```sh
 # Generate detailed explanation of all tasks and their parameters
@@ -195,7 +195,7 @@ The `--explain` command generates comprehensive documentation including:
 - Alias definitions for remote repositories
 - Schema version information
 
-## Advanced Features
+## Advanced features
 
 Maru2 includes powerful features for complex workflows:
 
@@ -209,10 +209,10 @@ Maru2 includes powerful features for complex workflows:
 - **Aliased task execution** - Run tasks from aliased workflows using `alias:task` syntax
 - **Workflow explanation** - Generate detailed documentation of tasks and their parameters with `--explain`
 
-## Next Steps
+## Next steps
 
 Ready to dive deeper? Continue with:
 
-- [CLI Documentation](cli.md) to learn all the command line options
+- [Command-line tool Documentation](cli.md) to learn all the command line options
 - [Workflow Syntax](syntax.md) for detailed information on defining tasks
 - [Built-in Tasks](builtins.md) to discover pre-defined tasks you can use

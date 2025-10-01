@@ -2,7 +2,7 @@
 
 This guide explains how to use the Maru2 command line interface effectively.
 
-## Basic Usage
+## Basic usage
 
 ```text
 maru2 [task] [flags]
@@ -20,7 +20,7 @@ maru2 --list
 maru2 --explain
 ```
 
-## Common Examples
+## Common examples
 
 ```sh
 # Run the default task
@@ -60,7 +60,7 @@ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo
 maru2 alias-name:task-name
 ```
 
-## All Available Flags
+## All available flags
 
 ```text
 Flags:
@@ -82,9 +82,9 @@ Flags:
       --with-file string      Extra text file to parse as key=value pairs to pass to the called task(s)
 ```
 
-## Discovering Tasks
+## Discovering tasks
 
-### Listing Available Tasks
+### Listing available tasks
 
 The `--list` flag shows you all available tasks in a workflow file.
 
@@ -107,7 +107,7 @@ maru2 --from custom-tasks.yaml --list
 maru2 --from "pkg:github/defenseunicorns/maru2@main#examples/web-app.yaml" --list
 ```
 
-### Explaining Tasks and Workflows
+### Explaining tasks and workflows
 
 The `--explain` flag provides detailed information about workflows and their tasks, including input parameters, descriptions, validation rules, and task dependencies.
 
@@ -123,7 +123,7 @@ You can also explain specific tasks by providing their names:
 $ maru2 --explain build
 ```
 
-**Output Formatting**: When running in a terminal, the output is formatted with syntax highlighting, colors, and improved readability using [`glamour`](https://github.com/charmbracelet/glamour). In non-terminal environments (like CI pipelines or when redirecting output), the output is plain markdown that can be saved to files or processed by other tools.
+**Output formatting**: When running in a terminal, the output is formatted with syntax highlighting, colors, and improved readability using [`glamour`](https://github.com/charmbracelet/glamour). In non-terminal environments (like CI pipelines or when redirecting output), the output is plain markdown that can be saved to files or processed by other tools.
 
 ```sh
 # Terminal output: styled and colored
@@ -133,7 +133,7 @@ maru2 --explain
 maru2 --explain > workflow-docs.md
 ```
 
-## Passing Inputs to Tasks
+## Passing inputs to tasks
 
 Use the `--with` flag to pass input values to tasks:
 
@@ -148,7 +148,7 @@ deploy:
   - run: echo "Deploying version ${{ input "version" }} to ${{ input "environment" }}"
 ```
 
-### Input Value Formatting
+### Input value formatting
 
 - Basic values: `--with key=value`
 - Values with spaces or special characters: `--with key="Hello, World!"`
@@ -165,7 +165,7 @@ $ maru2 notify --with channel=releases --with message="New version deployed"
 $ maru2 build --with timestamp=$(date +%s)
 ```
 
-### Passing Inputs from Files
+### Passing inputs from files
 
 Use the `--with-file` flag to load key=value pairs from a text file:
 
@@ -201,7 +201,7 @@ EOF
 another-key=another-value
 ```
 
-## Previewing Execution with Dry Run
+## Previewing execution with dry run
 
 The `--dry-run` flag lets you preview what commands would execute without actually running them:
 
@@ -220,7 +220,7 @@ When you use `--dry-run`, Maru2:
 5. Executes all steps, even those with `if` conditions that would normally be skipped
 6. Doesn't actually execute any commands
 
-### Understanding Template Output in Dry Run
+### Understanding template output in dry run
 
 When a template depends on output from previous steps (which aren't actually run in dry run mode), Maru2 shows special formatting:
 
@@ -232,7 +232,7 @@ echo "The value is ❯ from step-id output-key ❮"
 
 This visual indicator helps you identify dynamic parts of your workflow that depend on previous step outputs.
 
-### Dry Run and Conditional Steps
+### Dry run and conditional steps
 
 In dry-run mode, Maru2 executes all steps to give you a complete preview of the workflow, even those that would normally be skipped due to `if` conditions:
 
@@ -260,9 +260,9 @@ $ MARU2_CONFIG=custom.yaml maru2    # env var
 $ maru2                             # default
 ```
 
-## Task Execution
+## Task execution
 
-### The Default Task
+### The default task
 
 When you run `maru2` without specifying a task, it runs the `default` task:
 
@@ -274,7 +274,7 @@ $ maru2 default
 
 Creating a `default` task in your workflow provides a convenient entry point for the most common operation.
 
-### Running Specific Tasks
+### Running specific tasks
 
 To run a specific task from your workflow:
 
@@ -282,7 +282,7 @@ To run a specific task from your workflow:
 maru2 hello-world
 ```
 
-### Running Multiple Tasks
+### Running multiple tasks
 
 Like `make`, you can run multiple tasks in sequence:
 
@@ -292,7 +292,7 @@ maru2 clean build test deploy
 
 Tasks are executed in the order specified on the command line, which is useful for creating simple pipelines.
 
-### Running Aliased Tasks
+### Running aliased tasks
 
 If your workflow defines local file aliases, you can run tasks from those aliased workflows directly:
 
@@ -304,11 +304,11 @@ maru2 common:setup
 maru2 common:setup utils:compile common:deploy
 ```
 
-The `alias:task` format allows you to reference tasks from aliased workflow files without needing to specify the full file path.
+The `alias:task` format allows you to reference tasks from aliased workflow files without needing to specify the full path.
 
-## Working with Workflow Files
+## Working with workflow files
 
-### Local Workflow Files
+### Local workflow files
 
 By default, Maru2 looks for a file named `tasks.yaml` in the current directory. To use a different file:
 
@@ -317,7 +317,7 @@ maru2 --from path/to/other.yaml
 maru2 -f custom-workflow.yaml build
 ```
 
-### Remote Workflow Files
+### Remote workflow files
 
 Maru2 can execute tasks directly from remote repositories:
 
@@ -331,9 +331,9 @@ maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -
 
 > **Note**: When referencing remote workflows, you must use quotes since the package-URL spec uses special shell characters like `#` and `@`.
 
-## Managing Remote Workflows
+## Managing remote workflows
 
-### Fetch Policy
+### Fetch policy
 
 Control how Maru2 retrieves remote workflows with the `--fetch-policy` flag:
 
@@ -349,7 +349,7 @@ Available policies:
 | `if-not-present` | Only fetch if not in cache (default)          |
 | `never`          | Never fetch, only use cached workflows        |
 
-### Refreshing Remote Workflows
+### Refreshing remote workflows
 
 To update all remote references without executing any tasks:
 
@@ -359,7 +359,7 @@ maru2 --fetch-policy always --fetch-all
 
 This combination refreshes your cache without running any code.
 
-### Prefetching All Dependencies
+### Prefetching all dependencies
 
 Use `--fetch-all` to download all remote dependencies (even ones not in the hot path) before execution:
 
@@ -369,11 +369,11 @@ maru2 --fetch-all deploy
 
 This ensures all dependencies are available, which is useful before going offline or in environments with unreliable connectivity.
 
-## Setting Up Shell Completions
+## Setting up shell completions
 
 Maru2 supports command completion for various shells, making it easier to discover and use available tasks and options.
 
-### Installation Commands
+### Installation commands
 
 Choose the command for your shell:
 
@@ -403,7 +403,7 @@ maru2 completion fish > ~/.config/fish/completions/maru2.fish
 maru2 completion powershell > $PROFILE.CurrentUserAllHosts
 ```
 
-### Completion with Remote Workflows
+### Completion with remote workflows
 
 **Fish shell note**: When using tab completion with remote workflows in fish shell, use both sets of quotes:
 
@@ -415,7 +415,7 @@ maru2 --from "'pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml'" [tab
 maru2 --from "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" --list
 ```
 
-### Completion with Aliased Tasks
+### Completion with aliased tasks
 
 Tab completion also works with aliased tasks. If your workflow defines aliases, you'll see them in completion:
 
@@ -429,11 +429,11 @@ maru2 common:[tab][tab]
 # Shows: common:setup common:deploy
 ```
 
-## Additional Options
+## Additional options
 
-### Execution Timeout
+### Execution timeout
 
-Control how long Maru2 will run before timing out:
+Control how long Maru2 runs before timing out:
 
 ```sh
 maru2 long-task --timeout 2h30m
@@ -441,7 +441,7 @@ maru2 long-task --timeout 2h30m
 
 The default timeout is 1 hour. Use standard Go duration format for specifying timeouts.
 
-### Log Verbosity
+### Log verbosity
 
 Adjust the amount of information displayed during execution:
 
@@ -458,7 +458,7 @@ Available log levels:
 | `info`  | Show errors, warnings, and info messages (default) |
 | `debug` | Show all messages, including debugging information |
 
-### Working Directory
+### Working directory
 
 Change to a specific directory before executing any tasks:
 
@@ -468,9 +468,9 @@ maru2 --directory /path/to/project build
 
 This is equivalent to `cd /path/to/project && maru2 build; cd -`.
 
-### Managing the Cache Store
+### Managing the cache store
 
-#### Custom Store Location
+#### Custom store location
 
 Set a custom location for cached workflows:
 
@@ -483,7 +483,7 @@ By default, Maru2 uses:
 - `${HOME}/.maru2/store` (global cache)
 - `./.maru2/store` (if it exists in the current directory)
 
-#### Cleaning the Cache
+#### Cleaning the cache
 
 Remove unused workflows from the cache:
 

@@ -1,6 +1,6 @@
 # builtins
 
-What is a Maru2 `builtin:`?: Anything that satisfies the `Builtin` interface:
+What is a Maru2 `builtin:`? Anything that satisfies the `Builtin` interface:
 
 ```go
 // registration.go
@@ -14,7 +14,7 @@ type Builtin interface {
 }
 ```
 
-See [basic.go](basic.go) for some good examples on how a builtin is structured.
+See [basic.go](basic.go) for some good examples of how a builtin is structured.
 
 [wacky_structs.go](wacky_structs.go) can be removed once there are more complex usages of the Builtin system, it only exists for test coverage of schema generation.
 
@@ -24,4 +24,4 @@ Anything registered to the `_registrations` variable will be accessed to generat
 
 For registrations native to Maru2, add them to the `_registrations` variable.
 
-For third party extensions, use the `Register` function to register your builtin, then call `maru2.WorkflowSchema(version string)` to generate and export your new schema with your registerred builtin.
+For third party extensions, use the `Register` function to register your builtin, then call `maru2.WorkflowSchema(version string)` to generate and export your new schema with your registered builtin.
