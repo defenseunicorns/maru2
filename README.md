@@ -11,6 +11,8 @@
 > [!IMPORTANT]
 > Until this callout is removed, `maru2` is in maintenance mode while other efforts take priority.
 >
+> The current API is considered stable and any breaking changes will be done in a backwards compatible manner.
+>
 > Dependency and security updates will still continue to be performed as needed.
 >
 > Issues and Pull Requests are welcome, the CLI team may just take longer to respond.
