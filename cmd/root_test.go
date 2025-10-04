@@ -5,6 +5,7 @@ package cmd_test
 
 import (
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,6 +31,20 @@ func TestE2E(t *testing.T) {
 		RequireUniqueNames: true,
 		UpdateScripts:      os.Getenv("UPDATE_SCRIPTS") == "true",
 	})
+}
+
+func TestIsTerminal(t *testing.T) {
+	assert.True(t, cmd.IsTerminal(os.Stdout))
+	assert.True(t, cmd.IsTerminal(os.Stderr))
+	tmp := t.TempDir()
+	f, err := os.CreateTemp(tmp, "")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = f.Close()
+	})
+	assert.False(t, cmd.IsTerminal(f))
+	assert.False(t, cmd.IsTerminal(nil))
+	assert.False(t, cmd.IsTerminal(&strings.Builder{}))
 }
 
 func TestExplainRedirect(t *testing.T) {
@@ -90,7 +105,7 @@ tasks:
 	t.Cleanup(func() {
 		cmd.IsTerminal = curr
 	})
-	cmd.IsTerminal = func(int) bool {
+	cmd.IsTerminal = func(io.Writer) bool {
 		return true
 	}
 

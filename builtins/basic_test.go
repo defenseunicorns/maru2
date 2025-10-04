@@ -5,9 +5,9 @@ package builtins
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -210,7 +210,7 @@ func TestBuiltinFetch(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			ctx := log.WithContext(t.Context(), log.New(os.Stderr))
+			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
 			result, err := tc.fetch.Execute(ctx)
 
