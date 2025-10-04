@@ -343,8 +343,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			opts := maru2.RuntimeOptions{
-				Dry: dry,
-				Env: os.Environ(),
+				Dry:    dry,
+				Env:    os.Environ(),
+				Stdout: cmd.OutOrStdout(),
+				Stderr: cmd.OutOrStderr(),
+				Stdin:  cmd.InOrStdin(),
 			}
 
 			for _, call := range args {
