@@ -33,9 +33,8 @@ func TestE2E(t *testing.T) {
 	})
 }
 
+// this does not test for "success" cases due to go test runner hijacking os.Stdout and os.Stderr
 func TestIsTerminal(t *testing.T) {
-	assert.True(t, cmd.IsTerminal(os.Stdout))
-	assert.True(t, cmd.IsTerminal(os.Stderr))
 	tmp := t.TempDir()
 	f, err := os.CreateTemp(tmp, "")
 	require.NoError(t, err)
