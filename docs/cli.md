@@ -260,6 +260,25 @@ $ MARU2_CONFIG=custom.yaml maru2    # env var
 $ maru2                             # default
 ```
 
+## Environment variables
+
+### MARU2_CONFIG
+
+Overrides the default path to the maru2 config file. See above and/or [config.md](config.md).
+
+### TEMPDIR
+
+Maru2 uses temporary files to capture the outputs of tasks. By default, these temporary files are created in the OS-specific temporary directory. You can override this location by setting the `TEMPDIR` environment variable.
+
+```sh
+mkdir -p /path/to/tmp
+TEMPDIR=/path/to/tmp maru2 my-task
+```
+
+If specified, users will need to ensure this directory exists with the proper permissions before Maru2 execution.
+
+Maru2 does not handle cleanup of this directory either.
+
 ## Task execution
 
 ### The default task

@@ -238,6 +238,9 @@ func handleRunStep(
 		return nil, nil
 	}
 
+	// using os.CreateTempe w/ an empty string as the first argument
+	// leverages the TMPDIR environment variable, otherwise OS specific defaults
+	// see `go doc os.TempDir`
 	outFile, err := os.CreateTemp("", "maru2-output-*")
 	if err != nil {
 		return nil, err
