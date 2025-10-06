@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -281,7 +282,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			if explain {
-				if IsTerminal(int(os.Stdout.Fd())) {
+				if IsTerminal(cmd.OutOrStdout()) {
 					renderer, err := glamour.NewTermRenderer(glamour.WithStyles(styles.TokyoNightStyleConfig), glamour.WithWordWrap(100))
 					if err != nil {
 						return err
@@ -343,8 +344,11 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			opts := maru2.RuntimeOptions{
-				Dry: dry,
-				Env: os.Environ(),
+				Dry:    dry,
+				Env:    os.Environ(),
+				Stdout: cmd.OutOrStdout(),
+				Stderr: cmd.OutOrStderr(),
+				Stdin:  cmd.InOrStdin(),
 			}
 
 			for _, call := range args {
@@ -480,6 +484,10 @@ func ParseExitCode(err error) int {
 }
 
 // IsTerminal is a slim wrapper around term.IsTerminal, exported just so that E2E tests can mock
-var IsTerminal = func(fd int) bool {
-	return term.IsTerminal(fd)
+var IsTerminal = func(wr io.Writer) bool {
+	if f, ok := wr.(*os.File); ok && f != nil {
+		return term.IsTerminal(int(f.Fd()))
+	}
+
+	return false
 }

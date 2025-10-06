@@ -341,29 +341,6 @@ func TestRun(t *testing.T) {
 	}
 }
 
-func captureStdout(t *testing.T, f func()) string {
-	t.Helper()
-	old := os.Stdout
-	t.Cleanup(func() {
-		os.Stdout = old
-	})
-
-	r, w, err := os.Pipe()
-	require.NoError(t, err)
-	os.Stdout = w
-
-	f()
-
-	err = w.Close()
-	require.NoError(t, err)
-
-	var buf strings.Builder
-	_, err = io.Copy(&buf, r)
-	require.NoError(t, err)
-
-	return buf.String()
-}
-
 func TestRun_PrintGroup(t *testing.T) {
 	syncTrue := func() bool {
 		return true
@@ -398,14 +375,14 @@ func TestRun_PrintGroup(t *testing.T) {
 			},
 		}
 
-		stdout := captureStdout(t, func() {
-			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{})
-			require.NoError(t, err)
-			assert.Nil(t, out)
-		})
+		stdout := strings.Builder{}
 
-		assert.Equal(t, "::group::default\nfoo\n::endgroup::\n", stdout)
+		ctx := log.WithContext(t.Context(), log.New(io.Discard))
+		out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{Stdout: &stdout})
+		require.NoError(t, err)
+		assert.Nil(t, out)
+
+		assert.Equal(t, "::group::default\nfoo\n::endgroup::\n", stdout.String())
 	})
 
 	t.Run("gitlab", func(t *testing.T) {
@@ -419,14 +396,14 @@ func TestRun_PrintGroup(t *testing.T) {
 			},
 		}
 
-		stdout := captureStdout(t, func() {
-			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{})
-			require.NoError(t, err)
-			assert.Nil(t, out)
-		})
+		stdout := strings.Builder{}
 
-		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\nfoo\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, stdout)
+		ctx := log.WithContext(t.Context(), log.New(io.Discard))
+		out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{Stdout: &stdout})
+		require.NoError(t, err)
+		assert.Nil(t, out)
+
+		assert.Regexp(t, `^\\e\[0Ksection_start:\d+:default\[collapsed=true\]\\r\\e\[0Kdefault\nfoo\n\\e\[0Ksection_end:\d+:default\\r\\e\[0K\n$`, stdout.String())
 	})
 }
 

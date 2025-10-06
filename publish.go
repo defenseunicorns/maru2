@@ -38,11 +38,16 @@ func Publish(ctx context.Context, dst *remote.Repository, entrypoints []string) 
 		return fmt.Errorf("need at least one entrypoint")
 	}
 
+	// using os.CreateTemp w/ an empty string as the first argument
+	// leverages the TMPDIR environment variable, otherwise OS specific defaults
+	// see `go doc os.TempDir`
 	tmp, err := os.MkdirTemp("", "")
 	if err != nil {
 		return err
 	}
 
+	// leverages the PWD environment variable, otherwise OS specific defaults
+	// see `go doc os.Getwd`
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err

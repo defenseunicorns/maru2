@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"net/url"
 	"os"
@@ -41,6 +42,12 @@ type RuntimeOptions struct {
 	Dry bool
 	// Whether this execution is already inside a collapsible section in CI, disables nested collapsible sections if true
 	Collapsed bool
+	// See `go doc exec.Cmd.Stdout`
+	Stdout io.Writer
+	// See `go doc exec.Cmd.Stderr`
+	Stderr io.Writer
+	// See `go doc exec.Cmd.Stdin`
+	Stdin io.Reader
 }
 
 /*
@@ -105,7 +112,7 @@ func Run(
 	start := time.Now()
 
 	if task.Collapse && !ro.Collapsed {
-		closeGroup := printGroup(os.Stdout, taskName, task.Description)
+		closeGroup := printGroup(ro.Stdout, taskName, task.Description)
 		defer closeGroup()
 		ro.Collapsed = true
 	}
@@ -231,6 +238,9 @@ func handleRunStep(
 		return nil, nil
 	}
 
+	// using os.CreateTemp w/ an empty string as the first argument
+	// leverages the TMPDIR environment variable, otherwise OS specific defaults
+	// see `go doc os.TempDir`
 	outFile, err := os.CreateTemp("", "maru2-output-*")
 	if err != nil {
 		return nil, err
@@ -269,9 +279,9 @@ func handleRunStep(
 	cmd := exec.CommandContext(ctx, shell, args...)
 	cmd.Env = env
 	cmd.Dir = filepath.Join(ro.WorkingDir, step.Dir)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
+	cmd.Stdout = ro.Stdout
+	cmd.Stderr = ro.Stderr
+	cmd.Stdin = ro.Stdin
 
 	if step.Mute {
 		cmd.Stdout = nil
