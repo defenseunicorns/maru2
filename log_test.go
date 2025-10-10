@@ -615,7 +615,7 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    main# Main task",
+				"    main # Main task",
 				"",
 			},
 		},
@@ -642,8 +642,8 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    another   # Another task",
-				"    local-task# Local task",
+				"    another    # Another task",
+				"    local-task # Local task",
 				"",
 			},
 		},
@@ -658,7 +658,7 @@ func TestDetailedTaskListWithAliases(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    standalone# Standalone task",
+				"    standalone # Standalone task",
 				"",
 			},
 		},
@@ -703,9 +703,9 @@ tasks:
 `),
 			},
 			expected: []string{
-				"    main          # Main task",
-				"    external:build# Build the project",
-				"    external:test # Test the project",
+				"    main           # Main task",
+				"    external:build # Build the project",
+				"    external:test  # Test the project",
 				"",
 			},
 		},
