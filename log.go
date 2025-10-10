@@ -91,7 +91,7 @@ func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *
 	for name, task := range wf.Tasks.OrderedSeq() {
 		var comment string
 		if desc := task.Description; desc != "" {
-			comment = "# " + desc
+			comment = " # " + desc
 		}
 
 		msg := strings.Builder{}
@@ -115,7 +115,7 @@ func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *
 			for n, task := range aliasedWF.Tasks.OrderedSeq() {
 				var comment string
 				if desc := task.Description; desc != "" {
-					comment = "# " + desc
+					comment = " # " + desc
 				}
 
 				msg := strings.Builder{}
