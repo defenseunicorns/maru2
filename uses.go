@@ -35,7 +35,7 @@ func handleUsesStep(
 ) (map[string]any, error) {
 	ro.WorkingDir = filepath.Join(ro.WorkingDir, step.Dir)
 
-	if strings.HasPrefix(step.Uses, "builtin:") {
+	if strings.HasPrefix(step.Uses, BuiltinPrefix) {
 		return ExecuteBuiltin(ctx, step, withDefaults, outputs, ro.Dry)
 	}
 
@@ -125,7 +125,7 @@ func FetchAll(ctx context.Context, svc *uses.FetcherService, wf v1.Workflow, src
 				continue
 			}
 
-			if strings.HasPrefix(step.Uses, "builtin:") {
+			if strings.HasPrefix(step.Uses, BuiltinPrefix) {
 				continue
 			}
 

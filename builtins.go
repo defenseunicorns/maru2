@@ -16,12 +16,15 @@ import (
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
 
+// BuiltinPrefix is the uses prefix for builtins
+const BuiltinPrefix = "builtin:"
+
 // ExecuteBuiltin dispatches to registered builtin tasks (builtin:echo, builtin:fetch)
 //
-// Strips the "builtin:" prefix, renders templates in the With map,
+// Strips the builtin prefix, renders templates in the With map,
 // then delegates to the appropriate builtin's Execute method
 func ExecuteBuiltin(ctx context.Context, step v1.Step, with schema.With, previousOutputs CommandOutputs, dry bool) (map[string]any, error) {
-	name := strings.TrimPrefix(step.Uses, "builtin:")
+	name := strings.TrimPrefix(step.Uses, BuiltinPrefix)
 	logger := log.FromContext(ctx)
 
 	builtin := builtins.Get(name)
