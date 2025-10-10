@@ -411,8 +411,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    default# Default task",
-				"    test   # Test task",
+				"    default # Default task",
+				"    test    # Test task",
 				"",
 			},
 		},
@@ -438,7 +438,7 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    echo -w optional-param= -w required-param= -w text='default-value'# Echo task with inputs",
+				"    echo -w optional-param= -w required-param= -w text='default-value' # Echo task with inputs",
 				"",
 			},
 		},
@@ -466,7 +466,7 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    env-task -w value=\"${MY_ENV_VAR:-fallback}\"# Task with env default",
+				"    env-task -w value=\"${MY_ENV_VAR:-fallback}\" # Task with env default",
 				"",
 			},
 		},
@@ -489,9 +489,9 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    default  # Default task should be first",
-				"    aaa-first# Should appear after default but before zzz",
-				"    zzz-last # Should appear after default",
+				"    default   # Default task should be first",
+				"    aaa-first # Should appear after default but before zzz",
+				"    zzz-last  # Should appear after default",
 				"",
 			},
 		},
@@ -510,7 +510,7 @@ func TestDetailedTaskList(t *testing.T) {
 			},
 			expected: []string{
 				"    no-desc  ",
-				"    with-desc# Has description",
+				"    with-desc # Has description",
 				"",
 			},
 		},
@@ -531,8 +531,8 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    empty-inputs# Task with empty inputs",
-				"    nil-inputs  # Task with nil inputs",
+				"    empty-inputs # Task with empty inputs",
+				"    nil-inputs   # Task with nil inputs",
 				"",
 			},
 		},
@@ -552,7 +552,7 @@ func TestDetailedTaskList(t *testing.T) {
 				},
 			},
 			expected: []string{
-				"    ordered-test -w alpha='a' -w beta='b' -w zebra='z'# Test ordering",
+				"    ordered-test -w alpha='a' -w beta='b' -w zebra='z' # Test ordering",
 				"",
 			},
 		},

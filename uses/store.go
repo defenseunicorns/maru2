@@ -260,7 +260,7 @@ func (s *LocalStore) GC() error {
 
 outer:
 	for _, fi := range all {
-		if fi.IsDir() || fi.Name() == "index.txt" {
+		if fi.IsDir() || fi.Name() == IndexFileName {
 			continue
 		}
 
