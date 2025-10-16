@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.2 (2025-10-16)
+
+## What's Changed
+* ci(deps): bump the github-actions group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/175
+* build(deps): bump the go group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/defenseunicorns/maru2/pull/173
+
+
+**Full Changelog**: https://github.com/defenseunicorns/maru2/compare/v0.8.1...v0.8.2
+
 ## 0.8.1 (2025-10-08)
 
 ## What's Changed
