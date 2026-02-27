@@ -30,6 +30,13 @@ stderr 'ERRO stat does-not-exist.yaml: no such file or directory'
 ! exec maru2 -f workflow-with-aliases.yaml local:fails
 stderr 'ERRO at fails\[0\] \(file:local-tasks.yaml\?task=fails\)'
 
+-- list.txt --
+Available tasks:
+    local-task                                
+    remote-task -w message='hello from remote' # I am a remote task
+    local:echo-local                          
+    local:fails                                # This task is going to fail
+
 -- workflow-absolute-path.yaml --
 schema-version: v1
 aliases:
@@ -102,10 +109,3 @@ aliases:
 tasks:
   default:
     steps: []
--- list.txt --
-Available tasks:
-    local-task                                
-    remote-task -w message='hello from remote'# I am a remote task
-    local:echo-local                          
-    local:fails                               # This task is going to fail
-
