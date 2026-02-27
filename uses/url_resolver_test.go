@@ -115,8 +115,8 @@ func TestResolveURL(t *testing.T) {
 		{
 			name: "pkg -> pkg with task param",
 			prev: "file:/dir/bar.yaml",
-			uri:  "pkg:github/owner/repo@v1.0.0#dir/foo.yaml?task=bar",
-			next: "pkg:github/owner/repo@v1.0.0#dir/foo.yaml?task=bar",
+			uri:  "pkg:github/owner/repo@v1.0.0?task=bar#dir/foo.yaml",
+			next: "pkg:github/owner/repo@v1.0.0?task=bar#dir/foo.yaml",
 		},
 		{
 			name: "pkg -> file with path traversal",
@@ -259,7 +259,7 @@ func TestResolveURL(t *testing.T) {
 					BaseURL: "https://github.com/",
 				},
 			},
-			next: "pkg:github/owner/repo@v1.0.0?base-url=https%3A%2F%2Fgithub.com%2F#dir/bar.yaml",
+			next: "pkg:github/owner/repo@v1.0.0?base-url=https:%2F%2Fgithub.com%2F#dir/bar.yaml",
 		},
 		{
 			name: "pkg -> file with alias resolution",
@@ -271,7 +271,7 @@ func TestResolveURL(t *testing.T) {
 					BaseURL: "https://github.com",
 				},
 			},
-			next: "pkg:github/owner/repo@v1.0.0?base-url=https%3A%2F%2Fgithub.com#dir/bar.yaml",
+			next: "pkg:github/owner/repo@v1.0.0?base-url=https:%2F%2Fgithub.com#dir/bar.yaml",
 		},
 		{
 			name: "pkg -> file with task param and alias resolution",
@@ -284,7 +284,7 @@ func TestResolveURL(t *testing.T) {
 					TokenFromEnv: "GITHUB_TOKEN",
 				},
 			},
-			next: "pkg:github/owner/repo@v1.0.0?base-url=https%3A%2F%2Fgithub.com&task=baz&token-from-env=GITHUB_TOKEN#dir/bar.yaml",
+			next: "pkg:github/owner/repo@v1.0.0?base-url=https:%2F%2Fgithub.com&task=baz&token-from-env=GITHUB_TOKEN#dir/bar.yaml",
 		},
 		{
 			name:        "pkg -> file with invalid package URL",
@@ -410,7 +410,7 @@ func TestResolveURL(t *testing.T) {
 					TokenFromEnv: "CUSTOM_TOKEN",
 				},
 			},
-			next: "pkg:github/owner/repo@v1.0.0?base-url=https%3A%2F%2Fcustom.github.com&token-from-env=CUSTOM_TOKEN#dir/foo.yaml",
+			next: "pkg:github/owner/repo@v1.0.0?base-url=https:%2F%2Fcustom.github.com&token-from-env=CUSTOM_TOKEN#dir/foo.yaml",
 		},
 		{
 			name: "pkg alias resolution preserves existing qualifiers",
@@ -423,7 +423,7 @@ func TestResolveURL(t *testing.T) {
 					TokenFromEnv: "CUSTOM_TOKEN",
 				},
 			},
-			next: "pkg:github/owner/repo@v1.0.0?base-url=https%3A%2F%2Fcustom.github.com&existing=value&token-from-env=CUSTOM_TOKEN#dir/foo.yaml",
+			next: "pkg:github/owner/repo@v1.0.0?base-url=https:%2F%2Fcustom.github.com&existing=value&token-from-env=CUSTOM_TOKEN#dir/foo.yaml",
 		},
 		{
 			name: "pkg alias resolution does not override existing qualifiers",

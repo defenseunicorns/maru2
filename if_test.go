@@ -218,7 +218,7 @@ func TestIf(t *testing.T) {
 			inputExpr:       `input("missing")`,
 			with:            schema.With{},
 			previousOutputs: CommandOutputs{},
-			expectedErr:     "expression did not evaluate to a boolean",
+			expected:        false,
 		},
 		{
 			name:      "complex array operations",

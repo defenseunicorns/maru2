@@ -122,7 +122,7 @@ func TestFetcherService(t *testing.T) {
 		{
 			name:        "gitlab base url is invalid",
 			uri:         "pkg:gitlab/noxsios/vai?base-url=:%20invalid",
-			expectedErr: "parse \": invalid/\": missing protocol scheme",
+			expectedErr: "failed to parse base URL: parse \": invalid/\": missing protocol scheme",
 		},
 		{
 			name:           "caching",
