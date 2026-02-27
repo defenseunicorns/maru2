@@ -96,7 +96,7 @@ func (b *fetch) Execute(ctx context.Context, _ runtime.Options) (map[string]any,
 
 func (b *fetch) setDefaults() error {
 	if b.Method == "" {
-		b.Method = "GET"
+		b.Method = http.MethodGet
 	}
 
 	b.parsedTimeout = 30 * time.Second
