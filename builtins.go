@@ -12,6 +12,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/defenseunicorns/maru2/builtins"
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
@@ -23,7 +24,7 @@ const BuiltinPrefix = "builtin:"
 //
 // Strips the builtin prefix, renders templates in the With map,
 // then delegates to the appropriate builtin's Execute method
-func ExecuteBuiltin(ctx context.Context, step v1.Step, with schema.With, previousOutputs CommandOutputs, dry bool) (map[string]any, error) {
+func ExecuteBuiltin(ctx context.Context, step v1.Step, with schema.With, previousOutputs CommandOutputs, ro runtime.Options) (map[string]any, error) {
 	name := strings.TrimPrefix(step.Uses, BuiltinPrefix)
 	logger := log.FromContext(ctx)
 
@@ -35,13 +36,13 @@ func ExecuteBuiltin(ctx context.Context, step v1.Step, with schema.With, previou
 	var rendered schema.With
 	if with != nil {
 		var err error
-		rendered, err = TemplateWithMap(ctx, step.With, with, previousOutputs, dry)
+		rendered, err = TemplateWithMap(ctx, step.With, with, previousOutputs, ro.Dry)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", step.Uses, err)
 		}
 	}
 
-	if dry {
+	if ro.Dry {
 		logger.Info("dry run", "builtin", name)
 		printBuiltin(logger, rendered)
 		return nil, nil
@@ -63,7 +64,7 @@ func ExecuteBuiltin(ctx context.Context, step v1.Step, with schema.With, previou
 
 	logger.Debug(">", "builtin", name, "with", builtin)
 
-	result, err := builtin.Execute(ctx)
+	result, err := builtin.Execute(ctx, ro)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", step.Uses, err)
 	}

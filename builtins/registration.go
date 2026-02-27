@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+
+	"github.com/defenseunicorns/maru2/runtime"
 )
 
 var _register sync.RWMutex
@@ -17,7 +19,7 @@ var _register sync.RWMutex
 // Implementations must be structs to support configuration binding via mapstructure.
 // The Execute method receives context and returns outputs that can be accessed by subsequent steps
 type Builtin interface {
-	Execute(ctx context.Context) (map[string]any, error)
+	Execute(ctx context.Context, ro runtime.Options) (map[string]any, error)
 }
 
 var _registrations = map[string]func() Builtin{

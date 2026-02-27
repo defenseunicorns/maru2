@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
@@ -275,7 +276,7 @@ func TestExecuteBuiltin(t *testing.T) {
 			var buf bytes.Buffer
 			ctx := log.WithContext(t.Context(), log.New(&buf))
 
-			result, err := ExecuteBuiltin(ctx, tc.step, tc.with, tc.previousOutputs, tc.dry)
+			result, err := ExecuteBuiltin(ctx, tc.step, tc.with, tc.previousOutputs, runtime.Options{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

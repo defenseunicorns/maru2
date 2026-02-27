@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/spf13/afero"
 
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
@@ -31,12 +32,12 @@ func handleUsesStep(
 	withDefaults schema.With,
 	outputs CommandOutputs,
 	origin *url.URL,
-	ro RuntimeOptions,
+	ro runtime.Options,
 ) (map[string]any, error) {
 	ro.WorkingDir = filepath.Join(ro.WorkingDir, step.Dir)
 
 	if strings.HasPrefix(step.Uses, BuiltinPrefix) {
-		return ExecuteBuiltin(ctx, step, withDefaults, outputs, ro.Dry)
+		return ExecuteBuiltin(ctx, step, withDefaults, outputs, ro)
 	}
 
 	logger := log.FromContext(ctx)

@@ -6,6 +6,8 @@ package builtins
 import (
 	"context"
 	"fmt"
+
+	"github.com/defenseunicorns/maru2/runtime"
 )
 
 // wackyStructs is a sample builtin to showcase wacky struct handling
@@ -25,6 +27,6 @@ type wackyStructs struct {
 }
 
 // Execute the builtin
-func (b *wackyStructs) Execute(_ context.Context) (map[string]any, error) {
+func (b *wackyStructs) Execute(_ context.Context, _ runtime.Options) (map[string]any, error) {
 	return nil, fmt.Errorf("not implemented")
 }

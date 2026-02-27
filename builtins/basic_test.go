@@ -14,6 +14,8 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/runtime"
 )
 
 func TestBuiltinsMap(t *testing.T) {
@@ -64,7 +66,7 @@ func TestBuiltinEcho(t *testing.T) {
 			ctx := log.WithContext(t.Context(), logger)
 
 			echo := echo{Text: tc.text}
-			result, err := echo.Execute(ctx)
+			result, err := echo.Execute(ctx, runtime.Options{})
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.text, result["stdout"])
@@ -212,7 +214,7 @@ func TestBuiltinFetch(t *testing.T) {
 			t.Parallel()
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
 
-			result, err := tc.fetch.Execute(ctx)
+			result, err := tc.fetch.Execute(ctx, runtime.Options{})
 
 			if tc.expectedError != "" {
 				require.ErrorContains(t, err, tc.expectedError)
@@ -229,7 +231,7 @@ func TestBuiltinWackyStructs(t *testing.T) {
 	wacky := Get("wacky-structs")
 	assert.Implements(t, (*Builtin)(nil), wacky)
 
-	out, err := wacky.Execute(t.Context())
+	out, err := wacky.Execute(t.Context(), runtime.Options{})
 	assert.Nil(t, out)
 	require.Error(t, err)
 }

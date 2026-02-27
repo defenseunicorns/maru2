@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+
+	"github.com/defenseunicorns/maru2/runtime"
 )
 
 // echo is a sample builtin to MVP execution
@@ -22,7 +24,7 @@ type echo struct {
 }
 
 // Execute the builtin
-func (b *echo) Execute(ctx context.Context) (map[string]any, error) {
+func (b *echo) Execute(ctx context.Context, _ runtime.Options) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 
 	logger.Print(b.Text)
@@ -40,7 +42,7 @@ type fetch struct {
 }
 
 // Execute the builtin
-func (b *fetch) Execute(ctx context.Context) (map[string]any, error) {
+func (b *fetch) Execute(ctx context.Context, _ runtime.Options) (map[string]any, error) {
 	logger := log.FromContext(ctx)
 
 	if err := b.setDefaults(); err != nil {

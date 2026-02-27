@@ -29,6 +29,7 @@ import (
 
 	"github.com/defenseunicorns/maru2"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	"github.com/defenseunicorns/maru2/uses"
 )
@@ -343,7 +344,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				args = append(args, schema.DefaultTaskName)
 			}
 
-			opts := maru2.RuntimeOptions{
+			opts := runtime.Options{
 				Dry:    dry,
 				Env:    os.Environ(),
 				Stdout: cmd.OutOrStdout(),
