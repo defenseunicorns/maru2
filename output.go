@@ -60,15 +60,15 @@ func ParseOutput(r io.ReadSeeker) (map[string]string, error) {
 			continue
 		}
 
-		if idx := strings.Index(line, "="); idx != -1 {
+		if before, after, ok := strings.Cut(line, "="); ok {
 			// Split the line at the first '=' to handle the key-value pair
-			key := line[:idx]
-			value := line[idx+1:]
+			key := before
+			value := after
 			result[key] = value
-		} else if idx := strings.Index(line, "<<"); idx != -1 {
+		} else if before, after, ok := strings.Cut(line, "<<"); ok {
 			// Split the line at the first '<<' to handle the key-value pair
-			key := line[:idx]
-			delimiter := strings.TrimSpace(line[idx+2:])
+			key := before
+			delimiter := strings.TrimSpace(after)
 
 			if delimiter == "" {
 				return nil, fmt.Errorf("invalid syntax: missing delimiter after '<<'")
