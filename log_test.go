@@ -12,9 +12,11 @@ import (
 	"sync"
 	"testing"
 
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/colorprofile"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,14 +65,14 @@ func TestPrintScript(t *testing.T) {
 		{
 			name:     "simple shell",
 			script:   "echo hello",
-			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n",
+			expected: "\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m hello\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
 		{
 			name:     "multiline",
 			script:   "echo hello\necho world\n\necho !",
-			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m world\x1b[0m\n  \x1b[38;5;189m\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m !\x1b[0m\n",
+			expected: "\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m hello\x1b[m\n\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m world\x1b[m\n\x1b[48;5;237m \x1b[m \x1b[38;5;189m\x1b[m\n\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m !\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
@@ -133,6 +135,11 @@ func TestPrintScript(t *testing.T) {
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
+			if tc.color {
+				// In log v2, we need to explicitly set the color profile
+				// since the test buffer is not a TTY
+				logger.SetColorProfile(colorprofile.ANSI256)
+			}
 			printScript(logger, "", tc.script)
 			assert.Equal(t, tc.expected, buf.String(), "this test fails when run w/ `go test`, run w/ `make test` instead as that will use maru2, which uses a true shell env")
 		})
@@ -161,14 +168,14 @@ func TestPrintBuiltin(t *testing.T) {
 		{
 			name:     "simple shell",
 			builtin:  schema.With{"text": "hello"},
-			expected: "\x1b[38;5;141mwith\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m\x1b[0m\n\x1b[38;5;189m  \x1b[0m\x1b[38;5;141mtext\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m \x1b[0m\x1b[38;5;189mhello\x1b[0m\x1b[38;5;189m\x1b[0m\n",
+			expected: "\x1b[38;5;141mwith\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m\x1b[m\n\x1b[38;5;189m  \x1b[m\x1b[38;5;141mtext\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m \x1b[m\x1b[38;5;189mhello\x1b[m\x1b[38;5;189m\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
 		{
 			name:     "multiline",
 			builtin:  schema.With{"text": "hello\nworld\n!"},
-			expected: "\x1b[38;5;141mwith\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m\x1b[0m\n\x1b[38;5;189m  \x1b[0m\x1b[38;5;141mtext\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m \x1b[0m\x1b[38;5;189m|-\x1b[0m\x1b[38;5;240m\x1b[0m\n\x1b[38;5;240m    hello\x1b[0m\n\x1b[38;5;240m    world\x1b[0m\n\x1b[38;5;240m    !\x1b[0m\x1b[38;5;189m\x1b[0m\n",
+			expected: "\x1b[38;5;141mwith\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m\x1b[m\n\x1b[38;5;189m  \x1b[m\x1b[38;5;141mtext\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m \x1b[m\x1b[38;5;189m|-\x1b[m\x1b[38;5;240m\x1b[m\n\x1b[38;5;240m    hello\x1b[m\n\x1b[38;5;240m    world\x1b[m\n\x1b[38;5;240m    !\x1b[m\x1b[38;5;189m\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
@@ -242,6 +249,11 @@ func TestPrintBuiltin(t *testing.T) {
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
+			if tc.color {
+				// In log v2, we need to explicitly set the color profile
+				// since the test buffer is not a TTY
+				logger.SetColorProfile(colorprofile.ANSI256)
+			}
 			printBuiltin(logger, tc.builtin)
 			assert.Equal(t, tc.expected, buf.String())
 		})
@@ -945,7 +957,9 @@ func TestRenderInputMap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf strings.Builder
 			renderInputMap(&buf, tc.inputs)
-			assert.Equal(t, tc.expected, buf.String())
+			// Use lipgloss.Sprint to downsample colors for comparison,
+			// matching the behavior in TaskList.String()
+			assert.Equal(t, tc.expected, lipgloss.Sprint(buf.String()))
 		})
 	}
 }

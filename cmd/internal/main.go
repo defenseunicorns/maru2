@@ -14,7 +14,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/defenseunicorns/maru2"

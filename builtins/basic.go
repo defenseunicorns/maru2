@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 
 	"github.com/defenseunicorns/maru2/runtime"
 )

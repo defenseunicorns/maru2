@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/goccy/go-yaml"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"

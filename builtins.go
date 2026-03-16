@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/defenseunicorns/maru2/builtins"

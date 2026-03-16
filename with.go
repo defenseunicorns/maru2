@@ -16,8 +16,8 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/spf13/cast"
 
 	"github.com/defenseunicorns/maru2/schema"

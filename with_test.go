@@ -8,7 +8,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/charmbracelet/log"
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -204,7 +205,8 @@ func TestTemplateString(t *testing.T) {
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expected, result)
+				// Use lipgloss.Sprint to downsample colors for comparison in dry-run mode
+				assert.Equal(t, tc.expected, lipgloss.Sprint(result))
 			} else {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.expectedError)

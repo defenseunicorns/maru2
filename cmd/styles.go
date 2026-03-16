@@ -4,7 +4,7 @@
 package cmd
 
 import (
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 
 	"github.com/defenseunicorns/maru2"
 )

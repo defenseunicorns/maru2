@@ -11,7 +11,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/spf13/afero"
 
 	"github.com/defenseunicorns/maru2/runtime"

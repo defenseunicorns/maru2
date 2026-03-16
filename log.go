@@ -6,6 +6,7 @@ package maru2
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"io"
 	"net/url"
 	"os"
@@ -13,9 +14,9 @@ import (
 	"sync"
 	"time"
 
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/alecthomas/chroma/v2/quick"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/goccy/go-yaml"
 	"github.com/muesli/termenv"
@@ -44,37 +45,50 @@ var isGitLabCI = sync.OnceValue(func() bool {
 	return os.Getenv(GitLabCIEnvVar) == "true"
 })
 
+// hasDarkBackground detects if the terminal has a dark background.
+// This is evaluated once at package init time for use with LightDark color selection.
+// Defaults to true (dark mode) if detection fails.
+var hasDarkBackground = sync.OnceValue(func() bool {
+	return lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
+})
+
+// lightDark is a helper function for selecting colors based on terminal background.
+// It returns the appropriate color for the current terminal background.
+func lightDark(light, dark color.Color) color.Color {
+	return lipgloss.LightDark(hasDarkBackground())(light, dark)
+}
+
 // The terminal colors maru2 uses, derived from
 // https://github.com/charmbracelet/vhs/blob/main/themes.json
 var (
-	DebugColor = lipgloss.AdaptiveColor{
-		Light: "#2e7de9", // tokyonight-day blue
-		Dark:  "#7aa2f7", // tokyonight blue
-	}
-	InfoColor = lipgloss.AdaptiveColor{
-		Light: "#007197", // tokyonight-day cyan
-		Dark:  "#7dcfff", // tokyonight cyan
-	}
-	WarnColor = lipgloss.AdaptiveColor{
-		Light: "#8c6c3e", // tokyonight-day amber/yellow
-		Dark:  "#e0af68", // tokyonight amber/yellow
-	}
-	ErrorColor = lipgloss.AdaptiveColor{
-		Light: "#f52a65", // tokyonight-day red
-		Dark:  "#f7768e", // tokyonight red
-	}
-	FatalColor = lipgloss.AdaptiveColor{
-		Light: "#9854f1", // tokyonight-day magenta (deep red alternative)
-		Dark:  "#bb9af7", // tokyonight magenta (deep red alternative)
-	}
-	GreenColor = lipgloss.AdaptiveColor{
-		Light: "#587539", // tokyonight-day green
-		Dark:  "#9ece6a", // tokyonight green
-	}
-	GrayColor = lipgloss.AdaptiveColor{
-		Light: "#c5c6bC",
-		Dark:  "#3a3943",
-	}
+	DebugColor = lightDark(
+		lipgloss.Color("#2e7de9"), // tokyonight-day blue
+		lipgloss.Color("#7aa2f7"), // tokyonight blue
+	)
+	InfoColor = lightDark(
+		lipgloss.Color("#007197"), // tokyonight-day cyan
+		lipgloss.Color("#7dcfff"), // tokyonight cyan
+	)
+	WarnColor = lightDark(
+		lipgloss.Color("#8c6c3e"), // tokyonight-day amber/yellow
+		lipgloss.Color("#e0af68"), // tokyonight amber/yellow
+	)
+	ErrorColor = lightDark(
+		lipgloss.Color("#f52a65"), // tokyonight-day red
+		lipgloss.Color("#f7768e"), // tokyonight red
+	)
+	FatalColor = lightDark(
+		lipgloss.Color("#9854f1"), // tokyonight-day magenta (deep red alternative)
+		lipgloss.Color("#bb9af7"), // tokyonight magenta (deep red alternative)
+	)
+	GreenColor = lightDark(
+		lipgloss.Color("#587539"), // tokyonight-day green
+		lipgloss.Color("#9ece6a"), // tokyonight green
+	)
+	GrayColor = lightDark(
+		lipgloss.Color("#c5c6bC"),
+		lipgloss.Color("#3a3943"),
+	)
 )
 
 // TaskList is a prettier way to display a workflow's entrypoints from a CLI's perspective
@@ -161,7 +175,8 @@ func (tl *TaskList) String() string {
 		}
 	}
 
-	return sb.String()
+	// Use lipgloss.Sprint to automatically downsample colors based on stdout capabilities
+	return lipgloss.Sprint(sb.String())
 }
 
 func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
@@ -225,7 +240,7 @@ func printScript(logger *log.Logger, lang, script string) {
 
 	var buf strings.Builder
 	style := "tokyonight-day"
-	if lipgloss.HasDarkBackground() {
+	if hasDarkBackground() {
 		style = "tokyonight-moon"
 	}
 	if err := quick.Highlight(&buf, script, lang, "terminal256", style); err != nil {
@@ -266,7 +281,7 @@ func printBuiltin(logger *log.Logger, builtin schema.With) {
 	}
 
 	style := "tokyonight-day"
-	if lipgloss.HasDarkBackground() {
+	if hasDarkBackground() {
 		style = "tokyonight-moon"
 	}
 

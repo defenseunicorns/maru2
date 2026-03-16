@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/expr-lang/expr"
 
 	"github.com/defenseunicorns/maru2/schema"
