@@ -21,6 +21,7 @@ import (
 	"oras.land/oras-go/v2/registry/remote/retry"
 
 	"github.com/defenseunicorns/maru2"
+	"github.com/defenseunicorns/maru2/theme"
 )
 
 // NewPublishCmd creates the root command for the maru2-publish CLI.
@@ -148,7 +149,7 @@ func PublishMain() int {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(DefaultStyles())
+	logger.SetStyles(theme.DefaultStyles(os.Stdin, os.Stdout))
 
 	ctx = log.WithContext(ctx, logger)
 

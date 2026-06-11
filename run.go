@@ -204,13 +204,13 @@ func handleRunStep(
 	script, err := TemplateString(ctx, step.Run, withDefaults, outputs, ro.Dry)
 	if err != nil {
 		if ro.Dry {
-			printScript(logger, step.Shell, script)
+			printScript(logger, ro.Theme, step.Shell, script)
 		}
 		return nil, err
 	}
 
 	if ro.Dry || step.Show == nil || *step.Show {
-		printScript(logger, step.Shell, script)
+		printScript(logger, ro.Theme, step.Shell, script)
 	}
 	if ro.Dry {
 		return nil, nil

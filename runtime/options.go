@@ -4,7 +4,11 @@
 // Package runtime specifies global runtime configurations and options
 package runtime
 
-import "io"
+import (
+	"io"
+
+	"github.com/defenseunicorns/maru2/theme"
+)
 
 // Options are configurations whereupon the default empty/nil value is an acceptable case
 // and are not a requirement for a valid runtime execution
@@ -26,4 +30,6 @@ type Options struct {
 	Stderr io.Writer
 	// See `go doc exec.Cmd.Stdin`
 	Stdin io.Reader
+	// see theme pkg
+	Theme *theme.Theme
 }

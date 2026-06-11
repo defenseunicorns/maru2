@@ -31,6 +31,7 @@ import (
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
 	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
+	"github.com/defenseunicorns/maru2/theme"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -270,8 +271,10 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
 			}
 
+			termTheme := theme.DefaultTheme(cmd.OutOrStdout(), cmd.OutOrStderr())
+
 			if list {
-				t, err := maru2.NewDetailedTaskList(ctx, svc, resolved, wf)
+				t, err := maru2.NewDetailedTaskList(ctx, termTheme, svc, resolved, wf)
 				if err != nil {
 					return err
 				}
@@ -350,6 +353,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				Stdout: cmd.OutOrStdout(),
 				Stderr: cmd.OutOrStderr(),
 				Stdin:  cmd.InOrStdin(),
+				Theme:  termTheme,
 			}
 
 			for _, call := range args {
@@ -430,7 +434,7 @@ func Main() int {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(DefaultStyles())
+	logger.SetStyles(theme.DefaultStyles(os.Stdin, os.Stdout))
 
 	ctx = log.WithContext(ctx, logger)
 	cmd, err := cli.ExecuteContextC(ctx)

@@ -19,6 +19,7 @@ import (
 
 	"github.com/defenseunicorns/maru2"
 	maru2cmd "github.com/defenseunicorns/maru2/cmd"
+	"github.com/defenseunicorns/maru2/theme"
 )
 
 // this application is only for internal testing only
@@ -56,7 +57,7 @@ func main() {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(maru2cmd.DefaultStyles())
+	logger.SetStyles(theme.DefaultStyles(os.Stdin, os.Stdout))
 
 	ctx = log.WithContext(ctx, logger)
 	// end context and logger setup

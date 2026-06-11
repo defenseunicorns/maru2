@@ -16,13 +16,13 @@ import (
 	"charm.land/log/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/charmbracelet/colorprofile"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/theme"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -129,18 +129,14 @@ func TestPrintScript(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.color {
-				t.Setenv("NO_COLOR", "true")
-			}
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
+			them_e := theme.BlankTheme()
 			if tc.color {
-				// In log v2, we need to explicitly set the color profile
-				// since the test buffer is not a TTY
-				logger.SetColorProfile(colorprofile.ANSI256)
+				them_e = theme.DefaultTheme(os.Stdout, os.Stderr)
 			}
-			printScript(logger, "", tc.script)
+			printScript(logger, them_e, "", tc.script)
 			assert.Equal(t, tc.expected, buf.String(), "this test fails when run w/ `go test`, run w/ `make test` instead as that will use maru2, which uses a true shell env")
 		})
 	}
@@ -153,7 +149,7 @@ func TestPrintScript(t *testing.T) {
 	lexers.Register(&errLexer{name: "shell"}) // overrides shell lexer
 
 	var buf strings.Builder
-	printScript(log.New(&buf), "", "echo hello")
+	printScript(log.New(&buf), theme.BlankTheme(), "", "echo hello")
 	assert.Equal(t, "  echo hello\n", buf.String())
 }
 
@@ -243,18 +239,14 @@ func TestPrintBuiltin(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.color {
-				t.Setenv("NO_COLOR", "true")
-			}
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
+			them_e := theme.BlankTheme()
 			if tc.color {
-				// In log v2, we need to explicitly set the color profile
-				// since the test buffer is not a TTY
-				logger.SetColorProfile(colorprofile.ANSI256)
+				them_e = theme.DefaultTheme(os.Stdout, os.Stderr)
 			}
-			printBuiltin(logger, tc.builtin)
+			printBuiltin(logger, them_e, tc.builtin)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
@@ -267,7 +259,7 @@ func TestPrintBuiltin(t *testing.T) {
 	lexers.Register(&errLexer{name: "yaml"}) // overrides yaml lexer
 
 	var buf strings.Builder
-	printBuiltin(log.New(&buf), schema.With{"text": "echo hello"})
+	printBuiltin(log.New(&buf), theme.BlankTheme(), schema.With{"text": "echo hello"})
 	assert.Equal(t, `with:
   text: echo hello
 `, buf.String())
@@ -280,7 +272,7 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 
 	builtin := schema.With{"func": func() {}}
 
-	printBuiltin(logger, builtin)
+	printBuiltin(logger, theme.BlankTheme(), builtin)
 
 	output := buf.String()
 	assert.Contains(t, output, "failed to marshal builtin")
@@ -401,8 +393,6 @@ func TestPrintGroup(t *testing.T) {
 }
 
 func TestDetailedTaskList(t *testing.T) {
-	t.Setenv("NO_COLOR", "true") // format matters more than ensuring colors are correct
-
 	testCases := []struct {
 		name     string
 		workflow v1.Workflow
@@ -573,7 +563,7 @@ func TestDetailedTaskList(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			tl, err := NewDetailedTaskList(ctx, nil, nil, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, theme.BlankTheme(), nil, nil, tc.workflow)
 
 			require.NoError(t, err)
 			assert.NotNil(t, tl)
@@ -584,8 +574,6 @@ func TestDetailedTaskList(t *testing.T) {
 }
 
 func TestDetailedTaskListWithAliases(t *testing.T) {
-	t.Setenv("NO_COLOR", "true") // format matters more than ensuring colors are correct
-
 	testCases := []struct {
 		name      string
 		workflow  v1.Workflow
@@ -754,7 +742,7 @@ tasks:
 			require.NoError(t, err)
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			tl, err := NewDetailedTaskList(ctx, svc, tc.origin, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, theme.BlankTheme(), svc, tc.origin, tc.workflow)
 
 			if tc.expectErr != "" {
 				require.ErrorContains(t, err, tc.expectErr)
@@ -956,7 +944,7 @@ func TestRenderInputMap(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf strings.Builder
-			renderInputMap(&buf, tc.inputs)
+			renderInputMap(&buf, theme.BlankTheme(), tc.inputs)
 			// Use lipgloss.Sprint to downsample colors for comparison,
 			// matching the behavior in TaskList.String()
 			assert.Equal(t, tc.expected, lipgloss.Sprint(buf.String()))

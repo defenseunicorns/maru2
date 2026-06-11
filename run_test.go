@@ -24,6 +24,7 @@ import (
 	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/theme"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -1277,8 +1278,6 @@ func TestHandleRunStep(t *testing.T) {
 		},
 	}
 
-	t.Setenv("NO_COLOR", "true")
-
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
@@ -1287,7 +1286,7 @@ func TestHandleRunStep(t *testing.T) {
 				Level: log.InfoLevel,
 			}))
 
-			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, runtime.Options{Dry: tc.dry})
+			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, runtime.Options{Dry: tc.dry, Theme: theme.BlankTheme()})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

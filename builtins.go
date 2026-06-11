@@ -44,7 +44,7 @@ func ExecuteBuiltin(ctx context.Context, step v1.Step, with schema.With, previou
 
 	if ro.Dry {
 		logger.Info("dry run", "builtin", name)
-		printBuiltin(logger, rendered)
+		printBuiltin(logger, ro.Theme, rendered)
 		return nil, nil
 	}
 
