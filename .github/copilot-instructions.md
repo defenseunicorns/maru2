@@ -145,9 +145,10 @@ make lint-fix       # Run linters with auto-fix
 Always validate changes with this sequence:
 
 1. `make` (rebuild + regenerate schemas)
-2. `make test ARGS='-w short=true'` (run core tests)
-3. `make lint` (if golangci-lint installed)
-4. Check schema files are committed if changed
+2. `go test ./<changed-package> -cover` when working in a narrow package
+3. `make test ARGS='-w short=true'` (run core tests)
+4. `make lint` (if golangci-lint installed)
+5. Check schema files are committed if changed
 
 ### Common Build Issues & Workarounds
 
@@ -196,7 +197,7 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 ### Key Workflow Concepts
 
-**Step Outputs**: Steps can produce outputs by writing `key=value` pairs to the `$MARU2_OUTPUT` environment variable file. Access outputs from previous steps using `${{ from "step-id" "output-key" }}` syntax. (see `output.go` and `output_test.go`)
+**Step Outputs**: Steps can produce outputs by writing `key=value` pairs to `$MARU2_OUTPUT`, or structured JSON objects to `$MARU2_JSON_OUTPUT`. Access outputs from previous steps using `${{ from "step-id" "output-key-or-jq" }}` syntax. Exact top-level key matches use direct lookup for backwards compatibility; otherwise the second argument is evaluated as a jq expression via `github.com/itchyny/gojq`. (see `output.go`, `with.go`, `output_test.go`, and `with_test.go`)
 
 **Shell Selection**: Steps support different shells via the `shell` property: `sh`, `bash`, `powershell`, `pwsh`. Default behavior varies by command content.
 
@@ -270,6 +271,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 - `text/template` - Go's standard template engine for script interpolation (`${{ input "name" }}` syntax)
 - `github.com/expr-lang/expr` - Fast expression evaluation for conditional `if` statements
+- `github.com/itchyny/gojq` - Embedded jq-compatible query evaluation for structured step outputs
 
 **Remote Integrations**:
 
@@ -282,8 +284,9 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 **UI/Logging**:
 
-- `github.com/charmbracelet/lipgloss` - Terminal styling and color output
-- `github.com/charmbracelet/log` - Structured, leveled logging with styling
+- `charm.land/lipgloss/v2` - Terminal styling and color output
+- `charm.land/log/v2` - Structured, leveled logging with styling
+- `github.com/charmbracelet/colorprofile` - Terminal color-profile detection and output downsampling
 - `github.com/alecthomas/chroma/v2` - Syntax highlighting for code output
 
 **Utilities**:
@@ -351,6 +354,8 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
    - Write table-driven tests for multiple scenarios
    - Use `testify/require` for assertions that deal with error handling
    - Use `testify/assert` for all other assertions
+   - Use `t.Context()` instead of `context.Background()` in tests
+   - Keep comments minimal; prefer clear test names and direct assertions
    - Mock external dependencies using interfaces
    - Test both happy path and error conditions
 
@@ -363,7 +368,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 5. **Communication**:
    - Be brutally honest in your feedback, avoiding fluff wording and words of encouragement. High quality code is your objective, not assuaging the concerns of your reader.
    - If you are ever confused, or something does not look right, first stop and think, then if you are still confused pause and ask for clarification.
-   - Avoid exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational aknowledgements.
+   - Avoid exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational acknowledgements.
    - Communicate in clear and concise prose that relays your intent without verbosity.
 
 ### Architecture Notes
