@@ -46,4 +46,4 @@ stderr 'ERRO failed to get user home directory: \$HOME is not defined'
 i'm not JSON
 -- stderr-invalid-docker-config.txt --
 WARN THIS FEATURE IS IN ALPHA EXPECT FREQUENT BREAKING CHANGES
-ERRO failed to decode config file at $WORK/home/.docker/config.json: invalid config format: invalid character 'i' looking for beginning of value
+ERRO failed to decode config file $WORK/home/.docker/config.json: invalid config format: invalid character 'i' looking for beginning of value
