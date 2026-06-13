@@ -5,8 +5,11 @@ package maru2
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"maps"
+
+	"github.com/itchyny/gojq"
 	"os"
 	"os/exec"
 	"regexp"
@@ -80,14 +83,22 @@ func TemplateString(ctx context.Context, str string, with schema.With, previousO
 					return style.Render(fmt.Sprintf("❯ from %s %s ❮", stepName, id)), nil
 				}
 
-				v, ok := stepOutputs[id]
-				if ok {
+				if v, exists := stepOutputs[id]; exists {
 					return v, nil
 				}
-				logger.Warnf("no output %q from %q", id, stepName)
+
+				_, err := gojq.Parse(id)
+				if err != nil {
+					return "", fmt.Errorf("invalid jq query %q: %w", id, err)
+				}
+
 				return style.Render(fmt.Sprintf("❯ from %s %s ❮", stepName, id)), nil
 			},
 			"which": which,
+			"tojson": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				return string(b), err
+			},
 		}
 		tmpl = template.New("dry-run expression evaluator").Funcs(fm)
 	} else {
@@ -105,13 +116,31 @@ func TemplateString(ctx context.Context, str string, with schema.With, previousO
 					return "", fmt.Errorf("no outputs from step %q", stepName)
 				}
 
-				v, ok := stepOutputs[id]
-				if ok {
+				if v, exists := stepOutputs[id]; exists {
 					return v, nil
 				}
-				return "", fmt.Errorf("no output %q from step %q", id, stepName)
+
+				query, err := gojq.Parse(id)
+				if err != nil {
+					return "", fmt.Errorf("invalid jq query %q: %w", id, err)
+				}
+
+				iter := query.Run(stepOutputs)
+				v, ok := iter.Next()
+				if !ok || v == nil {
+					return "", fmt.Errorf("jq query %q produced no output for step %q", id, stepName)
+				}
+				if err, ok := v.(error); ok {
+					return "", fmt.Errorf("jq query %q failed: %w", id, err)
+				}
+
+				return v, nil
 			},
 			"which": which,
+			"tojson": func(v any) (string, error) {
+				b, err := json.Marshal(v)
+				return string(b), err
+			},
 		}
 		tmpl = template.New("expression evaluator").Funcs(fm)
 	}

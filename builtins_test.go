@@ -247,7 +247,7 @@ func TestExecuteBuiltin(t *testing.T) {
 					"existing-key": "value",
 				},
 			},
-			expectedError: "builtin:echo: template: expression evaluator:1:4: executing \"expression evaluator\" at <from \"existing-step\" \"missing-key\">: error calling from: no output \"missing-key\" from step \"existing-step\"",
+			expectedError: "builtin:echo: template: expression evaluator:1:4: executing \"expression evaluator\" at <from \"existing-step\" \"missing-key\">: error calling from: jq query \"missing-key\" failed: function not defined: key/0",
 		},
 		{
 			name: "echo builtin combining input and previous outputs",

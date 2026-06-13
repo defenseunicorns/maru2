@@ -17,6 +17,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/go-github/v75 v75.0.0
 	github.com/invopop/jsonschema v0.14.0
+	github.com/itchyny/gojq v0.12.19
 	github.com/olareg/olareg v0.1.2
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/package-url/packageurl-go v0.1.6
@@ -50,6 +51,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/mattn/go-runewidth v0.0.24 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect

@@ -1002,7 +1002,7 @@ func TestPrepareEnvironment(t *testing.T) {
 				actualOutFileName = ""
 			}
 
-			env, err := prepareEnvironment(tc.startingEnv, tc.withDefaults, actualOutFileName, tc.stepEnv)
+			env, err := prepareEnvironment(tc.startingEnv, tc.withDefaults, actualOutFileName, "", tc.stepEnv)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)

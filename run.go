@@ -228,12 +228,22 @@ func handleRunStep(
 		os.Remove(outFile.Name())
 	}()
 
+	jsonOutFile, err := os.CreateTemp("", "maru2-json-output-*")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		jsonOutFile.Close()
+		os.Remove(jsonOutFile.Name())
+	}()
+
 	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, ro.Dry)
+
 	if err != nil {
 		return nil, err
 	}
 
-	env, err := prepareEnvironment(ro.Env, withDefaults, outFile.Name(), templatedEnv)
+	env, err := prepareEnvironment(ro.Env, withDefaults, outFile.Name(), jsonOutFile.Name(), templatedEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -271,12 +281,24 @@ func handleRunStep(
 	}
 
 	out, err := ParseOutput(outFile)
-	if err != nil || len(out) == 0 {
+	if err != nil {
 		return nil, err
 	}
 
-	result := make(map[string]any, len(out))
+	jsonOut, err := ParseJSONOutput(jsonOutFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(out) == 0 && len(jsonOut) == 0 {
+		return nil, nil
+	}
+
+	result := make(map[string]any)
 	for k, v := range out {
+		result[k] = v
+	}
+	for k, v := range jsonOut {
 		result[k] = v
 	}
 
@@ -287,8 +309,8 @@ func handleRunStep(
 //
 // Combines system env vars, input parameters as env vars, step-level env vars,
 // and the output file path for step communication
-func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName string, stepEnv schema.Env) ([]string, error) {
-	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
+func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName string, jsonOutFileName string, stepEnv schema.Env) ([]string, error) {
+	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+2)
 	copy(env, envVars)
 
 	for k, v := range withDefaults {
@@ -314,6 +336,10 @@ func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName 
 
 	if outFileName != "" {
 		env = append(env, fmt.Sprintf("MARU2_OUTPUT=%s", outFileName))
+	}
+
+	if jsonOutFileName != "" {
+		env = append(env, fmt.Sprintf("MARU2_JSON_OUTPUT=%s", jsonOutFileName))
 	}
 
 	return env, nil

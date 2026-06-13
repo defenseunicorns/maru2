@@ -56,7 +56,7 @@ func handleUsesStep(
 		return nil, err
 	}
 
-	env, err := prepareEnvironment(ro.Env, nil, "", templatedEnv)
+	env, err := prepareEnvironment(ro.Env, nil, "", "", templatedEnv)
 	if err != nil {
 		return nil, err
 	}

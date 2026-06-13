@@ -5,6 +5,7 @@ package maru2
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -89,6 +90,38 @@ func ParseOutput(r io.ReadSeeker) (map[string]string, error) {
 	// Handle case where file ends but multiline was being collected
 	if collecting {
 		return nil, fmt.Errorf("invalid syntax: multiline value not terminated")
+	}
+
+	return result, nil
+}
+
+// ParseJSONOutput parses a JSON output file into a map
+func ParseJSONOutput(r io.ReadSeeker) (map[string]any, error) {
+	if f, ok := r.(*os.File); ok {
+		fi, err := f.Stat()
+		if err != nil {
+			return nil, err
+		}
+
+		if fi.Size() > 50*1024*1024 {
+			return nil, fmt.Errorf("output file too large")
+		}
+
+		if fi.Size() == 0 {
+			return nil, nil // Empty file, no output
+		}
+	}
+
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
+
+	var result map[string]any
+	if err := json.NewDecoder(r).Decode(&result); err != nil {
+		if err == io.EOF {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to parse json output: %w", err)
 	}
 
 	return result, nil
