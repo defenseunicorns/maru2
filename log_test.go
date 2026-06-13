@@ -132,13 +132,13 @@ func TestPrintScript(t *testing.T) {
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
-			them_e := theme.BlankTheme()
+			testTheme := theme.BlankTheme()
 			if tc.color {
-				them_e = theme.DefaultTheme(os.Stdout, os.Stderr)
-				them_e.ColorProfile = colorprofile.ANSI256   // in testing force colors
-				logger.SetColorProfile(colorprofile.ANSI256) // so the colors and escape codes match 1:1
+				testTheme = theme.DefaultTheme(os.Stdout, os.Stderr)
+				testTheme.ColorProfile = colorprofile.ANSI256 // in testing force colors
+				logger.SetColorProfile(colorprofile.ANSI256)  // so the colors and escape codes match 1:1
 			}
-			printScript(logger, them_e, "", tc.script)
+			printScript(logger, testTheme, "", tc.script)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
@@ -244,12 +244,12 @@ func TestPrintBuiltin(t *testing.T) {
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
-			them_e := theme.BlankTheme()
+			testTheme := theme.BlankTheme()
 			if tc.color {
-				them_e = theme.DefaultTheme(os.Stdout, os.Stderr)
+				testTheme = theme.DefaultTheme(os.Stdout, os.Stderr)
 				logger.SetColorProfile(colorprofile.ANSI256) // so the colors and escape codes match 1:1
 			}
-			printBuiltin(logger, them_e, tc.builtin)
+			printBuiltin(logger, testTheme, tc.builtin)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}

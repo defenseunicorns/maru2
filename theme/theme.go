@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: 2025-Present Defense Unicorns
+
+// Package theme controls terminal coloring and styles in maru2
 package theme
 
 import (
@@ -11,6 +15,9 @@ import (
 	"github.com/charmbracelet/x/term"
 )
 
+// Theme controls (almost) all coloring and styles
+//
+// still some one-offs that I'm figuring out how to best handle downsampling/NO_COLOR
 type Theme struct {
 	Debug color.Color
 	Info  color.Color
@@ -24,6 +31,7 @@ type Theme struct {
 	ChromaStyle  string
 }
 
+// NewStringWriter is similar in function to colorprofile.NewWriter
 func (t Theme) NewStringWriter(wr io.Writer) io.StringWriter {
 	return &colorprofile.Writer{Forward: wr, Profile: t.ColorProfile}
 }
@@ -95,16 +103,11 @@ func DefaultStyles(in, out io.Writer) *log.Styles {
 	return styles
 }
 
+// BlankTheme is a minimal theme w/ no colors or styles
+//
+// Mainly used for tests
 func BlankTheme() Theme {
 	return Theme{
-		Debug:        lipgloss.Color("#2e7de9"), // tokyonight-day blue
-		Info:         lipgloss.Color("#007197"), // tokyonight-day cyan
-		Warn:         lipgloss.Color("#8c6c3e"), // tokyonight-day amber/yellow
-		Error:        lipgloss.Color("#f52a65"), // tokyonight-day red
-		Fatal:        lipgloss.Color("#9854f1"), // tokyonight-day magenta (deep red alternative)
-		Green:        lipgloss.Color("#587539"), // tokyonight-day green
-		Gray:         lipgloss.Color("#c5c6bC"),
 		ColorProfile: colorprofile.NoTTY,
-		ChromaStyle:  "tokyonight-day",
 	}
 }
