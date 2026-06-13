@@ -212,11 +212,11 @@ func TestTemplateString(t *testing.T) {
 			dryRun:   true,
 		},
 		{
-			name: "dry run - with valid jq query missing step data",
+			name:           "dry run - with valid jq query missing step data",
 			previousOutput: CommandOutputs{},
-			str:      `user: ${{ from "step1" ".user.name" }}`,
-			expected: "user: ❯ from step1 .user.name ❮",
-			dryRun:   true,
+			str:            `user: ${{ from "step1" ".user.name" }}`,
+			expected:       "user: ❯ from step1 .user.name ❮",
+			dryRun:         true,
 		},
 		{
 			name: "dry run - with invalid jq syntax",
@@ -225,7 +225,7 @@ func TestTemplateString(t *testing.T) {
 			},
 			str:           `user: ${{ from "step1" ".user[" }}`,
 			expectedError: "invalid jq query \".user[\"",
-			dryRun:   true,
+			dryRun:        true,
 		},
 		{
 			name:     "dry run - with missing previous output",

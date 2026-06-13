@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"maps"
 
-	"github.com/itchyny/gojq"
 	"os"
 	"os/exec"
 	"regexp"
@@ -18,6 +17,8 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+
+	"github.com/itchyny/gojq"
 
 	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"

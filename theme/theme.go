@@ -33,25 +33,7 @@ type Theme struct {
 	ChromaStyle  string
 }
 
-type contextKey struct{}
-
-// WithContext returns a new context with the given theme embedded.
-func WithContext(ctx context.Context, t Theme) context.Context {
-	return context.WithValue(ctx, contextKey{}, t)
-}
-
-// FromContext returns the Theme stored in ctx, or BlankTheme() if none is set.
-func FromContext(ctx context.Context) Theme {
-	if t, ok := ctx.Value(contextKey{}).(Theme); ok {
-		return t
-	}
-	return BlankTheme()
-}
-
-// NewStringWriter is similar in function to colorprofile.NewWriter
-func (t Theme) NewStringWriter(wr io.Writer) io.StringWriter {
-	return &colorprofile.Writer{Forward: wr, Profile: t.ColorProfile}
-}
+var blankColor = lipgloss.Color("")
 
 // DefaultTheme returns the default theme with tokyonight colors.
 func DefaultTheme(in, out io.Writer) Theme {
@@ -118,11 +100,39 @@ func DefaultTheme(in, out io.Writer) Theme {
 	return theme
 }
 
-// BlankTheme is a minimal theme w/ no colors or styles
+// BlankTheme is a minimal theme w/ blank colors and default styles
 //
 // Mainly used for tests
 func BlankTheme() Theme {
 	return Theme{
+		Debug:        blankColor,
+		Info:         blankColor,
+		Warn:         blankColor,
+		Error:        blankColor,
+		Fatal:        blankColor,
+		Green:        blankColor,
+		Gray:         blankColor,
+		LogStyles:    log.DefaultStyles(),
 		ColorProfile: colorprofile.NoTTY,
 	}
+}
+
+// NewStringWriter is similar in function to colorprofile.NewWriter
+func (t Theme) NewStringWriter(wr io.Writer) io.StringWriter {
+	return &colorprofile.Writer{Forward: wr, Profile: t.ColorProfile}
+}
+
+type contextKey struct{}
+
+// WithContext returns a new context with the given theme embedded.
+func WithContext(ctx context.Context, t Theme) context.Context {
+	return context.WithValue(ctx, contextKey{}, t)
+}
+
+// FromContext returns the Theme stored in ctx, or BlankTheme() if none is set.
+func FromContext(ctx context.Context) Theme {
+	if t, ok := ctx.Value(contextKey{}).(Theme); ok {
+		return t
+	}
+	return BlankTheme()
 }
