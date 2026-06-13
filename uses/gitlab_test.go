@@ -32,7 +32,7 @@ func TestGitLabFetcher(t *testing.T) {
 		require.NoError(t, err)
 
 		rc, err = client.Fetch(ctx, u)
-		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
+		require.EqualError(t, err, `purl scheme is not "pkg": "file:foo.yaml"`)
 		assert.Nil(t, rc)
 
 		u, err = ResolveRelative(nil, "pkg:github/foo.yaml", nil)

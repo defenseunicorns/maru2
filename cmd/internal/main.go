@@ -57,9 +57,12 @@ func main() {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(theme.DefaultStyles(os.Stdin, os.Stdout))
+	styling := theme.DefaultTheme(os.Stdin, os.Stdout)
+	logger.SetStyles(styling.LogStyles)
+	logger.SetColorProfile(styling.ColorProfile)
 
 	ctx = log.WithContext(ctx, logger)
+	ctx = theme.WithContext(ctx, styling)
 	// end context and logger setup
 
 	// register uds, zarf, kubectl and other shortcuts

@@ -56,8 +56,9 @@ type TaskList struct {
 // NewDetailedTaskList renders a table detailing a workflow and all aliased workflows tasks
 //
 // The formatting is inspired by `just --list`
-func NewDetailedTaskList(ctx context.Context, theme theme.Theme, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*TaskList, error) {
-	t := &TaskList{theme: theme}
+func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*TaskList, error) {
+	termTheme := theme.FromContext(ctx)
+	t := &TaskList{theme: termTheme}
 	for name, task := range wf.Tasks.OrderedSeq() {
 		var comment string
 		if desc := task.Description; desc != "" {
@@ -67,7 +68,7 @@ func NewDetailedTaskList(ctx context.Context, theme theme.Theme, svc *uses.Fetch
 		msg := strings.Builder{}
 		msg.WriteString(name)
 
-		renderInputMap(&msg, theme, task.Inputs)
+		renderInputMap(&msg, termTheme, task.Inputs)
 
 		t.Row(msg.String(), comment)
 	}
@@ -91,7 +92,7 @@ func NewDetailedTaskList(ctx context.Context, theme theme.Theme, svc *uses.Fetch
 				msg := strings.Builder{}
 				msg.WriteString((fmt.Sprintf("%s:%s", name, n)))
 
-				renderInputMap(&msg, theme, task.Inputs)
+				renderInputMap(&msg, termTheme, task.Inputs)
 
 				t.Row(msg.String(), comment)
 			}
@@ -179,14 +180,16 @@ func renderInputMap(w io.Writer, theme theme.Theme, inputs v1.InputMap) {
 //
 // Uses chroma for syntax highlighting with adaptive color schemes (light/dark theme support)
 // Falls back to plain text output when NO_COLOR is set or highlighting fails
-func printScript(logger *log.Logger, theme theme.Theme, lang, script string) {
+func printScript(ctx context.Context, lang, script string) {
+	logger := log.FromContext(ctx)
+	termTheme := theme.FromContext(ctx)
 	if logger.GetLevel() > log.InfoLevel {
 		return
 	}
 
 	script = strings.TrimSpace(script)
 
-	if theme.ColorProfile == colorprofile.NoTTY {
+	if termTheme.ColorProfile == colorprofile.NoTTY {
 		// this is essentially the same behavior/rendering as make
 		logger.Print(script)
 		return
@@ -197,7 +200,7 @@ func printScript(logger *log.Logger, theme theme.Theme, lang, script string) {
 	}
 
 	var buf strings.Builder
-	if err := quick.Highlight(&buf, script, lang, "terminal256", theme.ChromaStyle); err != nil {
+	if err := quick.Highlight(&buf, script, lang, "terminal256", termTheme.ChromaStyle); err != nil {
 		logger.Debugf("failed to highlight: %v", err)
 		for line := range strings.SplitSeq(script, "\n") {
 			logger.Printf("  %s", line)
@@ -205,7 +208,7 @@ func printScript(logger *log.Logger, theme theme.Theme, lang, script string) {
 		return
 	}
 
-	gray := lipgloss.NewStyle().Background(theme.Gray)
+	gray := lipgloss.NewStyle().Background(termTheme.Gray)
 
 	prefix := gray.Render(" ")
 
@@ -218,7 +221,9 @@ func printScript(logger *log.Logger, theme theme.Theme, lang, script string) {
 //
 // Marshals the builtin With map as YAML and applies syntax highlighting for better readability
 // Used in dry-run mode to preview builtin task execution without running commands
-func printBuiltin(logger *log.Logger, theme theme.Theme, builtin schema.With) {
+func printBuiltin(ctx context.Context, builtin schema.With) {
+	logger := log.FromContext(ctx)
+	termTheme := theme.FromContext(ctx)
 	if logger.GetLevel() > log.InfoLevel {
 		return
 	}
@@ -229,12 +234,12 @@ func printBuiltin(logger *log.Logger, theme theme.Theme, builtin schema.With) {
 		return
 	}
 
-	if theme.ColorProfile == colorprofile.ASCII {
+	if termTheme.ColorProfile == colorprofile.ASCII {
 		logger.Printf("%s", strings.TrimSpace(string(b)))
 		return
 	}
 
-	style := theme.ChromaStyle
+	style := termTheme.ChromaStyle
 
 	var buf strings.Builder
 

@@ -149,9 +149,12 @@ func PublishMain() int {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(theme.DefaultStyles(os.Stdin, os.Stdout))
+	styling := theme.DefaultTheme(os.Stdin, os.Stdout)
+	logger.SetStyles(styling.LogStyles)
+	logger.SetColorProfile(styling.ColorProfile)
 
 	ctx = log.WithContext(ctx, logger)
+	ctx = theme.WithContext(ctx, styling)
 
 	if err := cli.ExecuteContext(ctx); err != nil {
 		logger.Error(err)

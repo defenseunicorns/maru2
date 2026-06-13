@@ -6,8 +6,6 @@ package runtime
 
 import (
 	"io"
-
-	"github.com/defenseunicorns/maru2/theme"
 )
 
 // Options are configurations whereupon the default empty/nil value is an acceptable case
@@ -30,6 +28,4 @@ type Options struct {
 	Stderr io.Writer
 	// See `go doc exec.Cmd.Stdin`
 	Stdin io.Reader
-	// see theme pkg
-	Theme theme.Theme
 }

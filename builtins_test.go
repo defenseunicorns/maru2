@@ -14,7 +14,6 @@ import (
 	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
-	"github.com/defenseunicorns/maru2/theme"
 )
 
 func TestExecuteBuiltin(t *testing.T) {
@@ -277,7 +276,7 @@ func TestExecuteBuiltin(t *testing.T) {
 			var buf bytes.Buffer
 			ctx := log.WithContext(t.Context(), log.New(&buf))
 
-			result, err := ExecuteBuiltin(ctx, tc.step, tc.with, tc.previousOutputs, runtime.Options{Dry: tc.dry, Theme: theme.BlankTheme()})
+			result, err := ExecuteBuiltin(ctx, tc.step, tc.with, tc.previousOutputs, runtime.Options{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

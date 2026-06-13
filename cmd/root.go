@@ -271,11 +271,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				return fmt.Errorf("failed to fetch %q: %w", resolved, err)
 			}
 
-			termTheme := theme.DefaultTheme(cmd.OutOrStdout(), cmd.OutOrStderr())
-			logger.SetColorProfile(termTheme.ColorProfile)
-
 			if list {
-				t, err := maru2.NewDetailedTaskList(ctx, termTheme, svc, resolved, wf)
+				t, err := maru2.NewDetailedTaskList(ctx, svc, resolved, wf)
 				if err != nil {
 					return err
 				}
@@ -354,7 +351,6 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				Stdout: cmd.OutOrStdout(),
 				Stderr: cmd.OutOrStderr(),
 				Stdin:  cmd.InOrStdin(),
-				Theme:  termTheme,
 			}
 
 			for _, call := range args {
@@ -435,9 +431,12 @@ func Main() int {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(theme.DefaultStyles(os.Stdin, os.Stdout))
+	styling := theme.DefaultTheme(os.Stdin, os.Stdout)
+	logger.SetStyles(styling.LogStyles)
+	logger.SetColorProfile(styling.ColorProfile)
 
 	ctx = log.WithContext(ctx, logger)
+	ctx = theme.WithContext(ctx, styling)
 	cmd, err := cli.ExecuteContextC(ctx)
 	if err != nil {
 		logger.Print("")

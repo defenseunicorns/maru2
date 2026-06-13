@@ -132,13 +132,18 @@ func TestPrintScript(t *testing.T) {
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
+			ctx := log.WithContext(t.Context(), logger)
+
 			testTheme := theme.BlankTheme()
 			if tc.color {
 				testTheme = theme.DefaultTheme(os.Stdout, os.Stderr)
 				testTheme.ColorProfile = colorprofile.ANSI256 // in testing force colors
 				logger.SetColorProfile(colorprofile.ANSI256)  // so the colors and escape codes match 1:1
 			}
-			printScript(logger, testTheme, "", tc.script)
+
+			ctx = theme.WithContext(ctx, testTheme)
+
+			printScript(ctx, "", tc.script)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
@@ -151,7 +156,9 @@ func TestPrintScript(t *testing.T) {
 	lexers.Register(&errLexer{name: "shell"}) // overrides shell lexer
 
 	var buf strings.Builder
-	printScript(log.New(&buf), theme.BlankTheme(), "", "echo hello")
+	logger := log.New(&buf)
+	ctx := log.WithContext(t.Context(), logger)
+	printScript(ctx, "", "echo hello")
 	assert.Equal(t, "echo hello\n", buf.String())
 }
 
@@ -244,12 +251,17 @@ func TestPrintBuiltin(t *testing.T) {
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
+			ctx := log.WithContext(t.Context(), logger)
+
 			testTheme := theme.BlankTheme()
 			if tc.color {
 				testTheme = theme.DefaultTheme(os.Stdout, os.Stderr)
-				logger.SetColorProfile(colorprofile.ANSI256) // so the colors and escape codes match 1:1
+				testTheme.ColorProfile = colorprofile.ANSI256 // in testing force colors
+				logger.SetColorProfile(colorprofile.ANSI256)  // so the colors and escape codes match 1:1
 			}
-			printBuiltin(logger, testTheme, tc.builtin)
+
+			ctx = theme.WithContext(ctx, testTheme)
+			printBuiltin(ctx, tc.builtin)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
@@ -262,7 +274,8 @@ func TestPrintBuiltin(t *testing.T) {
 	lexers.Register(&errLexer{name: "yaml"}) // overrides yaml lexer
 
 	var buf strings.Builder
-	printBuiltin(log.New(&buf), theme.BlankTheme(), schema.With{"text": "echo hello"})
+	ctx := log.WithContext(t.Context(), log.New(&buf))
+	printBuiltin(ctx, schema.With{"text": "echo hello"})
 	assert.Equal(t, `with:
   text: echo hello
 `, buf.String())
@@ -272,10 +285,11 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 	var buf strings.Builder
 	logger := log.New(&buf)
 	logger.SetLevel(log.DebugLevel)
+	ctx := log.WithContext(t.Context(), logger)
 
 	builtin := schema.With{"func": func() {}}
 
-	printBuiltin(logger, theme.BlankTheme(), builtin)
+	printBuiltin(ctx, builtin)
 
 	output := buf.String()
 	assert.Contains(t, output, "failed to marshal builtin")
@@ -566,7 +580,7 @@ func TestDetailedTaskList(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			tl, err := NewDetailedTaskList(ctx, theme.BlankTheme(), nil, nil, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, nil, nil, tc.workflow)
 
 			require.NoError(t, err)
 			assert.NotNil(t, tl)
@@ -745,7 +759,7 @@ tasks:
 			require.NoError(t, err)
 
 			ctx := log.WithContext(t.Context(), log.New(io.Discard))
-			tl, err := NewDetailedTaskList(ctx, theme.BlankTheme(), svc, tc.origin, tc.workflow)
+			tl, err := NewDetailedTaskList(ctx, svc, tc.origin, tc.workflow)
 
 			if tc.expectErr != "" {
 				require.ErrorContains(t, err, tc.expectErr)

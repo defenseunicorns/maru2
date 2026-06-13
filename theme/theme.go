@@ -5,6 +5,7 @@
 package theme
 
 import (
+	"context"
 	"image/color"
 	"io"
 	"os"
@@ -19,16 +20,32 @@ import (
 //
 // still some one-offs that I'm figuring out how to best handle downsampling/NO_COLOR
 type Theme struct {
-	Debug color.Color
-	Info  color.Color
-	Warn  color.Color
-	Error color.Color
-	Fatal color.Color
-	Green color.Color
-	Gray  color.Color
+	Debug     color.Color
+	Info      color.Color
+	Warn      color.Color
+	Error     color.Color
+	Fatal     color.Color
+	Green     color.Color
+	Gray      color.Color
+	LogStyles *log.Styles
 
 	ColorProfile colorprofile.Profile
 	ChromaStyle  string
+}
+
+type contextKey struct{}
+
+// WithContext returns a new context with the given theme embedded.
+func WithContext(ctx context.Context, t Theme) context.Context {
+	return context.WithValue(ctx, contextKey{}, t)
+}
+
+// FromContext returns the Theme stored in ctx, or BlankTheme() if none is set.
+func FromContext(ctx context.Context) Theme {
+	if t, ok := ctx.Value(contextKey{}).(Theme); ok {
+		return t
+	}
+	return BlankTheme()
 }
 
 // NewStringWriter is similar in function to colorprofile.NewWriter
@@ -55,7 +72,7 @@ func DefaultTheme(in, out io.Writer) Theme {
 		chromaStyle = "tokyonight-moon"
 	}
 
-	return Theme{
+	theme := Theme{
 		Debug: lightDark(
 			lipgloss.Color("#2e7de9"), // tokyonight-day blue
 			lipgloss.Color("#7aa2f7"), // tokyonight blue
@@ -87,20 +104,18 @@ func DefaultTheme(in, out io.Writer) Theme {
 		ColorProfile: colorprofile.Detect(out, os.Environ()),
 		ChromaStyle:  chromaStyle,
 	}
-}
 
-// DefaultStyles returns the default log styles using the default theme.
-func DefaultStyles(in, out io.Writer) *log.Styles {
-	t := DefaultTheme(in, out)
 	styles := log.DefaultStyles()
 
-	styles.Levels[log.DebugLevel] = styles.Levels[log.DebugLevel].Foreground(t.Debug)
-	styles.Levels[log.InfoLevel] = styles.Levels[log.InfoLevel].Foreground(t.Info)
-	styles.Levels[log.WarnLevel] = styles.Levels[log.WarnLevel].Foreground(t.Warn)
-	styles.Levels[log.ErrorLevel] = styles.Levels[log.ErrorLevel].Foreground(t.Error)
-	styles.Levels[log.FatalLevel] = styles.Levels[log.FatalLevel].Foreground(t.Fatal)
+	styles.Levels[log.DebugLevel] = styles.Levels[log.DebugLevel].Foreground(theme.Debug)
+	styles.Levels[log.InfoLevel] = styles.Levels[log.InfoLevel].Foreground(theme.Info)
+	styles.Levels[log.WarnLevel] = styles.Levels[log.WarnLevel].Foreground(theme.Warn)
+	styles.Levels[log.ErrorLevel] = styles.Levels[log.ErrorLevel].Foreground(theme.Error)
+	styles.Levels[log.FatalLevel] = styles.Levels[log.FatalLevel].Foreground(theme.Fatal)
 
-	return styles
+	theme.LogStyles = styles
+
+	return theme
 }
 
 // BlankTheme is a minimal theme w/ no colors or styles
