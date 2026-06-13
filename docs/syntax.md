@@ -620,7 +620,9 @@ The `name` field is primarily for documentation purposes and to improve readabil
 
 Maru2 allows steps to produce outputs that can be consumed by subsequent steps. This leverages a similar mechanism to GitHub Actions.
 
-To set outputs from a step:
+### String outputs via `$MARU2_OUTPUT`
+
+To set flat key/value outputs from a step:
 
 1. Assign an `id` to the step
 2. Write to the `$MARU2_OUTPUT` file in the format `key=value`
@@ -660,7 +662,43 @@ tasks:
       - run: echo "User ${{ from "user-info" "name" }} is ${{ from "user-info" "age" }} years old and lives in ${{ from "user-info" "city" }}"
 ```
 
-Outputs are only available to steps that come after the step that sets them. If a step with an ID doesn't write anything to `$MARU2_OUTPUT`, no outputs will be available from that step.
+### Structured JSON outputs via `$MARU2_JSON_OUTPUT`
+
+For structured data, write a valid JSON object to the `$MARU2_JSON_OUTPUT` file. Maru2 will parse it and make the fields available for querying with full [jq](https://jqlang.org/) syntax.
+
+```yaml
+schema-version: v1
+tasks:
+  deploy:
+    steps:
+      - run: |
+          aws ec2 describe-vpcs --output json | jq '{vpc_id: .Vpcs[0].VpcId, cidr: .Vpcs[0].CidrBlock}' >> $MARU2_JSON_OUTPUT
+        id: get-vpc
+      - run: echo "Deploying into VPC ${{ from "get-vpc" ".vpc_id" }} (${{ from "get-vpc" ".cidr" }})"
+```
+
+The query argument to `from` is a full jq expression. You can use any jq operator to filter, map, or transform the output:
+
+```yaml
+- run: |
+    # Select a nested value
+    echo "cluster: ${{ from "step-id" ".metadata.name" }}"
+
+    # Filter an array
+    echo "active users: ${{ from "step-id" "[.users[] | select(.active == true) | .name] | join(\", \")" }}"
+```
+
+> **Note**: If the query string matches a top-level key exactly (e.g. `"my_key"`), Maru2 uses it as a direct map lookup for backwards compatibility with `$MARU2_OUTPUT` outputs. Otherwise, it is treated as a jq expression and should start with `.` (e.g. `".my_key"`).
+
+### Passing structured data between steps with `tojson`
+
+Use the `tojson` template filter to serialize a structured output value back to a JSON string, for passing as an argument to a script or downstream task:
+
+```yaml
+- run: echo '${{ from "get-vpc" "." | tojson }}' | jq '.vpc_id'
+```
+
+Outputs are only available to steps that come after the step that sets them. If a step with an ID doesn't write anything to `$MARU2_OUTPUT` or `$MARU2_JSON_OUTPUT`, no outputs will be available from that step.
 
 ## Default values from environment variables
 
@@ -772,7 +810,7 @@ Maru2 supports conditional execution of steps using `if`. `if` statements are [e
 - `always()`: Run this step regardless of whether previous steps have succeeded or failed
 - `cancelled()`: Run this step _only_ if the task was cancelled (for example, via `Ctrl+C` or a `SIGINT` signal, `SIGTERM` kills the task entirely).
 - `input("name")`: Access an input value by name. Only one argument is allowed. Returns the value of the input (which may be a string, number, or boolean), or `nil` if the input doesn't exist.
-- `from("step-id", "output-key")`: Access an output from a previous step. Only two arguments are allowed: the step ID and the output key. Returns the output value, or `nil` if the step or output key doesn't exist.
+- `from("step-id", "output-key-or-jq")`: Access an output from a previous step. The second argument is either an exact key name (for `$MARU2_OUTPUT` style outputs) or a full [jq](https://jqlang.org/) expression (for `$MARU2_JSON_OUTPUT` style structured outputs). Returns the output value, or `nil` if the step or key doesn't exist.
 
 Go's `runtime` helper constants are also available- `os`, `arch`, `platform`: the current OS, architecture, or platform.
 
