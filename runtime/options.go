@@ -31,5 +31,5 @@ type Options struct {
 	// See `go doc exec.Cmd.Stdin`
 	Stdin io.Reader
 	// see theme pkg
-	Theme *theme.Theme
+	Theme theme.Theme
 }

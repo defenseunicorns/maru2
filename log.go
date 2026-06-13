@@ -50,13 +50,13 @@ type TaskList struct {
 	col0max int
 	rows    [][2]string
 
-	theme *theme.Theme
+	theme theme.Theme
 }
 
 // NewDetailedTaskList renders a table detailing a workflow and all aliased workflows tasks
 //
 // The formatting is inspired by `just --list`
-func NewDetailedTaskList(ctx context.Context, theme *theme.Theme, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*TaskList, error) {
+func NewDetailedTaskList(ctx context.Context, theme theme.Theme, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*TaskList, error) {
 	t := &TaskList{theme: theme}
 	for name, task := range wf.Tasks.OrderedSeq() {
 		var comment string
@@ -110,7 +110,8 @@ func (tl *TaskList) Row(col0, col1 string) {
 
 // String implements fmt.Stringers
 func (tl *TaskList) String() string {
-	sb := strings.Builder{}
+	s := strings.Builder{}
+	sb := tl.theme.NewStringWriter(&s)
 
 	cutoff := 50
 
@@ -131,10 +132,12 @@ func (tl *TaskList) String() string {
 		}
 	}
 
-	return sb.String()
+	return s.String()
 }
 
-func renderInputMap(w *strings.Builder, theme *theme.Theme, inputs v1.InputMap) {
+func renderInputMap(w io.Writer, theme theme.Theme, inputs v1.InputMap) {
+	wr := theme.NewStringWriter(w)
+
 	faint := lipgloss.NewStyle().Faint(true)
 	blue := lipgloss.NewStyle().Foreground(theme.Debug)
 	amber := lipgloss.NewStyle().Foreground(theme.Warn)
@@ -142,33 +145,33 @@ func renderInputMap(w *strings.Builder, theme *theme.Theme, inputs v1.InputMap) 
 	gray := lipgloss.NewStyle().Foreground(theme.Gray)
 
 	for n, input := range inputs.OrderedSeq() {
-		w.WriteString(faint.Render(" -w "))
+		wr.WriteString(faint.Render(" -w "))
 		if input.Default != nil {
-			w.WriteString(blue.Render(n))
-			w.WriteString("=")
+			wr.WriteString(blue.Render(n))
+			wr.WriteString("=")
 
 			if input.DefaultFromEnv != "" {
-				w.WriteString(green.Render(fmt.Sprintf(`"${%s:-%s}"`, input.DefaultFromEnv, cast.ToString(input.Default))))
+				wr.WriteString(green.Render(fmt.Sprintf(`"${%s:-%s}"`, input.DefaultFromEnv, cast.ToString(input.Default))))
 			} else {
-				w.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
+				wr.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
 			}
 			continue
 		}
 
 		if input.DefaultFromEnv != "" {
-			w.WriteString(blue.Render(n))
-			w.WriteString("=")
-			w.WriteString(green.Render(fmt.Sprintf(`"$%s"`, input.DefaultFromEnv)))
+			wr.WriteString(blue.Render(n))
+			wr.WriteString("=")
+			wr.WriteString(green.Render(fmt.Sprintf(`"$%s"`, input.DefaultFromEnv)))
 			continue
 		}
 
 		if input.Required != nil && !*input.Required {
-			w.WriteString(gray.Render(n))
-			w.WriteString("=")
+			wr.WriteString(gray.Render(n))
+			wr.WriteString("=")
 			continue
 		}
-		w.WriteString(amber.Render(n))
-		w.WriteString("=")
+		wr.WriteString(amber.Render(n))
+		wr.WriteString("=")
 	}
 }
 
@@ -176,14 +179,14 @@ func renderInputMap(w *strings.Builder, theme *theme.Theme, inputs v1.InputMap) 
 //
 // Uses chroma for syntax highlighting with adaptive color schemes (light/dark theme support)
 // Falls back to plain text output when NO_COLOR is set or highlighting fails
-func printScript(logger *log.Logger, theme *theme.Theme, lang, script string) {
+func printScript(logger *log.Logger, theme theme.Theme, lang, script string) {
 	if logger.GetLevel() > log.InfoLevel {
 		return
 	}
 
 	script = strings.TrimSpace(script)
 
-	if theme.ColorProfile == colorprofile.ASCII {
+	if theme.ColorProfile == colorprofile.NoTTY {
 		// this is essentially the same behavior/rendering as make
 		logger.Print(script)
 		return
@@ -204,7 +207,7 @@ func printScript(logger *log.Logger, theme *theme.Theme, lang, script string) {
 
 	gray := lipgloss.NewStyle().Background(theme.Gray)
 
-	prefix := lipgloss.Sprint(gray.Render(" "))
+	prefix := gray.Render(" ")
 
 	for line := range strings.SplitSeq(buf.String(), "\n") {
 		logger.Printf("%s %s", prefix, line)
@@ -215,7 +218,7 @@ func printScript(logger *log.Logger, theme *theme.Theme, lang, script string) {
 //
 // Marshals the builtin With map as YAML and applies syntax highlighting for better readability
 // Used in dry-run mode to preview builtin task execution without running commands
-func printBuiltin(logger *log.Logger, theme *theme.Theme, builtin schema.With) {
+func printBuiltin(logger *log.Logger, theme theme.Theme, builtin schema.With) {
 	if logger.GetLevel() > log.InfoLevel {
 		return
 	}

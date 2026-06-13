@@ -12,10 +12,10 @@ import (
 	"sync"
 	"testing"
 
-	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
+	"github.com/charmbracelet/colorprofile"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,9 +77,9 @@ func TestPrintScript(t *testing.T) {
 			logLevel: log.InfoLevel,
 		},
 		{
-			name:     "simple shell",
-			script:   "echo hello",
-			expected: "echo hello\n",
+			name:     "simple shell - no color",
+			script:   "echo hello nocolor",
+			expected: "echo hello nocolor\n",
 			color:    false,
 			logLevel: log.InfoLevel,
 		},
@@ -92,35 +92,35 @@ func TestPrintScript(t *testing.T) {
 		},
 		{
 			name:     "info level - should print",
-			script:   "echo hello",
-			expected: "echo hello\n",
+			script:   "echo hello info",
+			expected: "echo hello info\n",
 			color:    false,
 			logLevel: log.InfoLevel,
 		},
 		{
 			name:     "debug level - should print",
-			script:   "echo hello",
-			expected: "echo hello\n",
+			script:   "echo hello debug",
+			expected: "echo hello debug\n",
 			color:    false,
 			logLevel: log.DebugLevel,
 		},
 		{
 			name:     "warn level - should not print",
-			script:   "echo hello",
+			script:   "echo hello warn",
 			expected: "",
 			color:    false,
 			logLevel: log.WarnLevel,
 		},
 		{
 			name:     "error level - should not print",
-			script:   "echo hello",
+			script:   "echo hello error",
 			expected: "",
 			color:    false,
 			logLevel: log.ErrorLevel,
 		},
 		{
 			name:     "fatal level - should not print",
-			script:   "echo hello",
+			script:   "echo hello fatal",
 			expected: "",
 			color:    false,
 			logLevel: log.FatalLevel,
@@ -135,9 +135,11 @@ func TestPrintScript(t *testing.T) {
 			them_e := theme.BlankTheme()
 			if tc.color {
 				them_e = theme.DefaultTheme(os.Stdout, os.Stderr)
+				them_e.ColorProfile = colorprofile.ANSI256   // in testing force colors
+				logger.SetColorProfile(colorprofile.ANSI256) // so the colors and escape codes match 1:1
 			}
 			printScript(logger, them_e, "", tc.script)
-			assert.Equal(t, tc.expected, buf.String(), "this test fails when run w/ `go test`, run w/ `make test` instead as that will use maru2, which uses a true shell env")
+			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
 
@@ -150,7 +152,7 @@ func TestPrintScript(t *testing.T) {
 
 	var buf strings.Builder
 	printScript(log.New(&buf), theme.BlankTheme(), "", "echo hello")
-	assert.Equal(t, "  echo hello\n", buf.String())
+	assert.Equal(t, "echo hello\n", buf.String())
 }
 
 func TestPrintBuiltin(t *testing.T) {
@@ -245,6 +247,7 @@ func TestPrintBuiltin(t *testing.T) {
 			them_e := theme.BlankTheme()
 			if tc.color {
 				them_e = theme.DefaultTheme(os.Stdout, os.Stderr)
+				logger.SetColorProfile(colorprofile.ANSI256) // so the colors and escape codes match 1:1
 			}
 			printBuiltin(logger, them_e, tc.builtin)
 			assert.Equal(t, tc.expected, buf.String())
@@ -945,9 +948,7 @@ func TestRenderInputMap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf strings.Builder
 			renderInputMap(&buf, theme.BlankTheme(), tc.inputs)
-			// Use lipgloss.Sprint to downsample colors for comparison,
-			// matching the behavior in TaskList.String()
-			assert.Equal(t, tc.expected, lipgloss.Sprint(buf.String()))
+			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
 }

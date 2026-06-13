@@ -272,6 +272,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 			}
 
 			termTheme := theme.DefaultTheme(cmd.OutOrStdout(), cmd.OutOrStderr())
+			logger.SetColorProfile(termTheme.ColorProfile)
 
 			if list {
 				t, err := maru2.NewDetailedTaskList(ctx, termTheme, svc, resolved, wf)

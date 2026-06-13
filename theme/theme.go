@@ -24,8 +24,12 @@ type Theme struct {
 	ChromaStyle  string
 }
 
+func (t Theme) NewStringWriter(wr io.Writer) io.StringWriter {
+	return &colorprofile.Writer{Forward: wr, Profile: t.ColorProfile}
+}
+
 // DefaultTheme returns the default theme with tokyonight colors.
-func DefaultTheme(in, out io.Writer) *Theme {
+func DefaultTheme(in, out io.Writer) Theme {
 	hasDarkBG := true // follow lipgloss default behavior
 	inFile, inIsFile := in.(term.File)
 	outFile, outIsFile := out.(term.File)
@@ -43,7 +47,7 @@ func DefaultTheme(in, out io.Writer) *Theme {
 		chromaStyle = "tokyonight-moon"
 	}
 
-	return &Theme{
+	return Theme{
 		Debug: lightDark(
 			lipgloss.Color("#2e7de9"), // tokyonight-day blue
 			lipgloss.Color("#7aa2f7"), // tokyonight blue
@@ -91,8 +95,8 @@ func DefaultStyles(in, out io.Writer) *log.Styles {
 	return styles
 }
 
-func BlankTheme() *Theme {
-	return &Theme{
+func BlankTheme() Theme {
+	return Theme{
 		Debug:        lipgloss.Color("#2e7de9"), // tokyonight-day blue
 		Info:         lipgloss.Color("#007197"), // tokyonight-day cyan
 		Warn:         lipgloss.Color("#8c6c3e"), // tokyonight-day amber/yellow
@@ -100,7 +104,7 @@ func BlankTheme() *Theme {
 		Fatal:        lipgloss.Color("#9854f1"), // tokyonight-day magenta (deep red alternative)
 		Green:        lipgloss.Color("#587539"), // tokyonight-day green
 		Gray:         lipgloss.Color("#c5c6bC"),
-		ColorProfile: colorprofile.ASCII, // disable color despite setting colors up above
+		ColorProfile: colorprofile.NoTTY,
 		ChromaStyle:  "tokyonight-day",
 	}
 }
