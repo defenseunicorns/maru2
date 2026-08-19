@@ -126,13 +126,13 @@ func ResolveRelative(prev *url.URL, u string, pkgAliases v1.AliasMap) (*url.URL,
 
 	// http(s) -> file
 	case (prev.Scheme == "https" || prev.Scheme == "http") && uri.Scheme == "file":
-		next := *prev // https://github.com/golang/go/issues/38351
+		next := prev.Clone() // https://github.com/golang/go/issues/38351
 		next.Path = filepath.Join(filepath.Dir(prev.Path), uri.Opaque)
 		if next.Path == "." || next.Path == "/" {
 			next.Path = "/" + DefaultFileName
 		}
 		next.RawQuery = uri.RawQuery
-		return &next, nil
+		return next, nil
 
 	// pkg -> file
 	case prev.Scheme == "pkg" && uri.Scheme == "file":

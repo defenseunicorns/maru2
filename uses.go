@@ -201,7 +201,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fsys afero.Fs) ([]string, e
 		}
 	}
 
-	clone := *src
+	clone := src.Clone()
 	clone.RawQuery = ""
 	fullRefs := []string{clone.String()}
 

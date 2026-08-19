@@ -68,7 +68,7 @@ func (c *OCIClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, err
 		return nil, fmt.Errorf("uri is nil")
 	}
 
-	clone := *uri
+	clone := uri.Clone()
 
 	if clone.Scheme != "oci" {
 		return nil, fmt.Errorf("scheme is not \"oci\"")

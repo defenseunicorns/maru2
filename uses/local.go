@@ -37,7 +37,7 @@ func (f *LocalFetcher) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 		}
 	}
 
-	clone := *uri
+	clone := uri.Clone()
 
 	if clone.Scheme != "" && clone.Scheme != "file" {
 		return nil, fmt.Errorf("scheme is not \"file\" or empty")

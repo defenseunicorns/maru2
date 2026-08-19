@@ -278,7 +278,7 @@ outer:
 }
 
 func (s *LocalStore) id(uri *url.URL) string {
-	clone := *uri
+	clone := uri.Clone()
 	clone.RawQuery = ""
 	clone.User = nil
 	return clone.String()
