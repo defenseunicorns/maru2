@@ -298,9 +298,7 @@ func handleRunStep(
 	for k, v := range out {
 		result[k] = v
 	}
-	for k, v := range jsonOut {
-		result[k] = v
-	}
+	maps.Copy(result, jsonOut)
 
 	return result, nil
 }
@@ -375,8 +373,7 @@ func (e *TraceError) Unwrap() error {
 // Creates or extends a TraceError with frame information to show
 // the execution path when errors occur
 func addTrace(err error, frame string) error {
-	var tErr *TraceError
-	if errors.As(err, &tErr) {
+	if tErr, ok := errors.AsType[*TraceError](err); ok {
 		tErr.Trace = append([]string{frame}, tErr.Trace...)
 		return tErr
 	}

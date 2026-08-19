@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -1648,8 +1649,8 @@ func TestTraceError(t *testing.T) {
 
 				resultErr := tc.err
 				// Apply frames in reverse to simulate the call stack
-				for i := len(tc.frames) - 1; i >= 0; i-- {
-					resultErr = addTrace(resultErr, tc.frames[i])
+				for _, v := range slices.Backward(tc.frames) {
+					resultErr = addTrace(resultErr, v)
 				}
 
 				var traceErr *TraceError
