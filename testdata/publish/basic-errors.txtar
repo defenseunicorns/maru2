@@ -12,7 +12,7 @@ stderr 'no such file or directory'
 
 # with invalid repository
 ! maru2-publish 5555
-stderr 'ERRO unable to parse reference: invalid reference: missing registry or repository'
+stderr 'ERROR unable to parse reference: invalid reference: missing registry or repository'
 
 # with invalid reference (no tag)
 ! maru2-publish localhost:5000/test
@@ -40,10 +40,10 @@ rm home/.docker/config.json
 # home is not set
 env HOME=
 ! maru2-publish localhost:5000/test:latest
-stderr 'ERRO failed to get user home directory: \$HOME is not defined'
+stderr 'ERROR failed to get user home directory: \$HOME is not defined'
 
 -- bad/docker-config.json --
 i'm not JSON
 -- stderr-invalid-docker-config.txt --
-WARN THIS FEATURE IS IN ALPHA EXPECT FREQUENT BREAKING CHANGES
-ERRO failed to decode config file $WORK/home/.docker/config.json: invalid config format: invalid character 'i' looking for beginning of value
+WARN  THIS FEATURE IS IN ALPHA EXPECT FREQUENT BREAKING CHANGES
+ERROR failed to decode config file $WORK/home/.docker/config.json: invalid config format: invalid character 'i' looking for beginning of value

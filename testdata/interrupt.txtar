@@ -15,11 +15,11 @@ tasks:
     - run: echo "i should not run"
 -- stderr.txt --
 sleep 5
-ERRO signal: killed
-WARN task cancelled step=sleep[1]
+ERROR signal: killed
+WARN  task cancelled step=sleep[1]
 echo "cancelled"
 
-ERRO signal: killed
-ERRO at sleep[0] (file:tasks.yaml)
+ERROR signal: killed
+ERROR at sleep[0] (file:tasks.yaml)
 -- stdout.txt --
 cancelled

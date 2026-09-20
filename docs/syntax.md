@@ -784,14 +784,14 @@ When a task is run, Maru2 will validate all inputs against their respective patt
 # fails due to missing input!
 maru2 hello
 
-ERRO missing required input: "name"
-ERRO at (file:tasks.yaml)
+ERROR missing required input: "name"
+ERROR at (file:tasks.yaml)
 
 # fails due to invalid input
 maru2 hello --with name="Goodbye, World!"
 
-ERRO failed to validate: input=name, value=Goodbye, World!, regexp=^\w+$
-ERRO at (file:tasks.yaml)
+ERROR failed to validate: input=name, value=Goodbye, World!, regexp=^\w+$
+ERROR at (file:tasks.yaml)
 
 # succeeds!
 maru2 hello --with name="Jeff"
@@ -848,8 +848,8 @@ exit 1
 echo "This step runs because a previous step failed"
 echo "This step always runs, regardless of previous failures"
 
-ERRO exit status 1
-ERRO at example[1] (file:tasks.yaml)
+ERROR exit status 1
+ERROR at example[1] (file:tasks.yaml)
 ```
 
 ## CI Environment Integration

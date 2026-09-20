@@ -1,31 +1,31 @@
 ! exec maru2 -C foo
-stderr 'ERRO chdir foo: no such file or directory'
+stderr 'ERROR chdir foo: no such file or directory'
 
 ! exec maru2 --fetch-policy never --fetch-all
-stderr 'ERRO cannot fetch all with fetch policy "never"'
+stderr 'ERROR cannot fetch all with fetch policy "never"'
 
 ! exec maru2 --fetch-policy invalid
-stderr 'ERRO invalid argument "invalid" for "-p, --fetch-policy" flag: invalid fetch policy: invalid'
+stderr 'ERROR invalid argument "invalid" for "-p, --fetch-policy" flag: invalid fetch policy: invalid'
 
 exec maru2 --store . --fetch-all --gc echo
 stdout 'Hello World!'
 stderr 'echo "Hello World!"'
 
 ! exec maru2 -f ssh:foo
-stderr 'ERRO failed to resolve "ssh:foo": unsupported scheme: "ssh" in "ssh:foo"'
+stderr 'ERROR failed to resolve "ssh:foo": unsupported scheme: "ssh" in "ssh:foo"'
 
 mkdir home/.maru2
 mv bad/invalid.yaml home/.maru2/config.yaml
 ! exec maru2
-stderr 'ERRO failed to load config file: [1:1] string was used where mapping is expected\n>  1 | invalid yaml'
+stderr 'ERROR failed to load config file: [1:1] string was used where mapping is expected\n>  1 | invalid yaml'
 
 mv bad/fetch-policy.yaml home/.maru2/config.yaml
 ! exec maru2
-stderr 'ERRO failed to load config file: fetch-policy: fetch-policy must be one of the following: "always", "if-not-present", "never"'
+stderr 'ERROR failed to load config file: fetch-policy: fetch-policy must be one of the following: "always", "if-not-present", "never"'
 
 mv bad/alias.yaml home/.maru2/config.yaml
 ! exec maru2
-stderr 'ERRO failed to load config file: aliases.gh: Must validate one and only one schema \(oneOf\)\naliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
+stderr 'ERROR failed to load config file: aliases.gh: Must validate one and only one schema \(oneOf\)\naliases.gh.type: aliases.gh.type must be one of the following: "github", "gitlab"'
 
 rm home/.maru2/config.yaml
 

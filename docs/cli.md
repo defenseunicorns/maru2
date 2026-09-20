@@ -536,7 +536,7 @@ $ echo "Starting workflow"
 Starting workflow
 $ exit 1
 
-ERRO exit status 1
+ERROR exit status 1
   traceback (most recent call first)=
   │ at fail[0] (file:tasks.yaml)
   │ at caller[1] (file:tasks.yaml)

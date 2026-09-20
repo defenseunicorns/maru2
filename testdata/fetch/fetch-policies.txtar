@@ -15,7 +15,7 @@ stdout 'Hello from remote!'
 
 # Test that never policy fails for non-cached workflows
 ! exec maru2 --fetch-policy never --from $HTTP_BASE_URL/with-uses.yaml main
-stderr 'ERRO failed to fetch "http://127.0.0.1:[0-9]+/with-uses.yaml": descriptor not found'
+stderr 'ERROR failed to fetch "http://127.0.0.1:[0-9]+/with-uses.yaml": descriptor not found'
 
 # Test if-not-present policy (default)
 exec maru2 --fetch-policy if-not-present --from $HTTP_BASE_URL/simple.yaml hello
