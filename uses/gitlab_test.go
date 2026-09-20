@@ -5,6 +5,7 @@ package uses
 
 import (
 	"io"
+	"net/url"
 	"testing"
 
 	"charm.land/log/v2"
@@ -102,5 +103,17 @@ hello-world:
 		assert.NotNil(t, client)
 
 		assert.Equal(t, baseURL+"api/v4/", client.client.BaseURL().String())
+	})
+
+	t.Run("invalid purl fetch", func(t *testing.T) {
+		t.Parallel()
+		client, err := NewGitLabClient(nil, "", "")
+		require.NoError(t, err)
+
+		u, err := url.Parse("pkg:invalid-purl-format")
+		require.NoError(t, err)
+		rc, err := client.Fetch(t.Context(), u)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `purl is missing type or name`)
 	})
 }

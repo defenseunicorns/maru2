@@ -207,6 +207,9 @@ func escapeVersion(p string) string {
 	sub := p[start:end]
 
 	escaped := url.PathEscape(sub)
+	if sub == escaped {
+		return p
+	}
 
 	return strings.Replace(p, sub, escaped, 1)
 }

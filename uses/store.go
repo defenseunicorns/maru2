@@ -99,9 +99,9 @@ func NewLocalStore(fsys afero.Fs) (*LocalStore, error) {
 // Each line format: <url> h1:<sha256-hex> <size-bytes>
 // Returns a map of URLs to their descriptors for cache lookups
 func ParseIndex(r io.Reader) (map[string]Descriptor, error) {
-	index := make(map[string]Descriptor, 0)
+	index := make(map[string]Descriptor)
 
-	scanner := bufio.NewScanner(bufio.NewReader(r))
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
@@ -129,6 +129,10 @@ func ParseIndex(r io.Reader) (map[string]Descriptor, error) {
 		}
 
 		index[fields[0]] = desc
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
 	return index, nil
@@ -278,6 +282,9 @@ outer:
 }
 
 func (s *LocalStore) id(uri *url.URL) string {
+	if uri.RawQuery == "" && uri.User == nil {
+		return uri.String()
+	}
 	clone := uri.Clone()
 	clone.RawQuery = ""
 	clone.User = nil

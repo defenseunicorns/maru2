@@ -198,6 +198,11 @@ func TestParseExitCode(t *testing.T) {
 			err:      exec.Command("sh", "-c", "exit 42").Run(),
 			expected: 42,
 		},
+		{
+			name:     "command killed with SIGINT",
+			err:      exec.Command("sh", "-c", "kill -INT $$").Run(),
+			expected: 130,
+		},
 	}
 
 	for _, tt := range tests {
