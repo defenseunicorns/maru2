@@ -4,15 +4,15 @@ exec envsubst workflow-with-missing-dep.yaml workflow-with-invalid-yaml-dep.yaml
 
 # Test fetch-all with workflow containing non-existent remote dependency
 ! exec maru2 --fetch-all --from file:workflow-with-missing-dep.yaml
-stderr 'ERRO.*404 Not Found'
+stderr 'ERROR.*404 Not Found'
 
 # Test fetch-all with workflow containing invalid YAML dependency  
 ! exec maru2 --fetch-all --from file:workflow-with-invalid-yaml-dep.yaml
-stderr 'ERRO.*string was used where mapping is expected'
+stderr 'ERROR.*string was used where mapping is expected'
 
 # Test fetch-all with workflow containing server error dependency
 ! exec maru2 --fetch-all --from file:workflow-with-server-error.yaml
-stderr 'ERRO.*500 Internal Server Error'
+stderr 'ERROR.*500 Internal Server Error'
 
 -- workflow-with-missing-dep.yaml --
 schema-version: v1

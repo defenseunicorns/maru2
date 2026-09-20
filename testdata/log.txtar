@@ -1,5 +1,5 @@
 ! exec maru2 -l dne
-stderr 'ERRO invalid level: "dne"'
+stderr 'ERROR invalid level: "dne"'
 
 exec maru2 --log-level warn
 stderr ''

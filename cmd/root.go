@@ -20,16 +20,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/glamour/styles"
-	"github.com/charmbracelet/log"
+	"charm.land/glamour/v2"
+	"charm.land/glamour/v2/styles"
+	"charm.land/log/v2"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
 	"github.com/defenseunicorns/maru2"
 	configv0 "github.com/defenseunicorns/maru2/config/v0"
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
+	"github.com/defenseunicorns/maru2/theme"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -343,7 +345,7 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 				args = append(args, schema.DefaultTaskName)
 			}
 
-			opts := maru2.RuntimeOptions{
+			opts := runtime.Options{
 				Dry:    dry,
 				Env:    os.Environ(),
 				Stdout: cmd.OutOrStdout(),
@@ -411,6 +413,8 @@ maru2 -f "pkg:github/defenseunicorns/maru2@main#testdata/simple.yaml" echo -w me
 	root.Flags().BoolVar(&gc, "gc", false, "Perform garbage collection on the store")
 	root.Flags().BoolVar(&fetchAll, "fetch-all", false, "Fetch all tasks")
 
+	root.MarkFlagsMutuallyExclusive("list", "explain")
+
 	return root
 }
 
@@ -429,9 +433,12 @@ func Main() int {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(DefaultStyles())
+	styling := theme.DefaultTheme(os.Stdin, os.Stdout)
+	logger.SetStyles(styling.LogStyles)
+	logger.SetColorProfile(styling.ColorProfile)
 
 	ctx = log.WithContext(ctx, logger)
+	ctx = theme.WithContext(ctx, styling)
 	cmd, err := cli.ExecuteContextC(ctx)
 	if err != nil {
 		logger.Print("")
@@ -467,8 +474,7 @@ func ParseExitCode(err error) int {
 		return 0
 	}
 
-	var eErr *exec.ExitError
-	if errors.As(err, &eErr) {
+	if eErr, ok := errors.AsType[*exec.ExitError](err); ok {
 		if status, ok := eErr.Sys().(syscall.WaitStatus); ok {
 			if status.Exited() {
 				return status.ExitStatus()

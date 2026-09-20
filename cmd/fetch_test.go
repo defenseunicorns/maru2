@@ -126,7 +126,7 @@ func TestFetchE2E(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Dir: filepath.Join("..", "testdata", "fetch"),
 		Setup: func(env *testscript.Env) error {
-			env.Setenv("NO_COLOR", "true")
+			env.Setenv("TERM", "dumb")
 			env.Setenv("HTTP_BASE_URL", httpServer.URL)
 			env.Setenv("HOME", filepath.Join(env.WorkDir, "home"))
 			if ghToken, ok := os.LookupEnv("GITHUB_TOKEN"); ok && ghToken != "" {

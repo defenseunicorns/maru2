@@ -5,6 +5,7 @@ package maru2
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -60,15 +61,15 @@ func ParseOutput(r io.ReadSeeker) (map[string]string, error) {
 			continue
 		}
 
-		if idx := strings.Index(line, "="); idx != -1 {
+		if before, after, ok := strings.Cut(line, "="); ok {
 			// Split the line at the first '=' to handle the key-value pair
-			key := line[:idx]
-			value := line[idx+1:]
+			key := before
+			value := after
 			result[key] = value
-		} else if idx := strings.Index(line, "<<"); idx != -1 {
+		} else if before, after, ok := strings.Cut(line, "<<"); ok {
 			// Split the line at the first '<<' to handle the key-value pair
-			key := line[:idx]
-			delimiter := strings.TrimSpace(line[idx+2:])
+			key := before
+			delimiter := strings.TrimSpace(after)
 
 			if delimiter == "" {
 				return nil, fmt.Errorf("invalid syntax: missing delimiter after '<<'")
@@ -89,6 +90,38 @@ func ParseOutput(r io.ReadSeeker) (map[string]string, error) {
 	// Handle case where file ends but multiline was being collected
 	if collecting {
 		return nil, fmt.Errorf("invalid syntax: multiline value not terminated")
+	}
+
+	return result, nil
+}
+
+// ParseJSONOutput parses a JSON output file into a map
+func ParseJSONOutput(r io.ReadSeeker) (map[string]any, error) {
+	if f, ok := r.(*os.File); ok {
+		fi, err := f.Stat()
+		if err != nil {
+			return nil, err
+		}
+
+		if fi.Size() > 50*1024*1024 {
+			return nil, fmt.Errorf("output file too large")
+		}
+
+		if fi.Size() == 0 {
+			return nil, nil // Empty file, no output
+		}
+	}
+
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
+
+	var result map[string]any
+	if err := json.NewDecoder(r).Decode(&result); err != nil {
+		if err == io.EOF {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to parse json output: %w", err)
 	}
 
 	return result, nil

@@ -22,4 +22,4 @@ tasks:
     - run: echo "default"
 -- stderr.txt --
 
-ERRO failed to fetch "file:tasks.yaml": stat tasks.yaml: no such file or directory
+ERROR failed to fetch "file:tasks.yaml": stat tasks.yaml: no such file or directory

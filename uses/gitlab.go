@@ -4,7 +4,6 @@
 package uses
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -13,7 +12,7 @@ import (
 	"os"
 
 	"github.com/package-url/packageurl-go"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v3"
 )
 
 // GitLabClient is a client for fetching files from GitLab
@@ -69,7 +68,7 @@ func (g *GitLabClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 	}
 
 	pid := pURL.Namespace + "/" + pURL.Name
-	b, resp, err := g.client.RepositoryFiles.GetRawFile(pid, pURL.Subpath, &gitlab.GetRawFileOptions{
+	r, resp, err := g.client.RepositoryFiles.GetRawFileReader(pid, pURL.Subpath, &gitlab.GetRawFileOptions{
 		Ref: &pURL.Version,
 	}, gitlab.WithContext(ctx))
 	if err != nil {
@@ -80,5 +79,5 @@ func (g *GitLabClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, 
 		return nil, fmt.Errorf("failed to download %s: %s", pURL, resp.Status)
 	}
 
-	return io.NopCloser(bytes.NewReader(b)), nil
+	return r, nil
 }

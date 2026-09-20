@@ -30,9 +30,9 @@ echo "name=John, age=30"
 echo "name=Alice, age=30"
 -- stderr-open-error.txt --
 
-ERRO failed opening with-file "nonexistent.txt": open nonexistent.txt: no such file or directory
+ERROR failed opening with-file "nonexistent.txt": open nonexistent.txt: no such file or directory
 -- stderr-read-error.txt --
 
-ERRO failed reading with-file "invalid.txt": invalid syntax: non-delimited multiline value
+ERROR failed reading with-file "invalid.txt": invalid syntax: non-delimited multiline value
 -- invalid.txt --
 invalid content without equals sign

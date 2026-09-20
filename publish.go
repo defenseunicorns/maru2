@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/spf13/afero"
 	"oras.land/oras-go/v2"

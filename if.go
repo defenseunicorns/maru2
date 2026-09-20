@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/expr-lang/expr"
 
 	"github.com/defenseunicorns/maru2/schema"
@@ -111,7 +111,7 @@ func ShouldRun(ctx context.Context, expression string, err error, with schema.Wi
 
 	val, ok := out.(bool)
 	if !ok {
-		return false, fmt.Errorf("expression did not evaluate to a boolean")
+		return false, fmt.Errorf("expression did not evaluate to a boolean") // since https://github.com/expr-lang/expr/pull/866, this should be unreachable
 	}
 
 	if dry && !val {

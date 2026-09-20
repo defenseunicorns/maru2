@@ -1,5 +1,5 @@
 ! exec maru2 nonexistent-task
-stderr 'ERRO task "nonexistent-task" not found'
+stderr 'ERROR task "nonexistent-task" not found'
 
 -- tasks.yaml --
 schema-version: v0

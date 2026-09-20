@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/olareg/olareg"
 	olaregcfg "github.com/olareg/olareg/config"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"

@@ -12,12 +12,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/goccy/go-yaml"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
@@ -795,10 +796,10 @@ func TestExecuteUses(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.expectedErr == "" {
-				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, RuntimeOptions{})
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, runtime.Options{})
 				require.NoError(t, err)
 			} else {
-				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, RuntimeOptions{})
+				_, err := handleUsesStep(ctx, svc, v1.Step{Uses: tt.uses}, v1.Workflow{Aliases: tt.aliases}, schema.With{}, nil, origin, runtime.Options{})
 				require.EqualError(t, err, tt.expectedErr)
 			}
 		})
@@ -898,7 +899,7 @@ func TestUsesEnvironmentVariables(t *testing.T) {
 				tt.withInputs,
 				nil,
 				origin,
-				RuntimeOptions{
+				runtime.Options{
 					Env: tt.environ,
 					Dry: true, // dry run to avoid actual execution
 				},
@@ -941,7 +942,7 @@ func TestUsesEnvironmentVariablesExecution(t *testing.T) {
 	// Execute a simple task to verify environment variables are accessible
 	// This doesn't test the specific environment variable passing but confirms
 	// the basic uses functionality works with environment context
-	result, err := Run(ctx, svc, wf, "default", schema.With{}, origin, RuntimeOptions{Env: environ})
+	result, err := Run(ctx, svc, wf, "default", schema.With{}, origin, runtime.Options{Env: environ})
 	require.NoError(t, err)
 
 	// For this simple test, we just verify no error occurred

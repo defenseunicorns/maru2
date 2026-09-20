@@ -10,17 +10,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/defenseunicorns/maru2/runtime"
 )
 
 type mockBuiltin struct {
-	ExecuteFunc func(ctx context.Context) (map[string]any, error)
+	ExecuteFunc func(ctx context.Context, ro runtime.Options) (map[string]any, error)
 }
 
-func (m mockBuiltin) Execute(ctx context.Context) (map[string]any, error) {
+func (m mockBuiltin) Execute(ctx context.Context, ro runtime.Options) (map[string]any, error) {
 	if m.ExecuteFunc == nil {
 		return map[string]any{"result": "default"}, nil
 	}
-	return m.ExecuteFunc(ctx)
+	return m.ExecuteFunc(ctx, ro)
 }
 
 func TestRegister(t *testing.T) {
@@ -38,7 +40,7 @@ func TestRegister(t *testing.T) {
 			builtinName: "test-builtin",
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context, _ runtime.Options) (map[string]any, error) {
 						return map[string]any{"result": "test"}, nil
 					},
 				}
@@ -50,7 +52,7 @@ func TestRegister(t *testing.T) {
 			existingName: true,
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context, _ runtime.Options) (map[string]any, error) {
 						return map[string]any{"result": "test"}, nil
 					},
 				}
@@ -62,7 +64,7 @@ func TestRegister(t *testing.T) {
 			builtinName: "",
 			registrationFunc: func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context, _ runtime.Options) (map[string]any, error) {
 						return map[string]any{"result": "test"}, nil
 					},
 				}
@@ -81,7 +83,7 @@ func TestRegister(t *testing.T) {
 			if tc.existingName {
 				err := Register(tc.builtinName, func() Builtin {
 					return mockBuiltin{
-						ExecuteFunc: func(_ context.Context) (map[string]any, error) {
+						ExecuteFunc: func(_ context.Context, _ runtime.Options) (map[string]any, error) {
 							return map[string]any{"result": "first"}, nil
 						},
 					}
@@ -97,7 +99,7 @@ func TestRegister(t *testing.T) {
 				builtin := Get(tc.builtinName)
 				require.NotNil(t, builtin)
 
-				result, err := builtin.Execute(t.Context())
+				result, err := builtin.Execute(t.Context(), runtime.Options{})
 				require.NoError(t, err)
 				assert.Equal(t, "test", result["result"])
 			} else {
@@ -119,7 +121,7 @@ func TestConcurrentOperations(t *testing.T) {
 			name := fmt.Sprintf("concurrent-test-%d", id)
 			err := Register(name, func() Builtin {
 				return &mockBuiltin{
-					ExecuteFunc: func(_ context.Context) (map[string]any, error) {
+					ExecuteFunc: func(_ context.Context, _ runtime.Options) (map[string]any, error) {
 						return nil, nil
 					},
 				}

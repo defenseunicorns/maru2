@@ -34,7 +34,7 @@ func TestPublishE2E(t *testing.T) {
 	testscript.Run(t, testscript.Params{
 		Dir: filepath.Join("..", "testdata", "publish"),
 		Setup: func(env *testscript.Env) error {
-			env.Setenv("NO_COLOR", "true")
+			env.Setenv("TERM", "dumb")
 			env.Setenv("REGISTRY", serverURL.Host)
 			env.Setenv("HOME", filepath.Join(env.WorkDir, "home"))
 			return nil

@@ -64,8 +64,9 @@ func (f *FetchPolicy) Type() string {
 // JSONSchemaExtend extends the JSON schema for FetchPolicy
 func (FetchPolicy) JSONSchemaExtend(schema *jsonschema.Schema) {
 	schema.Type = "string"
-	all := []any{}
-	for _, fp := range AvailablePolicies() {
+	available := AvailablePolicies()
+	all := make([]any, 0, len(available))
+	for _, fp := range available {
 		all = append(all, fp)
 	}
 	schema.Enum = all

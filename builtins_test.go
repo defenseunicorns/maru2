@@ -7,10 +7,11 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 )
@@ -245,7 +246,7 @@ func TestExecuteBuiltin(t *testing.T) {
 					"existing-key": "value",
 				},
 			},
-			expectedError: "builtin:echo: template: expression evaluator:1:4: executing \"expression evaluator\" at <from \"existing-step\" \"missing-key\">: error calling from: no output \"missing-key\" from step \"existing-step\"",
+			expectedError: "builtin:echo: template: expression evaluator:1:4: executing \"expression evaluator\" at <from \"existing-step\" \"missing-key\">: error calling from: jq query \"missing-key\" failed: function not defined: key/0",
 		},
 		{
 			name: "echo builtin combining input and previous outputs",
@@ -275,7 +276,7 @@ func TestExecuteBuiltin(t *testing.T) {
 			var buf bytes.Buffer
 			ctx := log.WithContext(t.Context(), log.New(&buf))
 
-			result, err := ExecuteBuiltin(ctx, tc.step, tc.with, tc.previousOutputs, tc.dry)
+			result, err := ExecuteBuiltin(ctx, tc.step, tc.with, tc.previousOutputs, runtime.Options{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)

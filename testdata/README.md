@@ -4,7 +4,7 @@ This directory defines E2E test files for `maru2` leveraging <https://pkg.go.dev
 
 Regular E2E tests are run via [`cmd/root_test.go` `TestE2E`](../cmd/root_test.go).
 
-E2E tests the fetch "external" resources are run via [`cmd/fetch_test.go` `TestFetchE2E`](../cmd/fetch_test.go).
+E2E tests that fetch "external" resources are run via [`cmd/fetch_test.go` `TestFetchE2E`](../cmd/fetch_test.go).
 
 E2E tests for `maru2-publish` are run via [`cmd/publish_test.go` `TestPublishE2E`](../cmd/publish_test.go).
 

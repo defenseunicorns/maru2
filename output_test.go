@@ -154,3 +154,128 @@ c=d`),
 		require.ErrorContains(t, err, afero.ErrFileClosed.Error())
 	})
 }
+
+func TestParseJSONOutput(t *testing.T) {
+	testCases := []struct {
+		name        string
+		rs          io.ReadSeeker
+		expected    map[string]any
+		expectedErr string
+		initialRead int64
+	}{
+		{
+			name:     "empty reader",
+			rs:       strings.NewReader(""),
+			expected: nil,
+		},
+		{
+			name: "valid structured json",
+			rs: strings.NewReader(`{
+				"status": "ok",
+				"count": 2,
+				"items": ["one", "two"],
+				"nested": {"enabled": true}
+			}`),
+			expected: map[string]any{
+				"status": "ok",
+				"count":  float64(2),
+				"items":  []any{"one", "two"},
+				"nested": map[string]any{"enabled": true},
+			},
+		},
+		{
+			name:        "invalid json",
+			rs:          strings.NewReader(`{"status":`),
+			expectedErr: "failed to parse json output: unexpected EOF",
+		},
+		{
+			name:        "json array is invalid",
+			rs:          strings.NewReader(`["not", "an", "object"]`),
+			expectedErr: "failed to parse json output: json: cannot unmarshal array into Go value of type map[string]interface {}",
+		},
+		{
+			name:        "seeks to beginning before parsing",
+			rs:          strings.NewReader(`{"status":"ok"}`),
+			initialRead: 5,
+			expected: map[string]any{
+				"status": "ok",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if tc.initialRead != 0 {
+				_, err := tc.rs.Seek(tc.initialRead, io.SeekStart)
+				require.NoError(t, err)
+			}
+
+			outputs, err := ParseJSONOutput(tc.rs)
+			if tc.expectedErr != "" {
+				require.EqualError(t, err, tc.expectedErr)
+				require.Nil(t, outputs)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, outputs)
+		})
+	}
+
+	t.Run("empty file", func(t *testing.T) {
+		tmp := t.TempDir()
+		f, err := os.Create(filepath.Join(tmp, "output.json"))
+		t.Cleanup(func() {
+			_ = f.Close()
+		})
+		require.NoError(t, err)
+
+		outputs, err := ParseJSONOutput(f)
+		require.NoError(t, err)
+		require.Nil(t, outputs)
+	})
+
+	t.Run("closed file stat error", func(t *testing.T) {
+		tmp := t.TempDir()
+		f, err := os.Create(filepath.Join(tmp, "output.json"))
+		t.Cleanup(func() {
+			_ = f.Close()
+		})
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+
+		outputs, err := ParseJSONOutput(f)
+		require.Nil(t, outputs)
+		require.ErrorIs(t, err, os.ErrClosed)
+	})
+
+	t.Run("output hits size limit", func(t *testing.T) {
+		tmp := t.TempDir()
+		f, err := os.Create(filepath.Join(tmp, "output.json"))
+		t.Cleanup(func() {
+			_ = f.Close()
+		})
+		require.NoError(t, err)
+		require.NoError(t, f.Truncate(51<<20)) // sparse 50+ MB
+
+		outputs, err := ParseJSONOutput(f)
+		require.Nil(t, outputs)
+		require.EqualError(t, err, "output file too large")
+	})
+
+	t.Run("fail to seek", func(t *testing.T) {
+		fsys := afero.NewMemMapFs()
+		f, err := fsys.Create("output.json")
+		t.Cleanup(func() {
+			_ = f.Close()
+		})
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+
+		outputs, err := ParseJSONOutput(f)
+		require.Nil(t, outputs)
+		require.ErrorContains(t, err, afero.ErrFileClosed.Error())
+	})
+}

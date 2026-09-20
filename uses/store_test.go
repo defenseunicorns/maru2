@@ -626,7 +626,7 @@ func TestLocalStoreList(t *testing.T) {
 		store, err := NewLocalStore(fs)
 		require.NoError(t, err)
 
-		var items []string
+		items := make([]string, 0, 3)
 		for k := range store.List() {
 			items = append(items, k)
 		}

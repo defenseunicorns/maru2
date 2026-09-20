@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"maps"
 	"net/url"
 	"os"
@@ -20,35 +19,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/spf13/cast"
 
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
 )
-
-// RuntimeOptions are configurations whereupon the default empty/nil value is an acceptable case
-// and are not a requirement for a valid runtime execution
-//
-// Leave this type as a concrete instance vs a pointer type as this object will be mutated along the runtime pipeline,
-// and copy by value is the desired behavior versus copy by reference
-type RuntimeOptions struct {
-	// The WorkingDir to start the execution from, passed to the exec.Command in run blocks, leave blank for current process' PWD
-	WorkingDir string
-	// Environment variables passed to the exec.Command in run blocks, usually initialized w/ os.Environ()
-	Env []string
-	// Whether this execution is a dry run or not
-	Dry bool
-	// Whether this execution is already inside a collapsible section in CI, disables nested collapsible sections if true
-	Collapsed bool
-	// See `go doc exec.Cmd.Stdout`
-	Stdout io.Writer
-	// See `go doc exec.Cmd.Stderr`
-	Stderr io.Writer
-	// See `go doc exec.Cmd.Stdin`
-	Stdin io.Reader
-}
 
 /*
 Run is the main event loop in maru2
@@ -88,7 +66,7 @@ func Run(
 	taskName string,
 	outer schema.With,
 	origin *url.URL,
-	ro RuntimeOptions,
+	ro runtime.Options,
 ) (map[string]any, error) {
 	if taskName == "" {
 		taskName = schema.DefaultTaskName
@@ -218,7 +196,7 @@ func handleRunStep(
 	step v1.Step,
 	withDefaults schema.With,
 	outputs CommandOutputs,
-	ro RuntimeOptions,
+	ro runtime.Options,
 ) (map[string]any, error) {
 
 	logger := log.FromContext(ctx)
@@ -226,13 +204,13 @@ func handleRunStep(
 	script, err := TemplateString(ctx, step.Run, withDefaults, outputs, ro.Dry)
 	if err != nil {
 		if ro.Dry {
-			printScript(logger, step.Shell, script)
+			printScript(ctx, step.Shell, script)
 		}
 		return nil, err
 	}
 
 	if ro.Dry || step.Show == nil || *step.Show {
-		printScript(logger, step.Shell, script)
+		printScript(ctx, step.Shell, script)
 	}
 	if ro.Dry {
 		return nil, nil
@@ -250,12 +228,22 @@ func handleRunStep(
 		os.Remove(outFile.Name())
 	}()
 
+	jsonOutFile, err := os.CreateTemp("", "maru2-json-output-*")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		jsonOutFile.Close()
+		os.Remove(jsonOutFile.Name())
+	}()
+
 	templatedEnv, err := TemplateWithMap(ctx, step.Env, withDefaults, outputs, ro.Dry)
+
 	if err != nil {
 		return nil, err
 	}
 
-	env, err := prepareEnvironment(ro.Env, withDefaults, outFile.Name(), templatedEnv)
+	env, err := prepareEnvironment(ro.Env, withDefaults, outFile.Name(), jsonOutFile.Name(), templatedEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -293,14 +281,24 @@ func handleRunStep(
 	}
 
 	out, err := ParseOutput(outFile)
-	if err != nil || len(out) == 0 {
+	if err != nil {
 		return nil, err
 	}
 
-	result := make(map[string]any, len(out))
+	jsonOut, err := ParseJSONOutput(jsonOutFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(out) == 0 && len(jsonOut) == 0 {
+		return nil, nil
+	}
+
+	result := make(map[string]any)
 	for k, v := range out {
 		result[k] = v
 	}
+	maps.Copy(result, jsonOut)
 
 	return result, nil
 }
@@ -309,8 +307,8 @@ func handleRunStep(
 //
 // Combines system env vars, input parameters as env vars, step-level env vars,
 // and the output file path for step communication
-func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName string, stepEnv schema.Env) ([]string, error) {
-	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+1)
+func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName string, jsonOutFileName string, stepEnv schema.Env) ([]string, error) {
+	env := make([]string, len(envVars), len(envVars)+len(withDefaults)+len(stepEnv)+2)
 	copy(env, envVars)
 
 	for k, v := range withDefaults {
@@ -336,6 +334,10 @@ func prepareEnvironment(envVars []string, withDefaults schema.With, outFileName 
 
 	if outFileName != "" {
 		env = append(env, fmt.Sprintf("MARU2_OUTPUT=%s", outFileName))
+	}
+
+	if jsonOutFileName != "" {
+		env = append(env, fmt.Sprintf("MARU2_JSON_OUTPUT=%s", jsonOutFileName))
 	}
 
 	return env, nil
@@ -371,8 +373,7 @@ func (e *TraceError) Unwrap() error {
 // Creates or extends a TraceError with frame information to show
 // the execution path when errors occur
 func addTrace(err error, frame string) error {
-	var tErr *TraceError
-	if errors.As(err, &tErr) {
+	if tErr, ok := errors.AsType[*TraceError](err); ok {
 		tErr.Trace = append([]string{frame}, tErr.Trace...)
 		return tErr
 	}

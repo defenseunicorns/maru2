@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -68,7 +68,7 @@ func (c *OCIClient) Fetch(ctx context.Context, uri *url.URL) (io.ReadCloser, err
 		return nil, fmt.Errorf("uri is nil")
 	}
 
-	clone := *uri
+	clone := uri.Clone()
 
 	if clone.Scheme != "oci" {
 		return nil, fmt.Errorf("scheme is not \"oci\"")

@@ -11,9 +11,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/spf13/afero"
 
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
@@ -31,12 +32,12 @@ func handleUsesStep(
 	withDefaults schema.With,
 	outputs CommandOutputs,
 	origin *url.URL,
-	ro RuntimeOptions,
+	ro runtime.Options,
 ) (map[string]any, error) {
 	ro.WorkingDir = filepath.Join(ro.WorkingDir, step.Dir)
 
 	if strings.HasPrefix(step.Uses, BuiltinPrefix) {
-		return ExecuteBuiltin(ctx, step, withDefaults, outputs, ro.Dry)
+		return ExecuteBuiltin(ctx, step, withDefaults, outputs, ro)
 	}
 
 	logger := log.FromContext(ctx)
@@ -55,7 +56,7 @@ func handleUsesStep(
 		return nil, err
 	}
 
-	env, err := prepareEnvironment(ro.Env, nil, "", templatedEnv)
+	env, err := prepareEnvironment(ro.Env, nil, "", "", templatedEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +201,7 @@ func ListAllLocal(ctx context.Context, src *url.URL, fsys afero.Fs) ([]string, e
 		}
 	}
 
-	clone := *src
+	clone := src.Clone()
 	clone.RawQuery = ""
 	fullRefs := []string{clone.String()}
 

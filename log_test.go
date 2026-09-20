@@ -12,15 +12,17 @@ import (
 	"sync"
 	"testing"
 
+	"charm.land/log/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/colorprofile"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/theme"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -63,21 +65,21 @@ func TestPrintScript(t *testing.T) {
 		{
 			name:     "simple shell",
 			script:   "echo hello",
-			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n",
+			expected: "\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m hello\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
 		{
 			name:     "multiline",
 			script:   "echo hello\necho world\n\necho !",
-			expected: "  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m hello\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m world\x1b[0m\n  \x1b[38;5;189m\x1b[0m\n  \x1b[38;5;150mecho\x1b[0m\x1b[38;5;189m !\x1b[0m\n",
+			expected: "\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m hello\x1b[m\n\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m world\x1b[m\n\x1b[48;5;237m \x1b[m \x1b[38;5;189m\x1b[m\n\x1b[48;5;237m \x1b[m \x1b[38;5;150mecho\x1b[m\x1b[38;5;189m !\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
 		{
-			name:     "simple shell",
-			script:   "echo hello",
-			expected: "echo hello\n",
+			name:     "simple shell - no color",
+			script:   "echo hello nocolor",
+			expected: "echo hello nocolor\n",
 			color:    false,
 			logLevel: log.InfoLevel,
 		},
@@ -90,35 +92,35 @@ func TestPrintScript(t *testing.T) {
 		},
 		{
 			name:     "info level - should print",
-			script:   "echo hello",
-			expected: "echo hello\n",
+			script:   "echo hello info",
+			expected: "echo hello info\n",
 			color:    false,
 			logLevel: log.InfoLevel,
 		},
 		{
 			name:     "debug level - should print",
-			script:   "echo hello",
-			expected: "echo hello\n",
+			script:   "echo hello debug",
+			expected: "echo hello debug\n",
 			color:    false,
 			logLevel: log.DebugLevel,
 		},
 		{
 			name:     "warn level - should not print",
-			script:   "echo hello",
+			script:   "echo hello warn",
 			expected: "",
 			color:    false,
 			logLevel: log.WarnLevel,
 		},
 		{
 			name:     "error level - should not print",
-			script:   "echo hello",
+			script:   "echo hello error",
 			expected: "",
 			color:    false,
 			logLevel: log.ErrorLevel,
 		},
 		{
 			name:     "fatal level - should not print",
-			script:   "echo hello",
+			script:   "echo hello fatal",
 			expected: "",
 			color:    false,
 			logLevel: log.FatalLevel,
@@ -127,14 +129,22 @@ func TestPrintScript(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.color {
-				t.Setenv("NO_COLOR", "true")
-			}
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
-			printScript(logger, "", tc.script)
-			assert.Equal(t, tc.expected, buf.String(), "this test fails when run w/ `go test`, run w/ `make test` instead as that will use maru2, which uses a true shell env")
+			ctx := log.WithContext(t.Context(), logger)
+
+			testTheme := theme.BlankTheme()
+			if tc.color {
+				testTheme = theme.DefaultTheme(os.Stdout, os.Stderr)
+				testTheme.ColorProfile = colorprofile.ANSI256 // in testing force colors
+				logger.SetColorProfile(colorprofile.ANSI256)  // so the colors and escape codes match 1:1
+			}
+
+			ctx = theme.WithContext(ctx, testTheme)
+
+			printScript(ctx, "", tc.script)
+			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
 
@@ -146,8 +156,10 @@ func TestPrintScript(t *testing.T) {
 	lexers.Register(&errLexer{name: "shell"}) // overrides shell lexer
 
 	var buf strings.Builder
-	printScript(log.New(&buf), "", "echo hello")
-	assert.Equal(t, "  echo hello\n", buf.String())
+	logger := log.New(&buf)
+	ctx := log.WithContext(t.Context(), logger)
+	printScript(ctx, "", "echo hello")
+	assert.Equal(t, "echo hello\n", buf.String())
 }
 
 func TestPrintBuiltin(t *testing.T) {
@@ -161,14 +173,14 @@ func TestPrintBuiltin(t *testing.T) {
 		{
 			name:     "simple shell",
 			builtin:  schema.With{"text": "hello"},
-			expected: "\x1b[38;5;141mwith\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m\x1b[0m\n\x1b[38;5;189m  \x1b[0m\x1b[38;5;141mtext\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m \x1b[0m\x1b[38;5;189mhello\x1b[0m\x1b[38;5;189m\x1b[0m\n",
+			expected: "\x1b[38;5;141mwith\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m\x1b[m\n\x1b[38;5;189m  \x1b[m\x1b[38;5;141mtext\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m \x1b[m\x1b[38;5;189mhello\x1b[m\x1b[38;5;189m\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
 		{
 			name:     "multiline",
 			builtin:  schema.With{"text": "hello\nworld\n!"},
-			expected: "\x1b[38;5;141mwith\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m\x1b[0m\n\x1b[38;5;189m  \x1b[0m\x1b[38;5;141mtext\x1b[0m\x1b[38;5;189m:\x1b[0m\x1b[38;5;189m \x1b[0m\x1b[38;5;189m|-\x1b[0m\x1b[38;5;240m\x1b[0m\n\x1b[38;5;240m    hello\x1b[0m\n\x1b[38;5;240m    world\x1b[0m\n\x1b[38;5;240m    !\x1b[0m\x1b[38;5;189m\x1b[0m\n",
+			expected: "\x1b[38;5;141mwith\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m\x1b[m\n\x1b[38;5;189m  \x1b[m\x1b[38;5;141mtext\x1b[m\x1b[38;5;189m:\x1b[m\x1b[38;5;189m \x1b[m\x1b[38;5;189m|-\x1b[m\x1b[38;5;240m\x1b[m\n\x1b[38;5;240m    hello\x1b[m\n\x1b[38;5;240m    world\x1b[m\n\x1b[38;5;240m    !\x1b[m\x1b[38;5;189m\x1b[m\n",
 			color:    true,
 			logLevel: log.InfoLevel,
 		},
@@ -236,13 +248,20 @@ func TestPrintBuiltin(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.color {
-				t.Setenv("NO_COLOR", "true")
-			}
 			var buf strings.Builder
 			logger := log.New(&buf)
 			logger.SetLevel(tc.logLevel)
-			printBuiltin(logger, tc.builtin)
+			ctx := log.WithContext(t.Context(), logger)
+
+			testTheme := theme.BlankTheme()
+			if tc.color {
+				testTheme = theme.DefaultTheme(os.Stdout, os.Stderr)
+				testTheme.ColorProfile = colorprofile.ANSI256 // in testing force colors
+				logger.SetColorProfile(colorprofile.ANSI256)  // so the colors and escape codes match 1:1
+			}
+
+			ctx = theme.WithContext(ctx, testTheme)
+			printBuiltin(ctx, tc.builtin)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}
@@ -255,7 +274,8 @@ func TestPrintBuiltin(t *testing.T) {
 	lexers.Register(&errLexer{name: "yaml"}) // overrides yaml lexer
 
 	var buf strings.Builder
-	printBuiltin(log.New(&buf), schema.With{"text": "echo hello"})
+	ctx := log.WithContext(t.Context(), log.New(&buf))
+	printBuiltin(ctx, schema.With{"text": "echo hello"})
 	assert.Equal(t, `with:
   text: echo hello
 `, buf.String())
@@ -265,10 +285,11 @@ func TestPrintBuiltinMarshalError(t *testing.T) {
 	var buf strings.Builder
 	logger := log.New(&buf)
 	logger.SetLevel(log.DebugLevel)
+	ctx := log.WithContext(t.Context(), logger)
 
 	builtin := schema.With{"func": func() {}}
 
-	printBuiltin(logger, builtin)
+	printBuiltin(ctx, builtin)
 
 	output := buf.String()
 	assert.Contains(t, output, "failed to marshal builtin")
@@ -389,8 +410,6 @@ func TestPrintGroup(t *testing.T) {
 }
 
 func TestDetailedTaskList(t *testing.T) {
-	t.Setenv("NO_COLOR", "true") // format matters more than ensuring colors are correct
-
 	testCases := []struct {
 		name     string
 		workflow v1.Workflow
@@ -572,8 +591,6 @@ func TestDetailedTaskList(t *testing.T) {
 }
 
 func TestDetailedTaskListWithAliases(t *testing.T) {
-	t.Setenv("NO_COLOR", "true") // format matters more than ensuring colors are correct
-
 	testCases := []struct {
 		name      string
 		workflow  v1.Workflow
@@ -944,7 +961,7 @@ func TestRenderInputMap(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf strings.Builder
-			renderInputMap(&buf, tc.inputs)
+			renderInputMap(&buf, theme.BlankTheme(), tc.inputs)
 			assert.Equal(t, tc.expected, buf.String())
 		})
 	}

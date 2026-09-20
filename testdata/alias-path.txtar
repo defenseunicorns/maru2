@@ -19,16 +19,23 @@ stdout 'Local alias resolved successfully'
 exec maru2 -f workflow-with-aliases.yaml local:echo-local
 
 ! exec maru2 -f workflow-with-aliases.yaml local:dne
-stderr 'ERRO task "dne" not found'
+stderr 'ERROR task "dne" not found'
 
 ! exec maru2 -f workflow-with-aliases.yaml dne:echo-local
-stderr 'ERRO unsupported scheme: "dne" in "dne:echo-local"'
+stderr 'ERROR unsupported scheme: "dne" in "dne:echo-local"'
 
 ! exec maru2 -f workflow-resolve-error.yaml missing:anything
-stderr 'ERRO stat does-not-exist.yaml: no such file or directory'
+stderr 'ERROR stat does-not-exist.yaml: no such file or directory'
 
 ! exec maru2 -f workflow-with-aliases.yaml local:fails
-stderr 'ERRO at fails\[0\] \(file:local-tasks.yaml\?task=fails\)'
+stderr 'ERROR at fails\[0\] \(file:local-tasks.yaml\?task=fails\)'
+
+-- list.txt --
+Available tasks:
+    local-task                                
+    remote-task -w message='hello from remote' # I am a remote task
+    local:echo-local                          
+    local:fails                                # This task is going to fail
 
 -- workflow-absolute-path.yaml --
 schema-version: v1
@@ -102,10 +109,3 @@ aliases:
 tasks:
   default:
     steps: []
--- list.txt --
-Available tasks:
-    local-task                                
-    remote-task -w message='hello from remote'# I am a remote task
-    local:echo-local                          
-    local:fails                               # This task is going to fail
-

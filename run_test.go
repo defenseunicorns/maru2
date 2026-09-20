@@ -12,15 +12,17 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/defenseunicorns/maru2/runtime"
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
 	"github.com/defenseunicorns/maru2/uses"
@@ -328,7 +330,7 @@ func TestRun(t *testing.T) {
 			svc, err := uses.NewFetcherService()
 			require.NoError(t, err)
 
-			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, RuntimeOptions{Dry: tc.dry})
+			result, err := Run(ctx, svc, tc.workflow, tc.taskName, tc.with, nil, runtime.Options{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -378,7 +380,7 @@ func TestRun_PrintGroup(t *testing.T) {
 		stdout := strings.Builder{}
 
 		ctx := log.WithContext(t.Context(), log.New(io.Discard))
-		out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{Stdout: &stdout})
+		out, err := Run(ctx, nil, wf, "", nil, nil, runtime.Options{Stdout: &stdout})
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
@@ -399,7 +401,7 @@ func TestRun_PrintGroup(t *testing.T) {
 		stdout := strings.Builder{}
 
 		ctx := log.WithContext(t.Context(), log.New(io.Discard))
-		out, err := Run(ctx, nil, wf, "", nil, nil, RuntimeOptions{Stdout: &stdout})
+		out, err := Run(ctx, nil, wf, "", nil, nil, runtime.Options{Stdout: &stdout})
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
@@ -648,7 +650,7 @@ func TestRunContext(t *testing.T) {
 				}()
 			}
 
-			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, schema.With{}, nil, RuntimeOptions{})
+			out, err := Run(testCtx, svc, tc.workflow, tc.taskName, schema.With{}, nil, runtime.Options{})
 
 			if tc.expectedError != "" {
 				require.ErrorContains(t, err, tc.expectedError)
@@ -1000,7 +1002,7 @@ func TestPrepareEnvironment(t *testing.T) {
 				actualOutFileName = ""
 			}
 
-			env, err := prepareEnvironment(tc.startingEnv, tc.withDefaults, actualOutFileName, tc.stepEnv)
+			env, err := prepareEnvironment(tc.startingEnv, tc.withDefaults, actualOutFileName, "", tc.stepEnv)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
@@ -1276,8 +1278,6 @@ func TestHandleRunStep(t *testing.T) {
 		},
 	}
 
-	t.Setenv("NO_COLOR", "true")
-
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var buf bytes.Buffer
@@ -1286,7 +1286,7 @@ func TestHandleRunStep(t *testing.T) {
 				Level: log.InfoLevel,
 			}))
 
-			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, RuntimeOptions{Dry: tc.dry})
+			result, err := handleRunStep(ctx, tc.step, tc.withDefaults, nil, runtime.Options{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -1563,7 +1563,7 @@ func TestHandleUsesStep(t *testing.T) {
 			origin, err := url.Parse(tc.origin)
 			require.NoError(t, err)
 
-			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, RuntimeOptions{Dry: tc.dry})
+			result, err := handleUsesStep(ctx, svc, tc.step, tc.workflow, tc.withDefaults, nil, origin, runtime.Options{Dry: tc.dry})
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
@@ -1649,8 +1649,8 @@ func TestTraceError(t *testing.T) {
 
 				resultErr := tc.err
 				// Apply frames in reverse to simulate the call stack
-				for i := len(tc.frames) - 1; i >= 0; i-- {
-					resultErr = addTrace(resultErr, tc.frames[i])
+				for _, v := range slices.Backward(tc.frames) {
+					resultErr = addTrace(resultErr, v)
 				}
 
 				var traceErr *TraceError

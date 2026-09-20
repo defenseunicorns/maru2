@@ -10,4 +10,4 @@ tasks:
 
 -- stderr.txt --
 
-ERRO $HOME is not defined
+ERROR $HOME is not defined

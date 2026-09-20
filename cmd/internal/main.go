@@ -14,11 +14,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/spf13/cobra"
 
 	"github.com/defenseunicorns/maru2"
 	maru2cmd "github.com/defenseunicorns/maru2/cmd"
+	"github.com/defenseunicorns/maru2/theme"
 )
 
 // this application is only for internal testing only
@@ -56,9 +57,12 @@ func main() {
 		ReportTimestamp: false,
 	})
 
-	logger.SetStyles(maru2cmd.DefaultStyles())
+	styling := theme.DefaultTheme(os.Stdin, os.Stdout)
+	logger.SetStyles(styling.LogStyles)
+	logger.SetColorProfile(styling.ColorProfile)
 
 	ctx = log.WithContext(ctx, logger)
+	ctx = theme.WithContext(ctx, styling)
 	// end context and logger setup
 
 	// register uds, zarf, kubectl and other shortcuts

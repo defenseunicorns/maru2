@@ -5,9 +5,10 @@ package uses
 
 import (
 	"io"
+	"net/url"
 	"testing"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +33,7 @@ func TestGitLabFetcher(t *testing.T) {
 		require.NoError(t, err)
 
 		rc, err = client.Fetch(ctx, u)
-		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
+		require.EqualError(t, err, `purl scheme is not "pkg": "file:foo.yaml"`)
 		assert.Nil(t, rc)
 
 		u, err = ResolveRelative(nil, "pkg:github/foo.yaml", nil)
@@ -102,5 +103,17 @@ hello-world:
 		assert.NotNil(t, client)
 
 		assert.Equal(t, baseURL+"api/v4/", client.client.BaseURL().String())
+	})
+
+	t.Run("invalid purl fetch", func(t *testing.T) {
+		t.Parallel()
+		client, err := NewGitLabClient(nil, "", "")
+		require.NoError(t, err)
+
+		u, err := url.Parse("pkg:invalid-purl-format")
+		require.NoError(t, err)
+		rc, err := client.Fetch(t.Context(), u)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `purl is missing type or name`)
 	})
 }

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,7 @@ func TestGitHubFetcher(t *testing.T) {
 
 		rc, err = client.Fetch(ctx, u)
 		assert.Nil(t, rc)
-		require.EqualError(t, err, `purl scheme is not "pkg": "file"`)
+		require.EqualError(t, err, `purl scheme is not "pkg": "file:foo.yaml"`)
 
 		u, err = url.Parse("pkg:gitlab/foo.yaml")
 		require.NoError(t, err)
@@ -88,11 +88,23 @@ echo:
 		require.NoError(t, err)
 		assert.NotNil(t, client)
 
-		actualBaseURL := client.client.BaseURL.String()
+		actualBaseURL := client.client.BaseURL()
 		expectedBaseURL := baseURL
 		if !strings.HasSuffix(expectedBaseURL, "/") {
 			expectedBaseURL += "/"
 		}
 		assert.Equal(t, expectedBaseURL, actualBaseURL)
+	})
+
+	t.Run("invalid purl fetch", func(t *testing.T) {
+		t.Parallel()
+		client, err := NewGitHubClient(nil, "", "")
+		require.NoError(t, err)
+
+		u, err := url.Parse("pkg:invalid-purl-format")
+		require.NoError(t, err)
+		rc, err := client.Fetch(t.Context(), u)
+		assert.Nil(t, rc)
+		require.EqualError(t, err, `purl is missing type or name`)
 	})
 }

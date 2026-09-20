@@ -44,7 +44,7 @@ exists override-store/index.txt
 rm .maru2/store
 mv bad/index.txt home/.maru2/store/index.txt
 ! exec maru2
-stderr 'ERRO failed to initialize store: invalid line format'
+stderr 'ERROR failed to initialize store: invalid line format'
 
 rm home/.maru2/store/index.txt
 

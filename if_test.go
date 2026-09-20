@@ -9,7 +9,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -218,7 +218,7 @@ func TestIf(t *testing.T) {
 			inputExpr:       `input("missing")`,
 			with:            schema.With{},
 			previousOutputs: CommandOutputs{},
-			expectedErr:     "expression did not evaluate to a boolean",
+			expected:        false,
 		},
 		{
 			name:      "complex array operations",

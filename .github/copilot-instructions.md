@@ -124,7 +124,7 @@ go test ./cmd/ -run TestE2E/<TestName> -v
 
 - Use `-short` flag to skip network-dependent tests
 - E2E testing uses `testscript` framework in `/testdata/` - each `.txtar` file defines a complete test scenario
-- The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, and can be customized via maru2's input system
+- The `test` task in `tasks.yaml` sets `CGO_ENABLED=1`, uses race detection, writes `coverage.out`, and can be customized via maru2's input system
 - Prompt the user after finishing a feature for confirmation to run the entire test suite, do not auto run it.
 
 ### Linting
@@ -145,9 +145,10 @@ make lint-fix       # Run linters with auto-fix
 Always validate changes with this sequence:
 
 1. `make` (rebuild + regenerate schemas)
-2. `make test ARGS='-w short=true'` (run core tests)
-3. `make lint` (if golangci-lint installed)
-4. Check schema files are committed if changed
+2. `go test ./<changed-package> -cover` when working in a narrow package
+3. `make test ARGS='-w short=true'` (run core tests)
+4. `make lint` (if golangci-lint installed)
+5. Check schema files are committed if changed
 
 ### Common Build Issues & Workarounds
 
@@ -184,25 +185,25 @@ Maru2 follows a modular Go architecture with clear separation of concerns:
 
 ### Core Architecture Patterns
 
-**Builtin System**: Built-in tasks are registered in `builtins/registration.go` with a factory pattern. Each builtin implements the `Builtin` interface with an `Execute(ctx context.Context) (map[string]any, error)` method. Use `builtins.Get("name")` to retrieve instances.
+**Builtin System**: Built-in tasks are registered in `builtins/registration.go` with a factory pattern. Each builtin implements the `Builtin` interface with an `Execute(ctx context.Context, ro runtime.Options) (map[string]any, error)` method. Use `builtins.Get("name")` to retrieve fresh instances.
 
 **Schema-Driven Validation**: The entire workflow syntax is defined via Go structs in `schema/v0/` and `schema/v1/` that auto-generate JSON schemas. The `WorkFlowSchema()` function creates the main schema, while individual structs use `JSONSchemaExtend()` methods for documentation or behavior that is too complex to represent within the struct tags. Configuration files are also versioned using the same pattern in `config/v0/`.
 
 **Schema Versioning**: Maru2 now supports multiple schema versions (v0 and v1) with separate validation pipelines. The build process generates version-specific schema files for internal validation while maintaining a public schema for IDE integration.
 
-**Remote Uses System**: The `uses/` package implements pluggable fetchers for different protocols (GitHub, GitLab, OCI, HTTP, local files). Each fetcher implements the `Fetcher` interface and is registered via URL scheme detection.
+**Remote Uses System**: The `uses/` package implements pluggable fetchers for different protocols (GitHub, GitLab, OCI, HTTP, local files). Each fetcher implements the `Fetcher` interface and is selected by URL scheme handling in `uses.FetcherService`.
 
 **Testscript E2E Pattern**: E2E tests use `.txtar` archive format in `/testdata/` with `go test ./cmd/ -run TestE2E/<TestName> -v` for individual test execution.
 
 ### Key Workflow Concepts
 
-**Step Outputs**: Steps can produce outputs by writing `key=value` pairs to the `$MARU2_OUTPUT` environment variable file. Access outputs from previous steps using `${{ from "step-id" "output-key" }}` syntax. (see `output.go` and `output_test.go`)
+**Step Outputs**: Steps can produce outputs by writing `key=value` pairs to `$MARU2_OUTPUT`, or structured JSON objects to `$MARU2_JSON_OUTPUT`. Access outputs from previous steps using `${{ from "step-id" "output-key-or-jq" }}` syntax. Exact top-level key matches use direct lookup for backwards compatibility; otherwise the second argument is evaluated as a jq expression via `github.com/itchyny/gojq`. (see `output.go`, `with.go`, `output_test.go`, and `with_test.go`)
 
 **Shell Selection**: Steps support different shells via the `shell` property: `sh`, `bash`, `powershell`, `pwsh`. Default behavior varies by command content.
 
 **Conditional Execution**: Use `if` property with expr expressions. Built-in functions include `failure()`, `always()`, `cancelled()`, `input("name")`, and `from("step-id", "key")`.
 
-**Package URLs**: Remote tasks use package-url (purl) spec format like `pkg:github/owner/repo@version#path/to/tasks.yaml` which supports aliases for shorthand references. `oci`, `file`, `http` and `https` are also supported. No matter what, a `uses` field _must_ be a proper URL with a protocol scheme.
+**Package URLs**: Remote tasks use package-url (purl) spec format like `pkg:github/owner/repo@version#path/to/tasks.yaml` which supports aliases for shorthand references. `oci`, `file`, `http` and `https` are also supported. Local task names and alias references can be scheme-less, but remote `uses` values must use a supported URL scheme.
 
 **OCI Artifact Support**: Maru2 supports distributing and consuming workflows as OCI artifacts in container registries. This enables workflows to be versioned, cached, and distributed through existing container infrastructure. See the `maru2-publish` CLI and the `uses/oci.go` files for more information.
 
@@ -225,7 +226,7 @@ Located in `.github/workflows/`:
 
 - **`go.yaml`**: Main CI pipeline (build, test, lint) on push/PR to main
 - **`release.yaml`**: Automated releases
-- **`nightly-build.yaml`**: Nightly builds
+- **`dependency-review.yaml`**: Dependency review on pull requests
 - **`commitlint.yaml`**: Commit message linting
 
 **CI Requirements**:
@@ -270,11 +271,12 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 - `text/template` - Go's standard template engine for script interpolation (`${{ input "name" }}` syntax)
 - `github.com/expr-lang/expr` - Fast expression evaluation for conditional `if` statements
+- `github.com/itchyny/gojq` - Embedded jq-compatible query evaluation for structured step outputs
 
 **Remote Integrations**:
 
-- `github.com/google/go-github/v62` - GitHub API client for fetching remote tasks
-- `gitlab.com/gitlab-org/api/client-go` - GitLab API client for GitLab integration
+- `github.com/google/go-github/v92` - GitHub API client for fetching remote tasks
+- `gitlab.com/gitlab-org/api/client-go/v3` - GitLab API client for GitLab integration
 - `oras.land/oras-go/v2` - OCI registry support for artifact-based task distribution
 - `github.com/package-url/packageurl-go` - Package URL (purl) parsing for remote task references
 - `github.com/olareg/olareg` - OCI local registry implementation for testing
@@ -282,8 +284,10 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 **UI/Logging**:
 
-- `github.com/charmbracelet/lipgloss` - Terminal styling and color output
-- `github.com/charmbracelet/log` - Structured, leveled logging with styling
+- `charm.land/lipgloss/v2` - Terminal styling and color output
+- `charm.land/log/v2` - Structured, leveled logging with styling
+- `charm.land/glamour/v2` - Markdown rendering for CLI output
+- `github.com/charmbracelet/colorprofile` - Terminal color-profile detection and output downsampling
 - `github.com/alecthomas/chroma/v2` - Syntax highlighting for code output
 
 **Utilities**:
@@ -291,7 +295,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 - `github.com/spf13/afero` - Filesystem abstraction for testability
 - `github.com/go-viper/mapstructure/v2` - Clean struct mapping and configuration binding
 - `github.com/spf13/cast` - Safe type conversion utilities
-- `github.com/muesli/termenv` - Terminal environment detection and feature support
+- `github.com/charmbracelet/x/term` and `golang.org/x/term` - Terminal helpers
 
 **Testing**:
 
@@ -351,6 +355,8 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
    - Write table-driven tests for multiple scenarios
    - Use `testify/require` for assertions that deal with error handling
    - Use `testify/assert` for all other assertions
+   - Use `t.Context()` instead of `context.Background()` in tests
+   - Keep comments minimal; prefer clear test names and direct assertions
    - Mock external dependencies using interfaces
    - Test both happy path and error conditions
 
@@ -363,7 +369,7 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 5. **Communication**:
    - Be brutally honest in your feedback, avoiding fluff wording and words of encouragement. High quality code is your objective, not assuaging the concerns of your reader.
    - If you are ever confused, or something does not look right, first stop and think, then if you are still confused pause and ask for clarification.
-   - Avoid exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational aknowledgements.
+   - Avoid exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational acknowledgements.
    - Communicate in clear and concise prose that relays your intent without verbosity.
 
 ### Architecture Notes
@@ -374,13 +380,13 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 ### Key Source Files
 
-**Main entry point**: `cmd/maru2/main.go` (16 lines - delegates to `cmd.Main()`)
+**Main entry point**: `cmd/maru2/main.go` - delegates to `cmd.Main()`
 
 **Core workflow engine**: `run.go` - handles task execution, environment setup, step processing
 
 **Schema system**: `schema/v0/` and `schema/v1/` - defines workflow syntax and validation rules
 
-**Built-in tasks**: `builtins/` - implements `builtin:echo` and `builtin:fetch` tasks
+**Built-in tasks**: `builtins/` - implements registered builtins including `builtin:echo`, `builtin:fetch`, and schema/test helpers
 
 **Remote task support**: `uses/` - handles fetching tasks from remote sources
 
@@ -409,6 +415,6 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 **Always start with `make`** when working on this codebase to ensure binaries and schemas are properly generated and synchronized.
 
-**Avoid** exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational aknowledgements.
+**Avoid** exclamatory openers, affirmative interjections, enthusiastic affirmations, or conversational acknowledgements.
 
 **Trust these instructions** and only search for additional information if something is incomplete or incorrect. The build and test commands documented here have been validated to work correctly.

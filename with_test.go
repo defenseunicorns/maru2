@@ -8,7 +8,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -52,6 +53,58 @@ func TestTemplateString(t *testing.T) {
 			},
 			str:      "status: ${{ from \"step1\" \"result\" }}",
 			expected: "status: success",
+		},
+		{
+			name: "with jq query",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"user": map[string]any{
+						"name": "alice",
+					},
+				},
+			},
+			str:      "user: ${{ from \"step1\" \".user.name\" }}",
+			expected: "user: alice",
+		},
+		{
+			name: "with invalid jq query",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"user": "alice",
+				},
+			},
+			str:           "user: ${{ from \"step1\" \".user[\" }}",
+			expectedError: "invalid jq query",
+		},
+		{
+			name: "with jq query no output",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"user": "alice",
+				},
+			},
+			str:           "user: ${{ from \"step1\" \".admin\" }}",
+			expectedError: "jq query \".admin\" produced no output for step \"step1\"",
+		},
+		{
+			name: "with jq query evaluation error",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"user": "alice",
+				},
+			},
+			str:           "user: ${{ from \"step1\" \"missing-key\" }}",
+			expectedError: "jq query \"missing-key\" failed",
+		},
+		{
+			name: "with tojson",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"arr": []string{"a", "b"},
+				},
+			},
+			str:      "json: ${{ from \"step1\" \"arr\" | tojson }}",
+			expected: "json: [\"a\",\"b\"]",
 		},
 		{
 			name:           "with missing previous output",
@@ -146,6 +199,35 @@ func TestTemplateString(t *testing.T) {
 			dryRun:   true,
 		},
 		{
+			name: "dry run - with valid jq query",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{
+					"user": map[string]any{
+						"name": "alice",
+					},
+				},
+			},
+			str:      `user: ${{ from "step1" ".user.name" }}`,
+			expected: "user: ❯ from step1 .user.name ❮",
+			dryRun:   true,
+		},
+		{
+			name:           "dry run - with valid jq query missing step data",
+			previousOutput: CommandOutputs{},
+			str:            `user: ${{ from "step1" ".user.name" }}`,
+			expected:       "user: ❯ from step1 .user.name ❮",
+			dryRun:         true,
+		},
+		{
+			name: "dry run - with invalid jq syntax",
+			previousOutput: CommandOutputs{
+				"step1": map[string]any{},
+			},
+			str:           `user: ${{ from "step1" ".user[" }}`,
+			expectedError: "invalid jq query \".user[\"",
+			dryRun:        true,
+		},
+		{
 			name:     "dry run - with missing previous output",
 			str:      `status: ${{ from "step1" "result" }}`,
 			expected: "status: ❯ from step1 result ❮",
@@ -204,7 +286,7 @@ func TestTemplateString(t *testing.T) {
 
 			if tc.expectedError == "" {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expected, result)
+				assert.Equal(t, tc.expected, ansi.Strip(result))
 			} else {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.expectedError)
@@ -1638,7 +1720,7 @@ func TestPerformLookups(t *testing.T) {
 			local: schema.With{
 				"foo": `${{ from "step-1" "dne" }}`,
 			},
-			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from "step-1" "dne">: error calling from: no output "dne" from step "step-1"`,
+			expectedError: `template: expression evaluator:1:4: executing "expression evaluator" at <from "step-1" "dne">: error calling from: jq query "dne" failed: function not defined: dne/0`,
 		},
 	}
 

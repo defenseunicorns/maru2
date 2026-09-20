@@ -13,16 +13,17 @@ import (
 	"sync"
 	"time"
 
+	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/alecthomas/chroma/v2/quick"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/goccy/go-yaml"
-	"github.com/muesli/termenv"
 	"github.com/spf13/cast"
 
 	"github.com/defenseunicorns/maru2/schema"
 	v1 "github.com/defenseunicorns/maru2/schema/v1"
+	"github.com/defenseunicorns/maru2/theme"
 	"github.com/defenseunicorns/maru2/uses"
 )
 
@@ -44,50 +45,20 @@ var isGitLabCI = sync.OnceValue(func() bool {
 	return os.Getenv(GitLabCIEnvVar) == "true"
 })
 
-// The terminal colors maru2 uses, derived from
-// https://github.com/charmbracelet/vhs/blob/main/themes.json
-var (
-	DebugColor = lipgloss.AdaptiveColor{
-		Light: "#2e7de9", // tokyonight-day blue
-		Dark:  "#7aa2f7", // tokyonight blue
-	}
-	InfoColor = lipgloss.AdaptiveColor{
-		Light: "#007197", // tokyonight-day cyan
-		Dark:  "#7dcfff", // tokyonight cyan
-	}
-	WarnColor = lipgloss.AdaptiveColor{
-		Light: "#8c6c3e", // tokyonight-day amber/yellow
-		Dark:  "#e0af68", // tokyonight amber/yellow
-	}
-	ErrorColor = lipgloss.AdaptiveColor{
-		Light: "#f52a65", // tokyonight-day red
-		Dark:  "#f7768e", // tokyonight red
-	}
-	FatalColor = lipgloss.AdaptiveColor{
-		Light: "#9854f1", // tokyonight-day magenta (deep red alternative)
-		Dark:  "#bb9af7", // tokyonight magenta (deep red alternative)
-	}
-	GreenColor = lipgloss.AdaptiveColor{
-		Light: "#587539", // tokyonight-day green
-		Dark:  "#9ece6a", // tokyonight green
-	}
-	GrayColor = lipgloss.AdaptiveColor{
-		Light: "#c5c6bC",
-		Dark:  "#3a3943",
-	}
-)
-
 // TaskList is a prettier way to display a workflow's entrypoints from a CLI's perspective
 type TaskList struct {
 	col0max int
 	rows    [][2]string
+
+	theme theme.Theme
 }
 
 // NewDetailedTaskList renders a table detailing a workflow and all aliased workflows tasks
 //
 // The formatting is inspired by `just --list`
 func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *url.URL, wf v1.Workflow) (*TaskList, error) {
-	t := &TaskList{}
+	termTheme := theme.FromContext(ctx)
+	t := &TaskList{theme: termTheme}
 	for name, task := range wf.Tasks.OrderedSeq() {
 		var comment string
 		if desc := task.Description; desc != "" {
@@ -97,7 +68,7 @@ func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *
 		msg := strings.Builder{}
 		msg.WriteString(name)
 
-		renderInputMap(&msg, task.Inputs)
+		renderInputMap(&msg, termTheme, task.Inputs)
 
 		t.Row(msg.String(), comment)
 	}
@@ -121,7 +92,7 @@ func NewDetailedTaskList(ctx context.Context, svc *uses.FetcherService, origin *
 				msg := strings.Builder{}
 				msg.WriteString((fmt.Sprintf("%s:%s", name, n)))
 
-				renderInputMap(&msg, task.Inputs)
+				renderInputMap(&msg, termTheme, task.Inputs)
 
 				t.Row(msg.String(), comment)
 			}
@@ -140,7 +111,8 @@ func (tl *TaskList) Row(col0, col1 string) {
 
 // String implements fmt.Stringers
 func (tl *TaskList) String() string {
-	sb := strings.Builder{}
+	s := strings.Builder{}
+	sb := tl.theme.NewStringWriter(&s)
 
 	cutoff := 50
 
@@ -149,7 +121,7 @@ func (tl *TaskList) String() string {
 
 		col0len := ansi.StringWidth(col0)
 		text0 := lipgloss.NewStyle().MarginLeft(4).Render(col0)
-		text1 := lipgloss.NewStyle().Foreground(InfoColor).Render(col1)
+		text1 := lipgloss.NewStyle().Foreground(tl.theme.Info).Render(col1)
 
 		sb.WriteString(text0)
 
@@ -161,44 +133,46 @@ func (tl *TaskList) String() string {
 		}
 	}
 
-	return sb.String()
+	return s.String()
 }
 
-func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
+func renderInputMap(w io.Writer, theme theme.Theme, inputs v1.InputMap) {
+	wr := theme.NewStringWriter(w)
+
 	faint := lipgloss.NewStyle().Faint(true)
-	blue := lipgloss.NewStyle().Foreground(DebugColor)
-	amber := lipgloss.NewStyle().Foreground(WarnColor)
-	green := lipgloss.NewStyle().Foreground(GreenColor)
-	gray := lipgloss.NewStyle().Foreground(GrayColor)
+	blue := lipgloss.NewStyle().Foreground(theme.Debug)
+	amber := lipgloss.NewStyle().Foreground(theme.Warn)
+	green := lipgloss.NewStyle().Foreground(theme.Green)
+	gray := lipgloss.NewStyle().Foreground(theme.Gray)
 
 	for n, input := range inputs.OrderedSeq() {
-		w.WriteString(faint.Render(" -w "))
+		wr.WriteString(faint.Render(" -w "))
 		if input.Default != nil {
-			w.WriteString(blue.Render(n))
-			w.WriteString("=")
+			wr.WriteString(blue.Render(n))
+			wr.WriteString("=")
 
 			if input.DefaultFromEnv != "" {
-				w.WriteString(green.Render(fmt.Sprintf(`"${%s:-%s}"`, input.DefaultFromEnv, cast.ToString(input.Default))))
+				wr.WriteString(green.Render(fmt.Sprintf(`"${%s:-%s}"`, input.DefaultFromEnv, cast.ToString(input.Default))))
 			} else {
-				w.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
+				wr.WriteString(green.Render(fmt.Sprintf("'%s'", cast.ToString(input.Default))))
 			}
 			continue
 		}
 
 		if input.DefaultFromEnv != "" {
-			w.WriteString(blue.Render(n))
-			w.WriteString("=")
-			w.WriteString(green.Render(fmt.Sprintf(`"$%s"`, input.DefaultFromEnv)))
+			wr.WriteString(blue.Render(n))
+			wr.WriteString("=")
+			wr.WriteString(green.Render(fmt.Sprintf(`"$%s"`, input.DefaultFromEnv)))
 			continue
 		}
 
 		if input.Required != nil && !*input.Required {
-			w.WriteString(gray.Render(n))
-			w.WriteString("=")
+			wr.WriteString(gray.Render(n))
+			wr.WriteString("=")
 			continue
 		}
-		w.WriteString(amber.Render(n))
-		w.WriteString("=")
+		wr.WriteString(amber.Render(n))
+		wr.WriteString("=")
 	}
 }
 
@@ -206,14 +180,16 @@ func renderInputMap(w *strings.Builder, inputs v1.InputMap) {
 //
 // Uses chroma for syntax highlighting with adaptive color schemes (light/dark theme support)
 // Falls back to plain text output when NO_COLOR is set or highlighting fails
-func printScript(logger *log.Logger, lang, script string) {
+func printScript(ctx context.Context, lang, script string) {
+	logger := log.FromContext(ctx)
+	termTheme := theme.FromContext(ctx)
 	if logger.GetLevel() > log.InfoLevel {
 		return
 	}
 
 	script = strings.TrimSpace(script)
 
-	if termenv.EnvNoColor() {
+	if termTheme.ColorProfile == colorprofile.NoTTY {
 		// this is essentially the same behavior/rendering as make
 		logger.Print(script)
 		return
@@ -224,11 +200,7 @@ func printScript(logger *log.Logger, lang, script string) {
 	}
 
 	var buf strings.Builder
-	style := "tokyonight-day"
-	if lipgloss.HasDarkBackground() {
-		style = "tokyonight-moon"
-	}
-	if err := quick.Highlight(&buf, script, lang, "terminal256", style); err != nil {
+	if err := quick.Highlight(&buf, script, lang, "terminal256", termTheme.ChromaStyle); err != nil {
 		logger.Debugf("failed to highlight: %v", err)
 		for line := range strings.SplitSeq(script, "\n") {
 			logger.Printf("  %s", line)
@@ -236,7 +208,7 @@ func printScript(logger *log.Logger, lang, script string) {
 		return
 	}
 
-	gray := lipgloss.NewStyle().Background(GrayColor)
+	gray := lipgloss.NewStyle().Background(termTheme.Gray)
 
 	prefix := gray.Render(" ")
 
@@ -249,7 +221,9 @@ func printScript(logger *log.Logger, lang, script string) {
 //
 // Marshals the builtin With map as YAML and applies syntax highlighting for better readability
 // Used in dry-run mode to preview builtin task execution without running commands
-func printBuiltin(logger *log.Logger, builtin schema.With) {
+func printBuiltin(ctx context.Context, builtin schema.With) {
+	logger := log.FromContext(ctx)
+	termTheme := theme.FromContext(ctx)
 	if logger.GetLevel() > log.InfoLevel {
 		return
 	}
@@ -260,15 +234,12 @@ func printBuiltin(logger *log.Logger, builtin schema.With) {
 		return
 	}
 
-	if termenv.EnvNoColor() {
+	if termTheme.ColorProfile == colorprofile.ASCII {
 		logger.Printf("%s", strings.TrimSpace(string(b)))
 		return
 	}
 
-	style := "tokyonight-day"
-	if lipgloss.HasDarkBackground() {
-		style = "tokyonight-moon"
-	}
+	style := termTheme.ChromaStyle
 
 	var buf strings.Builder
 
