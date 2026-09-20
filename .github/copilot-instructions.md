@@ -275,8 +275,8 @@ Maru2 maintains a **minimal dependency footprint** with carefully selected, well
 
 **Remote Integrations**:
 
-- `github.com/google/go-github/v75` - GitHub API client for fetching remote tasks
-- `gitlab.com/gitlab-org/api/client-go` - GitLab API client for GitLab integration
+- `github.com/google/go-github/v92` - GitHub API client for fetching remote tasks
+- `gitlab.com/gitlab-org/api/client-go/v3` - GitLab API client for GitLab integration
 - `oras.land/oras-go/v2` - OCI registry support for artifact-based task distribution
 - `github.com/package-url/packageurl-go` - Package URL (purl) parsing for remote task references
 - `github.com/olareg/olareg` - OCI local registry implementation for testing

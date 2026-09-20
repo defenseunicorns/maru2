@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/go-github/v75/github"
+	"github.com/google/go-github/v92/github"
 	"github.com/package-url/packageurl-go"
 )
 
@@ -25,7 +25,10 @@ type GitHubClient struct {
 //
 // Uses auth token from tokenEnv > GITHUB_ENV > no auth token
 func NewGitHubClient(client *http.Client, base string, tokenEnv string) (*GitHubClient, error) {
-	c := github.NewClient(client)
+	var opts []github.ClientOptionsFunc
+	if client != nil {
+		opts = append(opts, github.WithHTTPClient(client))
+	}
 
 	if tokenEnv == "" {
 		tokenEnv = "GITHUB_TOKEN"
@@ -37,7 +40,7 @@ func NewGitHubClient(client *http.Client, base string, tokenEnv string) (*GitHub
 	}
 
 	if ok {
-		c = c.WithAuthToken(token)
+		opts = append(opts, github.WithAuthToken(token))
 	}
 
 	if base != "" {
@@ -49,7 +52,13 @@ func NewGitHubClient(client *http.Client, base string, tokenEnv string) (*GitHub
 		if !strings.HasSuffix(baseURL.Path, "/") {
 			baseURL.Path += "/"
 		}
-		c.BaseURL = baseURL
+		b := baseURL.String()
+		opts = append(opts, github.WithURLs(&b, nil)) // not using upload url currently so leaving nil, this may need to change to WithEnterpriseURLs
+	}
+
+	c, err := github.NewClient(opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	return &GitHubClient{client: c}, nil

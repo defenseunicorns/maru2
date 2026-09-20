@@ -88,7 +88,7 @@ echo:
 		require.NoError(t, err)
 		assert.NotNil(t, client)
 
-		actualBaseURL := client.client.BaseURL.String()
+		actualBaseURL := client.client.BaseURL()
 		expectedBaseURL := baseURL
 		if !strings.HasSuffix(expectedBaseURL, "/") {
 			expectedBaseURL += "/"
