@@ -35,7 +35,7 @@ func NewPublishCmd() *cobra.Command {
 		entrypoints     []string
 	)
 
-	migrate := &cobra.Command{
+	publish := &cobra.Command{
 		Use:   "maru2-publish",
 		Short: "Pack a maru2 workflow into an OCI artifact and publish",
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -120,18 +120,18 @@ func NewPublishCmd() *cobra.Command {
 		},
 	}
 
-	migrate.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
-	_ = migrate.RegisterFlagCompletionFunc("log-level", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	publish.Flags().StringVarP(&level, "log-level", "l", "info", "Set log level")
+	_ = publish.RegisterFlagCompletionFunc("log-level", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{log.DebugLevel.String(), log.InfoLevel.String(), log.WarnLevel.String(), log.ErrorLevel.String(), log.FatalLevel.String()}, cobra.ShellCompDirectiveNoFileComp
 	})
-	migrate.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
-	migrate.Flags().BoolVar(&plainHTTP, "plain-http", false, "Force the connections over HTTP instead of HTTPS")
-	migrate.Flags().BoolVar(&insecureSkipTLS, "insecure-skip-tls-verify", false, "Allow connections to SSL registry without certs")
-	migrate.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
-	_ = migrate.MarkFlagDirname("directory")
-	migrate.Flags().StringSliceVarP(&entrypoints, "entrypoint", "e", entrypoints, "Slice(s) of relative paths to workflows")
+	publish.Flags().BoolVarP(&ver, "version", "V", false, "Print version number and exit")
+	publish.Flags().BoolVar(&plainHTTP, "plain-http", false, "Force the connections over HTTP instead of HTTPS")
+	publish.Flags().BoolVar(&insecureSkipTLS, "insecure-skip-tls-verify", false, "Allow connections to SSL registry without certs")
+	publish.Flags().StringVarP(&dir, "directory", "C", "", "Change to directory before doing anything")
+	_ = publish.MarkFlagDirname("directory")
+	publish.Flags().StringSliceVarP(&entrypoints, "entrypoint", "e", entrypoints, "Slice(s) of relative paths to workflows")
 
-	return migrate
+	return publish
 }
 
 // PublishMain executes the root command for the maru2-publish CLI.
